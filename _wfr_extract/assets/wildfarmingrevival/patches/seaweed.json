@@ -1,0 +1,46 @@
+[
+  {
+    "op": "add",
+    "path": "/attributes",
+    "value": {
+      "hours": 96,
+      "minTemp": 5,
+      "maxTemp": 50
+    },
+    "file": "game:blocktypes/plant/aquatic/seaweed.json",
+    "condition": {
+      "when": "WFseaweedEnabled",
+      "isValue": "true"
+    },
+    "side": "server"
+  },
+  {
+    "op": "add",
+    "path": "/entityclassByType",
+    "value": {
+      "*-top": "BESeaweed"
+    },
+    "file": "game:blocktypes/plant/aquatic/seaweed.json",
+    "condition": {
+      "when": "WFseaweedEnabled",
+      "isValue": "true"
+    },
+    "side": "server"
+  },
+  {
+    "op": "remove",
+    "path": "/drops",
+    "file": "game:blocktypes/plant/aquatic/seaweed.json",
+    "condition": {
+      "when": "WFseaweedEnabled",
+      "isValue": "true"
+    },
+    "side": "Server",
+    "dependsOn": [
+      {
+        "modid": "expandedfoods",
+        "invert": true
+      }
+    ]
+  }
+]

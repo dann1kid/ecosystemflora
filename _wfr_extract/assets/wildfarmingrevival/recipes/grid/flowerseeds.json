@@ -1,0 +1,126 @@
+[
+  {
+    "ingredientPattern": "K,H",
+    "enabled": true,
+    "shapeless": true,
+    "ingredients": {
+      "K": {
+        "type": "item",
+        "code": "game:knife-*",
+        "isTool": true
+      },
+      "H": {
+        "type": "block",
+        "code": "game:flower-*-free",
+        "quantity": 1,
+        "name": "type",
+        "allowedVariants": [ "catmint", "cornflower", "forgetmenot", "edelweiss", "heather", "horsetail", "orangemallow", "wilddaisy", "westerngorse", "cowparsley", "goldenpoppy", "lilyofthevalley", "woad", "redtopgrass", "lupine-blue", "lupine-orange", "lupine-purple", "lupine-red", "lupine-white" ]
+      }
+    },
+    "name": "flowerseeds",
+    "width": 1,
+    "height": 2,
+    "output": {
+      "type": "item",
+      "code": "wildfarmingrevival:wildseeds-flower-{type}-free",
+      "quantity": 3
+    }
+  },
+  {
+    "ingredientPattern": "K,H",
+    "enabled": true,
+    "shapeless": true,
+    "ingredients": {
+      "K": {
+        "type": "item",
+        "code": "game:knife-*",
+        "isTool": true
+      },
+      "H": {
+        "type": "block",
+        "code": "game:flower-*",
+        "quantity": 1,
+        "name": "type",
+        "allowedVariants": [
+          "rafflesia-brown",
+          "rafflesia-red",
+          "croton-small-crimson-brown-green",
+          "croton-small-crimson-green",
+          "croton-small-crimson-orange",
+          "croton-small-darkgreen-gold",
+          "croton-small-darkgreen-gold-crimson",
+          "croton-small-green-orange",
+          "croton-small-lemongreen",
+          "croton-small-lemongreen-crimson",
+          "croton-medium-crimson-brown-green",
+          "croton-medium-crimson-green",
+          "croton-medium-crimson-orange",
+          "croton-medium-darkgreen-gold",
+          "croton-medium-darkgreen-gold-crimson",
+          "croton-medium-green-orange",
+          "croton-medium-lemongreen",
+          "croton-medium-lemongreen-crimson"
+        ]
+      }
+    },
+    "name": "flowerseeds",
+    "width": 1,
+    "height": 2,
+    "output": {
+      "type": "item",
+      "code": "wildfarmingrevival:wildseeds-flower-{type}",
+      "quantity": 3
+    }
+  },
+  {
+    "ingredientPattern": "K,H",
+    "enabled": true,
+    "shapeless": true,
+    "ingredients": {
+      "K": {
+        "type": "item",
+        "code": "game:knife-*",
+        "isTool": true
+      },
+      "H": {
+        "type": "block",
+        "code": "game:fern-*",
+        "quantity": 1,
+        "name": "type"
+      }
+    },
+    "name": "fernseeds",
+    "width": 1,
+    "height": 2,
+    "output": {
+      "type": "item",
+      "code": "wildfarmingrevival:wildseeds-fern-{type}",
+      "quantity": 3
+    }
+  },
+  {
+    "ingredientPattern": "K,H",
+    "enabled": true,
+    "shapeless": true,
+    "ingredients": {
+      "K": {
+        "type": "item",
+        "code": "game:knife-*",
+        "isTool": true
+      },
+      "H": {
+        "type": "block",
+        "code": "game:tallfern",
+        "quantity": 1
+      }
+    },
+    "name": "tallfernseeds",
+    "width": 1,
+    "height": 2,
+    "output": {
+      "type": "item",
+      "code": "wildfarmingrevival:wildseeds-fern-tallfern",
+      "quantity": 3
+    }
+  }
+]

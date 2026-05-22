@@ -1,3 +1,5 @@
+**Project direction & agent docs:** [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`AGENTS.md`](AGENTS.md)
+
 -----Plant System-----
 To create a new plant to grow a wildseeds and wildplant of the block must be put as a part of the code for both. For example say I wanted to grow a bowl. I would create a wildseeds variant with the code "wildseeds-bowl-burned" and a wildplant variant with the code "wildplant-bowl-burned".
 

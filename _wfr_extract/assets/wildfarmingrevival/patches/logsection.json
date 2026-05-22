@@ -1,0 +1,9 @@
+[
+  {
+    "op": "replace",
+    "path": "/class",
+    "value": "BlockLivingLogSection",
+    "file": "game:blocktypes/wood/woodtyped/log-section.json",
+    "side": "server"
+  }
+]
