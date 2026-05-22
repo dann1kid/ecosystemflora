@@ -19,7 +19,7 @@ namespace WildFarming.Ecosystem
             if ((float.IsNaN(minTemp) || float.IsNaN(maxTemp))
                 && block.Variant != null
                 && block.Variant.TryGetValue("flower", out string species)
-                && WildFlowerClimate.TryGet(species, out float tableMin, out float tableMax, out _))
+                && WildFlowerClimate.TryGet(species, out float tableMin, out float tableMax))
             {
                 if (float.IsNaN(minTemp)) minTemp = tableMin;
                 if (float.IsNaN(maxTemp)) maxTemp = tableMax;

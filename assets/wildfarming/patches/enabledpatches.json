@@ -1,3 +1,8 @@
 [
-	"flower-ecosystem.json"
+	{
+		"file": "game:blocktypes/plant/flower.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
+	}
 ]
