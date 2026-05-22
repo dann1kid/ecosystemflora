@@ -1,15 +1,49 @@
-[{
+[
+{
 	ingredientPattern: "K,H",
 	enabled: true,
 	shapeless: true,
 	ingredients: {
 		"K": { type: "item", code: "game:knife-*", isTool: true },
-		"H": { type: "block", code: "game:flower-*", quantity: 1, name: "type" },
+		"H": {
+			type: "block",
+			code: "game:flower-*-free",
+			quantity: 1,
+			name: "type",
+			allowedVariants: [
+				"catmint", "cornflower", "forgetmenot", "edelweiss", "heather", "horsetail",
+				"orangemallow", "wilddaisy", "westerngorse", "cowparsley", "goldenpoppy",
+				"lilyofthevalley", "woad", "redtopgrass"
+			]
+		},
 	},
 	name: "flowerseeds",
 	width: 1,
 	height: 2,
-	output: { type: "item", code: "wildfarming:wildseeds-flower-{type}", quantity: 3}
+	output: { type: "item", code: "wildfarming:wildseeds-flower-{type}-free", quantity: 3 }
+},
+{
+	ingredientPattern: "K,H",
+	enabled: true,
+	shapeless: true,
+	ingredients: {
+		"K": { type: "item", code: "game:knife-*", isTool: true },
+		"H": {
+			type: "block",
+			code: "game:flower-*-snow",
+			quantity: 1,
+			name: "type",
+			allowedVariants: [
+				"catmint", "cornflower", "forgetmenot", "edelweiss", "heather", "horsetail",
+				"orangemallow", "wilddaisy", "westerngorse", "cowparsley", "goldenpoppy",
+				"lilyofthevalley", "woad", "redtopgrass"
+			]
+		},
+	},
+	name: "flowerseeds-snow",
+	width: 1,
+	height: 2,
+	output: { type: "item", code: "wildfarming:wildseeds-flower-{type}-snow", quantity: 3 }
 },
 {
 	ingredientPattern: "K,H",
@@ -22,6 +56,6 @@
 	name: "fernseeds",
 	width: 1,
 	height: 2,
-	output: { type: "item", code: "wildfarming:wildseeds-fern-{type}", quantity: 3}
+	output: { type: "item", code: "wildfarming:wildseeds-fern-{type}", quantity: 3 }
 }
 ]

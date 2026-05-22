@@ -17,7 +17,7 @@ Vintage Story mod — cultivate wild plants with an **ecosystem layer**: player 
 
 1. **Planting (player)** — seeds can be placed on any valid spot (solid ground, empty space above, land claims). No climate check at click time.
 2. **Survival (individual)** — `wildplant` grows toward a vanilla block; if climate/soil is unsuitable for too long, the plant **dies** (`MaxFailedSurvivalChecks` in config).
-3. **Wild reproduction (ecosystem)** — mature plants registered by the mod (e.g. catmint) may spawn new `wildplant` nearby only where `MinFitness` suitability passes.
+3. **Wild reproduction (ecosystem)** — mature plants registered by the mod (catmint, forgetmenot, cornflower, wilddaisy) may spawn new `wildplant` nearby only where `MinFitness` suitability passes.
 
 Config file (created on first run): `%AppData%/VintagestoryData/ModConfig/wildfarming-ecosystem.json`
 
@@ -36,7 +36,7 @@ Optional JSON on `wildplant`:
 |-----------|---------|
 | `hours` / `hoursByType` | Average grow time (hours) |
 | `minTemp` / `maxTemp` / `*ByType` | Survival temperature range |
-| `ecologyReproduceByType` | Enable wild reproduction (e.g. `"*-catmint-*": true`) |
+| `ecologyReproduceByType` | Enable wild reproduction per flower type |
 
 ## Legacy code
 

@@ -197,7 +197,8 @@ src/
 |-----------|--------|
 | Экосистемное ядро | ✅ |
 | Catmint: посадка / рост / reproduce | ✅ playtest |
-| Другие виды / рецепты | ⏳ |
+| Reproduce forgetmenot, cornflower, wilddaisy | ✅ в JSON, playtest ⏳ |
+| Рецепты семян (нож + цветок) | ✅ исправлен `{flower}-free` |
 | Visual Studio / net10 | ✅ |
 | Legacy | ⏸ не в сборке |
 

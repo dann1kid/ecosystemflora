@@ -54,7 +54,7 @@
       { "type": "item", "code": "wildfarming:wildseeds-flower-wilddaisy-free", "chance":  {"avg": 0.0005}},
       { "type": "item", "code": "wildfarming:wildseeds-flower-orangemallow-free", "chance":  {"avg": 0.0005}},
       { "type": "item", "code": "wildfarming:wildseeds-flower-westerngorse-free", "chance":  {"avg": 0.0005}},
-      { "type": "item", "code": "wildfarming:wildseeds-flower-californiapoppy-free", "chance":  {"avg": 0.0005}},
+      { "type": "item", "code": "wildfarming:wildseeds-flower-goldenpoppy-free", "chance":  {"avg": 0.0005}},
       { "type": "item", "code": "wildfarming:wildseeds-flower-cowparsley-free", "chance":  {"avg": 0.0005}},
       { "type": "item", "code": "wildfarming:wildseeds-flower-lilyofthevalley-free", "chance":  {"avg": 0.0005}},
 

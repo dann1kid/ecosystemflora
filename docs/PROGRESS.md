@@ -1,6 +1,6 @@
 # Прогресс разработки
 
-**Текущая стадия:** `MVP-beta` — цикл catmint (посадка, рост, reproduce) проверен в игре (2026-05-23).  
+**Текущая стадия:** `MVP-beta` — catmint playtest OK; reproduce + рецепты семян расширены (2026-05-22).  
 **Версия мода:** `2.0.0-mvp` · **Игра:** Vintage Story 1.21+ · **Сборка:** .NET 10  
 
 Последнее обновление: 2026-05-23.
@@ -15,7 +15,7 @@
 |--------|----------|--------|
 | **0 — Archive** | Оригинал JakeCool19 v1.2.0, legacy-код | ✅ в репо, не в сборке |
 | **1 — MVP-alpha** | Экосистемное ядро, цветы, три слоя | ✅ завершено |
-| **2 — MVP-beta** | Playtest catmint, стабильный цикл, документация | **▶ сейчас** |
+| **2 — MVP-beta** | Reproduce 4 цветов, рецепты семян, playtest | **▶ сейчас** |
 | **3 — Ecosystem v1** | `IEcosystemParticipant`, rain/forest, ванильные взрослые в реестре | 📋 план |
 | **4 — Content** | Кусты/кактусы/грибы (выборочно), без living trees | 📋 опционально |
 
@@ -51,15 +51,15 @@
 ### Контент
 
 - [x] Все цветы из `wildplant.json` — температуры worldgen
-- [x] Дикое размножение включено только для **catmint** (`ecologyReproduceByType`)
+- [x] Дикое размножение: **catmint**, **forgetmenot**, **cornflower**, **wilddaisy** (`ecologyReproduceByType`)
 - [x] Legacy (деревья, грибы, лианы, Harmony) — **не компилируется**
 
 ---
 
 ## Что ещё не сделано
 
-- [ ] Reproduce для других цветов (не только catmint)
-- [ ] Рецепты семян (нож + цветок) — smoke-test на 1.21+
+- [ ] Playtest reproduce: forgetmenot, cornflower, wilddaisy
+- [ ] Playtest рецептов семян (нож + `flower-*-free` → `wildseeds-flower-{type}-free`)
 - [ ] `IEcosystemParticipant` / capabilities (vision §3.2)
 - [ ] Учёт `minRain` / `minForest` как в worldgen
 
@@ -67,8 +67,8 @@
 
 ## Следующие шаги
 
-1. `ecologyReproduceByType` для 2–3 популярных цветов.
-2. Проверить `flowerseeds.json` в игре.
+1. Playtest: нож + цветок → 3 семени; кластеры у взрослых forgetmenot / cornflower / wilddaisy.
+2. Закрыть **MVP-beta** → **Ecosystem v1** (`IEcosystemParticipant`, rain/forest).
 3. Push на `origin` при готовности.
 
 ---
@@ -86,4 +86,7 @@
 
 - Конфиг: `%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
 - Catmint: **5–19 °C**, ~8 суток роста (`192` ч)
+- Forgetmenot / wilddaisy: **7–20 °C**
+- Cornflower: **3–23 °C**
+- Рецепт семян: нож + `game:flower-*` → `wildseeds-flower-{вид}-free`
 - Ускорение: `"GrowthHoursMultiplier": 0.1`

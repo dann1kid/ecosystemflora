@@ -90,56 +90,6 @@
     "op": "add",
     "path": "/0/enabled",
     "value": false,
-    "file": "wildfarming:recipes/grid/flowerseeds.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/1/enabled",
-    "value": false,
-    "file": "wildfarming:recipes/grid/flowerseeds.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/enabled",
-    "value": false,
-    "file": "wildfarming:itemtypes/wildseeds.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/enabled",
-    "value": false,
-    "file": "wildfarming:itemtypes/wildseeds-croton.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/enabled",
-    "value": false,
-    "file": "wildfarming:itemtypes/wildseeds-fern.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/enabled",
-    "value": false,
-    "file": "wildfarming:itemtypes/wildseeds-lupine.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-  {
-    "op": "add",
-    "path": "/enabled",
-    "value": false,
-    "file": "wildfarming:itemtypes/wildseeds-rafflesia.json",
-    "condition": { "when": "WFflowersEnabled", "isValue": "false" }
-  },
-
-  {
-    "op": "add",
-    "path": "/0/enabled",
-    "value": false,
     "file": "wildfarming:recipes/grid/reedroots.json",
     "condition": { "when": "WFreedsEnabled", "isValue": "false" }
   },
