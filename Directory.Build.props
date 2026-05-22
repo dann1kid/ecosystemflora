@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <VintageStoryDir>$(APPDATA)\Vintagestory</VintageStoryDir>
+    <VintageStoryExe>$(VintageStoryDir)\Vintagestory.exe</VintageStoryExe>
+    <ModDeployDir>$(VintageStoryDir)\Mods\wildfarming</ModDeployDir>
+    <!-- Set false in VS Build Properties to skip copying into the game Mods folder -->
+    <DeployModToGame>true</DeployModToGame>
+  </PropertyGroup>
+</Project>

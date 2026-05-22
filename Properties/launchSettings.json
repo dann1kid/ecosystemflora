@@ -1,0 +1,9 @@
+﻿{
+    "profiles":  {
+                     "Vintage Story (F5)":  {
+                                                "commandName":  "Executable",
+                                                "executablePath":  "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory\\Vintagestory.exe",
+                                                "workingDirectory":  "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory"
+                                            }
+                 }
+}

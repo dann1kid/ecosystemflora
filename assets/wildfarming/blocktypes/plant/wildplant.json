@@ -43,6 +43,9 @@
 			"*-woad-*": -7,
 			"*-cornflower-*": -3,
 		},
+		"ecologyReproduceByType": {
+			"*-catmint-*": true
+		},
 		"maxTempByType": {
 			"*-catmint-*": 29,
 			"*-forgetmenot-*": 30,

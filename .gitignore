@@ -1,0 +1,19 @@
+# Build
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.slnx
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Temp analysis
+_wfr_extract/
+_wfr_temp.zip
+
+# OS
+Thumbs.db
+.DS_Store

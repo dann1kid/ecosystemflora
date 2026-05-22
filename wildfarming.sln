@@ -1,0 +1,31 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8B5E9F2A-1C4D-4E6F-9A0B-2D3E4F5A6B7C}"
+	ProjectSection(SolutionItems) = preProject
+		docs\PROJECT_VISION.md = docs\PROJECT_VISION.md
+		docs\PROMPT.md = docs\PROMPT.md
+		docs\VISUAL_STUDIO.md = docs\VISUAL_STUDIO.md
+		README.MD = README.MD
+		AGENTS.md = AGENTS.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wildfarming", "wildfarming.csproj", "{05C0F2A4-EF31-4FD6-A5E4-5D4FBA373CDC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05C0F2A4-EF31-4FD6-A5E4-5D4FBA373CDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05C0F2A4-EF31-4FD6-A5E4-5D4FBA373CDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05C0F2A4-EF31-4FD6-A5E4-5D4FBA373CDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05C0F2A4-EF31-4FD6-A5E4-5D4FBA373CDC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
