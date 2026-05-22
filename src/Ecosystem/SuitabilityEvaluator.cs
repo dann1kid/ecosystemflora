@@ -2,13 +2,12 @@ namespace WildFarming.Ecosystem
 {
     public static class SuitabilityEvaluator
     {
-        /// <summary>Soil, space, and climate range — used for player planting and maturation.</summary>
-        public static bool MeetsHardRequirements(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
+        /// <summary>Can an established plant survive here (climate + soil under roots).</summary>
+        public static bool MeetsSurvivalRequirements(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
             if (!ctx.HasClimate) return false;
             if (!ctx.GroundSideSolid) return false;
             if (ctx.GroundFertility < req.MinFertility) return false;
-            if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
 
             if (harshClimate && !ctx.InGreenhouse)
             {
@@ -18,9 +17,31 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
+        /// <summary>Can the player place a seed on this cell (empty enough space above ground).</summary>
+        public static bool MeetsPlacementRequirements(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            if (!ctx.GroundSideSolid) return false;
+            if (ctx.GroundFertility < req.MinFertility) return false;
+            if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
+            return true;
+        }
+
+        public static string DescribeSurvivalFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
+        {
+            if (!ctx.HasClimate) return "No climate data.";
+            if (!ctx.GroundSideSolid) return "No solid ground below.";
+            if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
+            if (harshClimate && !ctx.InGreenhouse)
+            {
+                if (ctx.Temperature > req.MaxTemp) return "Too hot.";
+                if (ctx.Temperature < req.MinTemp) return "Too cold.";
+            }
+            return null;
+        }
+
         public static float Score(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
-            if (!MeetsHardRequirements(req, ctx, harshClimate)) return 0f;
+            if (!MeetsSurvivalRequirements(req, ctx, harshClimate)) return 0f;
 
             float score = 1f;
 
@@ -38,7 +59,6 @@ namespace WildFarming.Ecosystem
             return score;
         }
 
-        /// <summary>Spontaneous reproduction — stricter fitness threshold.</summary>
         public static bool CanReproduce(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate, float minFitness)
         {
             return Score(req, ctx, harshClimate) >= minFitness;

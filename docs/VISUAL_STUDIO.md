@@ -79,6 +79,7 @@ wildfarming.sln
 | `MinFitness` | 0.65 | Порог только для **reproduce**, не для посадки |
 | `MaxFailedSurvivalChecks` | 5 | Сколько раз ×18ч в плохом климате до смерти ростка |
 | `HarshWildPlants` | true | Учитывать min/maxTemp при выживании |
+| `GrowthHoursMultiplier` | 1 | Ускорение роста для тестов (0.1 = в 10 раз быстрее) |
 
 ## Устранение проблем
 

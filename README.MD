@@ -2,7 +2,9 @@
 
 Vintage Story mod — cultivate wild plants with an **ecosystem layer**: player planting, climate survival, optional wild reproduction.
 
-**Docs:** [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md) · [`AGENTS.md`](AGENTS.md)
+**Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
+
+**Стадия:** `MVP-beta` — catmint playtest OK (посадка, рост, reproduce).
 
 **Build:** open [`wildfarming.sln`](wildfarming.sln) in Visual Studio 2022, or `dotnet build wildfarming.sln -c Debug`. Output: `bin/Debug/Mods/wildfarming/` (auto-deployed to game `Mods` when the client is closed).
 

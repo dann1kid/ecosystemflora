@@ -64,7 +64,20 @@ namespace WildFarming.Ecosystem
         /// <summary>Can this plant live here (climate, soil)? Used after planting — not for blocking the player.</summary>
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
         {
-            return SuitabilityEvaluator.MeetsHardRequirements(
+            return SuitabilityEvaluator.MeetsSurvivalRequirements(
+                requirements,
+                Sample(plantPos),
+                EcosystemConfig.Loaded.HarshWildPlants);
+        }
+
+        public bool CanPlaceSeedAt(BlockPos plantPos, PlantRequirements requirements)
+        {
+            return SuitabilityEvaluator.MeetsPlacementRequirements(requirements, Sample(plantPos));
+        }
+
+        public string DescribeSurvivalAt(BlockPos plantPos, PlantRequirements requirements)
+        {
+            return SuitabilityEvaluator.DescribeSurvivalFailure(
                 requirements,
                 Sample(plantPos),
                 EcosystemConfig.Loaded.HarshWildPlants);

@@ -7,8 +7,9 @@ namespace WildFarming.Ecosystem
     {
         public float MinTemp { get; set; } = -5f;
         public float MaxTemp { get; set; } = 50f;
-        public int MinFertility { get; set; } = 1;
-        public int MinReplaceable { get; set; } = 9501;
+        /// <summary>Matches vanilla soil tiers (verylow=100, low=150, …).</summary>
+        public int MinFertility { get; set; } = 100;
+        public int MinReplaceable { get; set; } = 9500;
 
         public static PlantRequirements FromBlock(Block block)
         {
@@ -18,8 +19,8 @@ namespace WildFarming.Ecosystem
             {
                 MinTemp = block.Attributes["minTemp"].AsFloat(-5f),
                 MaxTemp = block.Attributes["maxTemp"].AsFloat(50f),
-                MinFertility = block.Attributes["minFertility"].AsInt(1),
-                MinReplaceable = block.Attributes["minReplaceable"].AsInt(9501),
+                MinFertility = block.Attributes["minFertility"].AsInt(100),
+                MinReplaceable = block.Attributes["minReplaceable"].AsInt(9500),
             };
         }
     }

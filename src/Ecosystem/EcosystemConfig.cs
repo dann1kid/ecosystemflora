@@ -22,5 +22,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Failed growth checks (×18h) in bad climate before the juvenile plant dies.</summary>
         public int MaxFailedSurvivalChecks { get; set; } = 5;
+
+        /// <summary>Dev/test: multiply grow hours (1 = normal).</summary>
+        public float GrowthHoursMultiplier { get; set; } = 1f;
     }
 }

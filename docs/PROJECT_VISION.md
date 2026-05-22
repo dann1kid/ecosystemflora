@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **отношение к оригинальному Wild Farming и Revival**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-23.
+Последнее обновление: 2026-05-23 (стадия: MVP-alpha).
 
 ---
 
@@ -131,7 +131,7 @@ src/
   ... (остальное — по мере необходимости MVP)
 ```
 
-Папка `Ecosystem/` **пока не существует** — это целевое состояние.
+Папка `Ecosystem/` реализована — актуальный прогресс: **[`PROGRESS.md`](PROGRESS.md)**.
 
 ---
 
@@ -146,7 +146,13 @@ src/
 | 3 | На **взрослом** блоке (patch + BE или block behavior): `IReproducible`, 1–2 попытки/день, низкий шанс |
 | 4 | Конфиг: `Radius`, `Chance`, `MinFitness` — три параметра, не страница тогглов Revival |
 
-Критерий готовности MVP: на тестовом мире видно **кластеры** растений в подходящих зонах и **отсутствие** в неподходящих, без включения living trees / vines / mushrooms.
+Критерий готовности MVP:
+
+| Критерий | Статус |
+|----------|--------|
+| Посадка → рост → взрослый цветок | ✅ |
+| Reproduce catmint | ✅ playtest |
+| Расширение на другие виды | ⏳ |
 
 ---
 
@@ -185,17 +191,15 @@ src/
 
 ## 6. Текущая стадия репозитория
 
-**Стадия: MVP экосистемы (v2.0.0-mvp), три слоя посадка / выживание / reproduce.**
+**Стадия: `MVP-beta`** — catmint playtest OK. Детали: **[`PROGRESS.md`](PROGRESS.md)**.
 
 | Компонент | Статус |
 |-----------|--------|
-| Экосистемное ядро (`src/Ecosystem/`) | ✅ `EcosystemSystem`, `SuitabilityEvaluator`, `EnvironmentalContext`, `wildfarming-ecosystem.json` |
-| Посадка игроком | ✅ без климата; `PlantCodeHelper.WildPlantCodeFromSeed` |
-| Выживание `WildPlant` | ✅ `CanSurviveAt`, смерть после `MaxFailedSurvivalChecks` |
-| Дикое размножение | ✅ реестр взрослых, catmint (`ecologyReproduceByType`), `MinFitness` |
-| Visual Studio | ✅ `wildfarming.sln`, F5, автодеплой в `Mods` |
-| Legacy (грибы, деревья, лианы, Harmony…) | ⏸ в репо, не в сборке |
-| Сборка | ✅ `net10.0` → `bin/Debug/Mods/wildfarming/` |
+| Экосистемное ядро | ✅ |
+| Catmint: посадка / рост / reproduce | ✅ playtest |
+| Другие виды / рецепты | ⏳ |
+| Visual Studio / net10 | ✅ |
+| Legacy | ⏸ не в сборке |
 
 ### 6.1. Структура репозитория
 

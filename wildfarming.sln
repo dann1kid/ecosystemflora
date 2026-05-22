@@ -5,6 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8B5E9F2A-1C4D-4E6F-9A0B-2D3E4F5A6B7C}"
 	ProjectSection(SolutionItems) = preProject
+		docs\PROGRESS.md = docs\PROGRESS.md
 		docs\PROJECT_VISION.md = docs\PROJECT_VISION.md
 		docs\PROMPT.md = docs\PROMPT.md
 		docs\VISUAL_STUDIO.md = docs\VISUAL_STUDIO.md

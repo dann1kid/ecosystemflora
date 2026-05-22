@@ -25,7 +25,7 @@ MVP: один вид цветка; рефактор WildPlant под suitability
 
 Порт: VS 1.21+, .NET 8. Legacy src/ — референс JakeCool19 v1.2.0, не мержить wildfarmingrevival.
 
-Стадия репо: pre-MVP, папки Ecosystem/ ещё нет. Приоритет у docs/PROJECT_VISION.md над поведением Revival.
+Стадия репо: MVP-alpha — см. docs/PROGRESS.md. Приоритет у docs/PROJECT_VISION.md над Revival.
 
 Коммиты — только по запросу пользователя.
 ```

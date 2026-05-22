@@ -1,13 +1,13 @@
 # Guidance for AI agents
 
-**Quick start:** copy the block from **`docs/PROMPT.md`**.
+**Quick start:** current stage → **`docs/PROGRESS.md`**. Prompt → **`docs/PROMPT.md`**.
 
 Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
 - what to reuse from legacy Wild Farming vs what to ignore;
-- current repo stage: MVP v2.0.0-mvp (plant / survive / reproduce);
+- current repo stage: **MVP-beta** (catmint playtest OK) — see `docs/PROGRESS.md`;
 - MVP scope and agent rules.
 
 Quick constraints:
