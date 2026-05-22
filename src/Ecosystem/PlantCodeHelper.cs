@@ -4,38 +4,37 @@ namespace WildFarming.Ecosystem
 {
     public static class PlantCodeHelper
     {
-        /// <summary>wildseeds-flower-catmint-free → wildplant-flower-catmint-free</summary>
-        public static AssetLocation WildPlantCodeFromSeed(CollectibleObject seed)
+        public static bool IsVanillaEcologyPlant(Block block)
         {
-            if (seed?.Code == null) return null;
+            if (block?.Code == null || block.Code.Domain != "game") return false;
 
-            string path = seed.Code.Path;
-            const string seedPrefix = "wildseeds-";
-            if (path.StartsWith(seedPrefix))
-            {
-                return new AssetLocation(seed.Code.Domain, "wildplant-" + path.Substring(seedPrefix.Length));
-            }
-
-            return new AssetLocation(seed.Code.Domain, "wildplant-" + seed.CodeEndWithoutParts(1));
+            string path = block.Code.Path;
+            return path.StartsWith("flower-");
         }
 
-        /// <summary>wildplant-flower-catmint-free → flower-catmint-free</summary>
-        public static string MatureCodePath(Block block)
+        /// <summary>Spread target equals the same vanilla block code (no wildplant stage).</summary>
+        public static AssetLocation SpreadBlockCode(Block block)
         {
+            if (block?.Code == null) return null;
+            if (IsVanillaEcologyPlant(block)) return block.Code;
+            return null;
+        }
+
+        public static AssetLocation MatureBlockLocation(Block block)
+        {
+            AssetLocation vanilla = SpreadBlockCode(block);
+            if (vanilla != null) return vanilla;
+
             string path = block?.Code?.Path;
             if (string.IsNullOrEmpty(path)) return null;
 
             const string prefix = "wildplant-";
-            if (path.StartsWith(prefix)) return path.Substring(prefix.Length);
+            if (path.StartsWith(prefix))
+            {
+                return new AssetLocation("game:" + path.Substring(prefix.Length));
+            }
 
-            return block.CodeEndWithoutParts(1);
-        }
-
-        public static AssetLocation MatureBlockLocation(Block wildPlantBlock)
-        {
-            string maturePath = MatureCodePath(wildPlantBlock);
-            if (maturePath == null) return null;
-            return new AssetLocation("game:" + maturePath);
+            return null;
         }
     }
 }

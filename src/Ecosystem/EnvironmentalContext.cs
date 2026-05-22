@@ -12,6 +12,7 @@ namespace WildFarming.Ecosystem
         public bool GroundSideSolid { get; }
         public int SpaceReplaceable { get; }
         public bool HasClimate { get; }
+        public bool TouchesFluid { get; }
 
         EnvironmentalContext(
             BlockPos pos,
@@ -20,7 +21,8 @@ namespace WildFarming.Ecosystem
             int groundFertility,
             bool groundSideSolid,
             int spaceReplaceable,
-            bool hasClimate)
+            bool hasClimate,
+            bool touchesFluid)
         {
             Position = pos;
             Temperature = temperature;
@@ -29,6 +31,7 @@ namespace WildFarming.Ecosystem
             GroundSideSolid = groundSideSolid;
             SpaceReplaceable = spaceReplaceable;
             HasClimate = hasClimate;
+            TouchesFluid = touchesFluid;
         }
 
         public static EnvironmentalContext Sample(ICoreAPI api, BlockPos plantPos)
@@ -47,7 +50,8 @@ namespace WildFarming.Ecosystem
                 (int)ground.Fertility,
                 ground.SideSolid[BlockFacing.UP.Index],
                 space.Replaceable,
-                conds != null);
+                conds != null,
+                BlockFluidHelper.TouchesFluid(acc, plantPos));
         }
     }
 }

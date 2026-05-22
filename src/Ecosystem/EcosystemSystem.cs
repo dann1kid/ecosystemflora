@@ -1,19 +1,25 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Config;
+using Vintagestory.API.Server;
+
 namespace WildFarming.Ecosystem
 {
-    public class EcosystemSystem : ModSystem
+    public class EcosystemSystem
     {
         public static EcosystemSystem Instance { get; private set; }
 
         ICoreAPI api;
         readonly List<ReproducerEntry> reproducers = new List<ReproducerEntry>();
         long reproduceListenerId;
+        ChunkColumnLoadedDelegate chunkLoadedHandler;
 
-        public override void StartPre(ICoreAPI api)
+        public void InitPre(ICoreAPI api)
         {
-            base.StartPre(api);
+            if (api.Side != EnumAppSide.Server) return;
+
+            this.api = api;
             Instance = this;
 
             try
@@ -28,26 +34,41 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        public override void Start(ICoreAPI api)
+        public void Init(ICoreAPI api)
         {
-            base.Start(api);
-            this.api = api;
+            if (api.Side != EnumAppSide.Server) return;
 
-            if (api.Side == EnumAppSide.Server && EcosystemConfig.Loaded.EcosystemEnabled)
+            this.api = api;
+            Instance = this;
+
+            if (EcosystemConfig.Loaded.EcosystemEnabled)
             {
                 reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 8000);
             }
+
+            if (api is ICoreServerAPI sapi)
+            {
+                chunkLoadedHandler = OnChunkColumnLoaded;
+                sapi.Event.ChunkColumnLoaded += chunkLoadedHandler;
+            }
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
+            if (api is ICoreServerAPI sapi && chunkLoadedHandler != null)
+            {
+                sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
+                chunkLoadedHandler = null;
+            }
+
             if (api != null && reproduceListenerId != 0)
             {
                 api.Event.UnregisterGameTickListener(reproduceListenerId);
             }
             reproducers.Clear();
+            reproduceListenerId = 0;
             Instance = null;
-            base.Dispose();
+            api = null;
         }
 
         public EnvironmentalContext Sample(BlockPos plantPos)
@@ -55,24 +76,12 @@ namespace WildFarming.Ecosystem
             return EnvironmentalContext.Sample(api, plantPos);
         }
 
-        public float ScoreForPlant(BlockPos plantPos, PlantRequirements requirements)
-        {
-            IEnvironmentalContext ctx = Sample(plantPos);
-            return SuitabilityEvaluator.Score(requirements, ctx, EcosystemConfig.Loaded.HarshWildPlants);
-        }
-
-        /// <summary>Can this plant live here (climate, soil)? Used after planting — not for blocking the player.</summary>
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
         {
             return SuitabilityEvaluator.MeetsSurvivalRequirements(
                 requirements,
                 Sample(plantPos),
                 EcosystemConfig.Loaded.HarshWildPlants);
-        }
-
-        public bool CanPlaceSeedAt(BlockPos plantPos, PlantRequirements requirements)
-        {
-            return SuitabilityEvaluator.MeetsPlacementRequirements(requirements, Sample(plantPos));
         }
 
         public string DescribeSurvivalAt(BlockPos plantPos, PlantRequirements requirements)
@@ -83,38 +92,54 @@ namespace WildFarming.Ecosystem
                 EcosystemConfig.Loaded.HarshWildPlants);
         }
 
-        public bool CanReproduceAt(BlockPos plantPos, PlantRequirements requirements)
+        public void RegisterReproducer(BlockPos origin, AssetLocation plantBlockCode, PlantRequirements requirements, bool spawnBurst = false)
         {
-            return SuitabilityEvaluator.CanReproduce(
-                requirements,
-                Sample(plantPos),
-                EcosystemConfig.Loaded.HarshWildPlants,
-                EcosystemConfig.Loaded.MinFitness);
-        }
-
-        public void RegisterReproducer(BlockPos origin, AssetLocation juvenileBlockCode, PlantRequirements requirements)
-        {
+            if (api == null || api.Side != EnumAppSide.Server) return;
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            if (api.Side != EnumAppSide.Server) return;
 
-            for (int i = reproducers.Count - 1; i >= 0; i--)
+            try
             {
-                if (reproducers[i].Origin.Equals(origin))
+                Block plantBlock = api.World.GetBlock(plantBlockCode);
+                if (plantBlock == null || !EcologyAttributes.ReproduceEnabled(plantBlock))
                 {
-                    reproducers.RemoveAt(i);
+                    return;
+                }
+
+                AssetLocation spreadCode = PlantCodeHelper.SpreadBlockCode(plantBlock) ?? plantBlockCode.Clone();
+                AssetLocation matureCode = PlantCodeHelper.MatureBlockLocation(plantBlock) ?? spreadCode;
+
+                for (int i = reproducers.Count - 1; i >= 0; i--)
+                {
+                    if (reproducers[i].Origin.Equals(origin))
+                    {
+                        reproducers.RemoveAt(i);
+                    }
+                }
+
+                AssetLocation spreadCopy = spreadCode.Clone();
+                double now = api.World.Calendar.TotalHours;
+                var entry = new ReproducerEntry(origin.Copy(), spreadCopy, matureCode, requirements, now);
+                reproducers.Add(entry);
+
+                if (EcosystemConfig.Loaded.ReproduceDebug)
+                {
+                    api.Logger.Notification("[wildfarming] Registered {0} at {1}", spreadCopy, origin);
+                }
+
+                if (spawnBurst)
+                {
+                    TrySpawnOffspring(entry, skipChanceRoll: true, maxSpawns: 3);
                 }
             }
-
-            reproducers.Add(new ReproducerEntry(
-                origin.Copy(),
-                juvenileBlockCode,
-                requirements,
-                api.World.Calendar.TotalHours + EcosystemConfig.Loaded.ReproduceIntervalHours));
+            catch (System.Exception ex)
+            {
+                api.Logger.Error("[wildfarming] RegisterReproducer failed at {0}: {1}", origin, ex);
+            }
         }
 
         void OnReproduceTick(float dt)
         {
-            if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
+            if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             double now = api.World.Calendar.TotalHours;
@@ -125,7 +150,7 @@ namespace WildFarming.Ecosystem
                 ReproducerEntry entry = reproducers[i];
                 Block block = acc.GetBlock(entry.Origin);
 
-                if (block.Id == 0 || !IsMaturePlant(block, entry))
+                if (block.Id == 0 || !entry.IsMatureBlock(block))
                 {
                     reproducers.RemoveAt(i);
                     continue;
@@ -134,60 +159,113 @@ namespace WildFarming.Ecosystem
                 if (now < entry.NextAttemptHours) continue;
 
                 entry.NextAttemptHours = now + cfg.ReproduceIntervalHours;
-                TryReproduce(entry);
+                TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
             }
         }
 
-        static bool IsMaturePlant(Block block, ReproducerEntry entry)
-        {
-            return block.Code != null
-                && block.Code.Domain == "game"
-                && block.Code.Path.StartsWith("flower-");
-        }
-
-        void TryReproduce(ReproducerEntry entry)
+        void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (api.World.Rand.NextDouble() > cfg.ReproduceChance) return;
+
+            if (!skipChanceRoll && api.World.Rand.NextDouble() > cfg.ReproduceChance)
+            {
+                return;
+            }
 
             Block juvenile = api.World.GetBlock(entry.JuvenileBlockCode);
-            if (juvenile == null) return;
-
-            int radius = cfg.ReproduceRadius;
-            for (int attempt = 0; attempt < 10; attempt++)
+            if (juvenile == null)
             {
-                int dx = api.World.Rand.Next(-radius, radius + 1);
-                int dz = api.World.Rand.Next(-radius, radius + 1);
-                if (dx == 0 && dz == 0) continue;
-
-                BlockPos ground = entry.Origin.AddCopy(dx, -1, dz);
-                BlockPos plantPos = ground.UpCopy();
-
-                if (!CanReproduceAt(plantPos, entry.Requirements)) continue;
-
-                accSetPlant(plantPos, juvenile);
+                api.Logger.Warning("[wildfarming] Juvenile block not found: {0}", entry.JuvenileBlockCode);
                 return;
+            }
+
+            List<Vec2i> offsets = ReproducePlacement.ShuffledHorizontalOffsets(cfg.ReproduceRadius, api.World.Rand);
+            int spawned = 0;
+            int loggedFailures = 0;
+
+            foreach (Vec2i offset in offsets)
+            {
+                if (ReproducePlacement.TryPlaceSpreadNear(
+                    api,
+                    entry.Origin,
+                    offset.X,
+                    offset.Y,
+                    juvenile,
+                    entry.Requirements,
+                    cfg.MinFitness,
+                    cfg.HarshWildPlants,
+                    cfg.ReproduceVerticalSearch,
+                    cfg.ReproduceDebug,
+                    out string failureReason))
+                {
+                    spawned++;
+                    if (EcosystemConfig.Loaded.ReproduceDebug)
+                    {
+                        api.Logger.Notification("[wildfarming] Spawned {0} near {1}", juvenile.Code, entry.Origin);
+                    }
+                    if (spawned >= maxSpawns) return;
+                }
+                else if (cfg.ReproduceDebug && failureReason != null && loggedFailures < 5)
+                {
+                    api.Logger.Notification("[wildfarming] Skip column ({0},{1}) near {2}: {3}", offset.X, offset.Y, entry.Origin, failureReason);
+                    loggedFailures++;
+                }
+            }
+
+            if (cfg.ReproduceDebug && spawned == 0)
+            {
+                api.Logger.Notification("[wildfarming] No spawn cell near {0} (radius {1}, minFitness {2})", entry.Origin, cfg.ReproduceRadius, cfg.MinFitness);
             }
         }
 
-        void accSetPlant(BlockPos plantPos, Block juvenile)
+        void OnChunkColumnLoaded(Vec2i chunkCoord, IWorldChunk[] chunks)
         {
-            api.World.BlockAccessor.SetBlock(juvenile.Id, plantPos);
+            if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            int chunkSize = GlobalConstants.ChunkSize;
+            int x0 = chunkCoord.X * chunkSize;
+            int z0 = chunkCoord.Y * chunkSize;
+            int y1 = acc.MapSizeY - 1;
+
+            BlockPos start = new BlockPos(x0, 0, z0);
+            BlockPos end = new BlockPos(x0 + chunkSize - 1, y1, z0 + chunkSize - 1);
+
+            acc.WalkBlocks(start, end, (block, x, y, z) =>
+            {
+                if (!EcologyAttributes.ReproduceEnabled(block)) return;
+
+                BlockPos pos = new BlockPos(x, y, z);
+                PlantRequirements requirements = PlantRequirements.FromBlock(block);
+                RegisterReproducer(pos, block.Code, requirements, spawnBurst: false);
+            });
         }
 
         sealed class ReproducerEntry : IReproducible
         {
             public BlockPos Origin { get; }
             public AssetLocation JuvenileBlockCode { get; }
+            public AssetLocation MatureBlockCode { get; }
             public PlantRequirements Requirements { get; }
             public double NextAttemptHours { get; set; }
 
-            public ReproducerEntry(BlockPos origin, AssetLocation juvenileBlockCode, PlantRequirements requirements, double nextAttemptHours)
+            public ReproducerEntry(
+                BlockPos origin,
+                AssetLocation juvenileBlockCode,
+                AssetLocation matureBlockCode,
+                PlantRequirements requirements,
+                double nextAttemptHours)
             {
                 Origin = origin;
                 JuvenileBlockCode = juvenileBlockCode;
+                MatureBlockCode = matureBlockCode;
                 Requirements = requirements;
                 NextAttemptHours = nextAttemptHours;
+            }
+
+            public bool IsMatureBlock(Block block)
+            {
+                return block?.Code != null && block.Code.Equals(MatureBlockCode);
             }
         }
     }

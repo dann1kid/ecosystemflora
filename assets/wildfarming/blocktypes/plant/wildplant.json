@@ -27,6 +27,9 @@
 			"*-lilyofthevalley-*": 192,
 			"*-woad-*": 192,
 			"*-cornflower-*": 192,
+			"*-daffodil-*": 192,
+			"*-mugwort-*": 192,
+			"*-bluebell-*": 192,
 		},
 		"minTempByType": {
 			"*-catmint-*": 5,
@@ -41,13 +44,13 @@
 			"*-goldenpoppy-*": 22,
 			"*-lilyofthevalley-*": 2,
 			"*-woad-*": -2,
-			"*-cornflower-*": 3
+			"*-cornflower-*": 3,
+			"*-daffodil-*": 11,
+			"*-mugwort-*": 11,
+			"*-bluebell-*": 2
 		},
 		"ecologyReproduceByType": {
-			"*-catmint-*": true,
-			"*-forgetmenot-*": true,
-			"*-cornflower-*": true,
-			"*-wilddaisy-*": true
+			"*": true
 		},
 		"maxTempByType": {
 			"*-catmint-*": 19,
@@ -62,7 +65,10 @@
 			"*-goldenpoppy-*": 25,
 			"*-lilyofthevalley-*": 13,
 			"*-woad-*": 21,
-			"*-cornflower-*": 23
+			"*-cornflower-*": 23,
+			"*-daffodil-*": 28,
+			"*-mugwort-*": 28,
+			"*-bluebell-*": 15
 		},
 	},
 	drops: [],
@@ -74,7 +80,12 @@
 	climateColorMap: "climatePlantTint",
 	seasonColorMap: "seasonalFoliage",
 	blockmaterial: "Plant",
-	shape: { base: "game:block/basic/cross-short" },
+	shapeByType: {
+		"*-daffodil-*": { base: "game:block/plant/flower/1patch-3faces-16x16" },
+		"*-bluebell-*": { base: "game:block/plant/flower/1patch-3faces-16x16" },
+		"*-lilyofthevalley-*": { base: "game:block/plant/flower/1patch-3faces-16x16" },
+		"*": { base: "game:block/basic/cross-short" }
+	},
 	renderpass: "OpaqueNoCull",
 	lightAbsorption: 0,
 	sideopaque: {

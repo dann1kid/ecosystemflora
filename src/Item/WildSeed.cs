@@ -36,7 +36,11 @@ namespace WildFarming
             if (!ground.SideSolid[blockSel.Face.Index]) return;
             if (space.Replaceable < 9500) return;
 
-            world.BlockAccessor.SetBlock(wildPlant.BlockId, plantPos);
+            world.BlockAccessor.SetBlock(wildPlant.BlockId, plantPos, new ItemStack(wildPlant));
+            if (world.BlockAccessor.GetBlockEntity(plantPos) is WildPlantBlockEntity wildBe)
+            {
+                wildBe.InitFromReproduction();
+            }
             world.PlaySoundAt(new AssetLocation("sounds/block/plant"), plantPos.X, plantPos.Y, plantPos.Z, byPlayer);
 
             if (byPlayer?.WorldData?.CurrentGameMode != EnumGameMode.Creative)

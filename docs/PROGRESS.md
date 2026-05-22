@@ -42,6 +42,7 @@
 
 | Проблема | Причина | Решение |
 |----------|---------|---------|
+| Reproduce никогда не срабатывал | `Attributes["ecologyReproduceByType"].AsBool()` не резолвит ByType | Читать `Attributes["ecologyReproduce"]` |
 | Семена не сажались / сразу выпадали | Неверный код `wildplant-wildseeds-...`; `Unstable`; `drops` с семенами | `PlantCodeHelper.WildPlantCodeFromSeed`; убран `Unstable`; `drops: []` |
 | «Бедные условия» на хорошей почве | Проверка `replaceable` на уже посаженном блоке (5000 &lt; 9501) | Отдельно: `MeetsPlacement` vs `MeetsSurvival` |
 | «&lt; 1 день», но ждать ещё долго | Каждые 18 ч провал → `blossomAt += 18` | Исправлен survival-check |

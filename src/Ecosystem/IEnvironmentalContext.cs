@@ -11,5 +11,6 @@ namespace WildFarming.Ecosystem
         bool GroundSideSolid { get; }
         int SpaceReplaceable { get; }
         bool HasClimate { get; }
+        bool TouchesFluid { get; }
     }
 }
