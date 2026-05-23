@@ -21,19 +21,18 @@ namespace WildFarming.Ecosystem
             int x = origin.X + dx;
             int z = origin.Z + dz;
             BlockPos best = null;
-            int bestDist = int.MaxValue;
+            int bestY = int.MaxValue;
 
             for (int dy = verticalSearch; dy >= -verticalSearch; dy--)
             {
                 int y = origin.Y + dy;
                 BlockPos test = new BlockPos(x, y, z);
-                if (!IsValidCrowfootBase(acc, test, requirements, out _)) continue;
+                if (!IsValidCrowfootBase(acc, test, requirements, out BlockPos columnBase, out _)) continue;
 
-                int dist = System.Math.Abs(dy);
-                if (dist < bestDist)
+                if (columnBase.Y < bestY)
                 {
-                    bestDist = dist;
-                    best = test.Copy();
+                    bestY = columnBase.Y;
+                    best = columnBase.Copy();
                 }
             }
 
@@ -47,33 +46,25 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        static bool IsValidCrowfootBase(IBlockAccessor acc, BlockPos pos, PlantRequirements requirements, out string reason)
+        static bool IsValidCrowfootBase(
+            IBlockAccessor acc,
+            BlockPos pos,
+            PlantRequirements requirements,
+            out BlockPos columnBase,
+            out string reason)
         {
+            columnBase = null;
             reason = null;
 
-            Block space = acc.GetBlock(pos);
-            if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable
-                && !PlantCodeHelper.IsWatercrowfoot(space.Code))
+            if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, pos, out columnBase))
             {
-                reason = "Space blocked";
+                reason = "Not underwater or no bed below";
                 return false;
             }
 
-            if (!BlockFluidHelper.IsPlantInWater(acc, pos) && !PlantCodeHelper.IsWatercrowfoot(space.Code))
+            if (!BlockFluidHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
             {
-                reason = "Not underwater";
-                return false;
-            }
-
-            if (!BlockFluidHelper.TryMeasureUnderwaterColumnDepth(acc, pos, out int waterDepth, out bool hasSubstrate))
-            {
-                reason = "No substrate below";
-                return false;
-            }
-
-            if (!hasSubstrate)
-            {
-                reason = "No fertile bed below";
+                reason = "No water column";
                 return false;
             }
 

@@ -45,6 +45,14 @@ namespace WildFarming.Ecosystem
                 if (berry != null) return berry;
             }
 
+            if (path == "tallfern") return "tallfern";
+
+            if (path.StartsWith("fern-"))
+            {
+                string fernType = path.Substring("fern-".Length);
+                if (WildFernEcology.TryGet(fernType, out _)) return fernType;
+            }
+
             string wood = GetTreeWood(blockCode);
             if (wood != null) return wood;
 

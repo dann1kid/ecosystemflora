@@ -62,6 +62,7 @@ namespace WildFarming.Ecosystem
             WildFlowerClimate.LogMissingSpecies(api);
             WildTreeEcology.LogMissingWoods(api);
             WildBerryEcology.LogMissingTypes(api);
+            WildFernEcology.LogMissingSpecies(api);
         }
 
         void TryLogCalendarDebugOnce()

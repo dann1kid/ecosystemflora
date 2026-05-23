@@ -12,22 +12,38 @@ namespace WildFarming.Ecosystem
         public static bool PlaceColumn(ICoreAPI api, BlockPos basePos, int targetHeight, bool preferFlower, System.Random rand)
         {
             if (!EnsureBlocks(api)) return false;
-            if (targetHeight < 2) targetHeight = 2;
 
             IBlockAccessor acc = api.World.BlockAccessor;
-            BlockPos pos = basePos.Copy();
+            if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, basePos, out BlockPos columnBase))
+            {
+                return false;
+            }
+
+            int waterLayers = BlockFluidHelper.CountContiguousWaterLayersUp(acc, columnBase);
+            if (waterLayers < 2) return false;
+
+            if (targetHeight < 2) targetHeight = 2;
+            if (targetHeight > waterLayers) targetHeight = waterLayers;
+
+            BlockPos pos = columnBase.Copy();
             int sections = targetHeight - 1;
 
             for (int i = 0; i < sections; i++)
             {
+                if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
+
                 acc.SetBlock(sectionBlock.BlockId, pos);
                 pos.Up();
             }
 
-            Block cap = preferFlower && rand.NextDouble() < 0.35 ? topBlock : tipBlock;
+            if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
+
+            bool surfaceCap = !BlockFluidHelper.IsWaterAt(acc, pos.UpCopy());
+            Block cap = surfaceCap && preferFlower && rand.NextDouble() < 0.35 ? topBlock : tipBlock;
+
             acc.SetBlock(cap.BlockId, pos);
-            acc.MarkBlockDirty(basePos);
-            return PlantCodeHelper.IsWatercrowfoot(acc.GetBlock(basePos).Code);
+            acc.MarkBlockDirty(columnBase);
+            return PlantCodeHelper.IsWatercrowfoot(acc.GetBlock(columnBase).Code);
         }
 
         public static int MeasureColumnHeight(IBlockAccessor acc, BlockPos anyPartPos)

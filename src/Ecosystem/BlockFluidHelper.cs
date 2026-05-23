@@ -254,27 +254,83 @@ namespace WildFarming.Ecosystem
             waterDepth = 0;
             hasSubstrate = false;
 
-            BlockPos scan = basePos.DownCopy();
-            for (int i = 0; i < 12; i++)
+            if (!TryMeasureWaterColumn(acc, basePos, out int totalDepth, out BlockPos _))
             {
-                Block block = acc.GetBlock(scan);
-                if (IsFertileSubstrate(block))
-                {
-                    hasSubstrate = true;
-                    return true;
-                }
-
-                if (IsFluid(block) || IsFluid(acc.GetBlock(scan, BlockLayersAccess.Fluid)))
-                {
-                    waterDepth++;
-                    scan.Down();
-                    continue;
-                }
-
                 return false;
             }
 
-            return false;
+            waterDepth = totalDepth;
+            hasSubstrate = true;
+            return true;
+        }
+
+        /// <summary>Lowest submerged cell in the water column (directly above substrate).</summary>
+        public static bool TrySnapCrowfootColumnBase(IBlockAccessor acc, BlockPos pos, out BlockPos columnBase)
+        {
+            columnBase = null;
+            if (!IsWaterAt(acc, pos) && !PlantCodeHelper.IsWatercrowfoot(acc.GetBlock(pos)?.Code))
+            {
+                return false;
+            }
+
+            BlockPos scan = pos.Copy();
+            if (PlantCodeHelper.IsWatercrowfoot(acc.GetBlock(scan)?.Code))
+            {
+                scan = PlantCodeHelper.GetColumnBase(acc, scan);
+            }
+
+            while (IsWaterAt(acc, scan.DownCopy()))
+            {
+                scan.Down();
+            }
+
+            if (!IsWaterAt(acc, scan)) return false;
+
+            Block below = acc.GetBlock(scan.DownCopy());
+            if (!IsFertileSubstrate(below) && !IsMuddyGravel(below))
+            {
+                return false;
+            }
+
+            columnBase = scan;
+            return true;
+        }
+
+        /// <summary>Water blocks from base upward, including base.</summary>
+        public static int CountContiguousWaterLayersUp(IBlockAccessor acc, BlockPos basePos)
+        {
+            if (!IsWaterAt(acc, basePos)) return 0;
+
+            int count = 0;
+            BlockPos scan = basePos.Copy();
+            for (int i = 0; i < 12; i++)
+            {
+                if (!IsWaterAt(acc, scan)) break;
+                count++;
+                scan.Up();
+            }
+
+            return count;
+        }
+
+        /// <summary>Total water column height above fertile/muddy bed; <paramref name="columnBase"/> is the lowest water cell.</summary>
+        public static bool TryMeasureWaterColumn(IBlockAccessor acc, BlockPos anyPosInColumn, out int totalDepth, out BlockPos columnBase)
+        {
+            totalDepth = 0;
+            columnBase = null;
+
+            if (!TrySnapCrowfootColumnBase(acc, anyPosInColumn, out columnBase))
+            {
+                return false;
+            }
+
+            totalDepth = CountContiguousWaterLayersUp(acc, columnBase);
+            return totalDepth > 0;
+        }
+
+        public static bool IsSubmergedWaterCell(IBlockAccessor acc, BlockPos pos)
+        {
+            return IsWaterAt(acc, pos);
         }
     }
 }

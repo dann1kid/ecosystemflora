@@ -179,14 +179,22 @@ namespace WildFarming.Ecosystem
             if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
+
+                if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, plantPos, out BlockPos columnBase))
+                {
+                    return false;
+                }
+
                 int height = CrowfootColumnPlacer.MeasureColumnHeight(acc, parentOrigin);
                 if (height < 2) height = 3;
 
-                BlockFluidHelper.TryMeasureUnderwaterColumnDepth(acc, plantPos, out int waterDepth, out _);
-                if (waterDepth > 0 && waterDepth < height) height = waterDepth;
+                if (BlockFluidHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
+                {
+                    if (waterDepth > 0 && waterDepth < height) height = waterDepth;
+                }
 
                 bool preferFlower = spreadBlock.Code?.Path?.Contains("top") == true;
-                return CrowfootColumnPlacer.PlaceColumn(api, plantPos, height, preferFlower, api.World.Rand);
+                return CrowfootColumnPlacer.PlaceColumn(api, columnBase, height, preferFlower, api.World.Rand);
             }
 
             IBlockAccessor accessor = api.World.BlockAccessor;

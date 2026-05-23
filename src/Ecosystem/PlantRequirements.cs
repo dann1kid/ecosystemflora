@@ -140,6 +140,23 @@ namespace WildFarming.Ecosystem
                 sameSpacing = aquatic.SameSpeciesSpacing;
                 otherSpacing = aquatic.OtherSpeciesSpacing;
             }
+            else if (!string.IsNullOrEmpty(species) && WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fern))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = fern.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = fern.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = fern.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = fern.MaxRain;
+                if (float.IsNaN(minForest)) minForest = fern.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = fern.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = fern.SpreadRate;
+                sameSpacing = fern.SameSpeciesSpacing;
+                otherSpacing = fern.OtherSpeciesSpacing;
+                minSunlight = fern.MinSunlight;
+                allowedSoils = fern.Soil.Allowed;
+                minGroundFertility = fern.Soil.MinBlockFertility;
+                maxGroundFertility = fern.Soil.MaxBlockFertility;
+            }
             else if (!string.IsNullOrEmpty(species) && WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berry))
             {
                 habitat = EcologyHabitat.Terrestrial;
