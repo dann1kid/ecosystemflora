@@ -30,7 +30,8 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v1.1 — см. docs/PROGRESS.md (Roadmap / TODO).
 
-Ближайший backlog: tallgrass в экосистему; патч drygrass с цветов (нож); пресеты баланса. Mod DB — позже.
+Ближайший backlog (v1.x): tallgrass; патч drygrass (нож); пресеты баланса.
+Дизайн v2 (доки §10–11 PROJECT_VISION): границы флоры (опушка/лес через ContextMultiplier); disturbed + сукцессия после покоса. Mod DB — позже.
 
 Коммиты — только по запросу пользователя.
 ```
