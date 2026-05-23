@@ -33,10 +33,16 @@ namespace WildFarming.Ecosystem
             int maxSpawns,
             System.Random rand,
             bool logFailures,
-            out string failureReason)
+            out string failureReason,
+            System.Action<BlockPos, PlantRequirements> onPlaced = null)
         {
             failureReason = null;
             if (maxSpawns <= 0) return 0;
+
+            if (requirements != null && requirements.SpreadRadius > 0)
+            {
+                radius = requirements.SpreadRadius;
+            }
 
             List<SpreadCandidate> candidates = CollectSpreadCandidates(
                 api, origin, radius, verticalSearch, requirements, minFitness, harshClimate);
@@ -59,6 +65,7 @@ namespace WildFarming.Ecosystem
                 if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock, requirements, origin))
                 {
                     placed++;
+                    onPlaced?.Invoke(chosen.Pos, requirements);
                     if (logFailures)
                     {
                         api.Logger.Notification(
@@ -97,7 +104,13 @@ namespace WildFarming.Ecosystem
 
                     bool foundPos;
                     BlockPos plantPos;
-                    if (requirements.Habitat != EcologyHabitat.Terrestrial)
+                    if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                    {
+                        int sun = requirements.MinSunlight > 0 ? requirements.MinSunlight : 11;
+                        foundPos = TreePlacement.TryFindSaplingPos(
+                            acc, origin, dx, dz, verticalSearch, sun, out plantPos, out _);
+                    }
+                    else if (requirements.Habitat != EcologyHabitat.Terrestrial)
                     {
                         foundPos = WaterPlacement.TryFindPlantPos(
                             acc, origin, dx, dz, verticalSearch, requirements, out plantPos, out _);
@@ -109,6 +122,12 @@ namespace WildFarming.Ecosystem
                     }
 
                     if (!foundPos) continue;
+
+                    if (requirements.MinSunlight > 0
+                        && !TreePlacement.HasEnoughSunlight(acc, plantPos, requirements.MinSunlight))
+                    {
+                        continue;
+                    }
 
                     if (!seen.Add(plantPos)) continue;
 

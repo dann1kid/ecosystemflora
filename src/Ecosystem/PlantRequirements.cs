@@ -25,10 +25,25 @@ namespace WildFarming.Ecosystem
         public float MinForest { get; set; } = 0f;
         public float MaxForest { get; set; } = 1f;
         public int MinFertility { get; set; } = 100;
+
+        /// <summary>Block.Fertility floor (vanilla soil-high=300, low=150, sand=10).</summary>
+        public int MinGroundFertility { get; set; }
+
+        /// <summary>Block.Fertility ceiling; 0 = no cap (poor-soil specialists use max).</summary>
+        public int MaxGroundFertility { get; set; }
+
+        public SoilKind AllowedSoilKinds { get; set; } = SoilKind.None;
+
+        /// <summary>Minimum sun light at spread cell; 0 = skip (flowers).</summary>
+        public int MinSunlight { get; set; }
+
         public int MinReplaceable { get; set; } = 9500;
 
         /// <summary>Relative spread vigor (1 = config baseline).</summary>
         public float SpreadRate { get; set; } = 1f;
+
+        /// <summary>Horizontal spread radius; 0 = use <see cref="EcosystemConfig.ReproduceRadius"/>.</summary>
+        public int SpreadRadius { get; set; }
 
         /// <summary>Min horizontal blocks to same species (0 = allow adjacent clumps).</summary>
         public int SameSpeciesSpacing { get; set; }
@@ -102,6 +117,10 @@ namespace WildFarming.Ecosystem
             int otherSpacing = -1;
             Dictionary<string, int> spacingFrom = null;
             int minFertility = attrs != null ? attrs["minFertility"].AsInt(100) : 100;
+            int minGroundFertility = attrs != null ? attrs["ecologyMinGroundFertility"].AsInt(0) : 0;
+            int maxGroundFertility = attrs != null ? attrs["ecologyMaxGroundFertility"].AsInt(0) : 0;
+            SoilKind allowedSoils = SoilKind.None;
+            int minSunlight = attrs != null ? attrs["ecologyMinSunlight"].AsInt(0) : 0;
 
             if (!string.IsNullOrEmpty(species) && WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
             {
@@ -120,6 +139,37 @@ namespace WildFarming.Ecosystem
                 minFertility = 0;
                 sameSpacing = aquatic.SameSpeciesSpacing;
                 otherSpacing = aquatic.OtherSpeciesSpacing;
+            }
+            else if (!string.IsNullOrEmpty(species) && WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berry))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = berry.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = berry.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = berry.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = berry.MaxRain;
+                if (float.IsNaN(minForest)) minForest = berry.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = berry.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = berry.SpreadRate;
+                sameSpacing = berry.SameSpeciesSpacing;
+                otherSpacing = berry.OtherSpeciesSpacing;
+                minSunlight = berry.MinSunlight;
+                allowedSoils = berry.Soil.Allowed;
+                minGroundFertility = berry.Soil.MinBlockFertility;
+                maxGroundFertility = berry.Soil.MaxBlockFertility;
+            }
+            else if (!string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
+            {
+                habitat = EcologyHabitat.TerrestrialTree;
+                if (float.IsNaN(minTemp)) minTemp = tree.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = tree.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = tree.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = tree.MaxRain;
+                if (float.IsNaN(minForest)) minForest = tree.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = tree.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = tree.SpreadRate;
+                sameSpacing = tree.SameSpeciesSpacing;
+                otherSpacing = tree.OtherSpeciesSpacing;
+                minSunlight = 11;
             }
             else if (!string.IsNullOrEmpty(species) && WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
             {
@@ -158,10 +208,17 @@ namespace WildFarming.Ecosystem
             if (float.IsNaN(maxForest)) maxForest = 1f;
             if (float.IsNaN(spreadRate)) spreadRate = 1f;
 
-            return new PlantRequirements
+            int spreadRadius = attrs != null ? attrs["ecologySpreadRadius"].AsInt(0) : 0;
+            if (spreadRadius <= 0 && !string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeRadius))
+            {
+                spreadRadius = treeRadius.SpreadRadius;
+            }
+
+            var requirements = new PlantRequirements
             {
                 Species = species,
                 Habitat = habitat,
+                SpreadRadius = spreadRadius,
                 MaxWaterDepth = maxWaterDepth > 0 ? maxWaterDepth : 1,
                 MinWaterDepth = minWaterDepth,
                 VerticalBlocks = verticalBlocks > 0 ? verticalBlocks : 1,
@@ -177,8 +234,15 @@ namespace WildFarming.Ecosystem
                 OtherSpeciesSpacing = otherSpacing < 0 ? 0 : otherSpacing,
                 SpacingFromSpecies = spacingFrom,
                 MinFertility = minFertility,
+                MinGroundFertility = minGroundFertility,
+                MaxGroundFertility = maxGroundFertility,
+                AllowedSoilKinds = allowedSoils,
+                MinSunlight = minSunlight,
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
             };
+
+            WildPlantSoil.ApplyTo(requirements);
+            return requirements;
         }
     }
 }

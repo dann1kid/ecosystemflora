@@ -9,5 +9,7 @@ namespace WildFarming.Ecosystem
         WaterSurface = 2,
         /// <summary>Water crowfoot: column of section blocks, top or tip on surface.</summary>
         UnderwaterColumn = 3,
+        /// <summary>Mature log-grown trunk spreads vanilla saplings; growth is vanilla treegen.</summary>
+        TerrestrialTree = 4,
     }
 }

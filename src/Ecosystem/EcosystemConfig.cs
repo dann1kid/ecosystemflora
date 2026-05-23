@@ -71,5 +71,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>±Y when scanning for nearby flowers for spacing.</summary>
         public int SpacingVerticalSearch { get; set; } = 2;
+
+        /// <summary>Checks per tick for mod-placed saplings that matured into log-grown.</summary>
+        public int MaxPendingTreeChecksPerTick { get; set; } = 12;
     }
 }

@@ -10,6 +10,7 @@ namespace WildFarming.Ecosystem
         float ForestDensity { get; }
         bool InGreenhouse { get; }
         int GroundFertility { get; }
+        SoilKind GroundSoilKinds { get; }
         bool GroundSideSolid { get; }
         int SpaceReplaceable { get; }
         bool HasClimate { get; }

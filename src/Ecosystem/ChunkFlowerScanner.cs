@@ -5,7 +5,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Finds surface flowers per column instead of walking every block in the chunk.</summary>
+    /// <summary>Finds ecology parents (flowers, log-grown trees, …) per column instead of walking every block.</summary>
     internal static class ChunkFlowerScanner
     {
         public static List<ChunkFlowerHit> ScanColumn(Vec2i chunkCoord, IBlockAccessor acc, int maxHits)

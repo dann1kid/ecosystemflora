@@ -8,7 +8,7 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return false;
             if (!ctx.GroundSideSolid) return false;
-            if (ctx.GroundFertility < req.MinFertility) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
 
             if (harshClimate && !ctx.InGreenhouse)
             {
@@ -23,7 +23,7 @@ namespace WildFarming.Ecosystem
         public static bool MeetsPlacementRequirements(PlantRequirements req, IEnvironmentalContext ctx)
         {
             if (!ctx.GroundSideSolid) return false;
-            if (ctx.GroundFertility < req.MinFertility) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
             if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
             return true;
         }
@@ -32,7 +32,8 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return "No climate data.";
             if (!ctx.GroundSideSolid) return "No solid ground below.";
-            if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
+            string soil = SoilClassification.DescribeSoilFailure(req, ctx.GroundSoilKinds, ctx.GroundFertility);
+            if (soil != null) return soil;
 
             if (harshClimate && !ctx.InGreenhouse)
             {
@@ -50,7 +51,7 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return 0f;
             if (!ctx.GroundSideSolid) return 0f;
-            if (ctx.GroundFertility < req.MinFertility) return 0f;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return 0f;
             if (ctx.TouchesFluid) return 0f;
 
             float score = 1f;
@@ -87,7 +88,7 @@ namespace WildFarming.Ecosystem
             else
             {
                 if (!ctx.GroundSideSolid) return 0f;
-                if (ctx.GroundFertility < req.MinFertility) return 0f;
+                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return 0f;
                 if (ctx.TouchesFluid) return 0f;
             }
 
@@ -124,7 +125,7 @@ namespace WildFarming.Ecosystem
             {
                 if (ctx.TouchesFluid) return false;
                 if (!ctx.GroundSideSolid) return false;
-                if (ctx.GroundFertility < req.MinFertility) return false;
+                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
                 if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
             }
 
@@ -177,7 +178,8 @@ namespace WildFarming.Ecosystem
 
             if (ctx.TouchesFluid) return "Underwater or fluid at cell.";
             if (!ctx.GroundSideSolid) return "No solid ground below.";
-            if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
+            string soil = SoilClassification.DescribeSoilFailure(req, ctx.GroundSoilKinds, ctx.GroundFertility);
+            if (soil != null) return soil;
             if (ctx.SpaceReplaceable < ReproduceMinReplaceable)
             {
                 return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";

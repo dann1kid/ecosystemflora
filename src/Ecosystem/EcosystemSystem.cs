@@ -17,6 +17,7 @@ namespace WildFarming.Ecosystem
         long chunkScanListenerId;
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
+        readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         bool calendarDebugLogged;
 
         public void InitPre(ICoreAPI api)
@@ -59,6 +60,8 @@ namespace WildFarming.Ecosystem
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
+            WildTreeEcology.LogMissingWoods(api);
+            WildBerryEcology.LogMissingTypes(api);
         }
 
         void TryLogCalendarDebugOnce()
@@ -157,8 +160,11 @@ namespace WildFarming.Ecosystem
 
             try
             {
+                Block matureBlock = api.World.BlockAccessor.GetBlock(origin);
+                if (matureBlock == null || !EcosystemParticipant.TryFromBlock(matureBlock, out _)) return;
+
                 Block spreadBlock = api.World.GetBlock(spreadBlockCode);
-                if (spreadBlock == null || !EcosystemParticipant.TryFromBlock(spreadBlock, out _)) return;
+                if (spreadBlock == null) return;
 
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
@@ -253,6 +259,7 @@ namespace WildFarming.Ecosystem
             TryLogCalendarDebugOnce();
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
+            pendingTreeSaplings.Process(api, this, api.World.Calendar.TotalHours, cfg.MaxPendingTreeChecksPerTick);
             IBlockAccessor acc = api.World.BlockAccessor;
             double now = api.World.Calendar.TotalHours;
 
@@ -307,7 +314,14 @@ namespace WildFarming.Ecosystem
                 maxSpawns,
                 api.World.Rand,
                 cfg.ReproduceDebug,
-                out string failureReason);
+                out string failureReason,
+                onPlaced: (pos, requirements) =>
+                {
+                    if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                    {
+                        pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
+                    }
+                });
 
             if (cfg.ReproduceDebug && spawned == 0 && failureReason != null)
             {

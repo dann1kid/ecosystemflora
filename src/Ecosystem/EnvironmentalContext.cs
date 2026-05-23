@@ -11,6 +11,7 @@ namespace WildFarming.Ecosystem
         public float ForestDensity { get; }
         public bool InGreenhouse { get; }
         public int GroundFertility { get; }
+        public SoilKind GroundSoilKinds { get; }
         public bool GroundSideSolid { get; }
         public int SpaceReplaceable { get; }
         public bool HasClimate { get; }
@@ -24,6 +25,7 @@ namespace WildFarming.Ecosystem
             float forestDensity,
             bool inGreenhouse,
             int groundFertility,
+            SoilKind groundSoilKinds,
             bool groundSideSolid,
             int spaceReplaceable,
             bool hasClimate,
@@ -36,6 +38,7 @@ namespace WildFarming.Ecosystem
             ForestDensity = forestDensity;
             InGreenhouse = inGreenhouse;
             GroundFertility = groundFertility;
+            GroundSoilKinds = groundSoilKinds;
             GroundSideSolid = groundSideSolid;
             SpaceReplaceable = spaceReplaceable;
             HasClimate = hasClimate;
@@ -68,6 +71,7 @@ namespace WildFarming.Ecosystem
                 forestDensity,
                 GreenhouseHelper.IsGreenhouse(api, plantPos),
                 (int)ground.Fertility,
+                SoilClassification.Classify(ground),
                 ground.SideSolid[BlockFacing.UP.Index],
                 space.Replaceable,
                 fallback != null,

@@ -34,15 +34,18 @@
 | **Тростник** | `tallplant-coopersreed-*` (рогоз), `tallplant-papyrus-*` (камыш) |
 | **Поверхностная вода** | `waterlily` (кувшинка) |
 | **Подводный** | `aquatic-watercrowfoot-*` (водяной лютик: section / tip / top) |
+| **Деревья** | `log-grown-{wood}-*` → spread `sapling-{wood}-free` (14 пород; бамбук/aged — нет) |
+| **Ягоды** | `fruitingbush-wild-*` (10 видов) → тот же блок; почва/лес по worldgen |
 
 | Слой | Поведение |
 |------|-----------|
-| **Объект** | Ванильные блоки + `entityClass: EcosystemPlant` (патчи) |
+| **Объект** | Ванильные блоки; цветы/водные — патч `EcosystemPlant`; **деревья** — скан чанка по `log-grown` (без патча на ствол) |
 | **Участник** | `IEcosystemParticipant` → `EcosystemParticipant` |
 | **Среда** | Температура (сезон), `WorldgenRainfall` + `ForestDensity`, почва, жидкость |
 | **Клетка-кандидат** | Скан в радиусе → **взвешенный** выбор по fitness |
 | **Скорость** | `SpreadRate` per-species; календарь (`ReproduceAttemptsPerYear`) или legacy часы |
 | **Spacing** | `WildFlowerSpacing` + конфиг; у тростника нет вертикального стека в колонке |
+| **Почва** | `SoilKind` + `WildPlantSoil` — high/medium/low, песок, глина, торф, гравий; min/max `block.Fertility` |
 | **Семена мода** | Не в сборке |
 
 ### Среда обитания (`EcologyHabitat`)
@@ -53,6 +56,14 @@
 | `ReedNearWater` | Рогоз, камыш | `ReedPlacement` — см. правила ниже |
 | `WaterSurface` | Кувшинка | `WaterPlacement` — на открытой поверхности воды |
 | `UnderwaterColumn` | Водяной лютик | `CrowfootPlacement` + `CrowfootColumnPlacer` — колонка section → tip/top |
+| `TerrestrialTree` | Зрелый ствол `log-grown` | `TreePlacement` — саженец на почве, солнце ≥11; рост — **ванильный** treegen |
+
+### Деревья (вариант A)
+
+- **Родитель:** основание колонны `log-grown-{wood}-*` (`WildTreeEcology` — климат, rain/forest, `SpreadRadius`, spacing).
+- **Потомство:** `sapling-{wood}-free`; вырастет/погибнет — только игра.
+- **Регистрация:** при загрузке чанка (скан колонки) + `PendingTreeSaplings` для саженцев, посаженных модом, пока не появится `log-grown`.
+- **Без** living trunk / mod-блоков ствола; при снятии мода — обычные бревна и саженцы.
 
 ### Рогоз и камыш (правила spread)
 
@@ -180,6 +191,9 @@
 
 - [ ] Длинный playtest aquatic (камыш в жаре, лютик в глубине)
 - [ ] Папоротники `game:fern-*`
+- [x] Деревья: spread саженцев от `log-grown` (код)
+- [x] Ягодные кусты `fruitingbush-wild-*` + почвенные предпочтения
+- [ ] Playtest: лес, ягоды, люпин на бедной почве vs на high soil
 - [ ] Убрать `entityClass`, только chunk-scan (опционально)
 - [ ] Land claims при reproduce
 - [ ] Push на `origin` / публикация (modid TBD)
