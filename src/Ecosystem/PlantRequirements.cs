@@ -7,6 +7,10 @@ namespace WildFarming.Ecosystem
     {
         public string Species { get; set; }
 
+        public EcologyHabitat Habitat { get; set; } = EcologyHabitat.Terrestrial;
+
+        public int MaxWaterDepth { get; set; } = 1;
+
         public float MinTemp { get; set; } = -5f;
         public float MaxTemp { get; set; } = 50f;
         public float MinRain { get; set; } = 0f;
@@ -81,23 +85,38 @@ namespace WildFarming.Ecosystem
             float minForest = attrs != null ? attrs["minForest"].AsFloat(float.NaN) : float.NaN;
             float maxForest = attrs != null ? attrs["maxForest"].AsFloat(float.NaN) : float.NaN;
             float spreadRate = attrs != null ? attrs["ecologySpreadRate"].AsFloat(float.NaN) : float.NaN;
-            string species = null;
+            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            EcologyHabitat habitat = EcologyHabitat.Terrestrial;
+            int maxWaterDepth = 0;
             int sameSpacing = -1;
             int otherSpacing = -1;
             Dictionary<string, int> spacingFrom = null;
+            int minFertility = attrs != null ? attrs["minFertility"].AsInt(100) : 100;
 
-            if (block.Variant != null && block.Variant.TryGetValue("flower", out species))
+            if (!string.IsNullOrEmpty(species) && WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
             {
-                if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
-                {
-                    if (float.IsNaN(minTemp)) minTemp = ecology.MinTemp;
-                    if (float.IsNaN(maxTemp)) maxTemp = ecology.MaxTemp;
-                    if (float.IsNaN(minRain)) minRain = ecology.MinRain;
-                    if (float.IsNaN(maxRain)) maxRain = ecology.MaxRain;
-                    if (float.IsNaN(minForest)) minForest = ecology.MinForest;
-                    if (float.IsNaN(maxForest)) maxForest = ecology.MaxForest;
-                    if (float.IsNaN(spreadRate)) spreadRate = ecology.SpreadRate;
-                }
+                habitat = aquatic.Habitat;
+                maxWaterDepth = aquatic.MaxWaterDepth;
+                if (float.IsNaN(minTemp)) minTemp = aquatic.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = aquatic.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = aquatic.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = aquatic.MaxRain;
+                if (float.IsNaN(spreadRate)) spreadRate = aquatic.SpreadRate;
+                minForest = 0f;
+                maxForest = 1f;
+                minFertility = 0;
+                sameSpacing = aquatic.SameSpeciesSpacing;
+                otherSpacing = aquatic.OtherSpeciesSpacing;
+            }
+            else if (!string.IsNullOrEmpty(species) && WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
+            {
+                if (float.IsNaN(minTemp)) minTemp = ecology.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = ecology.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = ecology.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = ecology.MaxRain;
+                if (float.IsNaN(minForest)) minForest = ecology.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = ecology.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = ecology.SpreadRate;
 
                 if (WildFlowerSpacing.TryGet(species, out WildFlowerSpacing.Profile spacing))
                 {
@@ -129,6 +148,8 @@ namespace WildFarming.Ecosystem
             return new PlantRequirements
             {
                 Species = species,
+                Habitat = habitat,
+                MaxWaterDepth = maxWaterDepth > 0 ? maxWaterDepth : 1,
                 MinTemp = minTemp,
                 MaxTemp = maxTemp,
                 MinRain = minRain,
@@ -139,7 +160,7 @@ namespace WildFarming.Ecosystem
                 SameSpeciesSpacing = sameSpacing < 0 ? 0 : sameSpacing,
                 OtherSpeciesSpacing = otherSpacing < 0 ? 0 : otherSpacing,
                 SpacingFromSpecies = spacingFrom,
-                MinFertility = attrs != null ? attrs["minFertility"].AsInt(100) : 100,
+                MinFertility = minFertility,
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
             };
         }

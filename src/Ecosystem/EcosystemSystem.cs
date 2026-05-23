@@ -154,7 +154,7 @@ namespace WildFarming.Ecosystem
             try
             {
                 Block spreadBlock = api.World.GetBlock(spreadBlockCode);
-                if (spreadBlock == null || !FlowerEcosystemParticipant.TryFromBlock(spreadBlock, out _)) return;
+                if (spreadBlock == null || !EcosystemParticipant.TryFromBlock(spreadBlock, out _)) return;
 
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
@@ -232,7 +232,7 @@ namespace WildFarming.Ecosystem
                     if (registry.Contains(hit.Pos)) continue;
 
                     Block block = api.World.GetBlock(hit.BlockCode);
-                    if (!FlowerEcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
+                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
 
                     RegisterReproducer(hit.Pos, participant, spawnBurst: false);
                     registrationsLeft--;

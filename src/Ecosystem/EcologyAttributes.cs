@@ -5,7 +5,7 @@ namespace WildFarming.Ecosystem
     public static class EcologyAttributes
     {
         /// <summary>Block participates in wild ecology (capabilities via <see cref="IEcosystemParticipant"/>).</summary>
-        public static bool ReproduceEnabled(Block block) => FlowerEcosystemParticipant.TryFromBlock(block, out _);
+        public static bool ReproduceEnabled(Block block) => EcosystemParticipant.TryFromBlock(block, out _);
 
         public static bool CodeMatchesPattern(string codePath, string pattern)
         {

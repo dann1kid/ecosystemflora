@@ -28,8 +28,10 @@ namespace WildFarming.Ecosystem
         public bool IsMatureBlock(Block block)
         {
             if (block?.Code == null) return false;
+            string path = block.Code.Path;
+            if (path != null && path.Contains("-harvested-")) return false;
             if (block.Code.Equals(MatureBlockCode)) return true;
-            return PlantCodeHelper.SameFlowerSpecies(block.Code, MatureBlockCode);
+            return PlantCodeHelper.SameEcologySpecies(block.Code, MatureBlockCode);
         }
     }
 }

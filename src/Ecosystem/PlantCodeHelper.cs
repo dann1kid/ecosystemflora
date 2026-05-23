@@ -4,42 +4,64 @@ namespace WildFarming.Ecosystem
 {
     public static class PlantCodeHelper
     {
-        public static bool IsVanillaEcologyPlant(Block block)
+        public static bool IsEcologyPlant(Block block)
         {
             if (block?.Code == null || block.Code.Domain != "game") return false;
-
-            string path = block.Code.Path;
-            return path.StartsWith("flower-");
+            return TryGetEcologySpecies(block.Code, out _);
         }
 
-        /// <summary>Spread target equals the same vanilla block code (no wildplant stage).</summary>
-        public static AssetLocation SpreadBlockCode(Block block)
+        public static bool IsVanillaEcologyPlant(Block block) => IsEcologyPlant(block);
+
+        public static bool TryGetEcologySpecies(AssetLocation blockCode, out string species)
         {
-            if (block?.Code == null) return null;
-            if (IsVanillaEcologyPlant(block)) return block.Code;
+            species = GetEcologySpecies(blockCode);
+            return species != null;
+        }
+
+        public static string GetEcologySpecies(AssetLocation blockCode)
+        {
+            string path = blockCode?.Path;
+            if (string.IsNullOrEmpty(path)) return null;
+
+            if (path.StartsWith("flower-"))
+            {
+                string rest = path.Substring("flower-".Length);
+                if (rest.EndsWith("-free")) rest = rest.Substring(0, rest.Length - "-free".Length);
+                else if (rest.EndsWith("-snow")) rest = rest.Substring(0, rest.Length - "-snow".Length);
+                if (rest.StartsWith("lupine")) return "lupine";
+                return rest;
+            }
+
+            if (path.StartsWith("tallplant-coopersreed")) return "coopersreed";
+            if (path.StartsWith("tallplant-papyrus")) return "papyrus";
+            if (path == "waterlily") return "waterlily";
+
             return null;
         }
 
-        /// <summary>Species segment from flower-{species}-free|snow.</summary>
-        public static string GetFlowerSpecies(AssetLocation blockCode)
+        public static EcologyHabitat GetEcologyHabitat(AssetLocation blockCode)
         {
-            string path = blockCode?.Path;
-            if (string.IsNullOrEmpty(path) || !path.StartsWith("flower-")) return null;
+            string species = GetEcologySpecies(blockCode);
+            if (species == null) return EcologyHabitat.Terrestrial;
+            if (WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
+            {
+                return aquatic.Habitat;
+            }
 
-            string rest = path.Substring("flower-".Length);
-            if (rest.EndsWith("-free")) rest = rest.Substring(0, rest.Length - "-free".Length);
-            else if (rest.EndsWith("-snow")) rest = rest.Substring(0, rest.Length - "-snow".Length);
-
-            // flower-lupine-{color} → lupine (separate blocktype from flower.json)
-            if (rest.StartsWith("lupine")) return "lupine";
-
-            return rest;
+            return EcologyHabitat.Terrestrial;
         }
 
-        public static bool SameFlowerSpecies(AssetLocation a, AssetLocation b)
+        public static AssetLocation SpreadBlockCode(Block block)
         {
-            string sa = GetFlowerSpecies(a);
-            string sb = GetFlowerSpecies(b);
+            if (block?.Code == null) return null;
+            if (IsEcologyPlant(block)) return block.Code;
+            return null;
+        }
+
+        public static bool SameEcologySpecies(AssetLocation a, AssetLocation b)
+        {
+            string sa = GetEcologySpecies(a);
+            string sb = GetEcologySpecies(b);
             return sa != null && sa == sb;
         }
 

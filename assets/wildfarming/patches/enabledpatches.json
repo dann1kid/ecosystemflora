@@ -10,5 +10,17 @@
 		"op": "add",
 		"path": "/entityClass",
 		"value": "EcosystemPlant"
+	},
+	{
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
+	},
+	{
+		"file": "game:blocktypes/plant/waterlily.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
 	}
 ]

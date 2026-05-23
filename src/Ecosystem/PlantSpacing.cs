@@ -33,9 +33,9 @@ namespace WildFarming.Ecosystem
 
                         BlockPos checkPos = new BlockPos(x, y, z);
                         Block block = acc.GetBlock(checkPos);
-                        if (!PlantCodeHelper.IsVanillaEcologyPlant(block)) continue;
+                        if (!PlantCodeHelper.IsEcologyPlant(block)) continue;
 
-                        string otherSpecies = PlantCodeHelper.GetFlowerSpecies(block.Code);
+                        string otherSpecies = PlantCodeHelper.GetEcologySpecies(block.Code);
                         if (string.IsNullOrEmpty(otherSpecies)) continue;
 
                         int required = requirements.GetRequiredSpacingTo(otherSpecies, cfg);

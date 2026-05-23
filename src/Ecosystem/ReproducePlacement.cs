@@ -95,14 +95,25 @@ namespace WildFarming.Ecosystem
                 {
                     if (dx == 0 && dz == 0) continue;
 
-                    if (!SurfacePlacement.TryFindPlantPos(acc, origin, dx, dz, verticalSearch, out BlockPos plantPos, out _))
+                    bool foundPos;
+                    BlockPos plantPos;
+                    if (requirements.Habitat == EcologyHabitat.ReedNearWater
+                        || requirements.Habitat == EcologyHabitat.WaterSurface)
                     {
-                        continue;
+                        foundPos = WaterPlacement.TryFindPlantPos(
+                            acc, origin, dx, dz, verticalSearch, requirements, out plantPos, out _);
                     }
+                    else
+                    {
+                        foundPos = SurfacePlacement.TryFindPlantPos(
+                            acc, origin, dx, dz, verticalSearch, out plantPos, out _);
+                    }
+
+                    if (!foundPos) continue;
 
                     if (!seen.Add(plantPos)) continue;
 
-                    EnvironmentalContext ctx = EnvironmentalContext.Sample(api, plantPos);
+                    EnvironmentalContext ctx = EnvironmentalContext.Sample(api, plantPos, requirements);
                     if (!SuitabilityEvaluator.CanReproduce(requirements, ctx, harshClimate)) continue;
 
                     float fitness = SuitabilityEvaluator.ReproduceFitness(requirements, ctx);

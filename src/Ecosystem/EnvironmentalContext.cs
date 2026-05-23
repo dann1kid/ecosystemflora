@@ -15,6 +15,7 @@ namespace WildFarming.Ecosystem
         public int SpaceReplaceable { get; }
         public bool HasClimate { get; }
         public bool TouchesFluid { get; }
+        public bool HasShallowWater { get; }
 
         EnvironmentalContext(
             BlockPos pos,
@@ -26,7 +27,8 @@ namespace WildFarming.Ecosystem
             bool groundSideSolid,
             int spaceReplaceable,
             bool hasClimate,
-            bool touchesFluid)
+            bool touchesFluid,
+            bool hasShallowWater)
         {
             Position = pos;
             Temperature = temperature;
@@ -38,9 +40,10 @@ namespace WildFarming.Ecosystem
             SpaceReplaceable = spaceReplaceable;
             HasClimate = hasClimate;
             TouchesFluid = touchesFluid;
+            HasShallowWater = hasShallowWater;
         }
 
-        public static EnvironmentalContext Sample(ICoreAPI api, BlockPos plantPos)
+        public static EnvironmentalContext Sample(ICoreAPI api, BlockPos plantPos, PlantRequirements requirements = null)
         {
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos groundPos = plantPos.DownCopy();
@@ -56,6 +59,8 @@ namespace WildFarming.Ecosystem
             float worldgenRainfall = ReadWorldgenRainfall(worldgen, now);
             float forestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f;
 
+            bool shallowWater = ComputeWaterRequirement(acc, plantPos, ground, requirements);
+
             return new EnvironmentalContext(
                 plantPos.Copy(),
                 temperature,
@@ -66,7 +71,24 @@ namespace WildFarming.Ecosystem
                 ground.SideSolid[BlockFacing.UP.Index],
                 space.Replaceable,
                 fallback != null,
-                BlockFluidHelper.TouchesFluid(acc, plantPos));
+                BlockFluidHelper.TouchesFluid(acc, plantPos),
+                shallowWater);
+        }
+
+        static bool ComputeWaterRequirement(IBlockAccessor acc, BlockPos plantPos, Block ground, PlantRequirements requirements)
+        {
+            if (requirements == null) return false;
+
+            switch (requirements.Habitat)
+            {
+                case EcologyHabitat.ReedNearWater:
+                    int depth = System.Math.Max(4, (requirements.MaxWaterDepth > 0 ? requirements.MaxWaterDepth : 1) + 3);
+                    return BlockFluidHelper.HasReedSiltSubstrate(acc, plantPos, depth);
+                case EcologyHabitat.WaterSurface:
+                    return BlockFluidHelper.HasWaterSurfaceSupport(acc, plantPos);
+                default:
+                    return false;
+            }
         }
 
         static float ReadWorldgenRainfall(ClimateCondition worldgen, ClimateCondition now)

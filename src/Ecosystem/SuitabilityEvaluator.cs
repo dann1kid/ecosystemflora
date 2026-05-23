@@ -77,9 +77,17 @@ namespace WildFarming.Ecosystem
         public static float ReproduceFitness(PlantRequirements req, IEnvironmentalContext ctx)
         {
             if (!ctx.HasClimate) return 0f;
-            if (!ctx.GroundSideSolid) return 0f;
-            if (ctx.GroundFertility < req.MinFertility) return 0f;
-            if (ctx.TouchesFluid) return 0f;
+
+            if (req.Habitat == EcologyHabitat.WaterSurface || req.Habitat == EcologyHabitat.ReedNearWater)
+            {
+                if (!ctx.HasShallowWater) return 0f;
+            }
+            else
+            {
+                if (!ctx.GroundSideSolid) return 0f;
+                if (ctx.GroundFertility < req.MinFertility) return 0f;
+                if (ctx.TouchesFluid) return 0f;
+            }
 
             if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return 1f;
             if (!MeetsWorldgenRainForest(req, ctx)) return 0f;
@@ -96,12 +104,24 @@ namespace WildFarming.Ecosystem
         /// <summary>Can a juvenile be placed here. Parent already proved the area — physical + biome map checks.</summary>
         public static bool CanReproduce(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
-            if (ctx.TouchesFluid) return false;
-            if (!ctx.GroundSideSolid) return false;
-            if (ctx.GroundFertility < req.MinFertility) return false;
-            if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+            if (req.Habitat == EcologyHabitat.WaterSurface)
+            {
+                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!ctx.HasShallowWater) return false;
+            }
+            else if (req.Habitat == EcologyHabitat.ReedNearWater)
+            {
+                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!ctx.HasShallowWater) return false;
+            }
+            else
+            {
+                if (ctx.TouchesFluid) return false;
+                if (!ctx.GroundSideSolid) return false;
+                if (ctx.GroundFertility < req.MinFertility) return false;
+                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+            }
 
-            // Rain/forest use worldgen maps; do not apply harsh seasonal temp gate here (parent is alive).
             if (!MeetsWorldgenRainForest(req, ctx)) return false;
 
             return true;
@@ -109,6 +129,36 @@ namespace WildFarming.Ecosystem
 
         public static string DescribeReproduceFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
+            if (req.Habitat == EcologyHabitat.WaterSurface)
+            {
+                if (ctx.SpaceReplaceable < ReproduceMinReplaceable)
+                {
+                    return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
+                }
+
+                if (!ctx.HasShallowWater) return "No water surface below.";
+
+                string rainForestLily = DescribeRainForestFailure(req, ctx);
+                if (rainForestLily != null) return rainForestLily;
+
+                return null;
+            }
+
+            if (req.Habitat == EcologyHabitat.ReedNearWater)
+            {
+                if (ctx.SpaceReplaceable < ReproduceMinReplaceable)
+                {
+                    return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
+                }
+
+                if (!ctx.HasShallowWater) return "No muddy gravel below.";
+
+                string rainForestReed = DescribeRainForestFailure(req, ctx);
+                if (rainForestReed != null) return rainForestReed;
+
+                return null;
+            }
+
             if (ctx.TouchesFluid) return "Underwater or fluid at cell.";
             if (!ctx.GroundSideSolid) return "No solid ground below.";
             if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
@@ -117,8 +167,8 @@ namespace WildFarming.Ecosystem
                 return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
             }
 
-            string rainForest = DescribeRainForestFailure(req, ctx);
-            if (rainForest != null) return rainForest;
+            string rainForestTerrestrial = DescribeRainForestFailure(req, ctx);
+            if (rainForestTerrestrial != null) return rainForestTerrestrial;
 
             return null;
         }

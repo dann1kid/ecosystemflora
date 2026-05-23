@@ -10,7 +10,7 @@ namespace WildFarming
         {
             base.Initialize(api);
             if (api.Side != EnumAppSide.Server) return;
-            if (!FlowerEcosystemParticipant.TryFromBlock(Block, out IEcosystemParticipant participant)) return;
+            if (!EcosystemParticipant.TryFromBlock(Block, out IEcosystemParticipant participant)) return;
 
             EcosystemSystem eco = EcosystemSystem.Instance;
             if (eco == null) return;
