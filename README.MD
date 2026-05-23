@@ -1,47 +1,48 @@
 # Wild Farming (ecosystem fork)
 
-Vintage Story mod — cultivate wild plants with an **ecosystem layer**: player planting, climate survival, optional wild reproduction.
+Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainfall, forest density, spacing, and habitat-specific placement.
 
 **Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
 
-**Стадия:** `MVP-beta` — catmint playtest OK (посадка, рост, reproduce).
+**Стадия:** `Ecosystem v1.1` (`2.2.0-ecosystem-v1.1`) — flowers, aquatic flora, spacing, calendar spread.
 
-**Build:** open [`wildfarming.sln`](wildfarming.sln) in Visual Studio 2022, or `dotnet build wildfarming.sln -c Debug`. Output: `bin/Debug/Mods/wildfarming/` (auto-deployed to game `Mods` when the client is closed).
+**Build:** `dotnet build` → `bin/Debug/Mods/wildfarming/` (копируется в `Mods\wildfarming`, если клиент закрыт).
 
 | Requirement | Version |
 |-------------|---------|
 | Game | 1.21+ (`modinfo.json`) |
-| .NET SDK | 10.x (match installed Vintage Story) |
+| .NET SDK | 10.x |
 
-## How it works (three layers)
+## What it does
 
-1. **Planting (player)** — seeds can be placed on any valid spot (solid ground, empty space above, land claims). No climate check at click time.
-2. **Survival (individual)** — `wildplant` grows toward a vanilla block; if climate/soil is unsuitable for too long, the plant **dies** (`MaxFailedSurvivalChecks` in config).
-3. **Wild reproduction (ecosystem)** — mature plants registered by the mod (catmint, forgetmenot, cornflower, wilddaisy) may spawn new `wildplant` nearby only where `MinFitness` suitability passes.
+Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crowfoot). The mod patches `entityClass: EcosystemPlant` and registers mature plants for **wild reproduction**:
 
-Config file (created on first run): `%AppData%/VintagestoryData/ModConfig/wildfarming-ecosystem.json`
+- scan neighbors in radius → filter by climate / soil / water / spacing
+- weighted pick among valid cells → place the same vanilla block type
 
-## Adding a plant
+**Not in build:** mod seeds, `wildplant` blocks, living trees (legacy under `src/`, excluded from csproj).
 
-Pair item and block codes by suffix:
+## Plants in ecosystem
 
-- Item: `wildseeds-{suffix}` (e.g. `wildseeds-flower-catmint-free`)
-- Block: `wildplant-{suffix}` (e.g. `wildplant-flower-catmint-free`)
+| Group | Examples |
+|-------|----------|
+| Flowers | 20 × `game:flower-*` + lupine |
+| Reeds | coopersreed (рогоз), papyrus (камыш) — on `muddygravel`, shallow water rules |
+| Surface | waterlily |
+| Underwater | water crowfoot (водяной лютик) — multi-block column |
 
-Matures to `game:{suffix without wildplant- prefix}` → `game:flower-catmint-free`.
+Details and playtest checklist: [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
-Optional JSON on `wildplant`:
+## Config
 
-| Attribute | Purpose |
-|-----------|---------|
-| `hours` / `hoursByType` | Average grow time (hours) |
-| `minTemp` / `maxTemp` / `*ByType` | Survival temperature range |
-| `ecologyReproduceByType` | Enable wild reproduction per flower type |
+`%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
+
+Suggested natural play: `ReproduceAttemptsPerYear: 36–48`, `ReproduceChance: 0.35`, `ReproduceDebug: false`.
 
 ## Legacy code
 
-Older systems (living trees, mushrooms, vines, Harmony patches) remain under `src/` but are **excluded from the build**. See `docs/PROJECT_VISION.md` for scope.
+Older systems remain in the repo but are **excluded from the build**. See `docs/PROJECT_VISION.md`.
 
 ## Original mod
 
-Based on JakeCool19's Wild Farming (v1.2.0). Do not run alongside [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival) — same niche, different `modid`.
+Based on JakeCool19's Wild Farming (v1.2.0). Do not run alongside [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival).

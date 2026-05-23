@@ -1,6 +1,6 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v1.1` — цветы + spacing + календарь + водная флора (код, 2026-05-22).  
+**Текущая стадия:** `Ecosystem v1.1` — цветы, spacing, календарь, водная флора (код готов, playtest).  
 **Версия мода:** `2.2.0-ecosystem-v1.1` · **Игра:** Vintage Story 1.21+ · **Сборка:** .NET 10  
 
 Последнее обновление: 2026-05-22.
@@ -19,7 +19,7 @@
 | **3 — MVP-vanilla-flowers** | Только `game:flower-*`, оптимизация, playtest | ✅ завершено |
 | **4 — Ecosystem v1** | Участники, rain/forest, выбор клеток, скорость по виду | ✅ завершено |
 | **4.1 — Spacing + calendar** | Дистанция между растениями, spread по игровому году | ✅ в main |
-| **4.2 — Aquatic** | Рогоз, камыш, кувшинка; субстрат `muddygravel` | ✅ код, playtest |
+| **4.2 — Aquatic** | Рогоз, камыш, кувшинка, водяной лютик | ✅ код; ⏳ длинный playtest |
 | **5 — Content** | Папоротники, кусты (выборочно) | 📋 опционально |
 
 ---
@@ -31,7 +31,9 @@
 | Группа | Блоки |
 |--------|--------|
 | **Цветы** | `game:flower-*` (20 видов) + `flower-lupine-*` |
-| **Водная флора** | `tallplant-coopersreed-*` (рогоз), `tallplant-papyrus-*` (камыш), `waterlily` |
+| **Тростник** | `tallplant-coopersreed-*` (рогоз), `tallplant-papyrus-*` (камыш) |
+| **Поверхностная вода** | `waterlily` (кувшинка) |
+| **Подводный** | `aquatic-watercrowfoot-*` (водяной лютик: section / tip / top) |
 
 | Слой | Поведение |
 |------|-----------|
@@ -40,36 +42,70 @@
 | **Среда** | Температура (сезон), `WorldgenRainfall` + `ForestDensity`, почва, жидкость |
 | **Клетка-кандидат** | Скан в радиусе → **взвешенный** выбор по fitness |
 | **Скорость** | `SpreadRate` per-species; календарь (`ReproduceAttemptsPerYear`) или legacy часы |
-| **Spacing** | `WildFlowerSpacing` + конфиг `PlantSpacingEnabled` |
+| **Spacing** | `WildFlowerSpacing` + конфиг; у тростника нет вертикального стека в колонке |
 | **Семена мода** | Не в сборке |
 
 ### Среда обитания (`EcologyHabitat`)
 
 | Habitat | Виды | Размещение |
 |---------|------|------------|
-| `Terrestrial` | Цветы, люпин | `SurfacePlacement`, без жидкости в клетке |
-| `ReedNearWater` | Рогоз, камыш | `ReedPlacement`: **илистый гравий** (`muddygravel`) под корнями; рост в воде допустим |
-| `WaterSurface` | Кувшинка | `WaterPlacement`: поверхность воды |
+| `Terrestrial` | Цветы, люпин | `SurfacePlacement` — твёрдая почва, без жидкости в клетке |
+| `ReedNearWater` | Рогоз, камыш | `ReedPlacement` — см. правила ниже |
+| `WaterSurface` | Кувшинка | `WaterPlacement` — на открытой поверхности воды |
+| `UnderwaterColumn` | Водяной лютик | `CrowfootPlacement` + `CrowfootColumnPlacer` — колонка section → tip/top |
+
+### Рогоз и камыш (правила spread)
+
+Колонка снизу вверх для **мелководья**:
+
+```
+[ поверхность — воздух ]
+[ один блок воды — сюда рогоз, water-normal ]
+[ илистый гравий — muddygravel ]
+```
+
+| Случай | Клетка растения | Вариант блока |
+|--------|-----------------|---------------|
+| Берег, без водной колонки | `gravel.Y + 1`, под ногами ил | `land-normal` |
+| Мелководье, ровно 1 вода над илом | тот же `gravel.Y + 1`, **внутри** водного блока | `water-normal` |
+| 2+ воды между илом и поверхностью | — | spread **запрещён** |
+| Ил не `muddygravel` | — | spread **запрещён** |
+| Уже есть рогоз в колонке (X/Z) | — | spread **запрещён** |
+
+**Камыш:** высота 2 блока; в воде — ровно 1 водный слой над илом (`ExactWaterDepth: 1`).
+
+### Водяной лютик
+
+- Spread ставит колонку от `aquatic-watercrowfoot-section`, сверху `tip` или `top` (~35% с цветами).
+- Глубина воды над илом/почвой: 2–8 блоков (как worldgen).
+- Реестр привязан к **нижнему** блоку колонки (`GetColumnBase`).
 
 ### Архитектура (код)
 
 - [x] `EcosystemSystem`, `ReproducerRegistry`, `ChunkFlowerScanner`
 - [x] `EnvironmentalContext` — `WorldGenValues` для rain/forest
-- [x] `SuitabilityEvaluator` — ветки по habitat
-- [x] `WildFlowerClimate` + `WildAquaticEcology` — temp/rain/forest + SpreadRate
-- [x] `WildFlowerSpacing` + `PlantSpacing`
+- [x] `SuitabilityEvaluator` — ветки по `EcologyHabitat`
+- [x] `WildFlowerClimate` + `WildAquaticEcology`
+- [x] `WildFlowerSpacing` + `PlantSpacing` (горизонталь + запрет стека тростника в колонке)
 - [x] `SpeciesSpread` — календарь и legacy
 - [x] `ReproducePlacement`, `SurfacePlacement`, `ReedPlacement`, `WaterPlacement`
-- [x] `BlockFluidHelper` — жидкость, `HasReedSiltSubstrate` (поиск `muddygravel` вниз)
-- [x] `PlantCodeHelper` — species для цветов, тростника, кувшинки
-- [x] `EcosystemParticipant` (заменил `FlowerEcosystemParticipant`)
+- [x] `CrowfootPlacement`, `CrowfootColumnPlacer`
+- [x] `BlockFluidHelper` — `IsDedicatedWaterCell`, `CountWaterLayersAboveGravel`
+- [x] `PlantCodeHelper` — species, `ResolveReedSpreadBlock` (land/water)
+- [x] `EcosystemParticipant`
 - [x] Legacy не в сборке
 
 ### Патчи (`enabledpatches.json`)
 
-- `flower.json`, `flower-lupine.json`, `reedpapyrus.json`, `waterlily.json` → `EcosystemPlant`
+| Файл | `entityClass` |
+|------|----------------|
+| `flower.json` | `EcosystemPlant` |
+| `flower-lupine.json` | `EcosystemPlant` |
+| `reedpapyrus.json` | `EcosystemPlant` |
+| `waterlily.json` | `EcosystemPlant` |
+| `aquatic/watercrowfoot.json` | `EcosystemPlant` |
 
-### Исправления (сессии после v1)
+### Исправления (после v1)
 
 | Проблема | Решение |
 |----------|---------|
@@ -78,18 +114,23 @@
 | Реестр сбрасывался зимой | `SameEcologySpecies` для `-free`/`-snow` |
 | Одинаковая скорость видов | `SpreadRate` + `UseSpeciesSpreadRates` |
 | NLR на calendar в `Init` | Лог календаря на первом reproduce-тике |
-| Медленный woad/люпин при тест-конфиге | `MinSpeciesReproduceIntervalHours` default **0** |
-| Рогоз без ила при spread | Только `muddygravel` под корнями (скан вниз через воду) |
-| Ошибочный запрет «только суша» | Снят; вариант `water`/`land` копируется с родителя |
+| Рогоз без ила | Только `muddygravel`; привязка к колонке ила |
+| Рогоз в воздухе / столб воды | Только `gravel+1`; один водный слой; без `gravel+2` |
+| Рогоз на рогозе | Запрет стека в колонке; не считать чужой тростник «водой» |
+| Spread не в водный блок | `IsDedicatedWaterCell` + `water-normal` по клетке |
+| Камыш / лютик | `VerticalBlocks`, `UnderwaterColumn`, колонка лютика |
 
 ### Playtest
 
-| Стадия | Результат |
-|--------|-----------|
-| MVP-vanilla-flowers | ✅ поляны, склоны, производительность |
-| Ecosystem v1 | ✅ rain/forest, spread rates, пул кандидатов |
-| Spacing + calendar | ✅ в коде; настройка в конфиге |
-| Aquatic + muddygravel | ⏳ проверить spread у озёрного берега |
+| Область | Статус |
+|---------|--------|
+| MVP-vanilla-flowers | ✅ |
+| Ecosystem v1 (rain/forest, rates) | ✅ |
+| Spacing + calendar | ✅ в коде |
+| Рогоз: ил → 1 вода → рогоз | ✅ по отчёту пользователя |
+| Камыш, кувшинка, лютик | ⏳ длинная сессия, жаркий/холодный климат |
+
+**Чеклист aquatic:** мелководье у озера; нет второго блока воды под рогозом; камыш только при temp ≥ 24; лютик в глубине 2+; `ReproduceDebug: false` для финала.
 
 ---
 
@@ -110,6 +151,7 @@
 | `DefaultSameSpeciesSpacing` / `DefaultOtherSpeciesSpacing` | Базовые дистанции |
 | `SpacingVerticalSearch` | ±Y при проверке соседей |
 | `MaxReproduceAttemptsPerTick` | Лимит CPU |
+| `MaxChunkColumnsScannedPerTick` / `MaxRegistrationsPerTick` | Очередь чанков |
 | `ReproduceDebug` | Лог spread / Skip |
 | `OnlyActivateNearPlayers` | Опция для слабых серверов |
 
@@ -123,17 +165,24 @@
 
 **Дополнительно:** lupine (`flower-lupine-*`).
 
-**Водная флора:** coopersreed (рогоз), papyrus (камыш), waterlily (кувшинка).
+**Водная флора:**
+
+| species | RU | Примечание |
+|---------|-----|------------|
+| `coopersreed` | рогоз | ил + 0–1 вода над илом |
+| `papyrus` | камыш | жаркий климат; 2 блока высотой |
+| `waterlily` | кувшинка | поверхность воды |
+| `watercrowfoot` | водяной лютик | подводная колонка |
 
 ---
 
 ## Что ещё не сделано
 
-- [ ] Playtest aquatic на длинной сессии (холод/жара для камыша)
+- [ ] Длинный playtest aquatic (камыш в жаре, лютик в глубине)
 - [ ] Папоротники `game:fern-*`
 - [ ] Убрать `entityClass`, только chunk-scan (опционально)
 - [ ] Land claims при reproduce
-- [ ] Публикация / modid rename (TBD)
+- [ ] Push на `origin` / публикация (modid TBD)
 
 ---
 
@@ -144,7 +193,8 @@
 | `bacb506` | Ecosystem v1: participants, rain/forest, spread rates, candidate pool |
 | `4b78497` | Concurrent propagation queue |
 | `99d88f6` | Plant spacing, calendar spread, config |
-| `92ec0cf` | Aquatic flora, `muddygravel` substrate, `EcosystemParticipant` |
+| `92ec0cf` | Aquatic flora, muddygravel substrate, `EcosystemParticipant` |
+| `1eb2548` | Water plants: reed column rules, crowfoot, land/water variants |
 
 ---
 
@@ -152,3 +202,4 @@
 
 - Конфиг: `%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
 - Лог: `%AppData%\VintagestoryData\Logs\server-main.log` (`ReproduceDebug: true`)
+- Сборка: `dotnet build` → `bin\Debug\Mods\wildfarming\` (копируется в `Mods\wildfarming` при закрытой игре)
