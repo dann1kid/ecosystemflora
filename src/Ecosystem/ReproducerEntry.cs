@@ -25,6 +25,11 @@ namespace WildFarming.Ecosystem
             NextAttemptHours = nextAttemptHours;
         }
 
-        public bool IsMatureBlock(Block block) => block?.Code != null && block.Code.Equals(MatureBlockCode);
+        public bool IsMatureBlock(Block block)
+        {
+            if (block?.Code == null) return false;
+            if (block.Code.Equals(MatureBlockCode)) return true;
+            return PlantCodeHelper.SameFlowerSpecies(block.Code, MatureBlockCode);
+        }
     }
 }

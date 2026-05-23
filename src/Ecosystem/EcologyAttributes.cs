@@ -4,18 +4,8 @@ namespace WildFarming.Ecosystem
 {
     public static class EcologyAttributes
     {
-        /// <summary>Vanilla flowers and other game plants in the ecology set.</summary>
-        public static bool ReproduceEnabled(Block block)
-        {
-            if (block?.Code == null) return false;
-
-            if (PlantCodeHelper.IsVanillaEcologyPlant(block))
-            {
-                return block.Attributes == null || block.Attributes["ecologyReproduce"].AsBool(true);
-            }
-
-            return false;
-        }
+        /// <summary>Block participates in wild ecology (capabilities via <see cref="IEcosystemParticipant"/>).</summary>
+        public static bool ReproduceEnabled(Block block) => FlowerEcosystemParticipant.TryFromBlock(block, out _);
 
         public static bool CodeMatchesPattern(string codePath, string pattern)
         {

@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "wildfarming",
   "name": "Wild Farming",
-  "description" : "Cultivate flowers, herbs, mushrooms, and bushes!",
+  "description" : "Wild ecology for vanilla flowers: climate, rainfall, and forest-aware spread.",
   "authors": ["jakecool19"],
-  "version": "2.0.0-mvp",
+  "version": "2.1.0-ecosystem-v1",
   "side": "Universal",
   "dependencies": {
     "game": "1.21.0"

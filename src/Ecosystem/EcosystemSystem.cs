@@ -97,10 +97,27 @@ namespace WildFarming.Ecosystem
                 requirements, Sample(plantPos), EcosystemConfig.Loaded.HarshWildPlants);
         }
 
-        public void RegisterReproducer(BlockPos origin, AssetLocation plantBlockCode, PlantRequirements requirements, bool spawnBurst = false)
+        public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false)
+        {
+            if (participant == null) return;
+            RegisterReproducer(
+                origin,
+                participant.SpreadBlockCode,
+                participant.MatureBlockCode,
+                participant.Requirements,
+                spawnBurst);
+        }
+
+        public void RegisterReproducer(
+            BlockPos origin,
+            AssetLocation spreadBlockCode,
+            AssetLocation matureBlockCode,
+            PlantRequirements requirements,
+            bool spawnBurst = false)
         {
             if (api == null || api.Side != EnumAppSide.Server) return;
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
+            if (spreadBlockCode == null || matureBlockCode == null || requirements == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, origin, cfg.PlayerActivationRadiusBlocks))
@@ -110,23 +127,21 @@ namespace WildFarming.Ecosystem
 
             try
             {
-                Block plantBlock = api.World.GetBlock(plantBlockCode);
-                if (plantBlock == null || !EcologyAttributes.ReproduceEnabled(plantBlock)) return;
-
-                AssetLocation spreadCode = PlantCodeHelper.SpreadBlockCode(plantBlock) ?? plantBlockCode.Clone();
-                AssetLocation matureCode = PlantCodeHelper.MatureBlockLocation(plantBlock) ?? spreadCode;
+                Block spreadBlock = api.World.GetBlock(spreadBlockCode);
+                if (spreadBlock == null || !FlowerEcosystemParticipant.TryFromBlock(spreadBlock, out _)) return;
 
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
                 if (cfg.StaggerReproduceAttempts)
                 {
-                    nextAttempt = now + api.World.Rand.NextDouble() * cfg.ReproduceIntervalHours;
+                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(cfg, requirements);
+                    nextAttempt = now + api.World.Rand.NextDouble() * staggerSpan;
                 }
 
                 var entry = new ReproducerEntry(
                     origin.Copy(),
-                    spreadCode.Clone(),
-                    matureCode,
+                    spreadBlockCode.Clone(),
+                    matureBlockCode,
                     requirements,
                     nextAttempt);
 
@@ -134,7 +149,14 @@ namespace WildFarming.Ecosystem
 
                 if (cfg.ReproduceDebug)
                 {
-                    api.Logger.Notification("[wildfarming] Registered {0} at {1} (registry {2})", spreadCode, origin, registry.Count);
+                    api.Logger.Notification(
+                        "[wildfarming] Registered {0} at {1} spreadRate={2:0.##} interval={3:0.#}h chance={4:0.##} (registry {5})",
+                        spreadBlockCode,
+                        origin,
+                        requirements.SpreadRate,
+                        SpeciesSpread.EffectiveIntervalHours(cfg, requirements),
+                        SpeciesSpread.EffectiveChance(cfg, requirements),
+                        registry.Count);
                 }
 
                 if (spawnBurst)
@@ -184,8 +206,9 @@ namespace WildFarming.Ecosystem
                     if (registry.Contains(hit.Pos)) continue;
 
                     Block block = api.World.GetBlock(hit.BlockCode);
-                    PlantRequirements requirements = PlantRequirements.FromBlock(block);
-                    RegisterReproducer(hit.Pos, hit.BlockCode, requirements, spawnBurst: false);
+                    if (!FlowerEcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
+
+                    RegisterReproducer(hit.Pos, participant, spawnBurst: false);
                     registrationsLeft--;
                     if (registrationsLeft <= 0) break;
                 }
@@ -202,8 +225,8 @@ namespace WildFarming.Ecosystem
 
             registry.ProcessDue(
                 now,
-                cfg.ReproduceIntervalHours,
                 cfg.MaxReproduceAttemptsPerTick,
+                entry => SpeciesSpread.EffectiveIntervalHours(cfg, entry.Requirements),
                 entry =>
                 {
                     if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, entry.Origin, cfg.PlayerActivationRadiusBlocks))
@@ -226,7 +249,8 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
 
-            if (!skipChanceRoll && api.World.Rand.NextDouble() > cfg.ReproduceChance) return;
+            float chance = SpeciesSpread.EffectiveChance(cfg, entry.Requirements);
+            if (!skipChanceRoll && api.World.Rand.NextDouble() > chance) return;
 
             Block spreadBlock = api.World.GetBlock(entry.JuvenileBlockCode);
             if (spreadBlock == null)
@@ -235,29 +259,23 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            List<Vec2i> offsets = ReproducePlacement.ShuffledHorizontalOffsets(cfg.ReproduceRadius, api.World.Rand);
-            int spawned = 0;
-            int loggedFailures = 0;
+            int spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
+                api,
+                entry.Origin,
+                spreadBlock,
+                entry.Requirements,
+                cfg.MinFitness,
+                cfg.HarshWildPlants,
+                cfg.ReproduceRadius,
+                cfg.ReproduceVerticalSearch,
+                maxSpawns,
+                api.World.Rand,
+                cfg.ReproduceDebug,
+                out string failureReason);
 
-            foreach (Vec2i offset in offsets)
+            if (cfg.ReproduceDebug && spawned == 0 && failureReason != null)
             {
-                if (ReproducePlacement.TryPlaceSpreadNear(
-                    api, entry.Origin, offset.X, offset.Y, spreadBlock, entry.Requirements,
-                    cfg.MinFitness, cfg.HarshWildPlants, cfg.ReproduceVerticalSearch, cfg.ReproduceDebug,
-                    out string failureReason))
-                {
-                    spawned++;
-                    if (cfg.ReproduceDebug)
-                    {
-                        api.Logger.Notification("[wildfarming] Spawned {0} near {1}", spreadBlock.Code, entry.Origin);
-                    }
-                    if (spawned >= maxSpawns) return;
-                }
-                else if (cfg.ReproduceDebug && failureReason != null && loggedFailures < 3)
-                {
-                    api.Logger.Notification("[wildfarming] Skip ({0},{1}) near {2}: {3}", offset.X, offset.Y, entry.Origin, failureReason);
-                    loggedFailures++;
-                }
+                api.Logger.Notification("[wildfarming] No spread near {0}: {1}", entry.Origin, failureReason);
             }
         }
     }

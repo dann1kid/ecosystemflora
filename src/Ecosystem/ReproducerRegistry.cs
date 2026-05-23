@@ -55,7 +55,11 @@ namespace WildFarming.Ecosystem
             byChunk.Remove(chunkCoord);
         }
 
-        public int ProcessDue(double now, double intervalHours, int maxAttempts, System.Func<ReproducerEntry, bool> tryProcess)
+        public int ProcessDue(
+            double now,
+            int maxAttempts,
+            System.Func<ReproducerEntry, double> intervalHoursForEntry,
+            System.Func<ReproducerEntry, bool> tryProcess)
         {
             if (entries.Count == 0 || maxAttempts <= 0) return 0;
 
@@ -72,6 +76,7 @@ namespace WildFarming.Ecosystem
 
                 if (now < entry.NextAttemptHours) continue;
 
+                double intervalHours = intervalHoursForEntry != null ? intervalHoursForEntry(entry) : 24;
                 entry.NextAttemptHours = now + intervalHours;
 
                 bool keep = tryProcess(entry);

@@ -6,6 +6,8 @@ namespace WildFarming.Ecosystem
     {
         BlockPos Position { get; }
         float Temperature { get; }
+        float WorldgenRainfall { get; }
+        float ForestDensity { get; }
         bool InGreenhouse { get; }
         int GroundFertility { get; }
         bool GroundSideSolid { get; }

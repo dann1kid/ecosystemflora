@@ -10,13 +10,12 @@ namespace WildFarming
         {
             base.Initialize(api);
             if (api.Side != EnumAppSide.Server) return;
-            if (!EcologyAttributes.ReproduceEnabled(Block)) return;
+            if (!FlowerEcosystemParticipant.TryFromBlock(Block, out IEcosystemParticipant participant)) return;
 
             EcosystemSystem eco = EcosystemSystem.Instance;
             if (eco == null) return;
 
-            PlantRequirements requirements = PlantRequirements.FromBlock(Block);
-            eco.RegisterReproducer(Pos, Block.Code, requirements, spawnBurst: false);
+            eco.RegisterReproducer(Pos, participant, spawnBurst: false);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **отношение к оригинальному Wild Farming и Revival**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-23 (стадия: MVP-alpha).
+Последнее обновление: 2026-05-22 (стадия: **Ecosystem v1** — завершён).
 
 ---
 
@@ -11,11 +11,11 @@
 Цель — не клон [Wild Farming - Revival](https://mods.vintagestory.at/wildfarmingrevival), а **узкая экосистемная прослойка** для Vintage Story:
 
 - объекты **включены в мир** (климат, почва, соседи), а не живут как изолированные мини-игры;
-- **живой** объект обязан **размножаться**; без размножения это декор или культура игрока, не член экосистемы;
-- взаимодействие через **интерфейсы (capabilities / interests)**, а не через жёсткие ссылки на классы вроде `BlockEntityTrunk`;
-- размножение **только на пригодных клетках** → читаемая «история» на ландшафте (поляны у воды, границы биомов), без отдельного worldgen.
+- **живой** объект обязан **размножаться**; без размножения это декор, не член экосистемы;
+- взаимодействие через **интерфейсы (capabilities / interests)** — целевая модель, пока упрощённая реализация на цветах;
+- размножение **только на пригодных клетках** → читаемая «история» на ландшафте без отдельного worldgen.
 
-Использовать наработки JakeCool19 / Revival **как идеи и паттерны**, не переносить весь feature set.
+Использовать наработки JakeCool19 / Revival **как идеи**, не переносить весь feature set.
 
 ---
 
@@ -23,241 +23,182 @@
 
 ### 2.1. Объект не самостоятельный
 
-Сущность не симулирует весь мир внутри себя. Она:
-
-- **предоставляет** capabilities (что даёт соседям и среде);
-- **объявляет** interests (что ищет у среды и соседей);
-- при взаимодействии другие участники смотрят на **наличие интерфейсов**, а не на конкретный тип блока.
+Сущность не симулирует весь мир внутри себя. Она объявляет, что нужно от среды, и реагирует на снимок `EnvironmentalContext` в точке.
 
 ### 2.2. Живость = размножение
 
 | Статус | Критерий |
 |--------|----------|
-| Живой участник экосистемы | Реализует `IReproducible` (или эквивалент) — периодические попытки дать потомство |
-| Не живой | Только рост по таймеру, декор, предмет игрока — без экосистемного размножения |
+| Живой участник экосистемы | Зарегистрирован в `EcosystemSystem`, периодически пытается дать потомство |
+| Не живой | Статичный декор без регистрации |
 
-Рост «семя → взрослый» может быть у обоих; **маркер жизни — именно reproduce**.
+### 2.3. Среда из игры
 
-### 2.3. Среда уже есть в игре — не дублировать
+Климат, fertility, сезон — из API Vintage Story. Мод не подменяет worldgen; он **реагирует** на условия в каждой клетке-кандидате.
 
-Климат, fertility, влажность worldgen, сезон — брать из API Vintage Story (`GetClimateAt`, атрибуты блока почвы и т.д.). Мод **не подменяет** игру на этапе посадки; он реагирует на среду **после** действия игрока или при диком размножении.
-
-### 2.3.1. Ванильные блоки, без mod-артефактов в мире
+### 2.3.1. Ванильные блоки в мире (текущая реализация)
 
 | Принцип | Реализация |
 |---------|------------|
-| **Объект в мире** | Только `game:flower-*` (и позже другие `game:*` по списку). Никаких `wildfarming:wildplant-*` в дикой экосистеме. |
-| **Мод при снятии** | Патч добавляет `entityClass: EcosystemPlant` к ванильному `flower.json`. Без мода — снова обычный цветок, блоки в сохранении не ломаются. |
-| **Семена мода** | Не часть дикой экосистемы; культивация игроком — ванильные/игровые семена по желанию. |
-| **Дикое размножение** | `EcosystemPlant` BE на сервере регистрирует `game:flower` в реестре; потомство — соседние клетки с тем же `game:flower-*`, если `Score >= MinFitness`. |
+| **Объект в мире** | Только `game:flower-*` (20 видов × `free`/`snow`) |
+| **Мод при снятии** | Патч добавляет `entityClass: EcosystemPlant`; без мода — обычный `flower.json`, сохранения целы |
+| **Дикое размножение** | Потомство = тот же `game:flower-*` на соседней подходящей клетке |
+| **Семена / wildplant** | **Не** часть дикой экосистемы; не в сборке MVP-vanilla-flowers |
+| **Культивация игроком** | Ванильные механики игры; мод не обязан давать mod-семена |
 
-«Как отслеживать» — при загрузке чанка у каждого ванильного цветка с BE вызывается регистрация (без всплеска посадки при загрузке). Размножение по таймеру `EcosystemSystem`.
+**Регистрация:** при загрузке чанка (очередь, лимиты) + `EcosystemPlant` BE при появлении блока. **Размножение:** round-robin по реестру, лимит попыток за тик.
 
-### 2.4. Минимум механик
+### 2.4. Минимум механик (не тащить из Revival)
 
-Не тащить из Revival/оригинала:
+- living trees, лианы, Gas API, Harmony worldgen, термиты;
+- страницы тогглов и mod-артефакты в сохранении.
 
-- «живые деревья» (здоровье ствола, листва, POI, термиты как подсистема);
-- лианы, Gas API helper, десятки независимых тогглов;
-- Harmony-патчи генератора деревьев — если propagation идёт через экосистемный сервис.
-
-Брать:
-
-- цепочка **семя → промежуточный блок → ванильный блок**;
-- **климат / теплица** замедляют или останавливают созревание;
-- **размножение только при прохождении suitability** (идея `TreeFriend.TryToPlant`);
-- **данные в JSON-атрибутах**, логика в общих сервисах.
+**Берём:** suitability по климату/почве/воде/торфу, rain/forest из worldgen-карт, размножение с `MinFitness`, скорость spread per-species.
 
 ---
 
 ## 3. Целевая архитектура
 
-### 3.1. Схема
+### 3.1. Схема (цель)
 
 ```
-[Климат, почва, вода, соседи]  →  EnvironmentalContext (снимок в BlockPos)
-                                        ↓
-Участник (BE / Block behavior)  →  interests + capabilities
-                                        ↓
-                         EcosystemSystem (ModSystem)
-                           • Match interests ↔ capabilities
-                           • Suitability.Score(context) → 0..1
-                           • IReproducible.TryReproduce → блок только если score ≥ threshold
+[Климат, почва, вода]  →  EnvironmentalContext
+                                ↓
+Участник              →  interests (целевое: IEcosystemParticipant)
+                                ↓
+EcosystemSystem       →  Score >= MinFitness → SetBlock(тот же game:flower)
 ```
 
-### 3.2. Минимальные контракты (C#)
+### 3.2. Минимальные контракты (C#) — целевые
 
-Не раздувать: **4–5 интерфейсов** + композиция.
+| Интерфейс | Назначение | Статус |
+|-----------|------------|--------|
+| `IEnvironmentalContext` | Снимок среды | ✅ |
+| `IReproducible` / `ReproducerEntry` | Маркер живости + таймер | ✅ упрощённо |
+| `ISuitability` / `SuitabilityEvaluator` | Оценка клетки | ✅ температура, rain/forest, почва, вода |
+| `IEcosystemParticipant` | Interests + capabilities | ✅ `FlowerEcosystemParticipant` |
+| `IGrowthStage` | Семя → ювениль → взрослый | ⏸ не для дикой природы |
 
-| Интерфейс | Назначение |
-|-----------|------------|
-| `IEcosystemParticipant` | Участник в точке мира: списки interests и capabilities |
-| `IEnvironmentalContext` | Readonly снимок среды в `BlockPos` (климат, fertility, блок снизу, ключевые соседи) |
-| `ISuitability` | `float Score(IEnvironmentalContext)` — можно ли здесь жить / размножаться |
-| `IReproducible` | `bool TryReproduce(...)` — **единственный обязательный маркер «живости»** для экосистемы |
-| `IGrowthStage` (опционально) | Семя → ювениль → взрослый (аналог `wildplant` → `game:*`) |
+### 3.3. Естественная «история» на карте (реализовано)
 
-**Interests (примеры):** `TempRange`, `MinFertility`, `RequiresSolidGround`, `MaxLight`, `NearWater`, `HostTreeType`.
+1. Ванильный цветок в мире → регистрация в реестре (`FlowerEcosystemParticipant`).
+2. Периодически (интервал и шанс зависят от `SpreadRate` вида) — попытка spread.
+3. Скан всех свободных клеток в радиусе; фильтр rain/forest/почва/жидкость; `fitness >= MinFitness`.
+4. Случайный выбор среди кандидатов с весом по fitness → `game:flower-*` на клетке.
+5. Неподходящая почва (торф и т.д.) или климат — spread не происходит (читаемо в debug).
 
-**Capabilities (примеры):** `Shade`, `MoistureRetention`, `OrganicMatter`, `SeedDispersal`, `IHost` (для будущих деревьев).
-
-Соседний код не знает `BlockEntityTrunk` — только «есть ли capability X в радиусе R».
-
-### 3.3. Естественная «история» на карте
-
-1. Раз в N игровых часов у `IReproducible` — попытка размножения.
-2. Кандидаты — клетки в радиусе (позже: склон, ветер, вода).
-3. Для каждой клетки: `Score(context) >= MinFitness`.
-4. Успех → ставится **ювенильная** стадия (`wildplant` или саженец), не сразу взрослый блок.
-5. Провал → **ничего не ставить** (без призрачных блоков).
-
-Игрок остаётся внешним агентом (сажает семена); экосистема **дополняет** мир без обязательного микроменеджмента.
-
-### 3.4. Планируемая структура кода (цель)
+### 3.4. Структура кода (фактическая)
 
 ```
 src/
+  WF.cs                          # ModSystem, server-only ecosystem init
   Ecosystem/
+    EcosystemSystem.cs           # реестр, тики, chunk queue
+    ReproducerRegistry.cs
+    ChunkFlowerScanner.cs
+    ReproducePlacement.cs
+    SurfacePlacement.cs
+    BlockFluidHelper.cs
+    EnvironmentalContext.cs
+    SuitabilityEvaluator.cs
+    PlantRequirements.cs
+    WildFlowerClimate.cs         # temp + rain/forest + SpreadRate
+    SpeciesSpread.cs
+    FlowerEcosystemParticipant.cs
     IEcosystemParticipant.cs
-    IEnvironmentalContext.cs
-    ISuitability.cs
-    IReproducible.cs
-    EnvironmentalContext.cs      # сбор снимка из API
-    SuitabilityFromAttributes.cs # interests из block attributes
-    EcosystemSystem.cs           # ModSystem: тики, регистрация
+    EcologyFlowerSpecies.cs
+    EcologyAttributes.cs
+    PlantCodeHelper.cs
+    EcosystemConfig.cs
   BlockEntity/
-    WildPlant.cs                 # рефактор под ISuitability
-  Item/
-    WildSeed.cs
-  ... (остальное — по мере необходимости MVP)
+    EcosystemPlant.cs            # BE на game:flower (патч)
+  (legacy WildPlant, WildSeed…)  # не в csproj
+assets/wildfarming/
+  patches/enabledpatches.json    # entityClass на flower.json
+docs/
 ```
 
-Папка `Ecosystem/` реализована — актуальный прогресс: **[`PROGRESS.md`](PROGRESS.md)**.
+Актуальный чеклист: **[`PROGRESS.md`](PROGRESS.md)**.
 
 ---
 
-## 4. MVP (первая вертикаль)
-
-Один вид растения (например, один дикий цветок), без живых деревьев.
-
-| Шаг | Содержание |
-|-----|------------|
-| 1 | `EcosystemSystem` + `EnvironmentalContext` + `SuitabilityFromAttributes` |
-| 2 | Рефактор `WildPlantBlockEntity`: созревание через suitability, без дублирования климата |
-| 3 | На **взрослом** блоке (patch + BE или block behavior): `IReproducible`, 1–2 попытки/день, низкий шанс |
-| 4 | Конфиг: `Radius`, `Chance`, `MinFitness` — три параметра, не страница тогглов Revival |
-
-Критерий готовности MVP:
+## 4. MVP-vanilla-flowers (завершён)
 
 | Критерий | Статус |
 |----------|--------|
-| Посадка → рост → взрослый цветок | ✅ |
-| Reproduce catmint | ✅ playtest |
-| Расширение на другие виды | ⏳ |
+| Все 20 `game:flower-*` в реестре | ✅ |
+| Размножение на подходящих клетках | ✅ |
+| Склоны, вода, оптимизация | ✅ |
+| Без mod-блоков в мире | ✅ |
 
 ---
 
-## 5. Сравнение с Wild Farming (оригинал) и Revival
+## 5. Ecosystem v1 (завершён)
 
-### 5.1. Оригинал (этот репозиторий, v1.2.0, ~2022)
-
-| | |
-|---|---|
-| **modid** | `wildfarming` |
-| **Исходники** | Да, `src/`, .NET Framework 4.6.1 |
-| **Точка входа** | `src/WF.cs` — `WildFarming` ModSystem |
-| **Конфиг** | `WildFarmingConfig.json` / `BotanyConfig.cs` |
-| **Состояние** | Не собирается под современный VS без портирования |
-
-Ключевые классы для изучения (не копировать целиком):
-
-- `WildPlantBlockEntity` — таймер, климат, теплица, замена на `game:*`
-- `WildSeed` — посадка `wildplant-*`
-- `TreeFriend` — посадка рядом с деревом (обобщить в propagation)
-- `BlockEntityRegenSapling`, `BlockEntityTrunk` — **не входят в MVP**
-- `Patches.cs` — Harmony на `TreeGen` — **избегать**, если не необходимо
-- `WFGasHelper` — **не переносить**
-
-### 5.2. Wild Farming Revival (modid `wildfarmingrevival`)
-
-- Форк для VS 1.19–1.21+, .NET 8, только DLL в релизе.
-- Тот же namespace `WildFarming` внутри DLL; ассеты с доменом `wildfarmingrevival:`.
-- **Не ставить вместе с оригиналом.**
-- По умолчанию выключены: living trees, vines; добавлены seed bags, Config Lib GUI, `ResinGrowth`, `PropogateIntoWater/Claims`, Tall Fern, Silver Torch Cactus.
-- Удалён `WFGasHelper`.
-
-При работе в этом репозитории Revival — **референс поведения и баланса**, не источник для merge без лицензии/авторства.
+| Критерий | Статус |
+|----------|--------|
+| `IEcosystemParticipant` | ✅ |
+| `minRain` / `minForest` (worldgen maps) | ✅ |
+| Выбор из пула свободных клеток | ✅ |
+| `SpreadRate` per-species | ✅ |
+| Playtest (почва, торф, разная скорость) | ✅ |
 
 ---
 
-## 6. Текущая стадия репозитория
+## 6. Сравнение с оригиналом и Revival
 
-**Стадия: `MVP-beta`** — catmint playtest OK. Детали: **[`PROGRESS.md`](PROGRESS.md)**.
+### 6.1. Оригинал (репозиторий, v1.2.0)
+
+- `wildplant` → `game:*`, mod-семена, living trees — **архив**, не в сборке.
+- Полезны как референс: `TreeFriend`, `WildPlant` (таймер, климат).
+
+### 6.2. Revival
+
+- Референс баланса и UX; **не** merge и не co-load.
+- Наш modid остаётся `wildfarming`, другая архитектура.
+
+---
+
+## 7. Текущая стадия репозитория
+
+**Стадия: `Ecosystem v1` — завершён.** Следующая (опционально): **Content** (fern, …).
 
 | Компонент | Статус |
 |-----------|--------|
-| Экосистемное ядро | ✅ |
-| Catmint: посадка / рост / reproduce | ✅ playtest |
-| Reproduce forgetmenot, cornflower, wilddaisy | ✅ в JSON, playtest ⏳ |
-| Рецепты семян (нож + цветок) | ✅ исправлен `{flower}-free` |
-| Visual Studio / net10 | ✅ |
-| Legacy | ⏸ не в сборке |
+| Экосистема на `game:flower-*` | ✅ |
+| 20 видов, климат + spread rate | ✅ |
+| Rain/forest + candidate pool | ✅ |
+| Legacy в сборке | ⏸ |
 
-### 6.1. Структура репозитория
-
-```
-src/
-  Ecosystem/          # ModSystem, suitability, config
-  BlockEntity/WildPlant.cs
-  Item/WildSeed.cs
-  WF.cs               # регистрация wildseed + WildPlant
-  (legacy…)           # не компилируется
-assets/wildfarming/   # JSON, рецепты, patches
-docs/                 # vision, prompt, VISUAL_STUDIO.md
-wildfarming.sln
-```
-
-- `modinfo.json` — `2.0.0-mvp`, game `1.21.0`
-- Конфиг: `wildfarming-ecosystem.json` (не legacy `WildFarmingConfig.json`)
-
-### 6.2. Временные артефакты (можно удалять)
-
-При анализе могли появиться `_wfr_extract/`, `_wfr_temp.zip` — распакованный Revival 1.4.3 для сравнения; **не часть продукта**.
+- `modinfo.json` — `2.1.0-ecosystem-v1`, game `1.21.0`
+- Конфиг: `wildfarming-ecosystem.json`
 
 ---
 
-## 7. Правила для агентов
+## 8. Правила для агентов
 
-1. **Не расширять** living trees / vines / mushrooms / termites без явного запроса пользователя.
-2. **Новая логика** — в `Ecosystem/` и через интерфейсы; не плодить монолитные `BlockEntity*` на каждую фичу.
-3. **JSON attributes** — декларация interests; C# — интерпретация, не хардкод списков видов в коде.
-4. **Размножение** — только после `Suitability.Score >= MinFitness`; не ставить блоки «на удачу». **Не** блокировать посадку игроком.
-5. **Выживание** — климат после посадки; при длительном несоответствии — смерть, не silent deny.
-6. Портирование API — **Vintage Story 1.21+**, **.NET 10** (как у установленной игры).
-7. При сомнении между «как в Revival» и «как в §2–3 этого документа» — приоритет у **этого документа**.
-8. Коммиты — только по запросу пользователя.
-
----
-
-## 8. Открытые решения (TBD)
-
-- [ ] `modid` оставить `wildfarming` или новый (например `wildfarmingeco`) при портировании
-- [ ] Block behavior vs BlockEntity для `IReproducible` на взрослых ванильных блоках
-- [ ] Частота тиков размножения и производительность на больших серверах
-- [ ] Интеграция с land claims (`PropogateIntoClaims` из Revival — опционально, по умолчанию false)
-- [ ] Совместимость с модом Wildcraft (отключение дублирующих кустов) — только если вернём bush seeds
+1. **Не расширять** trees / vines / mushrooms без явного запроса.
+2. **Дикая экосистема** — только ванильные блоки в мире; не возвращать `wildplant` без запроса.
+3. **Размножение** — только `Score >= MinFitness`; не ставить блоки «на удачу».
+4. **Производительность** — не сканировать весь мир за тик; очереди и лимиты; не трогать блоки из фоновых потоков.
+5. API: **VS 1.21+**, **.NET 10**.
+6. Приоритет у этого документа над «как в Revival».
+7. Коммиты — только по запросу пользователя.
 
 ---
 
-## 9. Ссылки
+## 9. Открытые решения (TBD)
 
-- Оригинал на Mod DB: https://mods.vintagestory.at/show/mod/53  
+- [ ] `modid` оставить `wildfarming` или переименовать при публикации
+- [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan (производительность)
+- [ ] Land claims при reproduce (по умолчанию false)
+- [ ] Папоротники как второй тип участника
+
+---
+
+## 10. Ссылки
+
+- Оригинал: https://mods.vintagestory.at/show/mod/53  
 - Revival: https://mods.vintagestory.at/wildfarmingrevival  
-- Локальный README по атрибутам растений: `README.MD`  
-- Исходная точка входа legacy: `src/WF.cs`
-
----
-
-## 10. Промпт для агентов
-
-Готовый copy-paste блок и one-liner: **[`PROMPT.md`](PROMPT.md)**.
+- Прогресс: [`PROGRESS.md`](PROGRESS.md)  
+- Промпт: [`PROMPT.md`](PROMPT.md)

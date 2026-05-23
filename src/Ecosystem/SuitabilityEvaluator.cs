@@ -1,173 +1,174 @@
 namespace WildFarming.Ecosystem
-
 {
-
     public static class SuitabilityEvaluator
-
     {
-
         public const int ReproduceMinReplaceable = 5000;
 
-
-
-        /// <summary>Can an established plant survive here (climate + soil under roots).</summary>
-
         public static bool MeetsSurvivalRequirements(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
-
         {
-
             if (!ctx.HasClimate) return false;
-
             if (!ctx.GroundSideSolid) return false;
-
             if (ctx.GroundFertility < req.MinFertility) return false;
-
-
 
             if (harshClimate && !ctx.InGreenhouse)
-
             {
-
                 if (ctx.Temperature < req.MinTemp || ctx.Temperature > req.MaxTemp) return false;
-
             }
 
-
+            if (!MeetsWorldgenRainForest(req, ctx)) return false;
 
             return true;
-
         }
-
-
-
-        /// <summary>Can the player place a seed on this cell (empty enough space above ground).</summary>
 
         public static bool MeetsPlacementRequirements(PlantRequirements req, IEnvironmentalContext ctx)
-
         {
-
             if (!ctx.GroundSideSolid) return false;
-
             if (ctx.GroundFertility < req.MinFertility) return false;
-
             if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
-
             return true;
-
         }
 
-
-
         public static string DescribeSurvivalFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
-
         {
-
             if (!ctx.HasClimate) return "No climate data.";
-
             if (!ctx.GroundSideSolid) return "No solid ground below.";
-
             if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
 
             if (harshClimate && !ctx.InGreenhouse)
-
             {
-
                 if (ctx.Temperature > req.MaxTemp) return "Too hot.";
-
                 if (ctx.Temperature < req.MinTemp) return "Too cold.";
-
             }
 
-            return null;
+            string rainForest = DescribeRainForestFailure(req, ctx);
+            if (rainForest != null) return rainForest;
 
+            return null;
         }
 
-
-
         public static float Score(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
-
         {
-
-            if (!MeetsSurvivalRequirements(req, ctx, harshClimate)) return 0f;
-
-
+            if (!ctx.HasClimate) return 0f;
+            if (!ctx.GroundSideSolid) return 0f;
+            if (ctx.GroundFertility < req.MinFertility) return 0f;
+            if (ctx.TouchesFluid) return 0f;
 
             float score = 1f;
 
-
-
             if (harshClimate && !ctx.InGreenhouse)
-
             {
-
-                float range = req.MaxTemp - req.MinTemp;
-
-                if (range > 0.01f)
-
-                {
-
-                    float mid = (req.MinTemp + req.MaxTemp) * 0.5f;
-
-                    float dist = System.Math.Abs(ctx.Temperature - mid) / (range * 0.5f);
-
-                    score *= System.Math.Max(0.35f, 1f - dist * 0.35f);
-
-                }
-
+                if (ctx.Temperature < req.MinTemp || ctx.Temperature > req.MaxTemp) return 0f;
+                score = CombineFitness(score, RangeFitness(ctx.Temperature, req.MinTemp, req.MaxTemp));
             }
 
-
+            if (EcosystemConfig.Loaded.ApplyWorldgenRainForest)
+            {
+                if (!MeetsWorldgenRainForest(req, ctx)) return 0f;
+                score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
+                score = CombineFitness(score, RangeFitness(ctx.ForestDensity, req.MinForest, req.MaxForest));
+            }
 
             return score;
-
         }
 
-
-
-        /// <summary>Can a juvenile be placed here. Parent already proved the area — only physical cell checks.</summary>
-
-        public static bool CanReproduce(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
-
+        /// <summary>
+        /// Spread fitness: parent is alive — no seasonal temp gate; rain/forest still apply.
+        /// </summary>
+        public static float ReproduceFitness(PlantRequirements req, IEnvironmentalContext ctx)
         {
+            if (!ctx.HasClimate) return 0f;
+            if (!ctx.GroundSideSolid) return 0f;
+            if (ctx.GroundFertility < req.MinFertility) return 0f;
+            if (ctx.TouchesFluid) return 0f;
 
+            if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return 1f;
+            if (!MeetsWorldgenRainForest(req, ctx)) return 0f;
+
+            float score = 1f;
+            score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
+            score = CombineFitness(score, RangeFitness(ctx.ForestDensity, req.MinForest, req.MaxForest));
+            return score;
+        }
+
+        /// <summary>Weakest factor wins — avoids 0.35³ &lt; MinFitness on otherwise valid edge cells.</summary>
+        static float CombineFitness(float current, float factor) => System.Math.Min(current, factor);
+
+        /// <summary>Can a juvenile be placed here. Parent already proved the area — physical + biome map checks.</summary>
+        public static bool CanReproduce(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
+        {
             if (ctx.TouchesFluid) return false;
-
             if (!ctx.GroundSideSolid) return false;
-
             if (ctx.GroundFertility < req.MinFertility) return false;
-
             if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
 
-            return true;
+            // Rain/forest use worldgen maps; do not apply harsh seasonal temp gate here (parent is alive).
+            if (!MeetsWorldgenRainForest(req, ctx)) return false;
 
+            return true;
         }
 
-
-
         public static string DescribeReproduceFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
-
         {
-
             if (ctx.TouchesFluid) return "Underwater or fluid at cell.";
-
             if (!ctx.GroundSideSolid) return "No solid ground below.";
-
             if (ctx.GroundFertility < req.MinFertility) return "Soil not fertile enough.";
-
             if (ctx.SpaceReplaceable < ReproduceMinReplaceable)
-
             {
-
                 return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
+            }
 
+            string rainForest = DescribeRainForestFailure(req, ctx);
+            if (rainForest != null) return rainForest;
+
+            return null;
+        }
+
+        static bool MeetsWorldgenRainForest(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return true;
+            if (!ctx.HasClimate) return false;
+            return InRange(ctx.WorldgenRainfall, req.MinRain, req.MaxRain)
+                && InRange(ctx.ForestDensity, req.MinForest, req.MaxForest);
+        }
+
+        static string DescribeRainForestFailure(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return null;
+            if (!ctx.HasClimate) return "No climate data.";
+
+            if (ctx.WorldgenRainfall < req.MinRain)
+            {
+                return "Rainfall too low (" + ctx.WorldgenRainfall.ToString("0.00") + " < " + req.MinRain.ToString("0.00") + ").";
+            }
+
+            if (ctx.WorldgenRainfall > req.MaxRain)
+            {
+                return "Rainfall too high (" + ctx.WorldgenRainfall.ToString("0.00") + " > " + req.MaxRain.ToString("0.00") + ").";
+            }
+
+            if (ctx.ForestDensity < req.MinForest)
+            {
+                return "Forest too sparse (" + ctx.ForestDensity.ToString("0.00") + " < " + req.MinForest.ToString("0.00") + ").";
+            }
+
+            if (ctx.ForestDensity > req.MaxForest)
+            {
+                return "Forest too dense (" + ctx.ForestDensity.ToString("0.00") + " > " + req.MaxForest.ToString("0.00") + ").";
             }
 
             return null;
-
         }
 
+        static bool InRange(float value, float min, float max) => value >= min && value <= max;
+
+        static float RangeFitness(float value, float min, float max)
+        {
+            float range = max - min;
+            if (range <= 0.01f) return 1f;
+
+            float mid = (min + max) * 0.5f;
+            float dist = System.Math.Abs(value - mid) / (range * 0.5f);
+            return System.Math.Max(0.35f, 1f - dist * 0.35f);
+        }
     }
-
 }
-
-

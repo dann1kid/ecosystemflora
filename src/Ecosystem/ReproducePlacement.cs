@@ -6,96 +6,145 @@ namespace WildFarming.Ecosystem
 {
     internal static class ReproducePlacement
     {
-        public static List<Vec2i> ShuffledHorizontalOffsets(int radius, System.Random rand)
+        readonly struct SpreadCandidate
         {
-            var cells = new List<Vec2i>();
+            public BlockPos Pos { get; }
+            public float Fitness { get; }
+
+            public SpreadCandidate(BlockPos pos, float fitness)
+            {
+                Pos = pos;
+                Fitness = fitness;
+            }
+        }
+
+        /// <summary>
+        /// Scans all columns in radius, collects valid free cells, then picks up to maxSpawns (weighted by fitness).
+        /// </summary>
+        public static int TryPlaceSpreadAmongNeighbors(
+            ICoreAPI api,
+            BlockPos origin,
+            Block spreadBlock,
+            PlantRequirements requirements,
+            float minFitness,
+            bool harshClimate,
+            int radius,
+            int verticalSearch,
+            int maxSpawns,
+            System.Random rand,
+            bool logFailures,
+            out string failureReason)
+        {
+            failureReason = null;
+            if (maxSpawns <= 0) return 0;
+
+            List<SpreadCandidate> candidates = CollectSpreadCandidates(
+                api, origin, radius, verticalSearch, requirements, minFitness, harshClimate);
+
+            if (candidates.Count == 0)
+            {
+                failureReason = "No valid free cells in radius " + radius;
+                return 0;
+            }
+
+            int placed = 0;
+            var remaining = new List<SpreadCandidate>(candidates);
+
+            while (placed < maxSpawns && remaining.Count > 0)
+            {
+                int index = PickWeightedIndex(remaining, rand);
+                SpreadCandidate chosen = remaining[index];
+                remaining.RemoveAt(index);
+
+                if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock))
+                {
+                    placed++;
+                    if (logFailures)
+                    {
+                        api.Logger.Notification(
+                            "[wildfarming] Spawned {0} at {1} ({2} candidates near {3})",
+                            spreadBlock.Code, chosen.Pos, candidates.Count, origin);
+                    }
+                }
+            }
+
+            if (placed == 0)
+            {
+                failureReason = "Placement failed after selecting candidate";
+            }
+
+            return placed;
+        }
+
+        static List<SpreadCandidate> CollectSpreadCandidates(
+            ICoreAPI api,
+            BlockPos origin,
+            int radius,
+            int verticalSearch,
+            PlantRequirements requirements,
+            float minFitness,
+            bool harshClimate)
+        {
+            var candidates = new List<SpreadCandidate>();
+            var seen = new HashSet<BlockPos>();
+            IBlockAccessor acc = api.World.BlockAccessor;
+
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
                     if (dx == 0 && dz == 0) continue;
-                    cells.Add(new Vec2i(dx, dz));
+
+                    if (!SurfacePlacement.TryFindPlantPos(acc, origin, dx, dz, verticalSearch, out BlockPos plantPos, out _))
+                    {
+                        continue;
+                    }
+
+                    if (!seen.Add(plantPos)) continue;
+
+                    EnvironmentalContext ctx = EnvironmentalContext.Sample(api, plantPos);
+                    if (!SuitabilityEvaluator.CanReproduce(requirements, ctx, harshClimate)) continue;
+
+                    float fitness = SuitabilityEvaluator.ReproduceFitness(requirements, ctx);
+                    if (fitness < minFitness) continue;
+
+                    candidates.Add(new SpreadCandidate(plantPos.Copy(), fitness));
                 }
             }
 
-            for (int i = cells.Count - 1; i > 0; i--)
-            {
-                int j = rand.Next(i + 1);
-                Vec2i tmp = cells[i];
-                cells[i] = cells[j];
-                cells[j] = tmp;
-            }
-
-            return cells;
+            return candidates;
         }
 
-        public static bool TryPlaceSpreadNear(
-            ICoreAPI api,
-            BlockPos origin,
-            int dx,
-            int dz,
-            Block spreadBlock,
-            PlantRequirements requirements,
-            float minFitness,
-            bool harshClimate,
-            int verticalSearch,
-            bool logFailures,
-            out string failureReason)
+        static int PickWeightedIndex(List<SpreadCandidate> candidates, System.Random rand)
         {
-            failureReason = null;
-            IBlockAccessor acc = api.World.BlockAccessor;
+            if (candidates.Count == 1) return 0;
 
-            if (!SurfacePlacement.TryFindPlantPos(acc, origin, dx, dz, verticalSearch, out BlockPos plantPos, out failureReason))
+            float total = 0f;
+            for (int i = 0; i < candidates.Count; i++)
             {
-                return false;
+                total += candidates[i].Fitness;
             }
 
-            return TryPlaceSpread(
-                api,
-                plantPos,
-                spreadBlock,
-                requirements,
-                minFitness,
-                harshClimate,
-                logFailures,
-                out failureReason);
+            if (total <= 0f) return rand.Next(candidates.Count);
+
+            float roll = (float)rand.NextDouble() * total;
+            float acc = 0f;
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                acc += candidates[i].Fitness;
+                if (roll <= acc) return i;
+            }
+
+            return candidates.Count - 1;
         }
 
-        public static bool TryPlaceSpread(
-            ICoreAPI api,
-            BlockPos plantPos,
-            Block spreadBlock,
-            PlantRequirements requirements,
-            float minFitness,
-            bool harshClimate,
-            bool logFailures,
-            out string failureReason)
+        static bool PlaceSpreadBlock(ICoreAPI api, BlockPos plantPos, Block spreadBlock)
         {
-            failureReason = null;
             IBlockAccessor acc = api.World.BlockAccessor;
-            EnvironmentalContext ctx = EnvironmentalContext.Sample(api, plantPos);
-
-            if (!SuitabilityEvaluator.CanReproduce(requirements, ctx, harshClimate))
-            {
-                failureReason = SuitabilityEvaluator.DescribeReproduceFailure(requirements, ctx, harshClimate);
-                return false;
-            }
-
-            float score = SuitabilityEvaluator.Score(requirements, ctx, harshClimate);
-            if (score < minFitness)
-            {
-                failureReason = "Fitness " + score.ToString("0.00") + " < " + minFitness.ToString("0.00");
-                return false;
-            }
-
             ItemStack stack = new ItemStack(spreadBlock);
             acc.SetBlock(spreadBlock.BlockId, plantPos, stack);
 
-            if (acc.GetBlock(plantPos).Id != spreadBlock.Id)
-            {
-                failureReason = "Block id mismatch after place";
-                return false;
-            }
+            if (acc.GetBlock(plantPos).Id != spreadBlock.Id) return false;
 
             acc.MarkBlockDirty(plantPos);
             return true;

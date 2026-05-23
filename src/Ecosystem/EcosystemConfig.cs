@@ -8,6 +8,9 @@ namespace WildFarming.Ecosystem
 
         public bool HarshWildPlants { get; set; } = true;
 
+        /// <summary>Enforce worldgen minRain/maxRain and minForest/maxForest when spreading.</summary>
+        public bool ApplyWorldgenRainForest { get; set; } = true;
+
         public int ReproduceRadius { get; set; } = 4;
 
         public int ReproduceVerticalSearch { get; set; } = 5;
@@ -17,6 +20,12 @@ namespace WildFarming.Ecosystem
         public float MinFitness { get; set; } = 0.5f;
 
         public double ReproduceIntervalHours { get; set; } = 24;
+
+        /// <summary>Per-species SpreadRate from ecology table scales interval and chance.</summary>
+        public bool UseSpeciesSpreadRates { get; set; } = true;
+
+        /// <summary>Floor for interval / SpreadRate (avoids tick spam when testing with low base interval).</summary>
+        public double MinSpeciesReproduceIntervalHours { get; set; } = 2;
 
         public int MaxFailedSurvivalChecks { get; set; } = 5;
 

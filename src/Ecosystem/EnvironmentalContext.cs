@@ -7,6 +7,8 @@ namespace WildFarming.Ecosystem
     {
         public BlockPos Position { get; }
         public float Temperature { get; }
+        public float WorldgenRainfall { get; }
+        public float ForestDensity { get; }
         public bool InGreenhouse { get; }
         public int GroundFertility { get; }
         public bool GroundSideSolid { get; }
@@ -17,6 +19,8 @@ namespace WildFarming.Ecosystem
         EnvironmentalContext(
             BlockPos pos,
             float temperature,
+            float worldgenRainfall,
+            float forestDensity,
             bool inGreenhouse,
             int groundFertility,
             bool groundSideSolid,
@@ -26,6 +30,8 @@ namespace WildFarming.Ecosystem
         {
             Position = pos;
             Temperature = temperature;
+            WorldgenRainfall = worldgenRainfall;
+            ForestDensity = forestDensity;
             InGreenhouse = inGreenhouse;
             GroundFertility = groundFertility;
             GroundSideSolid = groundSideSolid;
@@ -41,17 +47,33 @@ namespace WildFarming.Ecosystem
             Block ground = acc.GetBlock(groundPos);
             Block space = acc.GetBlock(plantPos);
 
-            ClimateCondition conds = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+            // Seasonal temp from NowValues; rain/forest maps are worldgen-static (WorldGenValues).
+            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+            ClimateCondition worldgen = acc.GetClimateAt(plantPos, EnumGetClimateMode.WorldGenValues);
+            ClimateCondition fallback = worldgen ?? now;
+
+            float temperature = now?.Temperature ?? worldgen?.Temperature ?? 0f;
+            float worldgenRainfall = ReadWorldgenRainfall(worldgen, now);
+            float forestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f;
 
             return new EnvironmentalContext(
                 plantPos.Copy(),
-                conds?.Temperature ?? 0f,
+                temperature,
+                worldgenRainfall,
+                forestDensity,
                 GreenhouseHelper.IsGreenhouse(api, plantPos),
                 (int)ground.Fertility,
                 ground.SideSolid[BlockFacing.UP.Index],
                 space.Replaceable,
-                conds != null,
+                fallback != null,
                 BlockFluidHelper.TouchesFluid(acc, plantPos));
+        }
+
+        static float ReadWorldgenRainfall(ClimateCondition worldgen, ClimateCondition now)
+        {
+            if (worldgen != null) return worldgen.WorldgenRainfall;
+            if (now != null) return now.WorldgenRainfall;
+            return 0f;
         }
     }
 }

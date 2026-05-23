@@ -20,6 +20,25 @@ namespace WildFarming.Ecosystem
             return null;
         }
 
+        /// <summary>Species segment from flower-{species}-free|snow.</summary>
+        public static string GetFlowerSpecies(AssetLocation blockCode)
+        {
+            string path = blockCode?.Path;
+            if (string.IsNullOrEmpty(path) || !path.StartsWith("flower-")) return null;
+
+            string rest = path.Substring("flower-".Length);
+            if (rest.EndsWith("-free")) return rest.Substring(0, rest.Length - "-free".Length);
+            if (rest.EndsWith("-snow")) return rest.Substring(0, rest.Length - "-snow".Length);
+            return rest;
+        }
+
+        public static bool SameFlowerSpecies(AssetLocation a, AssetLocation b)
+        {
+            string sa = GetFlowerSpecies(a);
+            string sb = GetFlowerSpecies(b);
+            return sa != null && sa == sb;
+        }
+
         public static AssetLocation MatureBlockLocation(Block block)
         {
             AssetLocation vanilla = SpreadBlockCode(block);
