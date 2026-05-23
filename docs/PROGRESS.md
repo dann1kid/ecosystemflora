@@ -144,7 +144,7 @@
 | `bacb506` | Ecosystem v1: participants, rain/forest, spread rates, candidate pool |
 | `4b78497` | Concurrent propagation queue |
 | `99d88f6` | Plant spacing, calendar spread, config |
-| *(текущий)* | Aquatic flora, `muddygravel` substrate, `EcosystemParticipant` |
+| `92ec0cf` | Aquatic flora, `muddygravel` substrate, `EcosystemParticipant` |
 
 ---
 
