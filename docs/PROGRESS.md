@@ -79,7 +79,11 @@
 | Параметр | Назначение |
 |----------|------------|
 | `ReproduceRadius` / `ReproduceVerticalSearch` | Поиск клеток |
-| `ReproduceChance` / `ReproduceIntervalHours` | Базовый шанс и период (масштабируется видом) |
+| `ReproduceChance` | Базовый шанс (× SpreadRate вида) |
+| `ReproduceAttemptsPerYear` | Попыток spread за **игровой год** при SpreadRate=1 (учитывает `DaysPerYear`) |
+| `UseCalendarScaledSpread` | `true` — интервал в игровых днях, не фикс. часы |
+| `ReproduceIntervalHours` | Legacy, если calendar off или `AttemptsPerYear`=0 |
+| `MinSpeciesReproduceIntervalDays` | Мин. игровых дней между попытками (0 = без пола) |
 | `MinFitness` | Порог fitness (0–1) |
 | `ApplyWorldgenRainForest` | Rain/forest из worldgen |
 | `UseSpeciesSpreadRates` | Per-species `SpreadRate` |

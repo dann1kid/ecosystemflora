@@ -48,7 +48,8 @@ namespace WildFarming.Ecosystem
             ["wilddaisy"] = new EcologyEntry(7, 20, 0.4f, 0.75f, 0f, 0.31f, 1.3f),
             // Steady meadow / understory
             ["forgetmenot"] = new EcologyEntry(7, 20, 0.4f, 0.9f, 0f, 0.4f, 1.1f),
-            ["woad"] = new EcologyEntry(-2, 21, 0.25f, 0.7f, 0f, 0.35f, 1.0f),
+            ["woad"] = new EcologyEntry(-2, 21, 0.25f, 0.7f, 0f, 0.35f, 1.6f),
+            ["lupine"] = new EcologyEntry(1, 19, 0.3f, 0.8f, 0f, 0.35f, 2.4f),
             ["lilyofthevalley"] = new EcologyEntry(2, 13, 0.45f, 1f, 0.55f, 1f, 0.95f),
             // Slow / localized — rare or small worldgen patches
             ["daffodil"] = new EcologyEntry(11, 28, 0.5f, 1f, 0f, 0.3f, 0.65f),

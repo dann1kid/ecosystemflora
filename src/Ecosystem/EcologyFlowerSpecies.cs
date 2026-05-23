@@ -11,7 +11,7 @@ namespace WildFarming.Ecosystem
             "orangemallow", "wilddaisy", "westerngorse", "cowparsley", "goldenpoppy",
             "lilyofthevalley", "woad", "redtopgrass", "bluebell",
             "ghostpipewhite", "ghostpipepink", "ghostpipered",
-            "daffodil", "mugwort",
+            "daffodil", "mugwort", "lupine",
         };
 
         public static bool IsKnownFlower(string species)

@@ -27,8 +27,12 @@ namespace WildFarming.Ecosystem
             if (string.IsNullOrEmpty(path) || !path.StartsWith("flower-")) return null;
 
             string rest = path.Substring("flower-".Length);
-            if (rest.EndsWith("-free")) return rest.Substring(0, rest.Length - "-free".Length);
-            if (rest.EndsWith("-snow")) return rest.Substring(0, rest.Length - "-snow".Length);
+            if (rest.EndsWith("-free")) rest = rest.Substring(0, rest.Length - "-free".Length);
+            else if (rest.EndsWith("-snow")) rest = rest.Substring(0, rest.Length - "-snow".Length);
+
+            // flower-lupine-{color} → lupine (separate blocktype from flower.json)
+            if (rest.StartsWith("lupine")) return "lupine";
+
             return rest;
         }
 

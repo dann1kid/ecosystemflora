@@ -4,5 +4,11 @@
 		"op": "add",
 		"path": "/entityClass",
 		"value": "EcosystemPlant"
+	},
+	{
+		"file": "game:blocktypes/plant/flower-lupine.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
 	}
 ]

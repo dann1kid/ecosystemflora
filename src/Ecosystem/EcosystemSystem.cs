@@ -17,6 +17,7 @@ namespace WildFarming.Ecosystem
         long chunkScanListenerId;
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
+        bool calendarDebugLogged;
 
         public void InitPre(ICoreAPI api)
         {
@@ -60,6 +61,30 @@ namespace WildFarming.Ecosystem
             WildFlowerClimate.LogMissingSpecies(api);
         }
 
+        void TryLogCalendarDebugOnce()
+        {
+            if (calendarDebugLogged || api == null || !EcosystemConfig.Loaded.ReproduceDebug) return;
+
+            IGameCalendar cal = api.World?.Calendar;
+            if (cal == null) return;
+
+            calendarDebugLogged = true;
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            double attemptsPerYear = cfg.ReproduceAttemptsPerYear;
+            if (attemptsPerYear <= 0)
+            {
+                attemptsPerYear = (cal.DaysPerYear * cal.HoursPerDay)
+                    / System.Math.Max(0.01, cfg.ReproduceIntervalHours);
+            }
+
+            api.Logger.Notification(
+                "[wildfarming] Calendar: {0} days/year, {1} h/day; spread base {2} attempts/year (calendar-scaled={3})",
+                cal.DaysPerYear,
+                cal.HoursPerDay,
+                attemptsPerYear,
+                cfg.UseCalendarScaledSpread);
+        }
+
         public void Dispose()
         {
             if (api is ICoreServerAPI sapi)
@@ -79,6 +104,7 @@ namespace WildFarming.Ecosystem
             chunkScanListenerId = 0;
             chunkLoadedHandler = null;
             chunkUnloadedHandler = null;
+            calendarDebugLogged = false;
             Instance = null;
             api = null;
         }
@@ -134,7 +160,7 @@ namespace WildFarming.Ecosystem
                 double nextAttempt = now;
                 if (cfg.StaggerReproduceAttempts)
                 {
-                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(cfg, requirements);
+                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(api, cfg, requirements);
                     nextAttempt = now + api.World.Rand.NextDouble() * staggerSpan;
                 }
 
@@ -154,7 +180,7 @@ namespace WildFarming.Ecosystem
                         spreadBlockCode,
                         origin,
                         requirements.SpreadRate,
-                        SpeciesSpread.EffectiveIntervalHours(cfg, requirements),
+                        SpeciesSpread.EffectiveIntervalHours(api, cfg, requirements),
                         SpeciesSpread.EffectiveChance(cfg, requirements),
                         registry.Count);
                 }
@@ -219,6 +245,8 @@ namespace WildFarming.Ecosystem
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
 
+            TryLogCalendarDebugOnce();
+
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             IBlockAccessor acc = api.World.BlockAccessor;
             double now = api.World.Calendar.TotalHours;
@@ -226,7 +254,7 @@ namespace WildFarming.Ecosystem
             registry.ProcessDue(
                 now,
                 cfg.MaxReproduceAttemptsPerTick,
-                entry => SpeciesSpread.EffectiveIntervalHours(cfg, entry.Requirements),
+                entry => SpeciesSpread.EffectiveIntervalHours(api, cfg, entry.Requirements),
                 entry =>
                 {
                     if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, entry.Origin, cfg.PlayerActivationRadiusBlocks))
