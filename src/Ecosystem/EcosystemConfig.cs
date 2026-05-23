@@ -19,13 +19,23 @@ namespace WildFarming.Ecosystem
 
         public float MinFitness { get; set; } = 0.5f;
 
+        /// <summary>Legacy: hours between attempts when <see cref="UseCalendarScaledSpread"/> is false.</summary>
         public double ReproduceIntervalHours { get; set; } = 24;
+
+        /// <summary>Spread attempts per in-game year at SpreadRate=1 (scales with DaysPerYear).</summary>
+        public double ReproduceAttemptsPerYear { get; set; } = 36;
+
+        /// <summary>Use calendar DaysPerYear/HoursPerDay instead of fixed hours.</summary>
+        public bool UseCalendarScaledSpread { get; set; } = true;
 
         /// <summary>Per-species SpreadRate from ecology table scales interval and chance.</summary>
         public bool UseSpeciesSpreadRates { get; set; } = true;
 
-        /// <summary>Floor for interval / SpreadRate (avoids tick spam when testing with low base interval).</summary>
-        public double MinSpeciesReproduceIntervalHours { get; set; } = 2;
+        /// <summary>Min game-days between attempts (calendar mode). 0 = no floor.</summary>
+        public double MinSpeciesReproduceIntervalDays { get; set; } = 0;
+
+        /// <summary>Min hours between attempts (legacy mode only).</summary>
+        public double MinSpeciesReproduceIntervalHours { get; set; } = 0;
 
         public int MaxFailedSurvivalChecks { get; set; } = 5;
 
@@ -49,5 +59,17 @@ namespace WildFarming.Ecosystem
         public bool OnlyActivateNearPlayers { get; set; } = false;
 
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
+
+        /// <summary>Minimum horizontal distance between spread plants.</summary>
+        public bool PlantSpacingEnabled { get; set; } = true;
+
+        /// <summary>Used when species table has SameSpeciesSpacing 0.</summary>
+        public int DefaultSameSpeciesSpacing { get; set; } = 1;
+
+        /// <summary>Used when species table has OtherSpeciesSpacing 0.</summary>
+        public int DefaultOtherSpeciesSpacing { get; set; } = 1;
+
+        /// <summary>±Y when scanning for nearby flowers for spacing.</summary>
+        public int SpacingVerticalSearch { get; set; } = 2;
     }
 }

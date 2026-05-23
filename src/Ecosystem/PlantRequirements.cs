@@ -1,9 +1,12 @@
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 
 namespace WildFarming.Ecosystem
 {
     public class PlantRequirements
     {
+        public string Species { get; set; }
+
         public float MinTemp { get; set; } = -5f;
         public float MaxTemp { get; set; } = 50f;
         public float MinRain { get; set; } = 0f;
@@ -15,6 +18,56 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Relative spread vigor (1 = config baseline).</summary>
         public float SpreadRate { get; set; } = 1f;
+
+        /// <summary>Min horizontal blocks to same species (0 = allow adjacent clumps).</summary>
+        public int SameSpeciesSpacing { get; set; }
+
+        /// <summary>Default min horizontal blocks to other flower species.</summary>
+        public int OtherSpeciesSpacing { get; set; }
+
+        /// <summary>Per-other-species minimum distance overrides.</summary>
+        public Dictionary<string, int> SpacingFromSpecies { get; set; }
+
+        public int GetRequiredSpacingTo(string otherSpecies, EcosystemConfig cfg)
+        {
+            if (string.IsNullOrEmpty(otherSpecies)) return 0;
+
+            int required;
+            if (otherSpecies == Species)
+            {
+                // 0 = patch-forming species allows tight clumps (colonizers).
+                return SameSpeciesSpacing;
+            }
+
+            if (SpacingFromSpecies != null && SpacingFromSpecies.TryGetValue(otherSpecies, out int specific))
+            {
+                return specific;
+            }
+
+            required = OtherSpeciesSpacing;
+            if (required <= 0 && cfg != null) required = cfg.DefaultOtherSpeciesSpacing;
+
+            return required;
+        }
+
+        public int GetSpacingSearchRadius(EcosystemConfig cfg)
+        {
+            if (cfg == null || !cfg.PlantSpacingEnabled) return 0;
+
+            int max = SameSpeciesSpacing;
+            int otherBase = OtherSpeciesSpacing > 0 ? OtherSpeciesSpacing : cfg.DefaultOtherSpeciesSpacing;
+            if (otherBase > max) max = otherBase;
+
+            if (SpacingFromSpecies != null)
+            {
+                foreach (KeyValuePair<string, int> pair in SpacingFromSpecies)
+                {
+                    if (pair.Value > max) max = pair.Value;
+                }
+            }
+
+            return max;
+        }
 
         public static PlantRequirements FromBlock(Block block)
         {
@@ -28,18 +81,41 @@ namespace WildFarming.Ecosystem
             float minForest = attrs != null ? attrs["minForest"].AsFloat(float.NaN) : float.NaN;
             float maxForest = attrs != null ? attrs["maxForest"].AsFloat(float.NaN) : float.NaN;
             float spreadRate = attrs != null ? attrs["ecologySpreadRate"].AsFloat(float.NaN) : float.NaN;
+            string species = null;
+            int sameSpacing = -1;
+            int otherSpacing = -1;
+            Dictionary<string, int> spacingFrom = null;
 
-            if (block.Variant != null
-                && block.Variant.TryGetValue("flower", out string species)
-                && WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
+            if (block.Variant != null && block.Variant.TryGetValue("flower", out species))
             {
-                if (float.IsNaN(minTemp)) minTemp = ecology.MinTemp;
-                if (float.IsNaN(maxTemp)) maxTemp = ecology.MaxTemp;
-                if (float.IsNaN(minRain)) minRain = ecology.MinRain;
-                if (float.IsNaN(maxRain)) maxRain = ecology.MaxRain;
-                if (float.IsNaN(minForest)) minForest = ecology.MinForest;
-                if (float.IsNaN(maxForest)) maxForest = ecology.MaxForest;
-                if (float.IsNaN(spreadRate)) spreadRate = ecology.SpreadRate;
+                if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
+                {
+                    if (float.IsNaN(minTemp)) minTemp = ecology.MinTemp;
+                    if (float.IsNaN(maxTemp)) maxTemp = ecology.MaxTemp;
+                    if (float.IsNaN(minRain)) minRain = ecology.MinRain;
+                    if (float.IsNaN(maxRain)) maxRain = ecology.MaxRain;
+                    if (float.IsNaN(minForest)) minForest = ecology.MinForest;
+                    if (float.IsNaN(maxForest)) maxForest = ecology.MaxForest;
+                    if (float.IsNaN(spreadRate)) spreadRate = ecology.SpreadRate;
+                }
+
+                if (WildFlowerSpacing.TryGet(species, out WildFlowerSpacing.Profile spacing))
+                {
+                    sameSpacing = spacing.SameSpecies;
+                    otherSpacing = spacing.OtherSpecies;
+                    if (spacing.FromSpecies != null && spacing.FromSpecies.Count > 0)
+                    {
+                        spacingFrom = new Dictionary<string, int>(spacing.FromSpecies);
+                    }
+                }
+            }
+
+            if (attrs != null)
+            {
+                int attrSame = attrs["ecologySameSpeciesSpacing"].AsInt(-1);
+                if (attrSame >= 0) sameSpacing = attrSame;
+                int attrOther = attrs["ecologyOtherSpeciesSpacing"].AsInt(-1);
+                if (attrOther >= 0) otherSpacing = attrOther;
             }
 
             if (float.IsNaN(minTemp)) minTemp = 10f;
@@ -52,6 +128,7 @@ namespace WildFarming.Ecosystem
 
             return new PlantRequirements
             {
+                Species = species,
                 MinTemp = minTemp,
                 MaxTemp = maxTemp,
                 MinRain = minRain,
@@ -59,6 +136,9 @@ namespace WildFarming.Ecosystem
                 MinForest = minForest,
                 MaxForest = maxForest,
                 SpreadRate = spreadRate,
+                SameSpeciesSpacing = sameSpacing < 0 ? 0 : sameSpacing,
+                OtherSpeciesSpacing = otherSpacing < 0 ? 0 : otherSpacing,
+                SpacingFromSpecies = spacingFrom,
                 MinFertility = attrs != null ? attrs["minFertility"].AsInt(100) : 100,
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
             };

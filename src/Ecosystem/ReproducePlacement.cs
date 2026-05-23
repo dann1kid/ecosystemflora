@@ -108,6 +108,8 @@ namespace WildFarming.Ecosystem
                     float fitness = SuitabilityEvaluator.ReproduceFitness(requirements, ctx);
                     if (fitness < minFitness) continue;
 
+                    if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
+
                     candidates.Add(new SpreadCandidate(plantPos.Copy(), fitness));
                 }
             }
