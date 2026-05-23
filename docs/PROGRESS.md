@@ -116,7 +116,7 @@ catmint, cornflower, forgetmenot, edelweiss, heather, horsetail, orangemallow, w
 | `9f8db0f` | Knife recipes fix |
 | `b1d5978` | Vanilla propagate system |
 | `b04c7c2` | Optimization, all 20 flowers, chunk queue |
-| *(следующий)* | Ecosystem v1: participants, rain/forest, spread rates, candidate pool |
+| `bacb506` | Ecosystem v1: participants, rain/forest, spread rates, candidate pool |
 
 ---
 
