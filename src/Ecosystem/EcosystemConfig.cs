@@ -4,6 +4,12 @@ namespace WildFarming.Ecosystem
     {
         public static EcosystemConfig Loaded { get; set; } = new EcosystemConfig();
 
+        /// <summary>
+        /// Spread tuning bundle: <c>natural</c>, <c>lush</c>, <c>sparse</c>, or <c>custom</c> (manual fields only).
+        /// Applied on server start when not <c>custom</c>.
+        /// </summary>
+        public string BalancePreset { get; set; } = EcosystemBalancePresets.Natural;
+
         public bool EcosystemEnabled { get; set; } = true;
 
         public bool HarshWildPlants { get; set; } = true;

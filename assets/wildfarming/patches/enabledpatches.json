@@ -24,6 +24,12 @@
 		"value": "EcosystemPlant"
 	},
 	{
+		"file": "game:blocktypes/plant/tallgrass.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
+	},
+	{
 		"file": "game:blocktypes/plant/reedpapyrus.json",
 		"op": "add",
 		"path": "/entityClass",

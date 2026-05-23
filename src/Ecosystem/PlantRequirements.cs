@@ -157,6 +157,23 @@ namespace WildFarming.Ecosystem
                 minGroundFertility = fern.Soil.MinBlockFertility;
                 maxGroundFertility = fern.Soil.MaxBlockFertility;
             }
+            else if (!string.IsNullOrEmpty(species) && WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = grass.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = grass.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = grass.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = grass.MaxRain;
+                if (float.IsNaN(minForest)) minForest = grass.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = grass.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = grass.SpreadRate;
+                sameSpacing = grass.SameSpeciesSpacing;
+                otherSpacing = grass.OtherSpeciesSpacing;
+                minSunlight = grass.MinSunlight;
+                allowedSoils = grass.Soil.Allowed;
+                minGroundFertility = grass.Soil.MinBlockFertility;
+                maxGroundFertility = grass.Soil.MaxBlockFertility;
+            }
             else if (!string.IsNullOrEmpty(species) && WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berry))
             {
                 habitat = EcologyHabitat.Terrestrial;

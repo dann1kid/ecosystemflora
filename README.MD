@@ -4,7 +4,7 @@ Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainf
 
 **Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
 
-**Стадия:** `Ecosystem v1.1` (`2.2.0-ecosystem-v1.1`) — flowers, aquatic flora, spacing, calendar spread.
+**Стадия:** `Ecosystem v1.2` (`2.2.0-ecosystem-v1.2`) — flowers, tallgrass, aquatic flora, balance presets, drygrass drops.
 
 **Build:** `dotnet build` → `bin/Debug/Mods/wildfarming/` (копируется в `Mods\wildfarming`, если клиент закрыт).
 
@@ -26,7 +26,8 @@ Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crow
 
 | Group | Examples |
 |-------|----------|
-| Flowers | 20 × `game:flower-*` + lupine |
+| Flowers | 20 × `game:flower-*` + lupine (knife/scythe → `drygrass`) |
+| Meadow grass | `game:tallgrass-*` (matrix under flowers) |
 | Reeds | coopersreed (рогоз), papyrus (камыш) — on `muddygravel`, shallow water rules |
 | Surface | waterlily |
 | Underwater | water crowfoot (водяной лютик) — multi-block column |
@@ -37,7 +38,13 @@ Details and playtest checklist: [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 `%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
 
-Suggested natural play: `ReproduceAttemptsPerYear: 36–48`, `ReproduceChance: 0.35`, `ReproduceDebug: false`.
+Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread tuning is applied on server start. Use `custom` to keep manual numbers only.
+
+| Preset | Attempts/year | Chance | MinFitness |
+|--------|---------------|--------|------------|
+| natural | 42 | 0.35 | 0.5 |
+| lush | 60 | 0.45 | 0.4 |
+| sparse | 24 | 0.2 | 0.65 |
 
 ## Legacy code
 

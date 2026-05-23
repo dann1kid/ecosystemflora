@@ -45,6 +45,7 @@ namespace WildFarming.Ecosystem
             ["orangemallow"] = new Profile(SoilKind.LowFert | SoilKind.Sand | SoilKind.MediumFert, 80, 150),
             ["edelweiss"] = new Profile(SoilKind.LowFert | SoilKind.Gravel | SoilKind.MediumFert | SoilKind.ForestFloor, 80, 200),
             ["goldenpoppy"] = new Profile(SoilKind.LowFert | SoilKind.Sand | SoilKind.MediumFert, 80, 180),
+            ["tallgrass"] = new Profile(SoilKindSets.Meadow | SoilKind.LowFert | SoilKind.ForestFloor, 80, 0),
 
             // Trees — forest soils, not clay/sand/barren
             ["birch"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert | SoilKind.MediumFert, 100, 0),

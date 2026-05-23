@@ -30,12 +30,34 @@ namespace WildFarming.Ecosystem
             try
             {
                 EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("wildfarming-ecosystem.json");
-                if (fromDisk != null) EcosystemConfig.Loaded = fromDisk;
-                else api.StoreModConfig(EcosystemConfig.Loaded, "wildfarming-ecosystem.json");
+                if (fromDisk != null)
+                {
+                    EcosystemConfig.Loaded = fromDisk;
+                    if (EcosystemBalancePresets.IsKnownPreset(fromDisk.BalancePreset))
+                    {
+                        EcosystemBalancePresets.Apply(EcosystemConfig.Loaded, fromDisk.BalancePreset);
+                    }
+                }
+                else
+                {
+                    EcosystemConfig cfg = EcosystemConfig.Loaded;
+                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
+                    {
+                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+                    }
+
+                    api.StoreModConfig(cfg, "wildfarming-ecosystem.json");
+                }
             }
             catch
             {
-                api.StoreModConfig(EcosystemConfig.Loaded, "wildfarming-ecosystem.json");
+                EcosystemConfig cfg = EcosystemConfig.Loaded;
+                if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
+                {
+                    EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+                }
+
+                api.StoreModConfig(cfg, "wildfarming-ecosystem.json");
             }
         }
 
@@ -63,6 +85,7 @@ namespace WildFarming.Ecosystem
             WildTreeEcology.LogMissingWoods(api);
             WildBerryEcology.LogMissingTypes(api);
             WildFernEcology.LogMissingSpecies(api);
+            WildTallgrassEcology.LogMissingSpecies(api);
         }
 
         void TryLogCalendarDebugOnce()

@@ -47,6 +47,12 @@ namespace WildFarming.Ecosystem
 
             if (path == "tallfern") return "tallfern";
 
+            if (path.StartsWith("tallgrass-"))
+            {
+                if (path.StartsWith("tallgrass-eaten")) return null;
+                return "tallgrass";
+            }
+
             if (path.StartsWith("fern-"))
             {
                 string fernType = path.Substring("fern-".Length);
