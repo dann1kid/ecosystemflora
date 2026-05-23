@@ -11,6 +11,13 @@ namespace WildFarming.Ecosystem
 
         public int MaxWaterDepth { get; set; } = 1;
 
+        public int MinWaterDepth { get; set; }
+
+        public int VerticalBlocks { get; set; } = 1;
+
+        /// <summary>If &gt;= 0, in-water reeds need exactly this many water blocks above muddy gravel.</summary>
+        public int ExactWaterDepth { get; set; } = -1;
+
         public float MinTemp { get; set; } = -5f;
         public float MaxTemp { get; set; } = 50f;
         public float MinRain { get; set; } = 0f;
@@ -88,6 +95,9 @@ namespace WildFarming.Ecosystem
             string species = PlantCodeHelper.GetEcologySpecies(block.Code);
             EcologyHabitat habitat = EcologyHabitat.Terrestrial;
             int maxWaterDepth = 0;
+            int minWaterDepth = 0;
+            int verticalBlocks = 1;
+            int exactWaterDepth = -1;
             int sameSpacing = -1;
             int otherSpacing = -1;
             Dictionary<string, int> spacingFrom = null;
@@ -97,6 +107,9 @@ namespace WildFarming.Ecosystem
             {
                 habitat = aquatic.Habitat;
                 maxWaterDepth = aquatic.MaxWaterDepth;
+                minWaterDepth = aquatic.MinWaterDepth;
+                verticalBlocks = aquatic.VerticalBlocks;
+                exactWaterDepth = aquatic.ExactWaterDepth;
                 if (float.IsNaN(minTemp)) minTemp = aquatic.MinTemp;
                 if (float.IsNaN(maxTemp)) maxTemp = aquatic.MaxTemp;
                 if (float.IsNaN(minRain)) minRain = aquatic.MinRain;
@@ -150,6 +163,9 @@ namespace WildFarming.Ecosystem
                 Species = species,
                 Habitat = habitat,
                 MaxWaterDepth = maxWaterDepth > 0 ? maxWaterDepth : 1,
+                MinWaterDepth = minWaterDepth,
+                VerticalBlocks = verticalBlocks > 0 ? verticalBlocks : 1,
+                ExactWaterDepth = exactWaterDepth,
                 MinTemp = minTemp,
                 MaxTemp = maxTemp,
                 MinRain = minRain,

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Ecology for shallow aquatic plants (worldgen near-water / waterlily patches).</summary>
+    /// <summary>Ecology for shallow aquatic plants (worldgen near-water / underwater patches).</summary>
     internal static class WildAquaticEcology
     {
         public readonly struct Profile
@@ -14,6 +14,11 @@ namespace WildFarming.Ecosystem
             public readonly float MaxRain;
             public readonly float SpreadRate;
             public readonly int MaxWaterDepth;
+            public readonly int MinWaterDepth;
+            /// <summary>Blocks occupied upward from base (papyrus = 2).</summary>
+            public readonly int VerticalBlocks;
+            /// <summary>If &gt;= 0, require exactly this many water blocks above substrate when standing in water.</summary>
+            public readonly int ExactWaterDepth;
             public readonly int SameSpeciesSpacing;
             public readonly int OtherSpeciesSpacing;
 
@@ -24,7 +29,10 @@ namespace WildFarming.Ecosystem
                 float spreadRate,
                 int maxWaterDepth,
                 int sameSpeciesSpacing,
-                int otherSpeciesSpacing)
+                int otherSpeciesSpacing,
+                int minWaterDepth = 0,
+                int verticalBlocks = 1,
+                int exactWaterDepth = -1)
             {
                 Habitat = habitat;
                 MinTemp = minTemp;
@@ -33,6 +41,9 @@ namespace WildFarming.Ecosystem
                 MaxRain = maxRain;
                 SpreadRate = spreadRate;
                 MaxWaterDepth = maxWaterDepth;
+                MinWaterDepth = minWaterDepth;
+                VerticalBlocks = verticalBlocks;
+                ExactWaterDepth = exactWaterDepth;
                 SameSpeciesSpacing = sameSpeciesSpacing;
                 OtherSpeciesSpacing = otherSpeciesSpacing;
             }
@@ -40,12 +51,12 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Profile> BySpecies = new Dictionary<string, Profile>
         {
-            // Cooper's reed / cattail (рогоз) — NearWater, large patches
             ["coopersreed"] = new Profile(EcologyHabitat.ReedNearWater, 3, 23, 0.4f, 1f, 2.2f, 1, 0, 1),
-            // Papyrus reed (камыш) — hot climate NearWater
-            ["papyrus"] = new Profile(EcologyHabitat.ReedNearWater, 24, 40, 0.33f, 1f, 1.8f, 1, 0, 1),
-            // Water lily (кувшинка)
+            // Papyrus: 2 blocks tall, vanilla maxWaterDepth 1 — one water block above muddy gravel
+            ["papyrus"] = new Profile(EcologyHabitat.ReedNearWater, 24, 40, 0.33f, 1f, 1.8f, 1, 0, 1, exactWaterDepth: 1, verticalBlocks: 2),
             ["waterlily"] = new Profile(EcologyHabitat.WaterSurface, 10, 40, 0.5f, 1f, 1.5f, 2, 1, 1),
+            // Water crowfoot (водяной лютик): section column + top/tip
+            ["watercrowfoot"] = new Profile(EcologyHabitat.UnderwaterColumn, -10, 40, 0.5f, 1f, 1.4f, 8, 1, 1, minWaterDepth: 2),
         };
 
         public static bool TryGet(string species, out Profile profile)

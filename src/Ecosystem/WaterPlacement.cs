@@ -20,9 +20,14 @@ namespace WildFarming.Ecosystem
 
             if (requirements.Habitat == EcologyHabitat.ReedNearWater)
             {
-                int substrateDepth = System.Math.Max(4, requirements.MaxWaterDepth + 3);
                 return ReedPlacement.TryFindPlantPos(
-                    acc, origin, dx, dz, verticalSearch, substrateDepth, out plantPos, out failureReason);
+                    acc, origin, dx, dz, verticalSearch, requirements, out plantPos, out failureReason);
+            }
+
+            if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
+                return CrowfootPlacement.TryFindPlantPos(
+                    acc, origin, dx, dz, verticalSearch, requirements, out plantPos, out failureReason);
             }
 
             return TryFindWaterLilyPos(acc, origin, dx, dz, verticalSearch, out plantPos, out failureReason);

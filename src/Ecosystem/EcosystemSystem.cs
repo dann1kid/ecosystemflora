@@ -125,9 +125,13 @@ namespace WildFarming.Ecosystem
 
         public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false)
         {
-            if (participant == null) return;
+            if (participant == null || api == null) return;
+
+            BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(
+                api.World.BlockAccessor, origin, participant.BlockCode);
+
             RegisterReproducer(
-                origin,
+                anchor,
                 participant.SpreadBlockCode,
                 participant.MatureBlockCode,
                 participant.Requirements,
@@ -234,7 +238,8 @@ namespace WildFarming.Ecosystem
                     Block block = api.World.GetBlock(hit.BlockCode);
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
 
-                    RegisterReproducer(hit.Pos, participant, spawnBurst: false);
+                    BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, hit.Pos, hit.BlockCode);
+                    RegisterReproducer(anchor, participant, spawnBurst: false);
                     registrationsLeft--;
                     if (registrationsLeft <= 0) break;
                 }
@@ -287,9 +292,12 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
+                api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
+
             int spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
                 api,
-                entry.Origin,
+                spreadOrigin,
                 spreadBlock,
                 entry.Requirements,
                 cfg.MinFitness,

@@ -22,5 +22,11 @@
 		"op": "add",
 		"path": "/entityClass",
 		"value": "EcosystemPlant"
+	},
+	{
+		"file": "game:blocktypes/plant/aquatic/watercrowfoot.json",
+		"op": "add",
+		"path": "/entityClass",
+		"value": "EcosystemPlant"
 	}
 ]

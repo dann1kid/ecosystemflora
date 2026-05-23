@@ -14,6 +14,18 @@ namespace WildFarming.Ecosystem
             return block.IsLiquid();
         }
 
+        public static bool IsWater(Block block)
+        {
+            if (!IsFluid(block)) return false;
+            string code = block.Code?.Path;
+            return code != null && code.StartsWith("water");
+        }
+
+        public static bool IsWaterAt(IBlockAccessor acc, BlockPos pos)
+        {
+            return IsWater(acc.GetBlock(pos)) || IsWater(acc.GetBlock(pos, BlockLayersAccess.Fluid));
+        }
+
         public static bool TouchesFluid(IBlockAccessor acc, BlockPos plantPos)
         {
             Block space = acc.GetBlock(plantPos);
@@ -27,50 +39,11 @@ namespace WildFarming.Ecosystem
                 || IsFluid(fluidBelow);
         }
 
-        /// <summary>Plant cell itself is water/fluid (invalid for reeds on shore).</summary>
-        public static bool IsSubmergedPlantCell(IBlockAccessor acc, BlockPos plantPos)
+        public static bool IsPlantInWater(IBlockAccessor acc, BlockPos plantPos)
         {
-            if (IsFluid(acc.GetBlock(plantPos))) return true;
-            if (IsFluid(acc.GetBlock(plantPos, BlockLayersAccess.Fluid))) return true;
-            return false;
+            return IsWaterAt(acc, plantPos);
         }
 
-        /// <summary>Water within horizontal radius (same Y or one below), for NearWater reeds.</summary>
-        public static bool HasAdjacentWater(IBlockAccessor acc, BlockPos plantPos, int horizontalRadius)
-        {
-            if (horizontalRadius < 1) horizontalRadius = 1;
-
-            for (int dx = -horizontalRadius; dx <= horizontalRadius; dx++)
-            {
-                for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++)
-                {
-                    if (dx == 0 && dz == 0) continue;
-
-                    for (int dy = 0; dy >= -1; dy--)
-                    {
-                        BlockPos check = new BlockPos(plantPos.X + dx, plantPos.Y + dy, plantPos.Z + dz);
-                        if (IsFluid(acc.GetBlock(check, BlockLayersAccess.Fluid))) return true;
-                        if (IsFluid(acc.GetBlock(check))) return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>Water lily: fluid under the cell, air/replaceable at plant Y.</summary>
-        public static bool HasWaterSurfaceSupport(IBlockAccessor acc, BlockPos plantPos)
-        {
-            if (IsSubmergedPlantCell(acc, plantPos)) return false;
-
-            Block below = acc.GetBlock(plantPos.DownCopy());
-            Block fluidBelow = acc.GetBlock(plantPos.DownCopy(), BlockLayersAccess.Fluid);
-            if (IsFluid(fluidBelow) || IsFluid(below)) return true;
-
-            return IsFluid(acc.GetBlock(plantPos, BlockLayersAccess.Fluid));
-        }
-
-        /// <summary>Илистый гравий (game:muddygravel) — дно озёр/берегов в worldgen.</summary>
         public static bool IsMuddyGravel(Block block)
         {
             string path = block?.Code?.Path;
@@ -78,28 +51,229 @@ namespace WildFarming.Ecosystem
             return path == "muddygravel" || path.StartsWith("muddygravel");
         }
 
-        /// <summary>Scan downward through water/air/plants for lake-bed muddy gravel.</summary>
-        public static bool HasReedSiltSubstrate(IBlockAccessor acc, BlockPos plantPos, int maxDepth)
+        public static bool IsFertileSubstrate(Block block)
         {
-            if (maxDepth < 1) maxDepth = 1;
+            if (block == null || block.Id == 0) return false;
+            if (IsMuddyGravel(block)) return true;
+            return block.Fertility > 0 && block.SideSolid[BlockFacing.UP.Index];
+        }
+
+        /// <summary>
+        /// A single water column cell (not shore fluid on gravel without a water block).
+        /// Bottom = muddy gravel, middle = this cell, top = air/surface.
+        /// </summary>
+        public static bool IsDedicatedWaterCell(IBlockAccessor acc, BlockPos pos)
+        {
+            Block solid = acc.GetBlock(pos);
+            if (IsMuddyGravel(solid) || PlantCodeHelper.IsReedBlock(solid)) return false;
+
+            if (IsWater(solid)) return true;
+
+            if (solid.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable)
+            {
+                return IsWater(acc.GetBlock(pos, BlockLayersAccess.Fluid));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Shore: land reed on gravel (0 water layers). Shallow: exactly 1 water cell above gravel, reed inside it.
+        /// </summary>
+        public static bool IsValidReedPlantSite(IBlockAccessor acc, BlockPos plantPos, PlantRequirements req, out string reason)
+        {
+            reason = null;
+
+            Block space = acc.GetBlock(plantPos);
+            if (PlantCodeHelper.IsReedBlock(space))
+            {
+                reason = "Cell already has reed";
+                return false;
+            }
+
+            if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable && !IsDedicatedWaterCell(acc, plantPos))
+            {
+                reason = "Space blocked";
+                return false;
+            }
+
+            BlockPos gravelPos = plantPos.DownCopy();
+            if (!IsMuddyGravel(acc.GetBlock(gravelPos)))
+            {
+                reason = "Water block must sit directly on muddy gravel";
+                return false;
+            }
+
+            int waterLayers = CountWaterLayersAboveGravel(acc, gravelPos);
+            if (waterLayers < 0)
+            {
+                reason = "Reed already on gravel column";
+                return false;
+            }
+
+            int maxDepth = req.MaxWaterDepth > 0 ? req.MaxWaterDepth : 1;
+            if (waterLayers > maxDepth)
+            {
+                reason = "More than one water block between bottom and surface";
+                return false;
+            }
+
+            if (waterLayers == 1)
+            {
+                if (!IsDedicatedWaterCell(acc, plantPos))
+                {
+                    reason = "Reed must be placed inside the water block";
+                    return false;
+                }
+
+                if (IsDedicatedWaterCell(acc, plantPos.UpCopy()))
+                {
+                    reason = "Second water block above (column too deep)";
+                    return false;
+                }
+            }
+            else if (waterLayers == 0)
+            {
+                if (IsDedicatedWaterCell(acc, plantPos))
+                {
+                    reason = "Single water layer required for submerged reed";
+                    return false;
+                }
+            }
+
+            if (req.ExactWaterDepth >= 0 && waterLayers != req.ExactWaterDepth)
+            {
+                reason = "Need exactly " + req.ExactWaterDepth + " water block(s) above gravel";
+                return false;
+            }
+
+            if (!HasVerticalClearance(acc, plantPos, req.VerticalBlocks))
+            {
+                reason = "Not enough vertical space";
+                return false;
+            }
+
+            if (HasReedInSameColumn(acc, plantPos, req.Species))
+            {
+                reason = "Another reed already in this column";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>Contiguous dedicated water cells directly above gravel.</summary>
+        public static int CountWaterLayersAboveGravel(IBlockAccessor acc, BlockPos gravelPos)
+        {
+            if (!IsMuddyGravel(acc.GetBlock(gravelPos))) return -1;
+
+            int count = 0;
+            BlockPos scan = gravelPos.UpCopy();
+            for (int i = 0; i < 6; i++)
+            {
+                if (PlantCodeHelper.IsReedBlock(acc.GetBlock(scan))) return -1;
+
+                if (IsDedicatedWaterCell(acc, scan))
+                {
+                    count++;
+                    scan.Up();
+                    continue;
+                }
+
+                return count;
+            }
+
+            return count;
+        }
+
+        public static bool HasReedInSameColumn(IBlockAccessor acc, BlockPos plantPos, string species)
+        {
+            if (string.IsNullOrEmpty(species)) return false;
+
+            if (IsSameReedSpecies(acc.GetBlock(plantPos.UpCopy()), species)) return true;
+            if (IsSameReedSpecies(acc.GetBlock(plantPos.DownCopy()), species)) return true;
 
             BlockPos scan = plantPos.DownCopy();
-            for (int i = 0; i < maxDepth; i++)
+            for (int i = 0; i < 6; i++)
             {
                 Block block = acc.GetBlock(scan);
-                if (IsMuddyGravel(block)) return true;
-                if (!CanScanThroughForReedSubstrate(block)) return false;
+                if (IsMuddyGravel(block)) return false;
+                if (IsSameReedSpecies(block, species)) return true;
+                if (!IsWaterAt(acc, scan) && block.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
+                {
+                    return false;
+                }
+
                 scan.Down();
             }
 
             return false;
         }
 
-        static bool CanScanThroughForReedSubstrate(Block block)
+        static bool IsSameReedSpecies(Block block, string species)
         {
-            if (block == null || block.Id == 0) return true;
-            if (IsFluid(block)) return true;
-            if (block.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable) return true;
+            if (block == null || block.Id == 0) return false;
+            return PlantCodeHelper.GetEcologySpecies(block.Code) == species;
+        }
+
+        public static bool HasReedSiltSubstrate(IBlockAccessor acc, BlockPos plantPos, int maxDepth)
+        {
+            return IsMuddyGravel(acc.GetBlock(plantPos.DownCopy()));
+        }
+
+        public static bool MeetsReedWaterDepth(PlantRequirements req, IBlockAccessor acc, BlockPos plantPos)
+        {
+            return IsValidReedPlantSite(acc, plantPos, req, out _);
+        }
+
+        public static bool HasVerticalClearance(IBlockAccessor acc, BlockPos basePos, int verticalBlocks)
+        {
+            if (verticalBlocks <= 1) return true;
+
+            for (int i = 1; i < verticalBlocks; i++)
+            {
+                Block above = acc.GetBlock(basePos.UpCopy(i));
+                if (above.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable) continue;
+                if (IsFluid(above)) continue;
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool HasWaterSurfaceSupport(IBlockAccessor acc, BlockPos plantPos)
+        {
+            Block below = acc.GetBlock(plantPos.DownCopy());
+            Block fluidBelow = acc.GetBlock(plantPos.DownCopy(), BlockLayersAccess.Fluid);
+            if (IsFluid(fluidBelow) || IsFluid(below)) return true;
+            return IsFluid(acc.GetBlock(plantPos, BlockLayersAccess.Fluid));
+        }
+
+        public static bool TryMeasureUnderwaterColumnDepth(IBlockAccessor acc, BlockPos basePos, out int waterDepth, out bool hasSubstrate)
+        {
+            waterDepth = 0;
+            hasSubstrate = false;
+
+            BlockPos scan = basePos.DownCopy();
+            for (int i = 0; i < 12; i++)
+            {
+                Block block = acc.GetBlock(scan);
+                if (IsFertileSubstrate(block))
+                {
+                    hasSubstrate = true;
+                    return true;
+                }
+
+                if (IsFluid(block) || IsFluid(acc.GetBlock(scan, BlockLayersAccess.Fluid)))
+                {
+                    waterDepth++;
+                    scan.Down();
+                    continue;
+                }
+
+                return false;
+            }
+
             return false;
         }
     }

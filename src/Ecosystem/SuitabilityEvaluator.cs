@@ -78,7 +78,9 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return 0f;
 
-            if (req.Habitat == EcologyHabitat.WaterSurface || req.Habitat == EcologyHabitat.ReedNearWater)
+            if (req.Habitat == EcologyHabitat.WaterSurface
+                || req.Habitat == EcologyHabitat.ReedNearWater
+                || req.Habitat == EcologyHabitat.UnderwaterColumn)
             {
                 if (!ctx.HasShallowWater) return 0f;
             }
@@ -112,6 +114,10 @@ namespace WildFarming.Ecosystem
             else if (req.Habitat == EcologyHabitat.ReedNearWater)
             {
                 if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!ctx.HasShallowWater) return false;
+            }
+            else if (req.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
                 if (!ctx.HasShallowWater) return false;
             }
             else
@@ -151,10 +157,20 @@ namespace WildFarming.Ecosystem
                     return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
                 }
 
-                if (!ctx.HasShallowWater) return "No muddy gravel below.";
+                if (!ctx.HasShallowWater) return "No muddy gravel or wrong water depth.";
 
                 string rainForestReed = DescribeRainForestFailure(req, ctx);
                 if (rainForestReed != null) return rainForestReed;
+
+                return null;
+            }
+
+            if (req.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
+                if (!ctx.HasShallowWater) return "Water column too shallow/deep or no bed.";
+
+                string rainForestCrowfoot = DescribeRainForestFailure(req, ctx);
+                if (rainForestCrowfoot != null) return rainForestCrowfoot;
 
                 return null;
             }

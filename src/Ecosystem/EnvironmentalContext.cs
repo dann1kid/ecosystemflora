@@ -82,10 +82,17 @@ namespace WildFarming.Ecosystem
             switch (requirements.Habitat)
             {
                 case EcologyHabitat.ReedNearWater:
-                    int depth = System.Math.Max(4, (requirements.MaxWaterDepth > 0 ? requirements.MaxWaterDepth : 1) + 3);
-                    return BlockFluidHelper.HasReedSiltSubstrate(acc, plantPos, depth);
+                    return BlockFluidHelper.IsValidReedPlantSite(acc, plantPos, requirements, out _);
                 case EcologyHabitat.WaterSurface:
                     return BlockFluidHelper.HasWaterSurfaceSupport(acc, plantPos);
+                case EcologyHabitat.UnderwaterColumn:
+                    if (!BlockFluidHelper.TryMeasureUnderwaterColumnDepth(acc, plantPos, out int waterDepth, out bool hasSubstrate))
+                    {
+                        return false;
+                    }
+
+                    int minDepth = requirements.MinWaterDepth > 0 ? requirements.MinWaterDepth : 2;
+                    return hasSubstrate && waterDepth >= minDepth && waterDepth <= requirements.MaxWaterDepth;
                 default:
                     return false;
             }

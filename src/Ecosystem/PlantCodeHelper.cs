@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
@@ -35,8 +36,42 @@ namespace WildFarming.Ecosystem
             if (path.StartsWith("tallplant-coopersreed")) return "coopersreed";
             if (path.StartsWith("tallplant-papyrus")) return "papyrus";
             if (path == "waterlily") return "waterlily";
+            if (path.StartsWith("aquatic-watercrowfoot")) return "watercrowfoot";
 
             return null;
+        }
+
+        public static bool IsReedBlock(Block block)
+        {
+            string species = GetEcologySpecies(block?.Code);
+            return species == "coopersreed" || species == "papyrus";
+        }
+
+        public static bool IsWatercrowfoot(AssetLocation code)
+        {
+            return GetEcologySpecies(code) == "watercrowfoot";
+        }
+
+        /// <summary>Lowest block of a water-crowfoot column (for reproduce origin).</summary>
+        public static BlockPos GetColumnBase(IBlockAccessor acc, BlockPos pos)
+        {
+            BlockPos scan = pos.Copy();
+            while (IsWatercrowfoot(acc.GetBlock(scan.DownCopy())?.Code))
+            {
+                scan.Down();
+            }
+
+            return scan;
+        }
+
+        public static BlockPos GetReproduceAnchor(IBlockAccessor acc, BlockPos pos, AssetLocation blockCode)
+        {
+            if (GetEcologySpecies(blockCode) == "watercrowfoot")
+            {
+                return GetColumnBase(acc, pos);
+            }
+
+            return pos.Copy();
         }
 
         public static EcologyHabitat GetEcologyHabitat(AssetLocation blockCode)
@@ -54,8 +89,29 @@ namespace WildFarming.Ecosystem
         public static AssetLocation SpreadBlockCode(Block block)
         {
             if (block?.Code == null) return null;
-            if (IsEcologyPlant(block)) return block.Code;
-            return null;
+            if (!IsEcologyPlant(block)) return null;
+
+            if (GetEcologySpecies(block.Code) == "watercrowfoot")
+            {
+                return new AssetLocation("game:aquatic-watercrowfoot-section");
+            }
+
+            return block.Code;
+        }
+
+        /// <summary>Pick land-normal vs water-normal from target cell (vanilla habitat).</summary>
+        public static Block ResolveReedSpreadBlock(ICoreAPI api, BlockPos plantPos, Block parentBlock)
+        {
+            string species = GetEcologySpecies(parentBlock?.Code);
+            if (species != "coopersreed" && species != "papyrus") return parentBlock;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            string habitat = BlockFluidHelper.IsDedicatedWaterCell(acc, plantPos) ? "water" : "land";
+            string path = parentBlock.Code.Path ?? "";
+            string cover = path.Contains("-snow") ? "snow" : "free";
+            string code = "tallplant-" + species + "-" + habitat + "-normal-" + cover;
+            Block block = api.World.GetBlock(new AssetLocation("game:" + code));
+            return block ?? parentBlock;
         }
 
         public static bool SameEcologySpecies(AssetLocation a, AssetLocation b)

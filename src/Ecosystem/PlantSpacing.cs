@@ -42,6 +42,16 @@ namespace WildFarming.Ecosystem
                         if (required <= 0) continue;
 
                         int dist = HorizontalChebyshev(candidatePos, checkPos);
+                        bool sameColumn = candidatePos.X == checkPos.X && candidatePos.Z == checkPos.Z;
+
+                        // Reeds must not stack vertically (SameSpeciesSpacing 0 only allows horizontal clumps).
+                        if (sameColumn && otherSpecies == requirements.Species
+                            && PlantCodeHelper.IsReedBlock(block))
+                        {
+                            failureReason = "Reed already in column at y=" + checkPos.Y;
+                            return false;
+                        }
+
                         if (dist < required)
                         {
                             failureReason = "Too close to " + otherSpecies

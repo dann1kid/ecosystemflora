@@ -56,7 +56,7 @@ namespace WildFarming.Ecosystem
                 SpreadCandidate chosen = remaining[index];
                 remaining.RemoveAt(index);
 
-                if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock))
+                if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock, requirements, origin))
                 {
                     placed++;
                     if (logFailures)
@@ -97,8 +97,7 @@ namespace WildFarming.Ecosystem
 
                     bool foundPos;
                     BlockPos plantPos;
-                    if (requirements.Habitat == EcologyHabitat.ReedNearWater
-                        || requirements.Habitat == EcologyHabitat.WaterSurface)
+                    if (requirements.Habitat != EcologyHabitat.Terrestrial)
                     {
                         foundPos = WaterPlacement.TryFindPlantPos(
                             acc, origin, dx, dz, verticalSearch, requirements, out plantPos, out _);
@@ -151,15 +150,39 @@ namespace WildFarming.Ecosystem
             return candidates.Count - 1;
         }
 
-        static bool PlaceSpreadBlock(ICoreAPI api, BlockPos plantPos, Block spreadBlock)
+        static bool PlaceSpreadBlock(
+            ICoreAPI api,
+            BlockPos plantPos,
+            Block spreadBlock,
+            PlantRequirements requirements,
+            BlockPos parentOrigin)
         {
-            IBlockAccessor acc = api.World.BlockAccessor;
+            if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
+                IBlockAccessor acc = api.World.BlockAccessor;
+                int height = CrowfootColumnPlacer.MeasureColumnHeight(acc, parentOrigin);
+                if (height < 2) height = 3;
+
+                BlockFluidHelper.TryMeasureUnderwaterColumnDepth(acc, plantPos, out int waterDepth, out _);
+                if (waterDepth > 0 && waterDepth < height) height = waterDepth;
+
+                bool preferFlower = spreadBlock.Code?.Path?.Contains("top") == true;
+                return CrowfootColumnPlacer.PlaceColumn(api, plantPos, height, preferFlower, api.World.Rand);
+            }
+
+            IBlockAccessor accessor = api.World.BlockAccessor;
+
+            if (requirements.Habitat == EcologyHabitat.ReedNearWater)
+            {
+                spreadBlock = PlantCodeHelper.ResolveReedSpreadBlock(api, plantPos, spreadBlock);
+            }
+
             ItemStack stack = new ItemStack(spreadBlock);
-            acc.SetBlock(spreadBlock.BlockId, plantPos, stack);
+            accessor.SetBlock(spreadBlock.BlockId, plantPos, stack);
 
-            if (acc.GetBlock(plantPos).Id != spreadBlock.Id) return false;
+            if (accessor.GetBlock(plantPos).Id != spreadBlock.Id) return false;
 
-            acc.MarkBlockDirty(plantPos);
+            accessor.MarkBlockDirty(plantPos);
             return true;
         }
     }
