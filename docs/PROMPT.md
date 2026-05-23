@@ -28,7 +28,9 @@ Habitat:
 
 Код: src/Ecosystem/, BlockEntity/EcosystemPlant.cs, assets/wildfarming/patches/enabledpatches.json.
 
-Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v1.1 — см. docs/PROGRESS.md.
+Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v1.1 — см. docs/PROGRESS.md (Roadmap / TODO).
+
+Ближайший backlog: tallgrass в экосистему; патч drygrass с цветов (нож); пресеты баланса. Mod DB — позже.
 
 Коммиты — только по запросу пользователя.
 ```
