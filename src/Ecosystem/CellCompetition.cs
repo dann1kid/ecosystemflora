@@ -23,6 +23,7 @@ namespace WildFarming.Ecosystem
 
             float fitness = SuitabilityEvaluator.ReproduceFitness(challenger, ctx);
             fitness = EcologySpreadFitness.ApplyContext(api, challenger, targetPos, fitness);
+            fitness = EcologySpreadFitness.ApplyNiche(api, challenger, targetPos, fitness);
             if (challenger.SpreadRate > 0f)
             {
                 fitness *= challenger.SpreadRate;
@@ -51,6 +52,7 @@ namespace WildFarming.Ecosystem
 
             float hold = SuitabilityEvaluator.ReproduceFitness(incumbent, ctx);
             hold = EcologySpreadFitness.ApplyContext(api, incumbent, targetPos, hold);
+            hold = EcologySpreadFitness.ApplyNiche(api, incumbent, targetPos, hold);
             if (incumbent.HoldStrength > 0f)
             {
                 hold *= incumbent.HoldStrength;

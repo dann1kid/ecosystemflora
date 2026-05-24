@@ -40,5 +40,8 @@
   "DisplacementHoldMargin": 1.25,
   "EnableStressDeath": true,
   "EnableSymbiosis": true,
-  "SymbiosisCascadeRadius": 4
+  "SymbiosisCascadeRadius": 4,
+  "UseNicheContext": true,
+  "NicheCacheHours": 12,
+  "NicheStressThreshold": 0.45
 }

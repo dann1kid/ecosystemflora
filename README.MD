@@ -62,6 +62,8 @@ Remove legacy keys if present: `UseDisturbedSuccession`, `ColonizerWindowDays`, 
 | `UseFloraContext` | true | Forest-edge fitness multipliers |
 | `PreferSpreadToEmptyCells` | true | Spread into empty cells before displacement |
 | `ApplyCrossHabitatSpacing` | false | Aquatic ignores terrestrial spacing (shore fix) |
+| `UseNicheContext` | true | Moisture + light niche multipliers (v2.2) |
+| `NicheStressThreshold` | 0.45 | Stress when niche multiplier below this |
 
 Logs: `Spread` / `Displaced` (not worldgen spawn). Use `BalancePreset: natural`, `ReproduceDebug: false` for normal play.
 

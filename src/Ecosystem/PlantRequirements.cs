@@ -52,6 +52,16 @@ namespace WildFarming.Ecosystem
         /// <summary>Incumbent defense when another species tries to displace (low = easy to overrun).</summary>
         public float HoldStrength { get; set; } = 1f;
 
+        /// <summary>When true, <see cref="WildSpeciesNiche"/> supplies moisture/light prefs.</summary>
+        public bool HasNicheProfile { get; set; }
+
+        public MoistureLevel PreferredMoisture { get; set; } = MoistureLevel.Mesic;
+
+        public LightLevel PreferredLight { get; set; } = LightLevel.Partial;
+
+        /// <summary>Multiplier when local niche matches species preference.</summary>
+        public float NicheBonus { get; set; } = 1f;
+
         /// <summary>Horizontal spread radius; 0 = use <see cref="EcosystemConfig.ReproduceRadius"/>.</summary>
         public int SpreadRadius { get; set; }
 
@@ -287,6 +297,7 @@ namespace WildFarming.Ecosystem
 
             WildPlantSoil.ApplyTo(requirements);
             WildSpeciesModifiers.ApplyTo(requirements);
+            WildSpeciesNiche.ApplyTo(requirements);
             return requirements;
         }
     }

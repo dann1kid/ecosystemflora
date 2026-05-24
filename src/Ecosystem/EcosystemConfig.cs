@@ -119,5 +119,14 @@ namespace WildFarming.Ecosystem
         public bool EnableSymbiosis { get; set; } = true;
 
         public int SymbiosisCascadeRadius { get; set; } = 4;
+
+        // --- Local niche (v2.2) ---
+
+        public bool UseNicheContext { get; set; } = true;
+
+        public double NicheCacheHours { get; set; } = 12;
+
+        /// <summary>Below this niche multiplier, stress checks count as failed survival.</summary>
+        public float NicheStressThreshold { get; set; } = 0.45f;
     }
 }

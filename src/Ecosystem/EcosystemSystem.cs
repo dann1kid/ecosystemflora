@@ -20,6 +20,7 @@ namespace WildFarming.Ecosystem
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         bool calendarDebugLogged;
         internal FloraContextSampler FloraContext { get; private set; }
+        internal NicheSampler Niche { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
 
@@ -76,6 +77,7 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
 
             FloraContext = new FloraContextSampler();
+            Niche = new NicheSampler();
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
@@ -147,6 +149,8 @@ namespace WildFarming.Ecosystem
             calendarDebugLogged = false;
             FloraContext?.Clear();
             FloraContext = null;
+            Niche?.Clear();
+            Niche = null;
             ColumnCache?.Clear();
             ColumnCache = null;
             activeChunkScratch.Clear();
@@ -163,6 +167,7 @@ namespace WildFarming.Ecosystem
         {
             if (pos == null) return;
             ColumnCache?.InvalidateAround(pos, 1);
+            Niche?.InvalidateAround(pos, 2);
         }
 
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
@@ -391,6 +396,14 @@ namespace WildFarming.Ecosystem
                         entry.FailedSurvivalChecks++;
                     }
                     else if (!CanSurviveAt(entry.Origin, req))
+                    {
+                        entry.FailedSurvivalChecks++;
+                    }
+                    else if (cfg.UseNicheContext
+                        && req.HasNicheProfile
+                        && Niche != null
+                        && EcologySpreadFitness.NicheMultiplierFor(req, Niche.GetNiche(api, entry.Origin))
+                            < cfg.NicheStressThreshold)
                     {
                         entry.FailedSurvivalChecks++;
                     }
