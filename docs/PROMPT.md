@@ -31,7 +31,7 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Backlog: playtest mowing/symbiosis; land claims; balance tuning. Mod DB — позже. v2.1 meadow playtest ✅ 2026-05-22.
+Backlog: playtest mowing/symbiosis; land claims; balance tuning; perf roadmap (§12 PROJECT_VISION). Mod DB — позже. v2.1 meadow playtest ✅ 2026-05-22.
 
 Коммиты — только по запросу пользователя.
 ```

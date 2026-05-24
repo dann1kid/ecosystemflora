@@ -46,37 +46,103 @@ namespace WildFarming.Ecosystem
             HasShallowWater = hasShallowWater;
         }
 
-        public static EnvironmentalContext Sample(ICoreAPI api, BlockPos plantPos, PlantRequirements requirements = null)
+        /// <summary>Full context for stress / survival (temp, greenhouse, climate).</summary>
+        public static EnvironmentalContext Sample(
+            ICoreAPI api,
+            BlockPos plantPos,
+            PlantRequirements requirements = null)
+        {
+            return SampleForSurvival(api, plantPos, requirements);
+        }
+
+        /// <summary>Spread/displace fitness — no seasonal temp or greenhouse lookup.</summary>
+        public static EnvironmentalContext SampleForSpread(
+            ICoreAPI api,
+            BlockPos plantPos,
+            PlantRequirements requirements = null)
+        {
+            return SampleForSpread(api, plantPos, requirements, EcosystemSystem.Instance?.ColumnCache);
+        }
+
+        /// <summary>Stress / survival — spread fields plus seasonal temperature and greenhouse.</summary>
+        public static EnvironmentalContext SampleForSurvival(
+            ICoreAPI api,
+            BlockPos plantPos,
+            PlantRequirements requirements = null)
+        {
+            return SampleForSurvival(api, plantPos, requirements, EcosystemSystem.Instance?.ColumnCache);
+        }
+
+        internal static EnvironmentalContext SampleForSpread(
+            ICoreAPI api,
+            BlockPos plantPos,
+            PlantRequirements requirements,
+            EnvironmentalColumnCache cache)
         {
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos groundPos = plantPos.DownCopy();
             Block ground = acc.GetBlock(groundPos);
             Block space = acc.GetBlock(plantPos);
 
-            // Seasonal temp from NowValues; rain/forest maps are worldgen-static (WorldGenValues).
-            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
-            ClimateCondition worldgen = acc.GetClimateAt(plantPos, EnumGetClimateMode.WorldGenValues);
-            ClimateCondition fallback = worldgen ?? now;
-
-            float temperature = now?.Temperature ?? worldgen?.Temperature ?? 0f;
-            float worldgenRainfall = ReadWorldgenRainfall(worldgen, now);
-            float forestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f;
+            float worldgenRainfall;
+            float forestDensity;
+            bool hasClimate;
+            if (cache != null && cache.TryGetWorldgen(acc, plantPos, out worldgenRainfall, out forestDensity, out hasClimate))
+            {
+                // cached
+            }
+            else
+            {
+                ClimateCondition worldgen = acc.GetClimateAt(plantPos, EnumGetClimateMode.WorldGenValues);
+                ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+                ClimateCondition fallback = worldgen ?? now;
+                worldgenRainfall = ReadWorldgenRainfall(worldgen, now);
+                forestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f;
+                hasClimate = fallback != null;
+            }
 
             bool shallowWater = ComputeWaterRequirement(acc, plantPos, ground, requirements);
 
             return new EnvironmentalContext(
-                plantPos.Copy(),
-                temperature,
+                plantPos,
+                0f,
                 worldgenRainfall,
                 forestDensity,
-                GreenhouseHelper.IsGreenhouse(api, plantPos),
+                false,
                 (int)ground.Fertility,
                 SoilClassification.Classify(ground),
                 ground.SideSolid[BlockFacing.UP.Index],
                 space.Replaceable,
-                fallback != null,
+                hasClimate,
                 BlockFluidHelper.TouchesFluid(acc, plantPos),
                 shallowWater);
+        }
+
+        internal static EnvironmentalContext SampleForSurvival(
+            ICoreAPI api,
+            BlockPos plantPos,
+            PlantRequirements requirements,
+            EnvironmentalColumnCache cache)
+        {
+            EnvironmentalContext spread = SampleForSpread(api, plantPos, requirements, cache);
+            IBlockAccessor acc = api.World.BlockAccessor;
+
+            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+            float temperature = now?.Temperature ?? 0f;
+
+            return new EnvironmentalContext(
+                spread.Position,
+                temperature,
+                spread.WorldgenRainfall,
+                spread.ForestDensity,
+                GreenhouseHelper.IsGreenhouse(api, plantPos),
+                spread.GroundFertility,
+                spread.GroundSoilKinds,
+                spread.GroundSideSolid,
+                spread.SpaceReplaceable,
+                spread.HasClimate,
+                spread.TouchesFluid,
+                spread.HasShallowWater);
         }
 
         static bool ComputeWaterRequirement(IBlockAccessor acc, BlockPos plantPos, Block ground, PlantRequirements requirements)

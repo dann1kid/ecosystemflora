@@ -205,6 +205,7 @@ docs/
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
 - [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
 - [ ] Land claims при reproduce
+- [x] **Perf roadmap фаза 1** — spatial tick, climate cache, split sample (§12)
 
 ---
 
@@ -347,7 +348,71 @@ holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(Sprea
 
 ---
 
-## 12. Ссылки
+## 12. Производительность (roadmap)
+
+Чеклист реализации: **[`PROGRESS.md` → Оптимизация](PROGRESS.md#оптимизация-perf-roadmap)**.
+
+### 12.1. Где CPU сейчас
+
+Один reproduce-тик (каждые ~2 с):
+
+```
+ProcessStress     → round-robin по List<ReproducerEntry> (весь реестр)
+ProcessDue        → round-robin, до MaxReproduceAttemptsPerTick spread
+  └── CollectSpreadCandidates → O(r² × verticalSearch) × (Sample + spacing + FloraContext)
+ChunkScan         → очередь, лимитирован
+```
+
+При ~18k reproducers и `OnlyActivateNearPlayers` конфиг **фильтрует** далёкие растения, но код всё равно **сканирует** global list — много холостых итераций. Горячий путь — **один spread**, не размер реестра сам по себе.
+
+### 12.2. Потоки — что не делаем
+
+| Подход | Вердикт |
+|--------|---------|
+| Spread / displace / stress в worker threads | ❌ `BlockAccessor` не thread-safe; chunk unload → гонки |
+| `Parallel.For` по кандидатам spread | ❌ тот же accessor |
+| Фоновый precompute без snapshot | ❌ invalidation при unload |
+
+**Правило (§8):** блоки и spread — только main/server thread. Выигрыш — **меньше работы на тик**, spatial indexing, кэши.
+
+### 12.3. Асимптотика — приоритеты
+
+| # | Проблема | Сейчас | Цель |
+|---|----------|--------|------|
+| 1 | Tick scope | O(registry) round-robin | O(active chunks × plants) через `byChunk` + радиус игроков |
+| 2 | `List.Remove` | O(n) | Swap-remove + index map |
+| 3 | `CollectSpreadCandidates` | O(r²v) × heavy Sample | Cheap-first reject; Sample только на прошедших |
+| 4 | `PlantSpacing` | Brute-force O(r²Y) на кандидата | Per-chunk ecology hash |
+| 5 | `GetClimateAt` | 2× на каждый Sample | Static worldgen cache per XZ |
+
+### 12.4. Актуальность расчётов
+
+| Данные | Частота изменений | Spread нужен? | Stress нужен? | Кэш |
+|--------|-------------------|---------------|---------------|-----|
+| Worldgen rain / forest | Никогда | ✅ | ✅ | Permanent per XZ |
+| Ground fertility / soil | Редко (SetBlock) | ✅ | ✅ | Per XZ + invalidation |
+| Seasonal temperature | Медленно | ❌ | ✅ (harsh) | TTL ~игровые сутки |
+| FloraContext (trees) | При сломе дерева | ✅ | — | ✅ 12 h (`FloraContextCacheHours`) |
+| Greenhouse (RoomRegistry) | Редко | ❌ | ✅ | По необходимости |
+
+**Split sample:** `SampleForSpread` — rain, forest, soil, fluid; без temp/greenhouse.  
+`SampleForSurvival` — полный, только stress path и реже.
+
+### 12.5. Фазы (кратко)
+
+1. **Быстрые wins:** spatial tick, static climate cache, split sample, stress skip, no greenhouse on spread.
+2. **Средний refactor:** O(1) registry remove, cheap-first candidates, spacing hash.
+3. **Позже:** chunk column top-block cache, меньше аллокаций. Многопоточность — **не планируется**.
+
+**Первый PR:** spatial tick + static climate cache — ✅ (2026-05-22).
+
+### 12.6. Конфиг-throttle
+
+`OnlyActivateNearPlayers`, `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
+
+---
+
+## 13. Ссылки
 
 - Оригинал: https://mods.vintagestory.at/show/mod/53  
 - Revival: https://mods.vintagestory.at/wildfarmingrevival  

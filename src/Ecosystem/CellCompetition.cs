@@ -14,7 +14,8 @@ namespace WildFarming.Ecosystem
         {
             if (api == null || challenger == null || targetPos == null) return 0f;
 
-            EnvironmentalContext ctx = EnvironmentalContext.Sample(api, targetPos, challenger);
+            EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, challenger, cache);
             if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: false))
             {
                 return 0f;
@@ -41,7 +42,8 @@ namespace WildFarming.Ecosystem
             PlantRequirements incumbent = PlantRequirements.FromBlock(incumbentBlock);
             if (string.IsNullOrEmpty(incumbent.Species)) return float.MaxValue;
 
-            EnvironmentalContext ctx = EnvironmentalContext.Sample(api, targetPos, incumbent);
+            EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, incumbent, cache);
             if (!SuitabilityEvaluator.MeetsSurvivalRequirements(incumbent, ctx, harshClimate))
             {
                 return 0f;
@@ -85,7 +87,8 @@ namespace WildFarming.Ecosystem
             string incumbentSpecies = PlantCodeHelper.GetEcologySpecies(incumbentBlock.Code);
             if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;
 
-            EnvironmentalContext ctx = EnvironmentalContext.Sample(api, targetPos, challenger);
+            EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, challenger, cache);
             if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: true))
             {
                 return false;

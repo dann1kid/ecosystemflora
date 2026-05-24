@@ -2,7 +2,8 @@
 
 Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainfall, forest density, spacing, and habitat-specific placement.
 
-**Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
+**Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)  
+**Perf roadmap:** [`PROGRESS.md#оптимизация-perf-roadmap`](docs/PROGRESS.md) · [`PROJECT_VISION.md §12`](docs/PROJECT_VISION.md)
 
 **Стадия:** `Ecosystem v2.1` (`2.4.1-ecosystem-v2.1`) — unified cell competition, flora context, stress death, symbiosis. Playtest (2026-05-22): meadows colonize and displace visibly.
 

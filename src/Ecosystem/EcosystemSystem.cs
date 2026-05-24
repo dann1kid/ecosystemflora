@@ -20,6 +20,8 @@ namespace WildFarming.Ecosystem
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         bool calendarDebugLogged;
         internal FloraContextSampler FloraContext { get; private set; }
+        internal EnvironmentalColumnCache ColumnCache { get; private set; }
+        readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
 
         BlockBrokenDelegate didBreakBlockHandler;
 
@@ -74,6 +76,7 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
 
             FloraContext = new FloraContextSampler();
+            ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 500);
@@ -144,11 +147,23 @@ namespace WildFarming.Ecosystem
             calendarDebugLogged = false;
             FloraContext?.Clear();
             FloraContext = null;
+            ColumnCache?.Clear();
+            ColumnCache = null;
+            activeChunkScratch.Clear();
             Instance = null;
             api = null;
         }
 
-        public EnvironmentalContext Sample(BlockPos plantPos) => EnvironmentalContext.Sample(api, plantPos);
+        public EnvironmentalContext Sample(BlockPos plantPos)
+        {
+            return EnvironmentalContext.SampleForSurvival(api, plantPos, null, ColumnCache);
+        }
+
+        void InvalidateEnvironmentAround(BlockPos pos)
+        {
+            if (pos == null) return;
+            ColumnCache?.InvalidateAround(pos, 1);
+        }
 
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
         {
@@ -179,6 +194,7 @@ namespace WildFarming.Ecosystem
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
             FloraContext?.InvalidateAround(pos, 2);
+            InvalidateEnvironmentAround(pos);
 
             if (EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
             {
@@ -238,6 +254,12 @@ namespace WildFarming.Ecosystem
                     nextAttempt = now + api.World.Rand.NextDouble() * staggerSpan;
                 }
 
+                double stressDelay = cfg.StressRecheckHours > 0 ? cfg.StressRecheckHours : 18;
+                if (cfg.StaggerReproduceAttempts)
+                {
+                    stressDelay = api.World.Rand.NextDouble() * stressDelay;
+                }
+
                 var entry = new ReproducerEntry(
                     origin.Copy(),
                     spreadBlockCode.Clone(),
@@ -246,6 +268,7 @@ namespace WildFarming.Ecosystem
                     nextAttempt)
                 {
                     EstablishedAtHours = now,
+                    NextStressCheckAt = now + stressDelay,
                 };
 
                 registry.Add(entry);
@@ -303,6 +326,7 @@ namespace WildFarming.Ecosystem
             }
 
             registry.Remove(pos);
+            InvalidateEnvironmentAround(pos);
         }
 
         void OnChunkScanTick(float dt)
@@ -340,7 +364,7 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        void ProcessStress(double now, int maxChecks)
+        void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks)
         {
             if (maxChecks <= 0 || api == null || !EcosystemConfig.Loaded.EnableStressDeath) return;
 
@@ -352,7 +376,7 @@ namespace WildFarming.Ecosystem
                 maxChecks,
                 entry =>
                 {
-                    if (entry.FailedSurvivalChecks > 0 && now < entry.NextStressCheckAt) return false;
+                    if (now < entry.NextStressCheckAt) return false;
 
                     PlantRequirements req = entry.Requirements;
                     if (req == null) return false;
@@ -373,7 +397,7 @@ namespace WildFarming.Ecosystem
                     else
                     {
                         entry.FailedSurvivalChecks = 0;
-                        entry.NextStressCheckAt = 0;
+                        entry.NextStressCheckAt = now + cfg.StressRecheckHours;
                         return false;
                     }
 
@@ -385,7 +409,17 @@ namespace WildFarming.Ecosystem
 
                     return true;
                 },
-                pos => RemoveEcologyPlant(pos, cascadeSymbiosis: true, reason: "stress"));
+                pos => RemoveEcologyPlant(pos, cascadeSymbiosis: true, reason: "stress"),
+                activeChunks);
+        }
+
+        ICollection<Vec2i> BuildActiveChunks(EcosystemConfig cfg)
+        {
+            if (!cfg.OnlyActivateNearPlayers) return null;
+
+            activeChunkScratch.Clear();
+            activeChunkScratch.AddRange(registry.CollectChunksNearPlayers(api, cfg.PlayerActivationRadiusBlocks));
+            return activeChunkScratch;
         }
 
         void OnReproduceTick(float dt)
@@ -396,7 +430,11 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
-            ProcessStress(now, cfg.MaxStressChecksPerTick);
+            ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
+
+            if (activeChunks != null && activeChunks.Count == 0) return;
+
+            ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks);
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
             IBlockAccessor acc = api.World.BlockAccessor;
 
@@ -406,11 +444,6 @@ namespace WildFarming.Ecosystem
                 entry => SpeciesSpread.EffectiveIntervalHours(api, cfg, entry.Requirements),
                 entry =>
                 {
-                    if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, entry.Origin, cfg.PlayerActivationRadiusBlocks))
-                    {
-                        return false;
-                    }
-
                     Block block = acc.GetBlock(entry.Origin);
                     if (block.Id == 0 || !entry.IsMatureBlock(block))
                     {
@@ -419,7 +452,8 @@ namespace WildFarming.Ecosystem
 
                     TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
                     return true;
-                });
+                },
+                activeChunks);
         }
 
         void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
@@ -465,6 +499,8 @@ namespace WildFarming.Ecosystem
                     {
                         RegisterReproducer(pos, participant, spawnBurst: false);
                     }
+
+                    InvalidateEnvironmentAround(pos);
                 });
 
             if (cfg.ReproduceDebug && spawned == 0 && failureReason != null)
