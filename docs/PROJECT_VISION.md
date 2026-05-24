@@ -206,7 +206,7 @@ docs/
 - [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
 - [ ] Land claims при reproduce
 - [x] **Perf roadmap фаза 1** — spatial tick, climate cache, split sample (§12)
-- [ ] **v2.2 niche** — почва + уровни влажности/освещённости per species (§14)
+- [ ] **v2.2 niche** — moisture/light MVP (§14); backlog: **сукцессия почвы** per species (plant/death)
 
 ---
 
@@ -445,8 +445,13 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 - **Spread:** множитель к `ReproduceFitness` (как `FloraContext`), не отдельный biome
 - **Stress:** ускоренный failed check вне ниши (дополняет symbiosis)
 - **Displacement:** сильный вид может вытеснить, но долго не держится вне ниши
+- **Философия (playtest):** мягче — spread вне ниши допустим, приживание хуже; не обязательно hard gate по niche
 
-### 14.4. Реализация (принципы)
+### 14.4. Сукцессия почвы (backlog)
+
+Таблица per-species: при **успешной посадке** и при **смерти** растения — смена блока/состава почвы под клеткой (fertility, `forestfloor`, торф, и т.д.), чтобы ниша **меняла среду**, а не только читала её. Примеры: хвощ → влажнее; луговые colonizers → суше; лесная understory → `forestfloor`. Интеграция: хук после spread/displacement и в `RemoveEcologyPlant`; invalidation `NicheSampler` / column cache.
+
+### 14.5. Реализация (принципы)
 
 - Кеш per XZ/Y как `FloraContextSampler` / `EnvironmentalColumnCache`; invalidation при SetBlock воды/дерева/почвы
 - Не дублировать worldgen rain/forest — влажность **локальная** (блок + соседи)
