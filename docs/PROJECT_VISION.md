@@ -206,6 +206,7 @@ docs/
 - [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
 - [ ] Land claims при reproduce
 - [x] **Perf roadmap фаза 1** — spatial tick, climate cache, split sample (§12)
+- [ ] **v2.2 niche** — почва + уровни влажности/освещённости per species (§14)
 
 ---
 
@@ -409,6 +410,47 @@ ChunkScan         → очередь, лимитирован
 ### 12.6. Конфиг-throttle
 
 `OnlyActivateNearPlayers`, `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
+
+---
+
+## 14. Ниша: почва, влажность, освещение (v2.2)
+
+**Проблема:** symbiosis и `ForestDensity` не покрывают микрониши — хвощ любит **тень и влагу**, полевые цветы — **сухой открытый луг**, ландыш — **влажная тень**. Сейчас частично: `SoilKind`, `MinSunlight` (fern/berry/tallgrass), `FloraContext` (open/edge/forest).
+
+**Идея:** явная **трёхосевая ниша** на клетке spread/stress:
+
+```
+nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
+```
+
+### 14.1. Оси
+
+| Ось | Источник (vanilla API) | Уровни (пример) |
+|-----|------------------------|-----------------|
+| **Почва** | `SoilClassification`, `block.Fertility` | уже есть `SoilKind` — расширить профили |
+| **Влажность** | торф, `muddygravel`, соседняя вода/жидкость, rain локально | dry → mesic → wet → shoreline |
+| **Свет** | `TreePlacement.HasEnoughSunlight`, соседи `leaves`/`log-grown` | open (≥11) → partial → shade (7–10) → deep shade (&lt;7) |
+
+### 14.2. Виды (пример таблицы)
+
+| Группа | Почва | Влажность | Свет |
+|--------|-------|-----------|------|
+| Полевые colonizers (daisy, horsetail open) | meadow, medium | mesic–dry | open |
+| Лесная understory (lily, fern, horsetail wet) | forest floor, peat | wet–mesic | shade–partial |
+| Опушка (catmint, heather) | medium, low | mesic | partial–open |
+| Aquatic margin | gravel/mud | wet–submerged | open |
+
+### 14.3. Интеграция с v2.1
+
+- **Spread:** множитель к `ReproduceFitness` (как `FloraContext`), не отдельный biome
+- **Stress:** ускоренный failed check вне ниши (дополняет symbiosis)
+- **Displacement:** сильный вид может вытеснить, но долго не держится вне ниши
+
+### 14.4. Реализация (принципы)
+
+- Кеш per XZ/Y как `FloraContextSampler` / `EnvironmentalColumnCache`; invalidation при SetBlock воды/дерева/почвы
+- Не дублировать worldgen rain/forest — влажность **локальная** (блок + соседи)
+- Чеклист: [`PROGRESS.md` → v2.2](PROGRESS.md#v22--ниша-почва-влажность-освещение)
 
 ---
 
