@@ -65,11 +65,13 @@ namespace WildFarming.Ecosystem
 
             int processed = 0;
             int scanned = 0;
-            int count = entries.Count;
+            int scanBudget = entries.Count;
             var removeQueue = new List<BlockPos>();
 
-            while (processed < maxAttempts && scanned < count)
+            while (processed < maxAttempts && scanned < scanBudget)
             {
+                int count = entries.Count;
+                if (count == 0) break;
                 if (roundRobinIndex >= count) roundRobinIndex = 0;
                 ReproducerEntry entry = entries[roundRobinIndex++];
                 scanned++;
@@ -97,17 +99,22 @@ namespace WildFarming.Ecosystem
             return processed;
         }
 
-        public int ProcessStress(int maxChecks, System.Func<ReproducerEntry, bool> tryExpire)
+        public int ProcessStress(
+            int maxChecks,
+            System.Func<ReproducerEntry, bool> tryExpire,
+            System.Action<BlockPos> onExpired = null)
         {
             if (entries.Count == 0 || maxChecks <= 0 || tryExpire == null) return 0;
 
             int expired = 0;
             int scanned = 0;
-            int count = entries.Count;
+            int scanBudget = entries.Count;
             var removeQueue = new List<BlockPos>();
 
-            while (expired < maxChecks && scanned < count)
+            while (expired < maxChecks && scanned < scanBudget)
             {
+                int count = entries.Count;
+                if (count == 0) break;
                 if (roundRobinIndex >= count) roundRobinIndex = 0;
                 ReproducerEntry entry = entries[roundRobinIndex++];
                 scanned++;
@@ -120,7 +127,15 @@ namespace WildFarming.Ecosystem
 
             for (int i = 0; i < removeQueue.Count; i++)
             {
-                Remove(removeQueue[i]);
+                BlockPos pos = removeQueue[i];
+                if (onExpired != null)
+                {
+                    onExpired(pos);
+                }
+                else
+                {
+                    Remove(pos);
+                }
             }
 
             return expired;

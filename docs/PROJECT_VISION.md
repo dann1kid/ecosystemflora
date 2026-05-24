@@ -166,16 +166,17 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v1.1`.** Следующая (опционально): **Content** (fern, …).
+**Стадия: `Ecosystem v2.1`.** Единая конкуренция за клетку (§11); v1.x контент (tallgrass, drygrass, пресеты) — в main.
 
 | Компонент | Статус |
 |-----------|--------|
-| Экосистема на цветах + люпине | ✅ |
+| Экосистема: цветы, люпин, tallgrass, ferns, berries, trees | ✅ |
 | Водная флора (4 вида) | ✅ код |
 | Rain/forest + candidate pool + spacing | ✅ |
+| Cell competition (displace, stress, symbiosis, flora context) | ✅ |
 | Legacy в сборке | ⏸ |
 
-- `modinfo.json` — `2.2.0-ecosystem-v1.1`, game `1.21.0`
+- `modinfo.json` — `2.4.1-ecosystem-v2.1`, game `1.21.0`
 - Конфиг: `wildfarming-ecosystem.json`
 
 ---
@@ -198,9 +199,9 @@ docs/
 
 Кратко:
 
-- **Mod DB** — отложено до баланса и «полноты» луга (tallgrass + playtest).
-- **v1.x** — tallgrass, drygrass-патч, пресеты баланса (см. PROGRESS).
-- **v2.1** — единая конкуренция за клетку (§11); без disturbed/покоса как отдельной механики.
+- **Mod DB** — отложено до баланса и длинного playtest (aquatic, покос, symbiosis).
+- **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
+- **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
 - [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
 - [ ] Land claims при reproduce
@@ -332,6 +333,17 @@ holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(Sprea
 | Stress | `EcosystemSystem.ProcessStress` |
 | Symbiosis | `FloraSymbiosis` |
 | Species tuning | `WildSpeciesModifiers` |
+
+### 11.6. Playtest (2026-05-22)
+
+На живом мире (~18k reproducers) после v2.1:
+
+- **До:** поверхность выглядела «лысой» — редкие worldgen-вкрапления, мало динамики.
+- **После:** луга и опушки **пышно зарастают**; трава и цветы spread + **замещают** блоки соседей; визуально «живая» экосистема.
+- Логи: `Spread`, `Displaced` на подходящих клетках.
+- Исправлен краш `ProcessStress` при stress death (удаление из реестра во время round-robin).
+
+Остаётся проверить: покос → быстрые colonizers → вытеснение; symbiosis cascade; длинный aquatic playtest.
 
 ---
 

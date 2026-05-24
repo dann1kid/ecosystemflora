@@ -348,42 +348,44 @@ namespace WildFarming.Ecosystem
             bool harsh = cfg.HarshWildPlants;
             IBlockAccessor acc = api.World.BlockAccessor;
 
-            registry.ProcessStress(maxChecks, entry =>
-            {
-                if (entry.FailedSurvivalChecks > 0 && now < entry.NextStressCheckAt) return false;
-
-                PlantRequirements req = entry.Requirements;
-                if (req == null) return false;
-
-                if (req.Habitat != EcologyHabitat.Terrestrial) return false;
-
-                if (cfg.EnableSymbiosis
-                    && !string.IsNullOrEmpty(req.Species)
-                    && FloraSymbiosis.TryGetRule(req.Species, out _)
-                    && !FloraSymbiosis.HasRequiredHost(acc, entry.Origin, req.Species))
+            registry.ProcessStress(
+                maxChecks,
+                entry =>
                 {
-                    entry.FailedSurvivalChecks++;
-                }
-                else if (!CanSurviveAt(entry.Origin, req))
-                {
-                    entry.FailedSurvivalChecks++;
-                }
-                else
-                {
-                    entry.FailedSurvivalChecks = 0;
-                    entry.NextStressCheckAt = 0;
-                    return false;
-                }
+                    if (entry.FailedSurvivalChecks > 0 && now < entry.NextStressCheckAt) return false;
 
-                if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks)
-                {
-                    entry.NextStressCheckAt = now + cfg.StressRecheckHours;
-                    return false;
-                }
+                    PlantRequirements req = entry.Requirements;
+                    if (req == null) return false;
 
-                RemoveEcologyPlant(entry.Origin, cascadeSymbiosis: true, reason: "stress");
-                return true;
-            });
+                    if (req.Habitat != EcologyHabitat.Terrestrial) return false;
+
+                    if (cfg.EnableSymbiosis
+                        && !string.IsNullOrEmpty(req.Species)
+                        && FloraSymbiosis.TryGetRule(req.Species, out _)
+                        && !FloraSymbiosis.HasRequiredHost(acc, entry.Origin, req.Species))
+                    {
+                        entry.FailedSurvivalChecks++;
+                    }
+                    else if (!CanSurviveAt(entry.Origin, req))
+                    {
+                        entry.FailedSurvivalChecks++;
+                    }
+                    else
+                    {
+                        entry.FailedSurvivalChecks = 0;
+                        entry.NextStressCheckAt = 0;
+                        return false;
+                    }
+
+                    if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks)
+                    {
+                        entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                        return false;
+                    }
+
+                    return true;
+                },
+                pos => RemoveEcologyPlant(pos, cascadeSymbiosis: true, reason: "stress"));
         }
 
         void OnReproduceTick(float dt)
