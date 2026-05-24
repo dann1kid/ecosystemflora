@@ -31,7 +31,7 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Backlog: HoldStrength tuning; fallow N (залежь); mowing/symbiosis playtest. Закрыто (2026-05): v2.2 niche, block-only soil, LocalForestCover, aquatic spread, land claims (`RespectLandClaims`).
+Backlog (post-MVP): сезонность v2.3; strip JakeCool; rename EcoSystemLife; ModDB. Техдолг: chunk-scan без BE; handbook/dominant species (UX); perf фаза 3 — только при лагах ~18k reproducers. Залежь, HoldStrength tuning — опционально. Листва зимой — отложено (визуал, не экосистема).
 
 Коммиты — только по запросу пользователя.
 ```

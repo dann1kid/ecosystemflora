@@ -203,7 +203,10 @@ docs/
 - **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
 - **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
-- [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
+- [ ] Chunk-scan без BE (техдолг; сейчас `EcosystemPlant` → план `EcoSystemLife`)
+- [ ] Perf фаза 3 — только при лагах на большом реестре (§12)
+- [ ] Handbook / dominant species — UX, post-ModDB
+- [ ] Сезонность spread/stress (v2.3); зимняя листва на стволах — **отложено** (визуал, отдельно от экосистемы)
 - [x] Land claims — `RespectLandClaims` / `LandClaimGuard`
 - [x] **Perf roadmap фаза 1** — spatial tick, climate cache, split sample (§12)
 - [ ] **v2.2 niche** — moisture/light MVP (§14); backlog: **сукцессия почвы** per species (plant/death)
