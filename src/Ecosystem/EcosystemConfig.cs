@@ -14,7 +14,7 @@ namespace WildFarming.Ecosystem
 
         public bool HarshWildPlants { get; set; } = true;
 
-        /// <summary>Enforce worldgen minRain/maxRain and minForest/maxForest when spreading.</summary>
+        /// <summary>Enforce worldgen minRain/maxRain when spreading. Forest uses <see cref="LocalForestCover"/> (neighbor trees), not worldgen.</summary>
         public bool ApplyWorldgenRainForest { get; set; } = true;
 
         public int ReproduceRadius { get; set; } = 4;

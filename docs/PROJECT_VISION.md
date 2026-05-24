@@ -216,7 +216,7 @@ docs/
 
 ### 10.1. Связь с v1.1
 
-Уже есть глобальные ареалы: `WorldgenRainfall`, `ForestDensity`, климат, почва (`SoilKind`).  
+Уже есть глобальные ареалы: `WorldgenRainfall`, климат, почва (`SoilKind`). **Лесность для видов** — `LocalForestCover` (соседние `log-grown`/листва), не worldgen `ForestDensity`.  
 v2 добавляет **локальный множитель** при выборе клетки для spread и при оценке fitness:
 
 ```
@@ -272,7 +272,7 @@ else                      → Open            // 1.0
 - Ванильные блоки, простой алгоритм, без Harmony.
 - `ContextMultiplier` считать в `SuitabilityEvaluator` или при сборе `SpreadCandidate`.
 - Кеш на колонку XZ + инвалидация при изменении соседнего дерева (раз в N тиков или по событию `BlockBreak`/`SetBlock` рядом) — не каждый тик по всему миру.
-- Глобальный `ForestDensity` из climate **остаётся**; локальный контекст — **уточнение**, не замена.
+- **`LocalForestCover`** (0–1, до 8 соседей) заменяет worldgen `ForestDensity` в `MinForest`/`MaxForest`; `FloraContext` — тот же сигнал для множителей.
 
 ---
 
@@ -415,7 +415,7 @@ ChunkScan         → очередь, лимитирован
 
 ## 14. Ниша: почва, влажность, освещение (v2.2)
 
-**Проблема:** symbiosis и `ForestDensity` не покрывают микрониши — хвощ любит **тень и влагу**, полевые цветы — **сухой открытый луг**, ландыш — **влажная тень**. Сейчас частично: `SoilKind`, `MinSunlight` (fern/berry/tallgrass), `FloraContext` (open/edge/forest).
+**Проблема:** symbiosis и `LocalForestCover` не покрывают микрониши — хвощ любит **тень и влагу**, полевые цветы — **сухой открытый луг**, ландыш — **влажная тень**. Сейчас частично: `SoilKind`, `MinSunlight` (fern/berry/tallgrass), `FloraContext` (open/edge/forest).
 
 **Идея:** явная **трёхосевая ниша** на клетке spread/stress:
 

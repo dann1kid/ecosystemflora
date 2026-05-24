@@ -8,7 +8,7 @@ namespace WildFarming.Ecosystem
         public BlockPos Position { get; }
         public float Temperature { get; }
         public float WorldgenRainfall { get; }
-        public float ForestDensity { get; }
+        public float LocalForestCover { get; }
         public bool InGreenhouse { get; }
         public int GroundFertility { get; }
         public SoilKind GroundSoilKinds { get; }
@@ -22,7 +22,7 @@ namespace WildFarming.Ecosystem
             BlockPos pos,
             float temperature,
             float worldgenRainfall,
-            float forestDensity,
+            float localForestCover,
             bool inGreenhouse,
             int groundFertility,
             SoilKind groundSoilKinds,
@@ -35,7 +35,7 @@ namespace WildFarming.Ecosystem
             Position = pos;
             Temperature = temperature;
             WorldgenRainfall = worldgenRainfall;
-            ForestDensity = forestDensity;
+            LocalForestCover = localForestCover;
             InGreenhouse = inGreenhouse;
             GroundFertility = groundFertility;
             GroundSoilKinds = groundSoilKinds;
@@ -85,9 +85,8 @@ namespace WildFarming.Ecosystem
             Block space = acc.GetBlock(plantPos);
 
             float worldgenRainfall;
-            float forestDensity;
             bool hasClimate;
-            if (cache != null && cache.TryGetWorldgen(acc, plantPos, out worldgenRainfall, out forestDensity, out hasClimate))
+            if (cache != null && cache.TryGetWorldgenRainfall(acc, plantPos, out worldgenRainfall, out hasClimate))
             {
                 // cached
             }
@@ -97,8 +96,14 @@ namespace WildFarming.Ecosystem
                 ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
                 ClimateCondition fallback = worldgen ?? now;
                 worldgenRainfall = ReadWorldgenRainfall(worldgen, now);
-                forestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f;
                 hasClimate = fallback != null;
+            }
+
+            float localForestCover = 0f;
+            FloraContextSampler flora = EcosystemSystem.Instance?.FloraContext;
+            if (flora != null)
+            {
+                localForestCover = flora.GetLocalForestCover(api, plantPos);
             }
 
             bool shallowWater = ComputeWaterRequirement(acc, plantPos, ground, requirements);
@@ -107,7 +112,7 @@ namespace WildFarming.Ecosystem
                 plantPos,
                 0f,
                 worldgenRainfall,
-                forestDensity,
+                localForestCover,
                 false,
                 (int)ground.Fertility,
                 SoilClassification.Classify(ground),
@@ -134,7 +139,7 @@ namespace WildFarming.Ecosystem
                 spread.Position,
                 temperature,
                 spread.WorldgenRainfall,
-                spread.ForestDensity,
+                spread.LocalForestCover,
                 GreenhouseHelper.IsGreenhouse(api, plantPos),
                 spread.GroundFertility,
                 spread.GroundSoilKinds,

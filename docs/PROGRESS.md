@@ -39,14 +39,14 @@
 | **Поверхностная вода** | `waterlily` (кувшинка) |
 | **Подводный** | `aquatic-watercrowfoot-*` (водяной лютик: section / tip / top) |
 | **Деревья** | `log-grown-{wood}-*` → spread `sapling-{wood}-free` (14 пород; бамбук/aged — нет) |
-| **Ягоды** | `fruitingbush-wild-*` (10 видов) → тот же блок; почва/лес по worldgen |
+| **Ягоды** | `fruitingbush-wild-*` (10 видов) → тот же блок; почва + `LocalForestCover` |
 | **Папоротники** | `fern-*` (4) + `tallfern` — лес/влажность, свет ≥7 под кроной |
 
 | Слой | Поведение |
 |------|-----------|
 | **Объект** | Ванильные блоки; цветы/водные — патч `EcosystemPlant`; **деревья** — скан чанка по `log-grown` (без патча на ствол) |
 | **Участник** | `IEcosystemParticipant` → `EcosystemParticipant` |
-| **Среда** | Температура (сезон), `WorldgenRainfall` + `ForestDensity`, почва, жидкость |
+| **Среда** | Температура (сезон), `WorldgenRainfall`, **`LocalForestCover`** (соседние стволы), почва, жидкость |
 | **Клетка-кандидат** | Скан в радиусе → **взвешенный** выбор по fitness |
 | **Скорость** | `SpreadRate` per-species; календарь (`ReproduceAttemptsPerYear`) или legacy часы |
 | **Spacing** | `WildFlowerSpacing` + конфиг; у тростника нет вертикального стека в колонке |
@@ -171,7 +171,7 @@
 | `ReproduceIntervalHours` | Legacy, если calendar off |
 | `MinSpeciesReproduceIntervalDays` / `Hours` | Пол между попытками (0 = без пола) |
 | `MinFitness` | Порог fitness (0–1) |
-| `ApplyWorldgenRainForest` | Rain/forest из worldgen |
+| `ApplyWorldgenRainForest` | Только rainfall из worldgen; лес — `LocalForestCover` |
 | `UseSpeciesSpreadRates` | Per-species `SpreadRate` |
 | `PlantSpacingEnabled` | Дистанция между растениями |
 | `DefaultSameSpeciesSpacing` / `DefaultOtherSpeciesSpacing` | Базовые дистанции |

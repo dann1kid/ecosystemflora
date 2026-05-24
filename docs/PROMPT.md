@@ -14,7 +14,7 @@
 Принципы:
 - В мире только ванильные блоки; мод не подменяет блоки wildplant.
 - Живое = зарегистрировано в EcosystemSystem и периодически spread (IEcosystemParticipant / EcosystemParticipant).
-- Среда из API: EnvironmentalContext (температура, WorldgenRainfall, ForestDensity, почва, жидкость).
+- Среда из API: EnvironmentalContext (температура, WorldgenRainfall, LocalForestCover, почва, жидкость).
 - v2.1: единая конкуренция за клетку — spread на пустые + displacement занятых (CellCompetition), stress death, symbiosis. БЕЗ DisturbedTracker.
 - SpreadScore = fitness × Context × SpreadRate; HoldScore = fitness × Context × HoldStrength.
 - Опушка emergent через FloraContext + displacement, не отдельный биом.

@@ -15,7 +15,8 @@ namespace WildFarming.Ecosystem
                 if (ctx.Temperature < req.MinTemp || ctx.Temperature > req.MaxTemp) return false;
             }
 
-            if (!MeetsWorldgenRainForest(req, ctx)) return false;
+            if (!MeetsRainfall(req, ctx)) return false;
+            if (!MeetsLocalForest(req, ctx)) return false;
 
             return true;
         }
@@ -41,8 +42,11 @@ namespace WildFarming.Ecosystem
                 if (ctx.Temperature < req.MinTemp) return "Too cold.";
             }
 
-            string rainForest = DescribeRainForestFailure(req, ctx);
-            if (rainForest != null) return rainForest;
+            string rainfall = DescribeRainfallFailure(req, ctx);
+            if (rainfall != null) return rainfall;
+
+            string forest = DescribeLocalForestFailure(req, ctx);
+            if (forest != null) return forest;
 
             return null;
         }
@@ -62,18 +66,17 @@ namespace WildFarming.Ecosystem
                 score = CombineFitness(score, RangeFitness(ctx.Temperature, req.MinTemp, req.MaxTemp));
             }
 
-            if (EcosystemConfig.Loaded.ApplyWorldgenRainForest)
-            {
-                if (!MeetsWorldgenRainForest(req, ctx)) return 0f;
-                score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
-                score = CombineFitness(score, RangeFitness(ctx.ForestDensity, req.MinForest, req.MaxForest));
-            }
+            if (!MeetsRainfall(req, ctx)) return 0f;
+            score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
+
+            if (!MeetsLocalForest(req, ctx)) return 0f;
+            score = CombineFitness(score, RangeFitness(ctx.LocalForestCover, req.MinForest, req.MaxForest));
 
             return score;
         }
 
         /// <summary>
-        /// Spread fitness: parent is alive — no seasonal temp gate; rain/forest still apply.
+        /// Spread fitness: parent is alive — no seasonal temp gate; rainfall + local forest cover apply.
         /// </summary>
         public static float ReproduceFitness(PlantRequirements req, IEnvironmentalContext ctx)
         {
@@ -92,12 +95,16 @@ namespace WildFarming.Ecosystem
                 if (ctx.TouchesFluid) return 0f;
             }
 
-            if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return 1f;
-            if (!MeetsWorldgenRainForest(req, ctx)) return 0f;
+            if (!MeetsRainfall(req, ctx)) return 0f;
+            if (!MeetsLocalForest(req, ctx)) return 0f;
 
             float score = 1f;
-            score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
-            score = CombineFitness(score, RangeFitness(ctx.ForestDensity, req.MinForest, req.MaxForest));
+            if (EcosystemConfig.Loaded.ApplyWorldgenRainForest)
+            {
+                score = CombineFitness(score, RangeFitness(ctx.WorldgenRainfall, req.MinRain, req.MaxRain));
+            }
+
+            score = CombineFitness(score, RangeFitness(ctx.LocalForestCover, req.MinForest, req.MaxForest));
             return score;
         }
 
@@ -125,7 +132,8 @@ namespace WildFarming.Ecosystem
 
             if (!occupied && ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
 
-            if (!MeetsWorldgenRainForest(req, ctx)) return false;
+            if (!MeetsRainfall(req, ctx)) return false;
+            if (!MeetsLocalForest(req, ctx)) return false;
 
             return true;
         }
@@ -155,7 +163,8 @@ namespace WildFarming.Ecosystem
                 if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
             }
 
-            if (!MeetsWorldgenRainForest(req, ctx)) return false;
+            if (!MeetsRainfall(req, ctx)) return false;
+            if (!MeetsLocalForest(req, ctx)) return false;
 
             return true;
         }
@@ -171,8 +180,8 @@ namespace WildFarming.Ecosystem
 
                 if (!ctx.HasShallowWater) return "No water surface below.";
 
-                string rainForestLily = DescribeRainForestFailure(req, ctx);
-                if (rainForestLily != null) return rainForestLily;
+                string climate = DescribeClimateFailure(req, ctx);
+                if (climate != null) return climate;
 
                 return null;
             }
@@ -186,8 +195,8 @@ namespace WildFarming.Ecosystem
 
                 if (!ctx.HasShallowWater) return "No muddy gravel or wrong water depth.";
 
-                string rainForestReed = DescribeRainForestFailure(req, ctx);
-                if (rainForestReed != null) return rainForestReed;
+                string climate = DescribeClimateFailure(req, ctx);
+                if (climate != null) return climate;
 
                 return null;
             }
@@ -196,8 +205,8 @@ namespace WildFarming.Ecosystem
             {
                 if (!ctx.HasShallowWater) return "Water column too shallow/deep or no bed.";
 
-                string rainForestCrowfoot = DescribeRainForestFailure(req, ctx);
-                if (rainForestCrowfoot != null) return rainForestCrowfoot;
+                string climate = DescribeClimateFailure(req, ctx);
+                if (climate != null) return climate;
 
                 return null;
             }
@@ -211,21 +220,33 @@ namespace WildFarming.Ecosystem
                 return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
             }
 
-            string rainForestTerrestrial = DescribeRainForestFailure(req, ctx);
-            if (rainForestTerrestrial != null) return rainForestTerrestrial;
+            string climateTerrestrial = DescribeClimateFailure(req, ctx);
+            if (climateTerrestrial != null) return climateTerrestrial;
 
             return null;
         }
 
-        static bool MeetsWorldgenRainForest(PlantRequirements req, IEnvironmentalContext ctx)
+        static string DescribeClimateFailure(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            string rainfall = DescribeRainfallFailure(req, ctx);
+            if (rainfall != null) return rainfall;
+
+            return DescribeLocalForestFailure(req, ctx);
+        }
+
+        static bool MeetsRainfall(PlantRequirements req, IEnvironmentalContext ctx)
         {
             if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return true;
             if (!ctx.HasClimate) return false;
-            return InRange(ctx.WorldgenRainfall, req.MinRain, req.MaxRain)
-                && InRange(ctx.ForestDensity, req.MinForest, req.MaxForest);
+            return InRange(ctx.WorldgenRainfall, req.MinRain, req.MaxRain);
         }
 
-        static string DescribeRainForestFailure(PlantRequirements req, IEnvironmentalContext ctx)
+        static bool MeetsLocalForest(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            return InRange(ctx.LocalForestCover, req.MinForest, req.MaxForest);
+        }
+
+        static string DescribeRainfallFailure(PlantRequirements req, IEnvironmentalContext ctx)
         {
             if (!EcosystemConfig.Loaded.ApplyWorldgenRainForest) return null;
             if (!ctx.HasClimate) return "No climate data.";
@@ -240,14 +261,19 @@ namespace WildFarming.Ecosystem
                 return "Rainfall too high (" + ctx.WorldgenRainfall.ToString("0.00") + " > " + req.MaxRain.ToString("0.00") + ").";
             }
 
-            if (ctx.ForestDensity < req.MinForest)
+            return null;
+        }
+
+        static string DescribeLocalForestFailure(PlantRequirements req, IEnvironmentalContext ctx)
+        {
+            if (ctx.LocalForestCover < req.MinForest)
             {
-                return "Forest too sparse (" + ctx.ForestDensity.ToString("0.00") + " < " + req.MinForest.ToString("0.00") + ").";
+                return "Local forest too sparse (" + ctx.LocalForestCover.ToString("0.00") + " < " + req.MinForest.ToString("0.00") + ").";
             }
 
-            if (ctx.ForestDensity > req.MaxForest)
+            if (ctx.LocalForestCover > req.MaxForest)
             {
-                return "Forest too dense (" + ctx.ForestDensity.ToString("0.00") + " > " + req.MaxForest.ToString("0.00") + ").";
+                return "Local forest too dense (" + ctx.LocalForestCover.ToString("0.00") + " > " + req.MaxForest.ToString("0.00") + ").";
             }
 
             return null;

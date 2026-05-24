@@ -1,12 +1,15 @@
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Local open / forest-edge / forest-interior from neighboring tree blocks.</summary>
+    /// <summary>Local open / forest-edge / forest-interior and forest cover from neighboring tree blocks.</summary>
     internal sealed class FloraContextSampler
     {
+        public const int ForestCoverNeighborCap = 8;
+
         readonly Dictionary<long, CachedColumn> cache = new Dictionary<long, CachedColumn>();
         readonly Queue<long> cacheOrder = new Queue<long>();
         const int MaxCacheEntries = 8192;
@@ -14,37 +17,63 @@ namespace WildFarming.Ecosystem
         struct CachedColumn
         {
             public FloraContext Context;
+            public float LocalForestCover;
             public int ForestNeighbors;
             public double CachedAtHours;
         }
 
         public FloraContext GetContext(ICoreAPI api, BlockPos pos)
         {
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!cfg.UseFloraContext || api == null || pos == null)
+            return Sample(api, pos).Context;
+        }
+
+        public float GetLocalForestCover(ICoreAPI api, BlockPos pos)
+        {
+            return Sample(api, pos).LocalForestCover;
+        }
+
+        CachedColumn Sample(ICoreAPI api, BlockPos pos)
+        {
+            if (api == null || pos == null)
             {
-                return FloraContext.Open;
+                return new CachedColumn
+                {
+                    Context = FloraContext.Open,
+                    LocalForestCover = 0f,
+                    CachedAtHours = 0,
+                };
             }
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
             long key = ColumnKey(pos.X, pos.Z);
             double now = api.World.Calendar.TotalHours;
             if (cache.TryGetValue(key, out CachedColumn cached)
                 && now - cached.CachedAtHours < cfg.FloraContextCacheHours)
             {
-                return cached.Context;
+                return cached;
             }
 
             int forestNeighbors = CountForestNeighbors(api.World.BlockAccessor, pos, cfg.FloraContextNeighborRadius);
-            FloraContext context = Classify(forestNeighbors, cfg.FloraContextInteriorThreshold);
+            FloraContext context = cfg.UseFloraContext
+                ? Classify(forestNeighbors, cfg.FloraContextInteriorThreshold)
+                : FloraContext.Open;
 
-            StoreCache(key, new CachedColumn
+            cached = new CachedColumn
             {
                 Context = context,
                 ForestNeighbors = forestNeighbors,
+                LocalForestCover = CoverFromNeighborCount(forestNeighbors),
                 CachedAtHours = now,
-            });
+            };
 
-            return context;
+            StoreCache(key, cached);
+            return cached;
+        }
+
+        public static float CoverFromNeighborCount(int forestNeighbors)
+        {
+            if (forestNeighbors <= 0) return 0f;
+            return Math.Min(1f, forestNeighbors / (float)ForestCoverNeighborCap);
         }
 
         public void InvalidateAround(BlockPos pos, int radius)
@@ -95,7 +124,7 @@ namespace WildFarming.Ecosystem
                         if (IsForestNeighborBlock(block))
                         {
                             count++;
-                            if (count >= 8) return count;
+                            if (count >= ForestCoverNeighborCap) return count;
                         }
                     }
                 }

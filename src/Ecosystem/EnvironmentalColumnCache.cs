@@ -4,13 +4,12 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Caches static worldgen climate per XZ column (rain, forest).</summary>
+    /// <summary>Caches static worldgen rainfall per XZ column (forest cover is local via FloraContextSampler).</summary>
     internal sealed class EnvironmentalColumnCache
     {
         struct WorldgenColumn
         {
             public float WorldgenRainfall;
-            public float ForestDensity;
             public bool HasClimate;
         }
 
@@ -18,10 +17,9 @@ namespace WildFarming.Ecosystem
         const int MaxWorldgenEntries = 65536;
         readonly Queue<long> worldgenOrder = new Queue<long>();
 
-        public bool TryGetWorldgen(IBlockAccessor acc, BlockPos plantPos, out float rainfall, out float forestDensity, out bool hasClimate)
+        public bool TryGetWorldgenRainfall(IBlockAccessor acc, BlockPos plantPos, out float rainfall, out bool hasClimate)
         {
             rainfall = 0f;
-            forestDensity = 0f;
             hasClimate = false;
             if (acc == null || plantPos == null) return false;
 
@@ -29,7 +27,6 @@ namespace WildFarming.Ecosystem
             if (worldgenByXz.TryGetValue(key, out WorldgenColumn cached))
             {
                 rainfall = cached.WorldgenRainfall;
-                forestDensity = cached.ForestDensity;
                 hasClimate = cached.HasClimate;
                 return true;
             }
@@ -41,13 +38,11 @@ namespace WildFarming.Ecosystem
             cached = new WorldgenColumn
             {
                 WorldgenRainfall = worldgen?.WorldgenRainfall ?? now?.WorldgenRainfall ?? 0f,
-                ForestDensity = worldgen?.ForestDensity ?? now?.ForestDensity ?? 0f,
                 HasClimate = fallback != null,
             };
 
             StoreWorldgen(key, cached);
             rainfall = cached.WorldgenRainfall;
-            forestDensity = cached.ForestDensity;
             hasClimate = cached.HasClimate;
             return true;
         }
