@@ -11,6 +11,12 @@ namespace WildFarming.Ecosystem
         public PlantRequirements Requirements { get; }
         public double NextAttemptHours { get; set; }
 
+        public double EstablishedAtHours { get; set; }
+
+        public int FailedSurvivalChecks { get; set; }
+
+        public double NextStressCheckAt { get; set; }
+
         public ReproducerEntry(
             BlockPos origin,
             AssetLocation juvenileBlockCode,

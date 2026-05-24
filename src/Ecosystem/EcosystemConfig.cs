@@ -80,5 +80,35 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Checks per tick for mod-placed saplings that matured into log-grown.</summary>
         public int MaxPendingTreeChecksPerTick { get; set; } = 12;
+
+        // --- Flora context (v2) ---
+
+        public bool UseFloraContext { get; set; } = true;
+
+        public int FloraContextNeighborRadius { get; set; } = 2;
+
+        /// <summary>Forest neighbors at or above this count → <see cref="FloraContext.ForestInterior"/>.</summary>
+        public int FloraContextInteriorThreshold { get; set; } = 4;
+
+        public float FloraOpenInteriorPenalty { get; set; } = 0.35f;
+
+        public double FloraContextCacheHours { get; set; } = 12;
+
+        // --- Unified cell competition (v2.1) ---
+
+        public bool UseCellDisplacement { get; set; } = true;
+
+        /// <summary>Challenger spread score must exceed incumbent hold × this margin.</summary>
+        public float DisplacementHoldMargin { get; set; } = 1.25f;
+
+        public bool EnableStressDeath { get; set; } = true;
+
+        public double StressRecheckHours { get; set; } = 18;
+
+        public int MaxStressChecksPerTick { get; set; } = 24;
+
+        public bool EnableSymbiosis { get; set; } = true;
+
+        public int SymbiosisCascadeRadius { get; set; } = 4;
     }
 }

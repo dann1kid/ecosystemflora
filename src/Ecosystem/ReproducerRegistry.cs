@@ -97,6 +97,35 @@ namespace WildFarming.Ecosystem
             return processed;
         }
 
+        public int ProcessStress(int maxChecks, System.Func<ReproducerEntry, bool> tryExpire)
+        {
+            if (entries.Count == 0 || maxChecks <= 0 || tryExpire == null) return 0;
+
+            int expired = 0;
+            int scanned = 0;
+            int count = entries.Count;
+            var removeQueue = new List<BlockPos>();
+
+            while (expired < maxChecks && scanned < count)
+            {
+                if (roundRobinIndex >= count) roundRobinIndex = 0;
+                ReproducerEntry entry = entries[roundRobinIndex++];
+                scanned++;
+
+                if (!tryExpire(entry)) continue;
+
+                removeQueue.Add(entry.Origin);
+                expired++;
+            }
+
+            for (int i = 0; i < removeQueue.Count; i++)
+            {
+                Remove(removeQueue[i]);
+            }
+
+            return expired;
+        }
+
         void AddToChunkIndex(BlockPos pos)
         {
             Vec2i cc = ToChunkCoord(pos);

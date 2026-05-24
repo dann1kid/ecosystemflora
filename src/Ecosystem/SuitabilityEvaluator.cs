@@ -104,6 +104,32 @@ namespace WildFarming.Ecosystem
         /// <summary>Weakest factor wins — avoids 0.35³ &lt; MinFitness on otherwise valid edge cells.</summary>
         static float CombineFitness(float current, float factor) => System.Math.Min(current, factor);
 
+        /// <summary>Physical + climate suitability for spread target (empty or occupied).</summary>
+        public static bool CanCompeteForCell(
+            PlantRequirements req,
+            IEnvironmentalContext ctx,
+            bool harshClimate,
+            bool occupied)
+        {
+            if (req.Habitat == EcologyHabitat.TerrestrialTree
+                || req.Habitat == EcologyHabitat.WaterSurface
+                || req.Habitat == EcologyHabitat.ReedNearWater
+                || req.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
+                return CanReproduce(req, ctx, harshClimate);
+            }
+
+            if (ctx.TouchesFluid) return false;
+            if (!ctx.GroundSideSolid) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
+
+            if (!occupied && ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+
+            if (!MeetsWorldgenRainForest(req, ctx)) return false;
+
+            return true;
+        }
+
         /// <summary>Can a juvenile be placed here. Parent already proved the area — physical + biome map checks.</summary>
         public static bool CanReproduce(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {

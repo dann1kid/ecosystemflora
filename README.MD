@@ -4,7 +4,7 @@ Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainf
 
 **Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
 
-**Стадия:** `Ecosystem v1.2` (`2.2.0-ecosystem-v1.2`) — flowers, tallgrass, aquatic flora, balance presets, drygrass drops.
+**Стадия:** `Ecosystem v2.1` (`2.4.0-ecosystem-v2.1`) — unified cell competition, flora context, stress death, symbiosis.
 
 **Build:** `dotnet build` → `bin/Debug/Mods/wildfarming/` (копируется в `Mods\wildfarming`, если клиент закрыт).
 
@@ -45,6 +45,18 @@ Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread t
 | natural | 42 | 0.35 | 0.5 |
 | lush | 60 | 0.45 | 0.4 |
 | sparse | 24 | 0.2 | 0.65 |
+
+### Ecology v2.1 (config)
+
+| Key | Default | Effect |
+|-----|---------|--------|
+| `UseCellDisplacement` | true | Spread can replace weaker ecology plants |
+| `DisplacementHoldMargin` | 1.25 | Challenger must beat hold × margin |
+| `EnableStressDeath` | true | Plants die after repeated failed survival checks |
+| `EnableSymbiosis` | true | Ferns/forest flowers die when nearby tree removed |
+| `UseFloraContext` | true | Forest-edge fitness multipliers |
+
+Logs: `Spread` / `Displaced` (not worldgen spawn). Use `BalancePreset: natural`, `ReproduceDebug: false` for normal play.
 
 ## Legacy code
 

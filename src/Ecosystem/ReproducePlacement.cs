@@ -10,17 +10,16 @@ namespace WildFarming.Ecosystem
         {
             public BlockPos Pos { get; }
             public float Fitness { get; }
+            public bool Displacing { get; }
 
-            public SpreadCandidate(BlockPos pos, float fitness)
+            public SpreadCandidate(BlockPos pos, float fitness, bool displacing)
             {
                 Pos = pos;
                 Fitness = fitness;
+                Displacing = displacing;
             }
         }
 
-        /// <summary>
-        /// Scans all columns in radius, collects valid free cells, then picks up to maxSpawns (weighted by fitness).
-        /// </summary>
         public static int TryPlaceSpreadAmongNeighbors(
             ICoreAPI api,
             BlockPos origin,
@@ -34,7 +33,7 @@ namespace WildFarming.Ecosystem
             System.Random rand,
             bool logFailures,
             out string failureReason,
-            System.Action<BlockPos, PlantRequirements> onPlaced = null)
+            System.Action<BlockPos, PlantRequirements, bool> onPlaced = null)
         {
             failureReason = null;
             if (maxSpawns <= 0) return 0;
@@ -49,7 +48,7 @@ namespace WildFarming.Ecosystem
 
             if (candidates.Count == 0)
             {
-                failureReason = "No valid free cells in radius " + radius;
+                failureReason = "No competitive cells in radius " + radius;
                 return 0;
             }
 
@@ -62,15 +61,19 @@ namespace WildFarming.Ecosystem
                 SpreadCandidate chosen = remaining[index];
                 remaining.RemoveAt(index);
 
-                if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock, requirements, origin))
+                if (PlaceSpreadBlock(api, chosen.Pos, spreadBlock, requirements, origin, chosen.Displacing))
                 {
                     placed++;
-                    onPlaced?.Invoke(chosen.Pos, requirements);
+                    onPlaced?.Invoke(chosen.Pos, requirements, chosen.Displacing);
                     if (logFailures)
                     {
                         api.Logger.Notification(
-                            "[wildfarming] Spawned {0} at {1} ({2} candidates near {3})",
-                            spreadBlock.Code, chosen.Pos, candidates.Count, origin);
+                            "[wildfarming] {0} {1} at {2} ({3} candidates near {4})",
+                            chosen.Displacing ? "Displaced" : "Spread",
+                            spreadBlock.Code,
+                            chosen.Pos,
+                            candidates.Count,
+                            origin);
                     }
                 }
             }
@@ -95,6 +98,7 @@ namespace WildFarming.Ecosystem
             var candidates = new List<SpreadCandidate>();
             var seen = new HashSet<BlockPos>();
             IBlockAccessor acc = api.World.BlockAccessor;
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
@@ -131,15 +135,38 @@ namespace WildFarming.Ecosystem
 
                     if (!seen.Add(plantPos)) continue;
 
-                    EnvironmentalContext ctx = EnvironmentalContext.Sample(api, plantPos, requirements);
-                    if (!SuitabilityEvaluator.CanReproduce(requirements, ctx, harshClimate)) continue;
+                    Block occupant = acc.GetBlock(plantPos);
+                    bool empty = occupant.Id == 0;
+                    bool ecologyOccupied = !empty && PlantCodeHelper.IsEcologySpreadParent(occupant);
 
-                    float fitness = SuitabilityEvaluator.ReproduceFitness(requirements, ctx);
-                    if (fitness < minFitness) continue;
+                    float fitness;
+                    bool displacing = false;
 
-                    if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
+                    if (empty)
+                    {
+                        fitness = CellCompetition.SpreadScore(api, requirements, plantPos, harshClimate);
+                        if (fitness < minFitness) continue;
+                        if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
+                    }
+                    else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
+                    {
+                        if (!CellCompetition.CanDisplace(
+                            api, requirements, occupant, plantPos, harshClimate,
+                            out float challengerScore, out float incumbentScore))
+                        {
+                            continue;
+                        }
 
-                    candidates.Add(new SpreadCandidate(plantPos.Copy(), fitness));
+                        fitness = challengerScore;
+                        displacing = true;
+                        if (fitness < minFitness) continue;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    candidates.Add(new SpreadCandidate(plantPos.Copy(), fitness, displacing));
                 }
             }
 
@@ -174,7 +201,8 @@ namespace WildFarming.Ecosystem
             BlockPos plantPos,
             Block spreadBlock,
             PlantRequirements requirements,
-            BlockPos parentOrigin)
+            BlockPos parentOrigin,
+            bool displacing)
         {
             if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
             {
@@ -198,6 +226,16 @@ namespace WildFarming.Ecosystem
             }
 
             IBlockAccessor accessor = api.World.BlockAccessor;
+
+            if (displacing)
+            {
+                Block incumbent = accessor.GetBlock(plantPos);
+                EcosystemSystem eco = EcosystemSystem.Instance;
+                if (eco != null && PlantCodeHelper.IsEcologySpreadParent(incumbent))
+                {
+                    eco.RemoveEcologyPlant(plantPos, cascadeSymbiosis: true, reason: "displaced");
+                }
+            }
 
             if (requirements.Habitat == EcologyHabitat.ReedNearWater)
             {

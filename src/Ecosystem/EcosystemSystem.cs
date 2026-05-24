@@ -19,6 +19,9 @@ namespace WildFarming.Ecosystem
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         bool calendarDebugLogged;
+        internal FloraContextSampler FloraContext { get; private set; }
+
+        BlockBrokenDelegate didBreakBlockHandler;
 
         public void InitPre(ICoreAPI api)
         {
@@ -70,6 +73,8 @@ namespace WildFarming.Ecosystem
 
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
 
+            FloraContext = new FloraContextSampler();
+
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 500);
 
@@ -79,6 +84,9 @@ namespace WildFarming.Ecosystem
                 chunkUnloadedHandler = OnChunkColumnUnloaded;
                 sapi.Event.ChunkColumnLoaded += chunkLoadedHandler;
                 sapi.Event.ChunkColumnUnloaded += chunkUnloadedHandler;
+
+                didBreakBlockHandler = OnDidBreakBlock;
+                sapi.Event.DidBreakBlock += didBreakBlockHandler;
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
@@ -118,6 +126,7 @@ namespace WildFarming.Ecosystem
             {
                 if (chunkLoadedHandler != null) sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
                 if (chunkUnloadedHandler != null) sapi.Event.ChunkColumnUnloaded -= chunkUnloadedHandler;
+                if (didBreakBlockHandler != null) sapi.Event.DidBreakBlock -= didBreakBlockHandler;
             }
 
             if (api != null)
@@ -131,7 +140,10 @@ namespace WildFarming.Ecosystem
             chunkScanListenerId = 0;
             chunkLoadedHandler = null;
             chunkUnloadedHandler = null;
+            didBreakBlockHandler = null;
             calendarDebugLogged = false;
+            FloraContext?.Clear();
+            FloraContext = null;
             Instance = null;
             api = null;
         }
@@ -148,6 +160,34 @@ namespace WildFarming.Ecosystem
         {
             return SuitabilityEvaluator.DescribeSurvivalFailure(
                 requirements, Sample(plantPos), EcosystemConfig.Loaded.HarshWildPlants);
+        }
+
+        public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason)
+        {
+            if (api == null || pos == null) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            Block block = acc.GetBlock(pos);
+            if (block.Id == 0) return;
+
+            if (cascadeSymbiosis && EcosystemConfig.Loaded.EnableSymbiosis)
+            {
+                FloraSymbiosis.CascadeOnHostRemoved(api, pos, block);
+            }
+
+            registry.Remove(pos);
+            acc.SetBlock(0, pos);
+            acc.MarkBlockDirty(pos);
+            FloraContext?.InvalidateAround(pos, 2);
+
+            if (EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
+            {
+                api.Logger.Notification(
+                    "[wildfarming] Removed {0} at {1} ({2})",
+                    PlantCodeHelper.GetEcologySpecies(block.Code) ?? block.Code?.Path,
+                    pos,
+                    reason);
+            }
         }
 
         public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false)
@@ -203,7 +243,10 @@ namespace WildFarming.Ecosystem
                     spreadBlockCode.Clone(),
                     matureBlockCode,
                     requirements,
-                    nextAttempt);
+                    nextAttempt)
+                {
+                    EstablishedAtHours = now,
+                };
 
                 registry.Add(entry);
 
@@ -241,6 +284,27 @@ namespace WildFarming.Ecosystem
             registry.RemoveChunk(new Vec2i(chunkCoord.X, chunkCoord.Z));
         }
 
+        void OnDidBreakBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel)
+        {
+            if (blockSel?.Position == null || api == null) return;
+
+            Block oldBlock = api.World.Blocks[oldBlockId];
+            BlockPos pos = blockSel.Position;
+
+            if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
+            {
+                FloraSymbiosis.CascadeOnHostRemoved(api, pos, oldBlock);
+            }
+
+            if (FloraContextSampler.IsForestNeighborBlock(oldBlock)
+                || (oldBlock != null && PlantCodeHelper.IsEcologyPlant(oldBlock)))
+            {
+                FloraContext?.InvalidateAround(pos, 2);
+            }
+
+            registry.Remove(pos);
+        }
+
         void OnChunkScanTick(float dt)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
@@ -276,6 +340,52 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        void ProcessStress(double now, int maxChecks)
+        {
+            if (maxChecks <= 0 || api == null || !EcosystemConfig.Loaded.EnableStressDeath) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            bool harsh = cfg.HarshWildPlants;
+            IBlockAccessor acc = api.World.BlockAccessor;
+
+            registry.ProcessStress(maxChecks, entry =>
+            {
+                if (entry.FailedSurvivalChecks > 0 && now < entry.NextStressCheckAt) return false;
+
+                PlantRequirements req = entry.Requirements;
+                if (req == null) return false;
+
+                if (req.Habitat != EcologyHabitat.Terrestrial) return false;
+
+                if (cfg.EnableSymbiosis
+                    && !string.IsNullOrEmpty(req.Species)
+                    && FloraSymbiosis.TryGetRule(req.Species, out _)
+                    && !FloraSymbiosis.HasRequiredHost(acc, entry.Origin, req.Species))
+                {
+                    entry.FailedSurvivalChecks++;
+                }
+                else if (!CanSurviveAt(entry.Origin, req))
+                {
+                    entry.FailedSurvivalChecks++;
+                }
+                else
+                {
+                    entry.FailedSurvivalChecks = 0;
+                    entry.NextStressCheckAt = 0;
+                    return false;
+                }
+
+                if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks)
+                {
+                    entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                    return false;
+                }
+
+                RemoveEcologyPlant(entry.Origin, cascadeSymbiosis: true, reason: "stress");
+                return true;
+            });
+        }
+
         void OnReproduceTick(float dt)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
@@ -283,9 +393,10 @@ namespace WildFarming.Ecosystem
             TryLogCalendarDebugOnce();
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            pendingTreeSaplings.Process(api, this, api.World.Calendar.TotalHours, cfg.MaxPendingTreeChecksPerTick);
-            IBlockAccessor acc = api.World.BlockAccessor;
             double now = api.World.Calendar.TotalHours;
+            ProcessStress(now, cfg.MaxStressChecksPerTick);
+            pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
+            IBlockAccessor acc = api.World.BlockAccessor;
 
             registry.ProcessDue(
                 now,
@@ -339,7 +450,7 @@ namespace WildFarming.Ecosystem
                 api.World.Rand,
                 cfg.ReproduceDebug,
                 out string failureReason,
-                onPlaced: (pos, requirements) =>
+                onPlaced: (pos, requirements, displaced) =>
                 {
                     if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
                     {

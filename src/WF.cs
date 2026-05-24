@@ -33,10 +33,14 @@ namespace WildFarming
 
                 ecosystem.Init(api);
 
+                EcosystemConfig cfg = EcosystemConfig.Loaded;
                 api.Logger.Notification(
-                    "[wildfarming] Ecosystem on vanilla plants — enabled={0}, debug={1}",
-                    EcosystemConfig.Loaded.EcosystemEnabled,
-                    EcosystemConfig.Loaded.ReproduceDebug);
+                    "[wildfarming] Ecosystem v2.1 — enabled={0}, displacement={1}, stress={2}, symbiosis={3}, debug={4}",
+                    cfg.EcosystemEnabled,
+                    cfg.UseCellDisplacement,
+                    cfg.EnableStressDeath,
+                    cfg.EnableSymbiosis,
+                    cfg.ReproduceDebug);
             }
         }
 

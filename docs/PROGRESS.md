@@ -192,64 +192,32 @@
 
 Mod DB и публикация — **пока рано** (нужны баланс, «полнота» луга, playtest).
 
-### Баланс (не только таблицы)
+### v1.x — контент и баланс
 
-Сейчас калибровка — `Wild*Ecology` + `wildfarming-ecosystem.json`. Нужен **внешний цикл настройки**, иначе только угадайка по числам.
+- [x] **Tallgrass** в экосистеме
+- [x] Патч **drygrass** с цветов (нож/коса)
+- [x] Пресеты баланса `natural` / `lush` / `sparse`
 
-- [ ] Пресеты конфига: `natural` / `lush` / `sparse` (готовые json или defaults в коде)
-- [ ] Playtest-чеклист после изменений (люпин не на `soil-high`, лес не ковёр саженцев, ягоды, aquatic)
-- [ ] Опционально: сводка spread по species за игровой сезон при `ReproduceDebug` (кто доминирует)
+### v2.1 — единая конкуренция за клетку (§11 PROJECT_VISION)
 
-### Слой луга — «матрица» под цветами
+**Один механизм:** spread + displacement + stress death + symbiosis. Без `DisturbedTracker` / colonizer window.
 
-В worldgen луг = **tallgrass + цветы**; в экосистеме живут в основном цветы/кусты/деревья. `tallgrass-*` не конкурирует за клетки → луг визуально «однослойный».
+- [x] `CellCompetition` — spreadScore vs holdScore, displacement
+- [x] `FloraContext` как множитель fitness (опушка emergent)
+- [x] `EnableStressDeath` на `EcosystemPlant`
+- [x] `FloraSymbiosis` — каскад при смерти дерева/хоста
+- [x] `WildSpeciesModifiers`: `HoldStrength` вместо disturbed/colonizer
+- [ ] Playtest: покос → быстрые виды → вытеснение; опушка; symbiosis cascade
+- [ ] Land claims при displacement
+- [ ] Тюнинг `HoldStrength` / `DisplacementHoldMargin` по playtest
 
-- [ ] **Tallgrass** (`tallgrass-*`) как участники экосистемы: низкий `SpreadRate`, patch spacing, климат из `grass.json`
-- [ ] Патч `EcosystemPlant` на `tallgrass.json` (как цветы) или только chunk-scan — по аналогии с остальным
+### v2.0 (устарело → заменено v2.1)
 
-### Следующая фича — дроп «пучка травы» с цветов (ванильный стиль)
+~~DisturbedTracker, colonizer window, покос как отдельное состояние~~ — удалено в пользу §11.
 
-Ожидание игрока: срез цвета ножом → `drygrass` (сено, розжиг), как у `tallgrass`; исключения — ядовитые (ghostpipe и т.п.).  
-Сейчас у `flower-*` в ванилле **нет** дропа `drygrass` в JSON; экосистема spread дропы не трогает.
-
-**Принципы реализации (как у экосистемы):**
-
-- только **ванильные** блоки и предметы;
-- **JSON-патч** `dropsByType` / `drops` на `game:flower.json` (без своих item);
-- простой whitelist/blacklist по типам цветов;
-- без living trees / сложных BE.
-
-- [ ] Патч: нож (и при необходимости коса) → `game:drygrass` для `flower-*`
-- [ ] Исключить: `ghostpipe*`, прочие явно «не сено» (список в патче или таблице)
-- [ ] Playtest: сено, розжиг, баланс с tallgrass
-
-### v1.x — ближайшие фичи (простой код)
-
-См. также §10–11 в [`PROJECT_VISION.md`](PROJECT_VISION.md).
-
-### v2 — теория границ флоры + зона хозяйства (дизайн, после v1.x)
-
-**Цель:** границы и смена состава **из таблиц и локального контекста**, без отдельных биомов «опушка» в worldgen.
-
-#### Границы: луг / опушка / лес
-
-- [ ] `FloraContext` (`Open`, `ForestEdge`, `ForestInterior`) по числу лесных соседей (radius 2, `log-grown`/листва)
-- [ ] Поля в ecology: `ContextAffinity`, `ContextBonus` (+ опционально `ForestSuppression`)
-- [ ] `fitness_effective = base × ContextMultiplier` в spread / `SuitabilityEvaluator`
-- [ ] Кеш контекста на колонку XZ, инвалидация при смене дерева рядом
-
-#### Зона хозяйства: покос и сукцессия
-
-- [ ] `DisturbedTracker`: после Break/покоса клетка → `disturbed` + `disturbed_since` (игровые часы)
-- [ ] Поля в ecology: `IsColonizer`, `DisturbedBonus`, `LifespanDays`, опционально `SuccessionStage`
-- [ ] Colonizer window (конфиг, ~7 дней): буст colonizer, штраф прочим
-- [ ] Lifespan: снятие блока → снова конкуренция / disturbed
-- [ ] Playtest: полоса после косы → колонизаторы → смена → стабильный луг; опушка у леса без игрока
-
-#### Обратная связь игроку (v2+)
+### Обратная связь игроку (позже)
 
 - [ ] Handbook / dominant species по зоне (опционально)
-- [ ] Два яруса луга: tallgrass (низ) + цвета (верх) — связка с §«Слой луга»
 
 ### Playtest и техдолг
 

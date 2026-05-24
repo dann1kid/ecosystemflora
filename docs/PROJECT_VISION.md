@@ -200,7 +200,7 @@ docs/
 
 - **Mod DB** — отложено до баланса и «полноты» луга (tallgrass + playtest).
 - **v1.x** — tallgrass, drygrass-патч, пресеты баланса (см. PROGRESS).
-- **v2** — теория границ флоры + зона хозяйства (§10–11); без отдельного «режима опушки» в коде.
+- **v2.1** — единая конкуренция за клетку (§11); без disturbed/покоса как отдельной механики.
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
 - [ ] Убрать `EcosystemPlant` BE, оставить только chunk-scan
 - [ ] Land claims при reproduce
@@ -273,84 +273,65 @@ else                      → Open            // 1.0
 
 ---
 
-## 11. Ecosystem v2 — зона хозяйства и сукцессия (дизайн)
+## 11. Ecosystem v2.1 — единая конкуренция за клетку (реализовано)
 
-**Идея:** покос / снятие растения / вспахивание открывает **нишу** (`disturbed`). Сначала колонизаторы, затем смена состава, затем стабилизация. Плюс **цикл существования**: виды с ограниченным «возрастом» освобождают клетку для следующего слоя.
+**Идея:** один механизм вместо отдельных «покоса», «disturbed» и «опушки-биома». Растения конкурируют за клетки; покос игрока = просто освобождение клетки в общем пуле.
 
-### 11.1. Конечный автомат клетки (логический)
+### 11.1. Формула
 
-Не обязательно хранить в BE на каждом блоке растения — достаточно **лёгкого трекера на колонку XZ** или sparse map `(x,z) → DisturbedState`:
+На клетке-кандидате для вида-challenger:
 
 ```
-[Intact]  →  игрок сломал растение / покос  →  [Disturbed, age=0]
-                                                    ↓ +время (календарь)
-                                              [Disturbed, age↑]
-                                                    ↓ colonizer window
-                                              занято opportunist-видом
-                                                    ↓ lifespan / pressure
-                                              [Recovering, stage++]
-                                                    ↓
-                                              [Stable] ≈ исходный климакс (медленно)
+spreadScore = ReproduceFitness × ContextMultiplier × SpreadRate
+holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(SpreadRate, 2)
 ```
 
-### 11.2. Поля в таблице видов
+- **Пустая клетка** — победитель с max `spreadScore` (weighted random среди прошедших `MinFitness`).
+- **Занятая** ecology-клетка — challenger **вытесняет** incumbent, если  
+  `spreadScore ≥ holdScore × DisplacementHoldMargin` (конфиг, default 1.25).
+- **Стресс-смерть** — incumbent не проходит `MeetsSurvivalRequirements` (или потерял host-симбиота) N раз → блок снимается → снова конкуренция.
+
+Опушка **не отдельный биом**: edge-виды выигрывают у open-видов у леса через `ContextMultiplier` + displacement.
+
+Покос / слом игроком **не помечает** disturbed — клетка пустая → быстрые виды (высокий `SpreadRate`, низкий `HoldStrength`) занимают первыми; их позже вытесняют виды с высоким hold и лучшим контекстом.
+
+### 11.2. Поля в таблице видов (`WildSpeciesModifiers`)
 
 | Поле | Назначение |
 |------|------------|
-| `IsColonizer` | Быстро захватывает `disturbed` в первые N игровых дней |
-| `DisturbedBonus` | Множитель fitness, пока клетка disturbed |
-| `LifespanDays` | 0 = без лимита; &gt;0 — после срока участник «умирает» (блок снимается или заменяется на воздух), ниша снова конкурируется |
-| `SuccessionStage` | Опционально: порядок в цепочке (0 colonizer → 1 → 2 climax) |
+| `ContextAffinity` / `ContextBonus` | Локальный контекст (§10) |
+| `HoldStrength` | Защита занятой клетки (colonizers ~0.65, climax ~1.2) |
+| `SpreadRate` | В `Wild*Ecology` — частота и vigor spread |
 
-Пример:
+Убрано: `IsColonizer`, `DisturbedBonus`, `DisturbedTracker`, colonizer window.
 
-| species | SpreadRate | IsColonizer | DisturbedBonus | LifespanDays |
-|---------|------------|-------------|----------------|--------------|
-| redtopgrass | 2.2 | true | **5.0** | — |
-| mugwort | 2.0 | true | **4.0** | — |
-| (гипотет однолетник) | 1.5 | true | **6.0** | 40 |
-| wilddaisy | 1.3 | false | 1.0 | — |
-| cowparsley | 1.7 | false | 2.0 | — |
+### 11.3. Симбиоз (`FloraSymbiosis`)
 
-### 11.3. Формула spread на disturbed-клетке
+Симбионты привязаны к **дереву** (`log-grown`) в радиусе 2–4 блоков (папоротники, ландыш, ягоды).
 
-```
-score = SpreadRate × DisturbedBonus × (IsColonizer ? colonizer_boost : 1.0)
+- При смерти/сломе **хоста** → симbionты в радиусе каскадно снимаются.
+- При стресс-проверке: симbionт без host → накапливает failed checks → смерть.
 
-if disturbed_age < ColonizerWindowDays:
-    score ×= IsColonizer ? 3.0 : 0.3   // окно «горячей» ниши
-```
+### 11.4. Конфиг
 
-`ColonizerWindowDays` — конфиг (напр. 7 игровых дней). После окна — обычная конкуренция; виды с высоким `SpreadRate` и подходящим контекстом вытесняют колонизаторов.
+| Key | Default |
+|-----|---------|
+| `UseCellDisplacement` | true |
+| `DisplacementHoldMargin` | 1.25 |
+| `EnableStressDeath` | true |
+| `StressRecheckHours` | 18 |
+| `EnableSymbiosis` | true |
+| `UseFloraContext` | true |
 
-### 11.4. Цикл смерти / замещения
+### 11.5. Код
 
-Периодически (редкий тик, только зарегистрированные reproducers):
-
-- если `LifespanDays` &gt; 0 и возраст участника &gt; лимита → снять ванильный блок (или заменить на air), пометить клетку `disturbed` снова или открыть для spread.
-- более «успешные» для зоны (climate + context + soil) постепенно занимают освободившиеся клетки.
-
-**Важно:** смерть — не отдельная living-tree симуляция; только снятие блока и повторный spread ванильного кода.
-
-### 11.5. Как это видит игрок
-
-1. Покосил луг → через ~2 дня: колонизаторы (мятлик, подорожник-аналог по таблице).
-2. Через неделю: однолетники исчезают, пробивается устойчивый луг.
-3. Через месяц: у краёв — edge-виды (папоротник у леса) без действий игрока.
-4. Край леса: папоротник/куст сами концентрируются на `ForestEdge` через `ContextBonus`.
-
-### 11.6. Минимальный diff к текущему коду (v2)
-
-| # | Компонент |
-|---|-----------|
-| 1 | `FloraContext` + подсчёт лесных соседей |
-| 2 | Расширение `Wild*Ecology` / `PlantRequirements`: affinity, bonuses |
-| 3 | `DisturbedTracker` (колонка или sparse): `disturbed`, `disturbed_since_hours` |
-| 4 | Подписка `BlockBreak` / scythe на траву и цветы → mark disturbed |
-| 5 | В `ReproducePlacement` / fitness — множители disturbed + colonizer window |
-| 6 | Опционально: lifespan в `ReproducerEntry` + редкий tick «смерть» |
-
-Принципы те же, что в v1: **ванильные блоки**, таблицы, один цикл spread, без тяжёлого BE на каждый цветок.
+| Компонент | Файл |
+|-----------|------|
+| Spread / displace | `CellCompetition`, `ReproducePlacement` |
+| Context | `FloraContextSampler`, `EcologySpreadFitness` |
+| Stress | `EcosystemSystem.ProcessStress` |
+| Symbiosis | `FloraSymbiosis` |
+| Species tuning | `WildSpeciesModifiers` |
 
 ---
 

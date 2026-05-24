@@ -42,6 +42,16 @@ namespace WildFarming.Ecosystem
         /// <summary>Relative spread vigor (1 = config baseline).</summary>
         public float SpreadRate { get; set; } = 1f;
 
+        public FloraContextAffinity ContextAffinity { get; set; } = FloraContextAffinity.Open;
+
+        public float ContextBonus { get; set; } = 1f;
+
+        /// <summary>Multiplier in <see cref="FloraContext.ForestInterior"/> when affinity is open.</summary>
+        public float ForestInteriorPenalty { get; set; } = 0.35f;
+
+        /// <summary>Incumbent defense when another species tries to displace (low = easy to overrun).</summary>
+        public float HoldStrength { get; set; } = 1f;
+
         /// <summary>Horizontal spread radius; 0 = use <see cref="EcosystemConfig.ReproduceRadius"/>.</summary>
         public int SpreadRadius { get; set; }
 
@@ -276,6 +286,7 @@ namespace WildFarming.Ecosystem
             };
 
             WildPlantSoil.ApplyTo(requirements);
+            WildSpeciesModifiers.ApplyTo(requirements);
             return requirements;
         }
     }

@@ -15,23 +15,23 @@
 - В мире только ванильные блоки; мод не подменяет блоки wildplant.
 - Живое = зарегистрировано в EcosystemSystem и периодически spread (IEcosystemParticipant / EcosystemParticipant).
 - Среда из API: EnvironmentalContext (температура, WorldgenRainfall, ForestDensity, почва, жидкость).
-- Spread только на клетки с fitness >= MinFitness; кандидаты — все свободные в радиусе, выбор weighted.
-- Скорость spread: SpreadRate per-species (SpeciesSpread × конфиг).
+- v2.1: единая конкуренция за клетку — spread на пустые + displacement занятых (CellCompetition), stress death, symbiosis. БЕЗ DisturbedTracker.
+- SpreadScore = fitness × Context × SpreadRate; HoldScore = fitness × Context × HoldStrength.
+- Опушка emergent через FloraContext + displacement, не отдельный биом.
 
 Habitat:
-- Terrestrial — game:flower-*, flower-lupine
-- ReedNearWater — coopersreed, papyrus: muddygravel; мелководье = ровно 1 водный блок над илом, рогоз ВНУТРИ него (water-normal)
+- Terrestrial — game:flower-*, flower-lupine, tallgrass, fern, berries
+- ReedNearWater — coopersreed, papyrus
 - WaterSurface — waterlily
-- UnderwaterColumn — aquatic-watercrowfoot (колонка section → tip/top)
+- UnderwaterColumn — aquatic-watercrowfoot
 
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
 
 Код: src/Ecosystem/, BlockEntity/EcosystemPlant.cs, assets/wildfarming/patches/enabledpatches.json.
 
-Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v1.1 — см. docs/PROGRESS.md (Roadmap / TODO).
+Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Ближайший backlog (v1.x): tallgrass; патч drygrass (нож); пресеты баланса.
-Дизайн v2 (доки §10–11 PROJECT_VISION): границы флоры (опушка/лес через ContextMultiplier); disturbed + сукцессия после покоса. Mod DB — позже.
+Backlog: playtest displacement/symbiosis; land claims; balance tuning. Mod DB — позже.
 
 Коммиты — только по запросу пользователя.
 ```
@@ -40,4 +40,4 @@ Habitat:
 
 ## One-liner
 
-VS ecosystem mod: vanilla flowers + aquatic plants (reeds on muddygravel, crowfoot columns), worldgen climate, candidate-pool spread; not Revival.
+VS ecosystem mod: vanilla plants, unified cell competition (spread + displace + stress + symbiosis), flora context at forest edge; not Revival.
