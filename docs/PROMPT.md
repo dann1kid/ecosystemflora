@@ -31,7 +31,7 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Backlog: soil succession per species (plant/death); horsetail understory playtest; perf phase 2; land claims. v2.2: niche MVP done — см. PROGRESS §v2.2, PROJECT_VISION §14.
+Backlog: soil succession per species (plant/death); perf phase 2; land claims; forest-by-water playtest if issues. v2.2 niche MVP playtest closed (2026-05).
 
 Коммиты — только по запросу пользователя.
 ```

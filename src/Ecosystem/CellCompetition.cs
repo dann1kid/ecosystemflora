@@ -86,6 +86,12 @@ namespace WildFarming.Ecosystem
 
             if (!PlantCodeHelper.IsEcologySpreadParent(incumbentBlock)) return false;
 
+            IBlockAccessor acc = api.World.BlockAccessor;
+            if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, challenger, incumbentBlock, out _))
+            {
+                return false;
+            }
+
             string incumbentSpecies = PlantCodeHelper.GetEcologySpecies(incumbentBlock.Code);
             if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;
 

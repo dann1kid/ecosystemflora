@@ -20,6 +20,24 @@ namespace WildFarming.Ecosystem
             int searchRadius = requirements.GetSpacingSearchRadius(cfg);
             if (searchRadius <= 0) return true;
 
+            EcologySpacingIndex index = EcosystemSystem.Instance?.SpacingIndex;
+            if (index != null)
+            {
+                return index.MeetsSpacing(candidatePos, requirements, cfg, out failureReason);
+            }
+
+            return MeetsSpacingBruteForce(acc, candidatePos, requirements, cfg, searchRadius, out failureReason);
+        }
+
+        static bool MeetsSpacingBruteForce(
+            IBlockAccessor acc,
+            BlockPos candidatePos,
+            PlantRequirements requirements,
+            EcosystemConfig cfg,
+            int searchRadius,
+            out string failureReason)
+        {
+            failureReason = null;
             int y0 = candidatePos.Y - cfg.SpacingVerticalSearch;
             int y1 = candidatePos.Y + cfg.SpacingVerticalSearch;
 
@@ -50,7 +68,6 @@ namespace WildFarming.Ecosystem
                         int dist = HorizontalChebyshev(candidatePos, checkPos);
                         bool sameColumn = candidatePos.X == checkPos.X && candidatePos.Z == checkPos.Z;
 
-                        // Reeds must not stack vertically (SameSpeciesSpacing 0 only allows horizontal clumps).
                         if (sameColumn && otherSpecies == requirements.Species
                             && PlantCodeHelper.IsReedBlock(block))
                         {

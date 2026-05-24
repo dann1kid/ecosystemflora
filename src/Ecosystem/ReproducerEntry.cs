@@ -17,6 +17,10 @@ namespace WildFarming.Ecosystem
 
         public double NextStressCheckAt { get; set; }
 
+        internal int EntriesIndex { get; set; } = -1;
+
+        internal int ChunkListIndex { get; set; } = -1;
+
         public ReproducerEntry(
             BlockPos origin,
             AssetLocation juvenileBlockCode,

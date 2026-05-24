@@ -21,6 +21,7 @@ namespace WildFarming.Ecosystem
         bool calendarDebugLogged;
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
+        internal EcologySpacingIndex SpacingIndex { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
 
@@ -78,6 +79,7 @@ namespace WildFarming.Ecosystem
 
             FloraContext = new FloraContextSampler();
             Niche = new NicheSampler();
+            SpacingIndex = new EcologySpacingIndex();
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
@@ -151,6 +153,8 @@ namespace WildFarming.Ecosystem
             FloraContext = null;
             Niche?.Clear();
             Niche = null;
+            SpacingIndex?.Clear();
+            SpacingIndex = null;
             ColumnCache?.Clear();
             ColumnCache = null;
             activeChunkScratch.Clear();
@@ -196,6 +200,7 @@ namespace WildFarming.Ecosystem
             }
 
             registry.Remove(pos);
+            SpacingIndex?.Remove(pos);
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
             FloraContext?.InvalidateAround(pos, 2);
@@ -277,6 +282,7 @@ namespace WildFarming.Ecosystem
                 };
 
                 registry.Add(entry);
+                SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
 
                 if (cfg.ReproduceDebug)
                 {
@@ -309,7 +315,9 @@ namespace WildFarming.Ecosystem
 
         void OnChunkColumnUnloaded(Vec3i chunkCoord)
         {
-            registry.RemoveChunk(new Vec2i(chunkCoord.X, chunkCoord.Z));
+            var cc = new Vec2i(chunkCoord.X, chunkCoord.Z);
+            registry.RemoveChunk(cc);
+            SpacingIndex?.RemoveChunk(cc);
         }
 
         void OnDidBreakBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel)
@@ -331,6 +339,7 @@ namespace WildFarming.Ecosystem
             }
 
             registry.Remove(pos);
+            SpacingIndex?.Remove(pos);
             InvalidateEnvironmentAround(pos);
         }
 

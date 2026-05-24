@@ -47,11 +47,11 @@ namespace WildFarming.Ecosystem
             BlockPos origin = entry.Origin;
             if (byPos.TryGetValue(origin, out ReproducerEntry existing))
             {
-                RemoveFromChunkIndex(existing);
-                entries.Remove(existing);
+                RemoveEntry(existing);
             }
 
             byPos[origin] = entry;
+            entry.EntriesIndex = entries.Count;
             entries.Add(entry);
             AddToChunkIndex(entry);
         }
@@ -60,9 +60,7 @@ namespace WildFarming.Ecosystem
         {
             if (!byPos.TryGetValue(pos, out ReproducerEntry entry)) return false;
 
-            byPos.Remove(pos);
-            entries.Remove(entry);
-            RemoveFromChunkIndex(entry);
+            RemoveEntry(entry);
             return true;
         }
 
@@ -70,16 +68,40 @@ namespace WildFarming.Ecosystem
         {
             if (!byChunk.TryGetValue(chunkCoord, out List<ReproducerEntry> list)) return;
 
-            for (int i = 0; i < list.Count; i++)
+            var snapshot = new List<ReproducerEntry>(list);
+            for (int i = 0; i < snapshot.Count; i++)
             {
-                ReproducerEntry entry = list[i];
-                byPos.Remove(entry.Origin);
-                entries.Remove(entry);
+                RemoveEntry(snapshot[i]);
             }
 
-            byChunk.Remove(chunkCoord);
             dueChunkEntryIndex.Remove(chunkCoord);
             stressChunkEntryIndex.Remove(chunkCoord);
+        }
+
+        void RemoveEntry(ReproducerEntry entry)
+        {
+            if (entry == null) return;
+
+            byPos.Remove(entry.Origin);
+            RemoveFromEntriesList(entry);
+            RemoveFromChunkIndex(entry);
+        }
+
+        void RemoveFromEntriesList(ReproducerEntry entry)
+        {
+            int idx = entry.EntriesIndex;
+            if (idx < 0 || idx >= entries.Count) return;
+
+            int last = entries.Count - 1;
+            if (idx != last)
+            {
+                ReproducerEntry swapped = entries[last];
+                entries[idx] = swapped;
+                swapped.EntriesIndex = idx;
+            }
+
+            entries.RemoveAt(last);
+            entry.EntriesIndex = -1;
         }
 
         public int ProcessDue(
@@ -362,6 +384,7 @@ namespace WildFarming.Ecosystem
                 byChunk[cc] = list;
             }
 
+            entry.ChunkListIndex = list.Count;
             list.Add(entry);
         }
 
@@ -370,7 +393,20 @@ namespace WildFarming.Ecosystem
             Vec2i cc = ToChunkCoord(entry.Origin);
             if (!byChunk.TryGetValue(cc, out List<ReproducerEntry> list)) return;
 
-            list.Remove(entry);
+            int idx = entry.ChunkListIndex;
+            int last = list.Count - 1;
+            if (idx < 0 || idx > last) return;
+
+            if (idx != last)
+            {
+                ReproducerEntry swapped = list[last];
+                list[idx] = swapped;
+                swapped.ChunkListIndex = idx;
+            }
+
+            list.RemoveAt(last);
+            entry.ChunkListIndex = -1;
+
             if (list.Count == 0)
             {
                 byChunk.Remove(cc);

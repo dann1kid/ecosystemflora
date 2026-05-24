@@ -141,13 +141,15 @@ namespace WildFarming.Ecosystem
                     if (!seen.Add(plantPos)) continue;
 
                     Block occupant = acc.GetBlock(plantPos);
-                    bool empty = occupant.Id == 0;
-                    bool ecologyOccupied = !empty && PlantCodeHelper.IsEcologySpreadParent(occupant);
+                    if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, occupant, out bool isEmpty))
+                    {
+                        continue;
+                    }
 
                     float fitness;
                     bool displacing = false;
 
-                    if (empty)
+                    if (isEmpty)
                     {
                         fitness = CellCompetition.SpreadScore(api, requirements, plantPos, harshClimate);
                         if (fitness < minFitness) continue;
