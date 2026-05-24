@@ -141,5 +141,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Multiplier on till nutrient bonuses.</summary>
         public float FarmlandNutrientBridgeStrength { get; set; } = 1f;
+
+        /// <summary>Do not spread, displace, stress-remove, or change soil inside land claims.</summary>
+        public bool RespectLandClaims { get; set; } = true;
     }
 }

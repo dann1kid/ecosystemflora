@@ -31,7 +31,7 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Backlog: land claims; HoldStrength tuning; fallow N (залежь); mowing/symbiosis playtest. Закрыто (2026-05): v2.2 niche, block-only soil, LocalForestCover, aquatic spread (SpreadVacancy, gravel-* bed).
+Backlog: HoldStrength tuning; fallow N (залежь); mowing/symbiosis playtest. Закрыто (2026-05): v2.2 niche, block-only soil, LocalForestCover, aquatic spread, land claims (`RespectLandClaims`).
 
 Коммиты — только по запросу пользователя.
 ```

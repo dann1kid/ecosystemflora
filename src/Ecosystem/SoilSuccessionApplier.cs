@@ -29,6 +29,8 @@ namespace WildFarming.Ecosystem
 
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos groundPos = plantPos.DownCopy();
+            if (!LandClaimGuard.AllowsEcologyChange(api, groundPos)) return;
+
             Block ground = acc.GetBlock(groundPos);
             if (!WildSoilBlockMapper.IsSuccessionTarget(ground)) return;
 

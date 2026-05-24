@@ -30,12 +30,14 @@ namespace WildFarming.Ecosystem
 
             for (int i = 0; i < sections; i++)
             {
+                if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
                 if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
 
                 acc.SetBlock(sectionBlock.BlockId, pos);
                 pos.Up();
             }
 
+            if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
             if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
 
             bool surfaceCap = !BlockFluidHelper.IsWaterAt(acc, pos.UpCopy());

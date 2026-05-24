@@ -47,5 +47,6 @@
   "UseSoilSuccession": true,
   "SoilSuccessionStrength": 1,
   "UseFarmlandNutrientBridge": true,
-  "FarmlandNutrientBridgeStrength": 1
+  "FarmlandNutrientBridgeStrength": 1,
+  "RespectLandClaims": true
 }

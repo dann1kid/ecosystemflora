@@ -140,6 +140,8 @@ namespace WildFarming.Ecosystem
 
                     if (!seen.Add(plantPos)) continue;
 
+                    if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) continue;
+
                     Block occupant = acc.GetBlock(plantPos);
                     if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, occupant, out bool isEmpty))
                     {
@@ -224,6 +226,8 @@ namespace WildFarming.Ecosystem
             BlockPos parentOrigin,
             bool displacing)
         {
+            if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) return false;
+
             if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
@@ -232,6 +236,8 @@ namespace WildFarming.Ecosystem
                 {
                     return false;
                 }
+
+                if (!LandClaimGuard.AllowsEcologyChange(api, columnBase)) return false;
 
                 int height = CrowfootColumnPlacer.MeasureColumnHeight(acc, parentOrigin);
                 if (height < 2) height = 3;

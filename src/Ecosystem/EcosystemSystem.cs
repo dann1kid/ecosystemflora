@@ -201,6 +201,7 @@ namespace WildFarming.Ecosystem
         public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason)
         {
             if (api == null || pos == null) return;
+            if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             Block block = acc.GetBlock(pos);
