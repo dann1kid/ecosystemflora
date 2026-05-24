@@ -51,12 +51,12 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Profile> BySpecies = new Dictionary<string, Profile>
         {
-            ["coopersreed"] = new Profile(EcologyHabitat.ReedNearWater, 3, 23, 0.4f, 1f, 2.2f, 1, 0, 1),
+            ["coopersreed"] = new Profile(EcologyHabitat.ReedNearWater, 3, 23, 0.4f, 1f, 2.8f, 1, 0, 1),
             // Papyrus: 2 blocks tall, vanilla maxWaterDepth 1 — one water block above muddy gravel
-            ["papyrus"] = new Profile(EcologyHabitat.ReedNearWater, 24, 40, 0.33f, 1f, 1.8f, 1, 0, 1, exactWaterDepth: 1, verticalBlocks: 2),
-            ["waterlily"] = new Profile(EcologyHabitat.WaterSurface, 10, 40, 0.5f, 1f, 1.5f, 2, 1, 1),
+            ["papyrus"] = new Profile(EcologyHabitat.ReedNearWater, 24, 40, 0.33f, 1f, 2.4f, 1, 0, 1, exactWaterDepth: 1, verticalBlocks: 2),
+            ["waterlily"] = new Profile(EcologyHabitat.WaterSurface, 10, 40, 0.5f, 1f, 2.2f, 2, 1, 1),
             // Water crowfoot (водяной лютик): section column + top/tip
-            ["watercrowfoot"] = new Profile(EcologyHabitat.UnderwaterColumn, -10, 40, 0.5f, 1f, 1.4f, 8, 1, 1, minWaterDepth: 2),
+            ["watercrowfoot"] = new Profile(EcologyHabitat.UnderwaterColumn, -10, 40, 0.5f, 1f, 2.0f, 8, 1, 1, minWaterDepth: 2),
         };
 
         public static bool TryGet(string species, out Profile profile)

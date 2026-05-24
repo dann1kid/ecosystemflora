@@ -9,6 +9,11 @@ namespace WildFarming.Ecosystem
     {
         public const string TreeHostToken = "tree";
 
+        /// <summary>Ground symbionts can sit many blocks below canopy logs.</summary>
+        const int TreeHostVerticalSearchUp = 16;
+        const int TreeCascadeVerticalSearchDown = 16;
+        const int NonTreeVerticalSearch = 2;
+
         public readonly struct Rule
         {
             public readonly string[] HostKeys;
@@ -67,13 +72,16 @@ namespace WildFarming.Ecosystem
 
             int radius = EcosystemConfig.Loaded.SymbiosisCascadeRadius;
             IBlockAccessor acc = api.World.BlockAccessor;
+            bool treeHost = PlantCodeHelper.IsTreeLogGrownBlock(hostBlock);
+            int scanDown = treeHost ? TreeCascadeVerticalSearchDown : NonTreeVerticalSearch;
+            int scanUp = NonTreeVerticalSearch;
             var scanPos = new BlockPos();
 
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
-                    for (int dy = -2; dy <= 2; dy++)
+                    for (int dy = -scanDown; dy <= scanUp; dy++)
                     {
                         scanPos.Set(hostPos.X + dx, hostPos.Y + dy, hostPos.Z + dz);
                         if (scanPos.Equals(hostPos)) continue;
@@ -84,7 +92,7 @@ namespace WildFarming.Ecosystem
                         string symbiontSpecies = PlantCodeHelper.GetEcologySpecies(block.Code);
                         if (!TryGetRule(symbiontSpecies, out Rule rule)) continue;
 
-                        if (!HostMatchesRemoved(rule, hostBlock, hostPos, scanPos)) continue;
+                        if (!SymbiontLinkedToRemovedHost(rule, hostBlock, hostPos, scanPos)) continue;
 
                         eco.RemoveEcologyPlant(scanPos, cascadeSymbiosis: false, reason: "symbiosis");
                     }
@@ -92,12 +100,11 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        static bool HostMatchesRemoved(Rule rule, Block hostBlock, BlockPos hostPos, BlockPos symbiontPos)
+        static bool SymbiontLinkedToRemovedHost(Rule rule, Block hostBlock, BlockPos hostPos, BlockPos symbiontPos)
         {
             if (hostBlock == null) return false;
 
-            int dist = HorizontalChebyshev(hostPos, symbiontPos);
-            if (dist > rule.MaxHostDistance) return false;
+            if (HorizontalChebyshev(hostPos, symbiontPos) > rule.MaxHostDistance) return false;
 
             for (int i = 0; i < rule.HostKeys.Length; i++)
             {
@@ -122,12 +129,17 @@ namespace WildFarming.Ecosystem
             hostBlock = null;
             hostPos = null;
 
+            if (RuleUsesTreeHost(rule))
+            {
+                return FindTreeHostAbove(acc, symbiontPos, rule.MaxHostDistance, out hostBlock, out hostPos);
+            }
+
             var scanPos = new BlockPos();
             for (int dx = -rule.MaxHostDistance; dx <= rule.MaxHostDistance; dx++)
             {
                 for (int dz = -rule.MaxHostDistance; dz <= rule.MaxHostDistance; dz++)
                 {
-                    for (int dy = -2; dy <= 2; dy++)
+                    for (int dy = -NonTreeVerticalSearch; dy <= NonTreeVerticalSearch; dy++)
                     {
                         scanPos.Set(symbiontPos.X + dx, symbiontPos.Y + dy, symbiontPos.Z + dz);
                         if (scanPos.Equals(symbiontPos)) continue;
@@ -135,7 +147,7 @@ namespace WildFarming.Ecosystem
                         Block block = acc.GetBlock(scanPos);
                         if (block.Id == 0) continue;
 
-                        if (HostMatchesRemoved(rule, block, scanPos, symbiontPos))
+                        if (SymbiontLinkedToRemovedHost(rule, block, scanPos, symbiontPos))
                         {
                             hostBlock = block;
                             hostPos = scanPos.Copy();
@@ -146,6 +158,53 @@ namespace WildFarming.Ecosystem
             }
 
             return null;
+        }
+
+        static BlockPos FindTreeHostAbove(
+            IBlockAccessor acc,
+            BlockPos symbiontPos,
+            int maxHorizontalDistance,
+            out Block hostBlock,
+            out BlockPos hostPos)
+        {
+            hostBlock = null;
+            hostPos = null;
+            var scanPos = new BlockPos();
+
+            for (int dx = -maxHorizontalDistance; dx <= maxHorizontalDistance; dx++)
+            {
+                for (int dz = -maxHorizontalDistance; dz <= maxHorizontalDistance; dz++)
+                {
+                    for (int dy = 1; dy <= TreeHostVerticalSearchUp; dy++)
+                    {
+                        scanPos.Set(symbiontPos.X + dx, symbiontPos.Y + dy, symbiontPos.Z + dz);
+                        if (scanPos.Equals(symbiontPos)) continue;
+
+                        if (HorizontalChebyshev(symbiontPos, scanPos) > maxHorizontalDistance) continue;
+
+                        Block block = acc.GetBlock(scanPos);
+                        if (!PlantCodeHelper.IsTreeLogGrownBlock(block)) continue;
+
+                        hostBlock = block;
+                        hostPos = scanPos.Copy();
+                        return hostPos;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        static bool RuleUsesTreeHost(Rule rule)
+        {
+            if (rule.HostKeys == null) return false;
+
+            for (int i = 0; i < rule.HostKeys.Length; i++)
+            {
+                if (rule.HostKeys[i] == TreeHostToken) return true;
+            }
+
+            return false;
         }
 
         static int HorizontalChebyshev(BlockPos a, BlockPos b)
