@@ -147,7 +147,7 @@ docs/
 | `SpreadRate` per-species | ✅ |
 | Spacing + calendar spread | ✅ |
 | Aquatic (reeds, lily, crowfoot) | ✅ код |
-| Длинный playtest aquatic | ⏳ |
+| Длинный playtest aquatic | ✅ (2026-05-24) |
 
 ---
 
@@ -199,7 +199,7 @@ docs/
 
 Кратко:
 
-- **Mod DB** — отложено до баланса и длинного playtest (aquatic, покос, symbiosis).
+- **Mod DB** — отложено до баланса и playtest (покос, symbiosis); aquatic ✅ 2026-05-24.
 - **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
 - **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
@@ -345,7 +345,7 @@ holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(Sprea
 - Логи: `Spread`, `Displaced` на подходящих клетках.
 - Исправлен краш `ProcessStress` при stress death (удаление из реестра во время round-robin).
 
-Остаётся проверить: покос → быстрые colonizers → вытеснение; symbiosis cascade; длинный aquatic playtest.
+Остаётся проверить: покос → быстрые colonizers → вытеснение; symbiosis cascade.
 
 ---
 

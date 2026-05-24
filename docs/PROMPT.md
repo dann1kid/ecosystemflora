@@ -31,7 +31,7 @@ Habitat:
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
-Backlog: soil succession per species (plant/death); perf phase 2; land claims; forest-by-water playtest if issues. v2.2 niche MVP playtest closed (2026-05).
+Backlog: land claims; HoldStrength tuning; fallow N (залежь); mowing/symbiosis playtest. Закрыто (2026-05): v2.2 niche, block-only soil, LocalForestCover, aquatic spread (SpreadVacancy, gravel-* bed).
 
 Коммиты — только по запросу пользователя.
 ```
