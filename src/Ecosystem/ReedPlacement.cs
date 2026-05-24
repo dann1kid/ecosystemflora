@@ -30,7 +30,7 @@ namespace WildFarming.Ecosystem
             for (int gy = yMin; gy <= yMax; gy++)
             {
                 BlockPos gravelPos = new BlockPos(x, gy, z);
-                if (!BlockFluidHelper.IsMuddyGravel(acc.GetBlock(gravelPos))) continue;
+                if (!BlockFluidHelper.IsReedBedSubstrate(acc.GetBlock(gravelPos))) continue;
 
                 int waterLayers = BlockFluidHelper.CountWaterLayersAboveGravel(acc, gravelPos);
                 if (waterLayers < 0 || waterLayers > maxDepth) continue;
@@ -44,7 +44,7 @@ namespace WildFarming.Ecosystem
 
             if (best == null)
             {
-                failureReason = "No valid reed site on muddy gravel";
+                failureReason = "No valid reed site on lake/shore bed";
                 return false;
             }
 

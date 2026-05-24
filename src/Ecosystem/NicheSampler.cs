@@ -82,7 +82,7 @@ namespace WildFarming.Ecosystem
                 return MoistureLevel.Wet;
             }
 
-            if (BlockFluidHelper.IsMuddyGravel(ground))
+            if (BlockFluidHelper.IsReedBedSubstrate(ground))
             {
                 if (BlockFluidHelper.TouchesFluid(acc, plantPos))
                 {
@@ -92,7 +92,7 @@ namespace WildFarming.Ecosystem
                 return MoistureLevel.Shoreline;
             }
 
-            if (HasNearbyWater(acc, plantPos, 2))
+            if (BlockFluidHelper.HasNearbyWater(acc, plantPos, 2))
             {
                 return MoistureLevel.Wet;
             }
@@ -118,27 +118,6 @@ namespace WildFarming.Ecosystem
             if (light >= 9) return LightLevel.Partial;
             if (light >= 7) return LightLevel.Shade;
             return LightLevel.DeepShade;
-        }
-
-        static bool HasNearbyWater(IBlockAccessor acc, BlockPos center, int radius)
-        {
-            var scanPos = new BlockPos();
-            for (int dx = -radius; dx <= radius; dx++)
-            {
-                for (int dz = -radius; dz <= radius; dz++)
-                {
-                    for (int dy = -1; dy <= 1; dy++)
-                    {
-                        scanPos.Set(center.X + dx, center.Y + dy, center.Z + dz);
-                        if (BlockFluidHelper.IsWaterAt(acc, scanPos))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
         }
 
         void StoreCache(long key, CachedCell value)

@@ -193,7 +193,7 @@ namespace WildFarming.Ecosystem
                     return "Space blocked (replaceable " + ctx.SpaceReplaceable + ", need " + ReproduceMinReplaceable + ").";
                 }
 
-                if (!ctx.HasShallowWater) return "No muddy gravel or wrong water depth.";
+                if (!ctx.HasShallowWater) return "No gravel bed or wrong water depth.";
 
                 string climate = DescribeClimateFailure(req, ctx);
                 if (climate != null) return climate;

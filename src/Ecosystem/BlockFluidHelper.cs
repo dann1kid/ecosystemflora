@@ -51,10 +51,50 @@ namespace WildFarming.Ecosystem
             return path == "muddygravel" || path.StartsWith("muddygravel");
         }
 
-        public static bool IsFertileSubstrate(Block block)
+        /// <summary>Lake/river bed for reeds: muddy gravel or rock gravel (e.g. gravel-granite under water).</summary>
+        public static bool IsReedBedSubstrate(Block block)
         {
             if (block == null || block.Id == 0) return false;
             if (IsMuddyGravel(block)) return true;
+
+            string path = block.Code?.Path;
+            if (string.IsNullOrEmpty(path)) return false;
+
+            if (path == "gravel" || path.StartsWith("gravel-"))
+            {
+                return block.SideSolid[BlockFacing.UP.Index];
+            }
+
+            return false;
+        }
+
+        public static bool HasNearbyWater(IBlockAccessor acc, BlockPos center, int radius)
+        {
+            if (acc == null || center == null || radius < 0) return false;
+
+            var scanPos = new BlockPos();
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dz = -radius; dz <= radius; dz++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        scanPos.Set(center.X + dx, center.Y + dy, center.Z + dz);
+                        if (IsWaterAt(acc, scanPos))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsFertileSubstrate(Block block)
+        {
+            if (block == null || block.Id == 0) return false;
+            if (IsReedBedSubstrate(block)) return true;
             return block.Fertility > 0 && block.SideSolid[BlockFacing.UP.Index];
         }
 
@@ -65,7 +105,7 @@ namespace WildFarming.Ecosystem
         public static bool IsDedicatedWaterCell(IBlockAccessor acc, BlockPos pos)
         {
             Block solid = acc.GetBlock(pos);
-            if (IsMuddyGravel(solid) || PlantCodeHelper.IsReedBlock(solid)) return false;
+            if (IsReedBedSubstrate(solid) || PlantCodeHelper.IsReedBlock(solid)) return false;
 
             if (IsWater(solid)) return true;
 
@@ -98,9 +138,9 @@ namespace WildFarming.Ecosystem
             }
 
             BlockPos gravelPos = plantPos.DownCopy();
-            if (!IsMuddyGravel(acc.GetBlock(gravelPos)))
+            if (!IsReedBedSubstrate(acc.GetBlock(gravelPos)))
             {
-                reason = "Water block must sit directly on muddy gravel";
+                reason = "Water block must sit directly on muddy or rock gravel bed";
                 return false;
             }
 
@@ -134,9 +174,15 @@ namespace WildFarming.Ecosystem
             }
             else if (waterLayers == 0)
             {
-                if (IsDedicatedWaterCell(acc, plantPos))
+                if (IsWater(acc.GetBlock(plantPos)))
                 {
-                    reason = "Single water layer required for submerged reed";
+                    reason = "Land reed cannot replace a solid water block";
+                    return false;
+                }
+
+                if (!HasNearbyWater(acc, plantPos, 3))
+                {
+                    reason = "Land reeds need water within 3 blocks";
                     return false;
                 }
             }
@@ -162,10 +208,10 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        /// <summary>Contiguous dedicated water cells directly above gravel.</summary>
+        /// <summary>Contiguous solid water blocks directly above reed bed (shoreline fluid alone does not count).</summary>
         public static int CountWaterLayersAboveGravel(IBlockAccessor acc, BlockPos gravelPos)
         {
-            if (!IsMuddyGravel(acc.GetBlock(gravelPos))) return -1;
+            if (!IsReedBedSubstrate(acc.GetBlock(gravelPos))) return -1;
 
             int count = 0;
             BlockPos scan = gravelPos.UpCopy();
@@ -173,7 +219,8 @@ namespace WildFarming.Ecosystem
             {
                 if (PlantCodeHelper.IsReedBlock(acc.GetBlock(scan))) return -1;
 
-                if (IsDedicatedWaterCell(acc, scan))
+                Block solid = acc.GetBlock(scan);
+                if (IsWater(solid))
                 {
                     count++;
                     scan.Up();
@@ -184,6 +231,33 @@ namespace WildFarming.Ecosystem
             }
 
             return count;
+        }
+
+        public static bool IsValidCrowfootSpreadBase(
+            IBlockAccessor acc,
+            BlockPos pos,
+            PlantRequirements requirements)
+        {
+            if (!TrySnapCrowfootColumnBase(acc, pos, out BlockPos columnBase))
+            {
+                return false;
+            }
+
+            if (PlantCodeHelper.IsWatercrowfoot(acc.GetBlock(columnBase)?.Code))
+            {
+                return false;
+            }
+
+            if (!TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
+            {
+                return false;
+            }
+
+            int minDepth = requirements != null && requirements.MinWaterDepth > 0
+                ? requirements.MinWaterDepth
+                : 2;
+            int maxDepth = requirements != null ? requirements.MaxWaterDepth : 8;
+            return waterDepth >= minDepth && waterDepth <= maxDepth;
         }
 
         public static bool HasReedInSameColumn(IBlockAccessor acc, BlockPos plantPos, string species)
@@ -197,7 +271,7 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < 6; i++)
             {
                 Block block = acc.GetBlock(scan);
-                if (IsMuddyGravel(block)) return false;
+                if (IsReedBedSubstrate(block)) return false;
                 if (IsSameReedSpecies(block, species)) return true;
                 if (!IsWaterAt(acc, scan) && block.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
                 {
@@ -218,7 +292,7 @@ namespace WildFarming.Ecosystem
 
         public static bool HasReedSiltSubstrate(IBlockAccessor acc, BlockPos plantPos, int maxDepth)
         {
-            return IsMuddyGravel(acc.GetBlock(plantPos.DownCopy()));
+            return IsReedBedSubstrate(acc.GetBlock(plantPos.DownCopy()));
         }
 
         public static bool MeetsReedWaterDepth(PlantRequirements req, IBlockAccessor acc, BlockPos plantPos)
@@ -287,7 +361,7 @@ namespace WildFarming.Ecosystem
             if (!IsWaterAt(acc, scan)) return false;
 
             Block below = acc.GetBlock(scan.DownCopy());
-            if (!IsFertileSubstrate(below) && !IsMuddyGravel(below))
+            if (!IsFertileSubstrate(below))
             {
                 return false;
             }

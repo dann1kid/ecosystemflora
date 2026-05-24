@@ -148,8 +148,10 @@ namespace WildFarming.Ecosystem
 
                     float fitness;
                     bool displacing = false;
+                    bool canOccupy = isEmpty
+                        || SpreadVacancy.CanOccupy(acc, plantPos, requirements, occupant, isEmpty);
 
-                    if (isEmpty)
+                    if (canOccupy)
                     {
                         fitness = CellCompetition.SpreadScore(api, requirements, plantPos, harshClimate);
                         if (fitness < minFitness) continue;

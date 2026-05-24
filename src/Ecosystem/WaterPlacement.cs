@@ -74,6 +74,11 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
+        public static bool IsValidWaterLilySpreadSite(IBlockAccessor acc, BlockPos pos)
+        {
+            return IsValidWaterLilySite(acc, pos, out _);
+        }
+
         static bool IsValidWaterLilySite(IBlockAccessor acc, BlockPos pos, out string reason)
         {
             reason = null;
