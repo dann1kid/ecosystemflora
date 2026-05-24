@@ -38,6 +38,12 @@ namespace WildFarming.Ecosystem
                         string otherSpecies = PlantCodeHelper.GetEcologySpecies(block.Code);
                         if (string.IsNullOrEmpty(otherSpecies)) continue;
 
+                        EcologyHabitat otherHabitat = PlantCodeHelper.GetEcologyHabitat(block.Code);
+                        if (!ShouldApplySpacingBetween(requirements.Habitat, otherHabitat, cfg))
+                        {
+                            continue;
+                        }
+
                         int required = requirements.GetRequiredSpacingTo(otherSpecies, cfg);
                         if (required <= 0) continue;
 
@@ -63,6 +69,34 @@ namespace WildFarming.Ecosystem
             }
 
             return true;
+        }
+
+        internal static bool ShouldApplySpacingBetween(
+            EcologyHabitat candidateHabitat,
+            EcologyHabitat neighborHabitat,
+            EcosystemConfig cfg)
+        {
+            if (cfg != null && cfg.ApplyCrossHabitatSpacing)
+            {
+                return true;
+            }
+
+            return GetSpacingGroup(candidateHabitat) == GetSpacingGroup(neighborHabitat);
+        }
+
+        static int GetSpacingGroup(EcologyHabitat habitat)
+        {
+            switch (habitat)
+            {
+                case EcologyHabitat.ReedNearWater:
+                case EcologyHabitat.WaterSurface:
+                case EcologyHabitat.UnderwaterColumn:
+                    return 1;
+                case EcologyHabitat.TerrestrialTree:
+                    return 2;
+                default:
+                    return 0;
+            }
         }
 
         static int HorizontalChebyshev(BlockPos a, BlockPos b)

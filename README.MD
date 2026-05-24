@@ -39,7 +39,11 @@ Details and playtest checklist: [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 `%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
 
+Reference template (v2.1, no obsolete v2.0 keys): [`assets/wildfarming/wildfarming-ecosystem.example.json`](assets/wildfarming/wildfarming-ecosystem.example.json)
+
 Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread tuning is applied on server start. Use `custom` to keep manual numbers only.
+
+Remove legacy keys if present: `UseDisturbedSuccession`, `ColonizerWindowDays`, `ColonizerSpreadBoost`, `NonColonizerDisturbedMultiplier`.
 
 | Preset | Attempts/year | Chance | MinFitness |
 |--------|---------------|--------|------------|
@@ -56,6 +60,8 @@ Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread t
 | `EnableStressDeath` | true | Plants die after repeated failed survival checks |
 | `EnableSymbiosis` | true | Ferns/forest flowers die when nearby tree removed |
 | `UseFloraContext` | true | Forest-edge fitness multipliers |
+| `PreferSpreadToEmptyCells` | true | Spread into empty cells before displacement |
+| `ApplyCrossHabitatSpacing` | false | Aquatic ignores terrestrial spacing (shore fix) |
 
 Logs: `Spread` / `Displaced` (not worldgen spawn). Use `BalancePreset: natural`, `ReproduceDebug: false` for normal play.
 

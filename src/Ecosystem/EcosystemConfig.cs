@@ -69,6 +69,12 @@ namespace WildFarming.Ecosystem
         /// <summary>Minimum horizontal distance between spread plants.</summary>
         public bool PlantSpacingEnabled { get; set; } = true;
 
+        /// <summary>
+        /// When false (default), aquatic and terrestrial plants do not enforce spacing against each other
+        /// (shore flowers no longer block reed/lily spread toward valid muddy cells).
+        /// </summary>
+        public bool ApplyCrossHabitatSpacing { get; set; } = false;
+
         /// <summary>Used when species table has SameSpeciesSpacing 0.</summary>
         public int DefaultSameSpeciesSpacing { get; set; } = 1;
 
