@@ -447,9 +447,25 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 - **Displacement:** сильный вид может вытеснить, но долго не держится вне ниши
 - **Философия (playtest):** мягче — spread вне ниши допустим, приживание хуже; не обязательно hard gate по niche
 
-### 14.4. Сукцессия почвы (backlog)
+### 14.4. Сукцессия почвы (v2.2)
 
-Таблица per-species: при **успешной посадке** и при **смерти** растения — смена блока/состава почвы под клеткой (fertility, `forestfloor`, торф, и т.д.), чтобы ниша **меняла среду**, а не только читала её. Примеры: хвощ → влажнее; луговые colonizers → суше; лесная understory → `forestfloor`. Интеграция: хук после spread/displacement и в `RemoveEcologyPlant`; invalidation `NicheSampler` / column cache.
+**Дикая почва** (`WildSoilComposition` + `WildSoilStore`):
+
+| Параметр | Где | В игре |
+|----------|-----|--------|
+| **Tier** | `SoilFertilityTier` + дробный `TierProgress` | смена `game:soil-*` / `forestfloor` / `peat` |
+| **Влажность** | RAM (in-memory) | пороги для `peat` / лесной пол |
+| **Agro-роль** | RAM до вспашки | доминирующая `PlantSoilRole` на клетке |
+
+**N/P/K только на пашне:** `FarmlandTillBridge` после вспашки (`DidUseBlock` + отложенный тик) дописывает `IFarmlandBlockEntity.Nutrients[]` по роли и tier. Ванильный `OnCreatedFromSoil` задаёт базу; мост добавляет бонус сидерации.
+
+**Роли** (`PlantSoilRole`) — `WildSpeciesSoilSuccession`: MeadowColonizer, MeadowPerennial, ForestUnderstory, WetlandHerb, GrassMatrix, **NitrogenFixer** (lupine), …
+
+**События:** spread (register) и death (`RemoveEcologyPlant`). Spread на `farmland-*` **запрещён** (`SpreadPreflight`, `SurfacePlacement`).
+
+**Конфиг:** `UseSoilSuccession`, `SoilSuccessionStrength`, `UseFarmlandNutrientBridge`, `FarmlandNutrientBridgeStrength`.
+
+**TODO:** persist agro/tier в chunk moddata; залежь (farmland + дикая трава без культуры).
 
 ### 14.5. Реализация (принципы)
 

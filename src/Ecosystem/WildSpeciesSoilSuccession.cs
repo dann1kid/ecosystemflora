@@ -1,0 +1,175 @@
+using System.Collections.Generic;
+
+namespace WildFarming.Ecosystem
+{
+    /// <summary>Per-role soil conversion on spread (establish) and death.</summary>
+    internal static class WildSpeciesSoilSuccession
+    {
+        public readonly struct RoleProfile
+        {
+            public readonly SoilImpact SpreadImpact;
+            public readonly SoilImpact DeathImpact;
+
+            public RoleProfile(SoilImpact spread, SoilImpact death)
+            {
+                SpreadImpact = spread;
+                DeathImpact = death;
+            }
+        }
+
+        static readonly Dictionary<PlantSoilRole, RoleProfile> ByRole = BuildRoles();
+        static readonly Dictionary<string, PlantSoilRole> SpeciesRole = BuildSpecies();
+
+        static Dictionary<PlantSoilRole, RoleProfile> BuildRoles()
+        {
+            return new Dictionary<PlantSoilRole, RoleProfile>
+            {
+                [PlantSoilRole.MeadowColonizer] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = -4f,
+                        FertilityTierDelta = 0.10f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = -6f,
+                        FertilityTierDelta = -0.15f,
+                    }),
+
+                [PlantSoilRole.MeadowPerennial] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = 0f,
+                        FertilityTierDelta = 0.20f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = -3f,
+                        FertilityTierDelta = 0.15f,
+                    }),
+
+                [PlantSoilRole.GrassMatrix] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = -2f,
+                        FertilityTierDelta = 0.08f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = -4f,
+                        FertilityTierDelta = 0.05f,
+                    }),
+
+                [PlantSoilRole.ForestEdge] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = 2f,
+                        FertilityTierDelta = 0.12f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = 1f,
+                        FertilityTierDelta = 0.12f,
+                    }),
+
+                [PlantSoilRole.ForestUnderstory] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = 8f,
+                        FertilityTierDelta = 0.08f,
+                        IsForestFloor = true,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = 5f,
+                        FertilityTierDelta = 0.25f,
+                        IsForestFloor = true,
+                    }),
+
+                [PlantSoilRole.WetlandHerb] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = 12f,
+                        FertilityTierDelta = -0.05f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = 6f,
+                        FertilityTierDelta = 0.05f,
+                    }),
+
+                [PlantSoilRole.NitrogenFixer] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = 0f,
+                        FertilityTierDelta = 0.18f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = -2f,
+                        FertilityTierDelta = 0.20f,
+                    }),
+            };
+        }
+
+        static Dictionary<string, PlantSoilRole> BuildSpecies()
+        {
+            return new Dictionary<string, PlantSoilRole>
+            {
+                ["wilddaisy"] = PlantSoilRole.MeadowColonizer,
+                ["cornflower"] = PlantSoilRole.MeadowColonizer,
+                ["goldenpoppy"] = PlantSoilRole.MeadowColonizer,
+                ["heather"] = PlantSoilRole.MeadowColonizer,
+                ["westerngorse"] = PlantSoilRole.MeadowColonizer,
+                ["forgetmenot"] = PlantSoilRole.MeadowPerennial,
+                ["cowparsley"] = PlantSoilRole.MeadowPerennial,
+                ["catmint"] = PlantSoilRole.ForestEdge,
+                ["edelweiss"] = PlantSoilRole.ForestEdge,
+                ["daffodil"] = PlantSoilRole.MeadowPerennial,
+                ["lupine"] = PlantSoilRole.NitrogenFixer,
+                ["horsetail"] = PlantSoilRole.WetlandHerb,
+                ["bluebell"] = PlantSoilRole.ForestUnderstory,
+                ["lilyofthevalley"] = PlantSoilRole.ForestUnderstory,
+                ["ghostpipewhite"] = PlantSoilRole.ForestUnderstory,
+                ["ghostpipepink"] = PlantSoilRole.ForestUnderstory,
+                ["ghostpipered"] = PlantSoilRole.ForestUnderstory,
+                ["eaglefern"] = PlantSoilRole.ForestUnderstory,
+                ["cinnamonfern"] = PlantSoilRole.ForestUnderstory,
+                ["deerfern"] = PlantSoilRole.ForestUnderstory,
+                ["hartstongue"] = PlantSoilRole.ForestUnderstory,
+                ["tallfern"] = PlantSoilRole.ForestEdge,
+                ["tallgrass"] = PlantSoilRole.GrassMatrix,
+            };
+        }
+
+        public static bool TryGetRole(string species, out PlantSoilRole role)
+        {
+            if (string.IsNullOrEmpty(species))
+            {
+                role = PlantSoilRole.MeadowPerennial;
+                return false;
+            }
+
+            if (SpeciesRole.TryGetValue(species, out role)) return true;
+
+            if (WildFernEcology.TryGet(species, out _))
+            {
+                role = PlantSoilRole.ForestUnderstory;
+                return true;
+            }
+
+            role = PlantSoilRole.MeadowPerennial;
+            return false;
+        }
+
+        public static bool TryGetImpact(string species, SoilSuccessionEvent evt, out SoilImpact impact)
+        {
+            impact = default;
+            if (!TryGetRole(species, out PlantSoilRole role)) return false;
+            if (!ByRole.TryGetValue(role, out RoleProfile profile)) return false;
+
+            impact = evt == SoilSuccessionEvent.Spread ? profile.SpreadImpact : profile.DeathImpact;
+            return true;
+        }
+    }
+}

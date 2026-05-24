@@ -43,5 +43,9 @@
   "SymbiosisCascadeRadius": 4,
   "UseNicheContext": true,
   "NicheCacheHours": 12,
-  "NicheStressThreshold": 0.45
+  "NicheStressThreshold": 0.45,
+  "UseSoilSuccession": true,
+  "SoilSuccessionStrength": 1,
+  "UseFarmlandNutrientBridge": true,
+  "FarmlandNutrientBridgeStrength": 1
 }

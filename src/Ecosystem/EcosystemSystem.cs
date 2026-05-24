@@ -22,10 +22,13 @@ namespace WildFarming.Ecosystem
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
+        internal WildSoilStore WildSoil { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
 
         BlockBrokenDelegate didBreakBlockHandler;
+        BlockPlacedDelegate didPlaceBlockHandler;
+        BlockUsedDelegate didUseBlockHandler;
 
         public void InitPre(ICoreAPI api)
         {
@@ -80,6 +83,7 @@ namespace WildFarming.Ecosystem
             FloraContext = new FloraContextSampler();
             Niche = new NicheSampler();
             SpacingIndex = new EcologySpacingIndex();
+            WildSoil = new WildSoilStore();
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
@@ -94,6 +98,12 @@ namespace WildFarming.Ecosystem
 
                 didBreakBlockHandler = OnDidBreakBlock;
                 sapi.Event.DidBreakBlock += didBreakBlockHandler;
+
+                didPlaceBlockHandler = OnDidPlaceBlock;
+                sapi.Event.DidPlaceBlock += didPlaceBlockHandler;
+
+                didUseBlockHandler = OnDidUseBlock;
+                sapi.Event.DidUseBlock += didUseBlockHandler;
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
@@ -134,6 +144,8 @@ namespace WildFarming.Ecosystem
                 if (chunkLoadedHandler != null) sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
                 if (chunkUnloadedHandler != null) sapi.Event.ChunkColumnUnloaded -= chunkUnloadedHandler;
                 if (didBreakBlockHandler != null) sapi.Event.DidBreakBlock -= didBreakBlockHandler;
+                if (didPlaceBlockHandler != null) sapi.Event.DidPlaceBlock -= didPlaceBlockHandler;
+                if (didUseBlockHandler != null) sapi.Event.DidUseBlock -= didUseBlockHandler;
             }
 
             if (api != null)
@@ -148,6 +160,8 @@ namespace WildFarming.Ecosystem
             chunkLoadedHandler = null;
             chunkUnloadedHandler = null;
             didBreakBlockHandler = null;
+            didPlaceBlockHandler = null;
+            didUseBlockHandler = null;
             calendarDebugLogged = false;
             FloraContext?.Clear();
             FloraContext = null;
@@ -155,6 +169,8 @@ namespace WildFarming.Ecosystem
             Niche = null;
             SpacingIndex?.Clear();
             SpacingIndex = null;
+            WildSoil?.Clear();
+            WildSoil = null;
             ColumnCache?.Clear();
             ColumnCache = null;
             activeChunkScratch.Clear();
@@ -167,7 +183,7 @@ namespace WildFarming.Ecosystem
             return EnvironmentalContext.SampleForSurvival(api, plantPos, null, ColumnCache);
         }
 
-        void InvalidateEnvironmentAround(BlockPos pos)
+        internal void InvalidateEnvironmentAround(BlockPos pos)
         {
             if (pos == null) return;
             ColumnCache?.InvalidateAround(pos, 1);
@@ -197,6 +213,12 @@ namespace WildFarming.Ecosystem
             if (cascadeSymbiosis && EcosystemConfig.Loaded.EnableSymbiosis)
             {
                 FloraSymbiosis.CascadeOnHostRemoved(api, pos, block);
+            }
+
+            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            if (!string.IsNullOrEmpty(species))
+            {
+                SoilSuccessionApplier.Apply(api, pos, species, SoilSuccessionEvent.Death);
             }
 
             registry.Remove(pos);
@@ -283,6 +305,7 @@ namespace WildFarming.Ecosystem
 
                 registry.Add(entry);
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
+                SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
 
                 if (cfg.ReproduceDebug)
                 {
@@ -320,12 +343,37 @@ namespace WildFarming.Ecosystem
             SpacingIndex?.RemoveChunk(cc);
         }
 
+        void OnDidPlaceBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel, ItemStack withItemStack)
+        {
+            if (blockSel?.Position == null || api == null) return;
+            ScheduleFarmlandBridgeCheck(blockSel.Position);
+        }
+
+        void OnDidUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
+        {
+            if (blockSel?.Position == null || api == null) return;
+            ScheduleFarmlandBridgeCheck(blockSel.Position);
+        }
+
+        void ScheduleFarmlandBridgeCheck(BlockPos pos)
+        {
+            if (!EcosystemConfig.Loaded.UseFarmlandNutrientBridge) return;
+
+            BlockPos copy = pos.Copy();
+            api.Event.RegisterCallback(_ => FarmlandTillBridge.TryApplyAfterTill(api, copy), 50);
+        }
+
         void OnDidBreakBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel)
         {
             if (blockSel?.Position == null || api == null) return;
 
             Block oldBlock = api.World.Blocks[oldBlockId];
             BlockPos pos = blockSel.Position;
+
+            if (WildSoilBlockMapper.IsSuccessionTarget(oldBlock))
+            {
+                WildSoil?.InvalidateGround(pos);
+            }
 
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {

@@ -128,5 +128,18 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Below this niche multiplier, stress checks count as failed survival.</summary>
         public float NicheStressThreshold { get; set; } = 0.45f;
+
+        // --- Soil succession (v2.2) ---
+
+        public bool UseSoilSuccession { get; set; } = true;
+
+        /// <summary>Multiplier on spread/death soil impact deltas.</summary>
+        public float SoilSuccessionStrength { get; set; } = 1f;
+
+        /// <summary>When soil is tilled, add N/P/K from dominant wild plant role + tier.</summary>
+        public bool UseFarmlandNutrientBridge { get; set; } = true;
+
+        /// <summary>Multiplier on till nutrient bonuses.</summary>
+        public float FarmlandNutrientBridgeStrength { get; set; } = 1f;
     }
 }

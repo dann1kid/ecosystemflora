@@ -59,6 +59,11 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (WildSoilGroundRules.IsFarmland(ground))
+            {
+                return false;
+            }
+
             if (isEmpty && space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
                 return false;

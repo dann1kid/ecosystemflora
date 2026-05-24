@@ -64,6 +64,12 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (WildSoilGroundRules.IsFarmland(ground))
+            {
+                reason = "Farmland excluded";
+                return false;
+            }
+
             if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
                 reason = "Space blocked";
