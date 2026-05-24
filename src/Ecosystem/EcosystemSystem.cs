@@ -22,7 +22,6 @@ namespace WildFarming.Ecosystem
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
-        internal WildSoilStore WildSoil { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
 
@@ -83,7 +82,6 @@ namespace WildFarming.Ecosystem
             FloraContext = new FloraContextSampler();
             Niche = new NicheSampler();
             SpacingIndex = new EcologySpacingIndex();
-            WildSoil = new WildSoilStore();
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
@@ -169,8 +167,6 @@ namespace WildFarming.Ecosystem
             Niche = null;
             SpacingIndex?.Clear();
             SpacingIndex = null;
-            WildSoil?.Clear();
-            WildSoil = null;
             ColumnCache?.Clear();
             ColumnCache = null;
             activeChunkScratch.Clear();
@@ -346,21 +342,32 @@ namespace WildFarming.Ecosystem
         void OnDidPlaceBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel, ItemStack withItemStack)
         {
             if (blockSel?.Position == null || api == null) return;
-            ScheduleFarmlandBridgeCheck(blockSel.Position);
+            Block oldGround = oldBlockId > 0 ? api.World.Blocks[oldBlockId] : null;
+            ScheduleFarmlandBridgeCheck(blockSel.Position, oldGround);
         }
 
         void OnDidUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
         {
             if (blockSel?.Position == null || api == null) return;
-            ScheduleFarmlandBridgeCheck(blockSel.Position);
+            Block ground = api.World.BlockAccessor.GetBlock(blockSel.Position);
+            ScheduleFarmlandBridgeCheck(blockSel.Position, ground);
         }
 
-        void ScheduleFarmlandBridgeCheck(BlockPos pos)
+        void ScheduleFarmlandBridgeCheck(BlockPos pos, Block groundBeforeTill)
         {
             if (!EcosystemConfig.Loaded.UseFarmlandNutrientBridge) return;
 
+            PlantSoilRole role = WildSoilAgroSampler.SampleDominantRole(api, pos);
+            SoilFertilityTier tier = SoilFertilityTier.Medium;
+            if (groundBeforeTill != null && WildSoilBlockMapper.IsSuccessionTarget(groundBeforeTill))
+            {
+                tier = SoilFertilityTierExtensions.FromBlockFertility(groundBeforeTill);
+            }
+
             BlockPos copy = pos.Copy();
-            api.Event.RegisterCallback(_ => FarmlandTillBridge.TryApplyAfterTill(api, copy), 50);
+            api.Event.RegisterCallback(
+                _ => FarmlandTillBridge.TryApplyAfterTill(api, copy, role, tier),
+                50);
         }
 
         void OnDidBreakBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel)
@@ -369,11 +376,6 @@ namespace WildFarming.Ecosystem
 
             Block oldBlock = api.World.Blocks[oldBlockId];
             BlockPos pos = blockSel.Position;
-
-            if (WildSoilBlockMapper.IsSuccessionTarget(oldBlock))
-            {
-                WildSoil?.InvalidateGround(pos);
-            }
 
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {

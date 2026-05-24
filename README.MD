@@ -2,17 +2,19 @@
 
 Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainfall, forest density, spacing, and habitat-specific placement.
 
-**Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)  
-**Perf roadmap:** [`PROGRESS.md#оптимизация-perf-roadmap`](docs/PROGRESS.md) · [`PROJECT_VISION.md §12`](docs/PROJECT_VISION.md)
+**Docs:** `[docs/PROGRESS.md](docs/PROGRESS.md)` · `[docs/PROJECT_VISION.md](docs/PROJECT_VISION.md)` · `[docs/PROMPT.md](docs/PROMPT.md)` · `[docs/VISUAL_STUDIO.md](docs/VISUAL_STUDIO.md)`  
+**Perf roadmap:** `[PROGRESS.md#оптимизация-perf-roadmap](docs/PROGRESS.md)` · `[PROJECT_VISION.md §12](docs/PROJECT_VISION.md)`
 
 **Стадия:** `Ecosystem v2.2` (`2.4.1-ecosystem-v2.1`) — cell competition + niche (moisture/light). Playtest (2026-05): dominants by zone; horsetail yields to fern/tallgrass.
 
 **Build:** `dotnet build` → `bin/Debug/Mods/wildfarming/` (копируется в `Mods\wildfarming`, если клиент закрыт).
 
-| Requirement | Version |
-|-------------|---------|
-| Game | 1.21+ (`modinfo.json`) |
-| .NET SDK | 10.x |
+
+| Requirement | Version                |
+| ----------- | ---------------------- |
+| Game        | 1.21+ (`modinfo.json`) |
+| .NET SDK    | 10.x                   |
+
 
 ## What it does
 
@@ -25,45 +27,51 @@ Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crow
 
 ## Plants in ecosystem
 
-| Group | Examples |
-|-------|----------|
-| Flowers | 20 × `game:flower-*` + lupine (knife/scythe → `drygrass`) |
-| Meadow grass | `game:tallgrass-*` (matrix under flowers) |
-| Reeds | coopersreed (рогоз), papyrus (камыш) — on `muddygravel`, shallow water rules |
-| Surface | waterlily |
-| Underwater | water crowfoot (водяной лютик) — multi-block column |
 
-Details and playtest checklist: [`docs/PROGRESS.md`](docs/PROGRESS.md).
+| Group        | Examples                                                                     |
+| ------------ | ---------------------------------------------------------------------------- |
+| Flowers      | 20 × `game:flower-*` + lupine (knife/scythe → `drygrass`)                    |
+| Meadow grass | `game:tallgrass-*` (matrix under flowers)                                    |
+| Reeds        | coopersreed (рогоз), papyrus (камыш) — on `muddygravel`, shallow water rules |
+| Surface      | waterlily                                                                    |
+| Underwater   | water crowfoot (водяной лютик) — multi-block column                          |
+
+
+Details and playtest checklist: `[docs/PROGRESS.md](docs/PROGRESS.md)`.
 
 ## Config
 
 `%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
 
-Reference template (v2.1, no obsolete v2.0 keys): [`assets/wildfarming/wildfarming-ecosystem.example.json`](assets/wildfarming/wildfarming-ecosystem.example.json)
+Reference template (v2.1, no obsolete v2.0 keys): `[assets/wildfarming/wildfarming-ecosystem.example.json](assets/wildfarming/wildfarming-ecosystem.example.json)`
 
-Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread tuning is applied on server start. Use `custom` to keep manual numbers only.
+Set `**BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread tuning is applied on server start. Use `custom` to keep manual numbers only.
 
 Remove legacy keys if present: `UseDisturbedSuccession`, `ColonizerWindowDays`, `ColonizerSpreadBoost`, `NonColonizerDisturbedMultiplier`.
 
-| Preset | Attempts/year | Chance | MinFitness |
-|--------|---------------|--------|------------|
-| natural | 42 | 0.35 | 0.5 |
-| lush | 60 | 0.45 | 0.4 |
-| sparse | 24 | 0.2 | 0.65 |
+
+| Preset  | Attempts/year | Chance | MinFitness |
+| ------- | ------------- | ------ | ---------- |
+| natural | 42            | 0.35   | 0.5        |
+| lush    | 60            | 0.45   | 0.4        |
+| sparse  | 24            | 0.2    | 0.65       |
+
 
 ### Ecology v2.1 (config)
 
-| Key | Default | Effect |
-|-----|---------|--------|
-| `UseCellDisplacement` | true | Spread can replace weaker ecology plants |
-| `DisplacementHoldMargin` | 1.25 | Challenger must beat hold × margin |
-| `EnableStressDeath` | true | Plants die after repeated failed survival checks |
-| `EnableSymbiosis` | true | Ferns/forest flowers die when nearby tree removed |
-| `UseFloraContext` | true | Forest-edge fitness multipliers |
-| `PreferSpreadToEmptyCells` | true | Spread into empty cells before displacement |
-| `ApplyCrossHabitatSpacing` | false | Aquatic ignores terrestrial spacing (shore fix) |
-| `UseNicheContext` | true | Moisture + light niche multipliers (v2.2) |
-| `NicheStressThreshold` | 0.45 | Stress when niche multiplier below this |
+
+| Key                        | Default | Effect                                            |
+| -------------------------- | ------- | ------------------------------------------------- |
+| `UseCellDisplacement`      | true    | Spread can replace weaker ecology plants          |
+| `DisplacementHoldMargin`   | 1.25    | Challenger must beat hold × margin                |
+| `EnableStressDeath`        | true    | Plants die after repeated failed survival checks  |
+| `EnableSymbiosis`          | true    | Ferns/forest flowers die when nearby tree removed |
+| `UseFloraContext`          | true    | Forest-edge fitness multipliers                   |
+| `PreferSpreadToEmptyCells` | true    | Spread into empty cells before displacement       |
+| `ApplyCrossHabitatSpacing` | false   | Aquatic ignores terrestrial spacing (shore fix)   |
+| `UseNicheContext`          | true    | Moisture + light niche multipliers (v2.2)         |
+| `NicheStressThreshold`     | 0.45    | Stress when niche multiplier below this           |
+
 
 Logs: `Spread` / `Displaced` (not worldgen spawn). Use `BalancePreset: natural`, `ReproduceDebug: false` for normal play.
 

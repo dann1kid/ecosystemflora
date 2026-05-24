@@ -449,15 +449,18 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 
 ### 14.4. Сукцессия почвы (v2.2)
 
-**Дикая почва** (`WildSoilComposition` + `WildSoilStore`):
+**Дикая почва (block-only, без RAM):**
 
 | Параметр | Где | В игре |
 |----------|-----|--------|
-| **Tier** | `SoilFertilityTier` + дробный `TierProgress` | смена `game:soil-*` / `forestfloor` / `peat` |
-| **Влажность** | RAM (in-memory) | пороги для `peat` / лесной пол |
-| **Agro-роль** | RAM до вспашки | доминирующая `PlantSoilRole` на клетке |
+| **Tier** | `Block.Fertility` + смена блока | `game:soil-*` / `forestfloor` / `peat` |
+| **Влажность** | `NicheSampler` на момент события | торф у `WetlandHerb` при высокой влажности |
+| **Лесная подстилка** | лесные роли / колонизаторы | только вариант `forestfloor-*` (насыщенность) |
+| **Луг на вырубке** | death + гумус (perennial, tallgrass, lupine) | `forestfloor` → `soil-*` при росте tier |
 
-**N/P/K только на пашне:** `FarmlandTillBridge` после вспашки (`DidUseBlock` + отложенный тик) дописывает `IFarmlandBlockEntity.Nutrients[]` по роли и tier. Ванильный `OnCreatedFromSoil` задаёт базу; мост добавляет бонус сидерации.
+**N/P/K только на пашне:** `FarmlandTillBridge` — при вспашке снимок: tier с **блока soil до замены**, роль из **растений над клеткой** (`WildSoilAgroSampler`). Бонус поверх ванильного `OnCreatedFromSoil`.
+
+**Death:** только естественное снятие mod (`RemoveEcologyPlant` — stress, displacement, symbiosis), не ручной слом.
 
 **Роли** (`PlantSoilRole`) — `WildSpeciesSoilSuccession`: MeadowColonizer, MeadowPerennial, ForestUnderstory, WetlandHerb, GrassMatrix, **NitrogenFixer** (lupine), …
 

@@ -1,57 +1,49 @@
 using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Seeds farmland N/P/K from wild-soil agro memory when soil is tilled.</summary>
+    /// <summary>Seeds farmland N/P/K from plants above ground + soil tier at till (block-only, no RAM).</summary>
     internal static class FarmlandTillBridge
     {
         static BlockPos lastPos;
         static long lastApplyMs;
 
-        public static void TryApplyAfterTill(ICoreAPI api, BlockPos pos)
+        public static void TryApplyAfterTill(
+            ICoreAPI api,
+            BlockPos farmlandPos,
+            PlantSoilRole sampledRole,
+            SoilFertilityTier sampledTier)
         {
-            if (api == null || pos == null) return;
+            if (api == null || farmlandPos == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EcosystemEnabled || !cfg.UseFarmlandNutrientBridge) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
-            Block ground = acc.GetBlock(pos);
+            Block ground = acc.GetBlock(farmlandPos);
             if (!WildSoilGroundRules.IsFarmland(ground)) return;
 
             long now = api.World.ElapsedMilliseconds;
-            if (lastPos != null && lastPos.Equals(pos) && now - lastApplyMs < 80)
+            if (lastPos != null && lastPos.Equals(farmlandPos) && now - lastApplyMs < 80)
             {
                 return;
             }
 
-            IFarmlandBlockEntity farmland = acc.GetBlockEntity(pos) as IFarmlandBlockEntity;
+            IFarmlandBlockEntity farmland = acc.GetBlockEntity(farmlandPos) as IFarmlandBlockEntity;
             if (farmland?.Nutrients == null || farmland.Nutrients.Length < 3) return;
 
-            WildSoilStore store = EcosystemSystem.Instance?.WildSoil;
-            PlantSoilRole role = PlantSoilRole.MeadowPerennial;
-            SoilFertilityTier tier = SoilFertilityTier.Medium;
-
-            if (store != null && store.TryTakeTillContext(pos, out role, out tier))
-            {
-                // context taken from wild-soil store
-            }
-            else
-            {
-                tier = SoilFertilityTierExtensions.FromBlockFertility(ground);
-            }
-
             float strength = cfg.FarmlandNutrientBridgeStrength;
-            ApplyRoleBonus(role, farmland.Nutrients, strength);
-            ApplyTierBonus(tier, farmland.Nutrients, strength);
+            ApplyRoleBonus(sampledRole, farmland.Nutrients, strength);
+            ApplyTierBonus(sampledTier, farmland.Nutrients, strength);
 
-            if (acc.GetBlockEntity(pos) is BlockEntity be)
+            if (acc.GetBlockEntity(farmlandPos) is BlockEntity be)
             {
                 be.MarkDirty(true);
             }
 
-            lastPos = pos.Copy();
+            lastPos = farmlandPos.Copy();
             lastApplyMs = now;
         }
 
