@@ -98,6 +98,9 @@ namespace WildFarming.Ecosystem
 
         public bool UseCellDisplacement { get; set; } = true;
 
+        /// <summary>When empty cells exist in spread radius, pick only among them (mowing / gap colonization).</summary>
+        public bool PreferSpreadToEmptyCells { get; set; } = true;
+
         /// <summary>Challenger spread score must exceed incumbent hold × this margin.</summary>
         public float DisplacementHoldMargin { get; set; } = 1.25f;
 

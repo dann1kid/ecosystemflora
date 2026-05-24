@@ -457,6 +457,13 @@ namespace WildFarming.Ecosystem
                     if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
                     {
                         pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
+                        return;
+                    }
+
+                    Block placed = api.World.BlockAccessor.GetBlock(pos);
+                    if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
+                    {
+                        RegisterReproducer(pos, participant, spawnBurst: false);
                     }
                 });
 

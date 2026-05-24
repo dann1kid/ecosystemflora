@@ -49,7 +49,7 @@ namespace WildFarming.Ecosystem
                 -12, 40,
                 0.1f, 1f,
                 0f, 1f,
-                0.6f,
+                2.0f,
                 0, 0,
                 new WildPlantSoil.Profile(SoilKindSets.Meadow | SoilKind.LowFert | SoilKind.ForestFloor, 80, 0),
                 7),

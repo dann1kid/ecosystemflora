@@ -67,7 +67,7 @@ namespace WildFarming.Ecosystem
                 ["hartstongue"] = Edge(1.8f, hold: 1.05f),
                 ["tallfern"] = Edge(2f, hold: 1.1f),
 
-                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1f, 0.4f, 0.6f),
+                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.85f),
 
                 ["blueberry"] = Edge(2f, hold: 1.2f),
                 ["blackcurrant"] = Edge(1.6f, hold: 1.15f),

@@ -52,6 +52,11 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
+            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells)
+            {
+                candidates = FilterPreferEmpty(candidates);
+            }
+
             int placed = 0;
             var remaining = new List<SpreadCandidate>(candidates);
 
@@ -171,6 +176,17 @@ namespace WildFarming.Ecosystem
             }
 
             return candidates;
+        }
+
+        static List<SpreadCandidate> FilterPreferEmpty(List<SpreadCandidate> candidates)
+        {
+            var empty = new List<SpreadCandidate>();
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                if (!candidates[i].Displacing) empty.Add(candidates[i]);
+            }
+
+            return empty.Count > 0 ? empty : candidates;
         }
 
         static int PickWeightedIndex(List<SpreadCandidate> candidates, System.Random rand)
