@@ -38,9 +38,12 @@ namespace WildFarming.Ecosystem
             int[] xs;
             int[] zs;
             int count;
+            readonly HashSet<long> nearChunks = new HashSet<long>();
 
-            public void Refresh(ICoreAPI api)
+            public void Refresh(ICoreAPI api, int radiusBlocks)
             {
+                nearChunks.Clear();
+
                 ICoreServerAPI sapi = api as ICoreServerAPI;
                 if (sapi == null) { count = 0; return; }
 
@@ -53,15 +56,33 @@ namespace WildFarming.Ecosystem
                     zs = new int[n];
                 }
 
+                int cs = Vintagestory.API.Config.GlobalConstants.ChunkSize;
+                int chunkRadius = (radiusBlocks / cs) + 1;
+
                 count = 0;
                 for (int i = 0; i < n; i++)
                 {
                     IServerPlayer p = players[i] as IServerPlayer;
                     if (p?.Entity?.Pos == null) continue;
-                    xs[count] = (int)p.Entity.Pos.X;
-                    zs[count] = (int)p.Entity.Pos.Z;
+                    int px = (int)p.Entity.Pos.X;
+                    int pz = (int)p.Entity.Pos.Z;
+                    xs[count] = px;
+                    zs[count] = pz;
                     count++;
+
+                    int pcx = px / cs;
+                    int pcz = pz / cs;
+                    for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
+                        for (int dz = -chunkRadius; dz <= chunkRadius; dz++)
+                            nearChunks.Add(ChunkKey(pcx + dx, pcz + dz));
                 }
+            }
+
+            public bool IsNearChunk(BlockPos pos)
+            {
+                if (nearChunks.Count == 0) return false;
+                int cs = Vintagestory.API.Config.GlobalConstants.ChunkSize;
+                return nearChunks.Contains(ChunkKey(pos.X / cs, pos.Z / cs));
             }
 
             public bool IsNear(BlockPos pos, int radiusBlocks)

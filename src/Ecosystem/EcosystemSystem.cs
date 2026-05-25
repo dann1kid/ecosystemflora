@@ -449,7 +449,7 @@ namespace WildFarming.Ecosystem
 
             bool trampling = cfg.EnableTrampling;
             int tramplingRadius = cfg.TramplingRadius;
-            if (trampling) tramplingSnapshot.Refresh(api);
+            if (trampling) tramplingSnapshot.Refresh(api, tramplingRadius);
 
             registry.ProcessStress(
                 maxChecks,
@@ -486,6 +486,7 @@ namespace WildFarming.Ecosystem
                         entry.FailedSurvivalChecks++;
                     }
                     else if (trampling
+                        && tramplingSnapshot.IsNearChunk(entry.Origin)
                         && tramplingSnapshot.IsNear(entry.Origin, tramplingRadius))
                     {
                         entry.TramplingExposure++;
