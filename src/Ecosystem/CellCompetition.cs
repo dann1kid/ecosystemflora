@@ -16,6 +16,16 @@ namespace WildFarming.Ecosystem
 
             EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
             EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, challenger, cache);
+            return SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx);
+        }
+
+        internal static float SpreadScoreFromContext(
+            ICoreAPI api,
+            PlantRequirements challenger,
+            BlockPos targetPos,
+            bool harshClimate,
+            EnvironmentalContext ctx)
+        {
             if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: false))
             {
                 return 0f;
@@ -46,6 +56,16 @@ namespace WildFarming.Ecosystem
 
             EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
             EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, incumbent, cache);
+            return IncumbentHoldScoreFromContext(api, incumbent, targetPos, harshClimate, ctx);
+        }
+
+        internal static float IncumbentHoldScoreFromContext(
+            ICoreAPI api,
+            PlantRequirements incumbent,
+            BlockPos targetPos,
+            bool harshClimate,
+            EnvironmentalContext ctx)
+        {
             if (!SuitabilityEvaluator.MeetsSurvivalRequirements(incumbent, ctx, harshClimate))
             {
                 return 0f;
@@ -73,6 +93,7 @@ namespace WildFarming.Ecosystem
             Block incumbentBlock,
             BlockPos targetPos,
             bool harshClimate,
+            in CellBlockSnapshot snap,
             out float challengerScore,
             out float incumbentScore)
         {
@@ -88,7 +109,7 @@ namespace WildFarming.Ecosystem
             if (!PlantCodeHelper.IsEcologySpreadParent(incumbentBlock)) return false;
 
             IBlockAccessor acc = api.World.BlockAccessor;
-            if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, challenger, incumbentBlock, out _))
+            if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, challenger, in snap, out _))
             {
                 return false;
             }
@@ -97,14 +118,25 @@ namespace WildFarming.Ecosystem
             if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;
 
             EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
-            EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(api, targetPos, challenger, cache);
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(
+                api, targetPos, in snap, challenger, cache);
             if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: true))
             {
                 return false;
             }
 
-            challengerScore = SpreadScore(api, challenger, targetPos, harshClimate);
-            incumbentScore = IncumbentHoldScore(api, incumbentBlock, targetPos, harshClimate);
+            challengerScore = SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx);
+
+            PlantRequirements incumbent = PlantRequirements.FromBlock(incumbentBlock);
+            if (string.IsNullOrEmpty(incumbent.Species))
+            {
+                incumbentScore = float.MaxValue;
+            }
+            else
+            {
+                incumbentScore = IncumbentHoldScoreFromContext(api, incumbent, targetPos, harshClimate, ctx);
+            }
+
             if (challengerScore <= 0f) return false;
 
             return challengerScore >= incumbentScore * cfg.DisplacementHoldMargin;

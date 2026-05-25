@@ -5,6 +5,9 @@ namespace WildFarming.Ecosystem
 {
     internal static class SurfacePlacement
     {
+        static readonly BlockPos scanPos = new BlockPos(0);
+        static readonly BlockPos groundScratch = new BlockPos(0);
+
         public static bool TryFindPlantPos(
             IBlockAccessor acc,
             BlockPos origin,
@@ -25,14 +28,14 @@ namespace WildFarming.Ecosystem
             for (int dy = verticalSearch; dy >= -verticalSearch; dy--)
             {
                 int y = origin.Y + dy;
-                BlockPos test = new BlockPos(x, y, z);
-                if (!IsValidPlantSite(acc, test, out _)) continue;
+                scanPos.Set(x, y, z);
+                if (!IsValidPlantSite(acc, scanPos)) continue;
 
                 int dist = System.Math.Abs(dy);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
-                    best = test.Copy();
+                    best = scanPos.Copy();
                 }
             }
 
@@ -46,33 +49,34 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos, out string reason)
+        static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos)
         {
-            reason = null;
             Block space = acc.GetBlock(pos);
-            Block ground = acc.GetBlock(pos.DownCopy());
+            groundScratch.Set(pos.X, pos.Y - 1, pos.Z);
+            Block ground = acc.GetBlock(groundScratch);
 
-            if (BlockFluidHelper.TouchesFluid(acc, pos))
+            Block fluidAt = acc.GetBlock(pos, BlockLayersAccess.Fluid);
+            Block fluidBelow = acc.GetBlock(groundScratch, BlockLayersAccess.Fluid);
+            if (BlockFluidHelper.IsFluid(space)
+                || BlockFluidHelper.IsFluid(ground)
+                || BlockFluidHelper.IsFluid(fluidAt)
+                || BlockFluidHelper.IsFluid(fluidBelow))
             {
-                reason = "Underwater or fluid present";
                 return false;
             }
 
             if (!ground.SideSolid[BlockFacing.UP.Index])
             {
-                reason = "No solid ground";
                 return false;
             }
 
             if (WildSoilGroundRules.IsFarmland(ground))
             {
-                reason = "Farmland excluded";
                 return false;
             }
 
             if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
-                reason = "Space blocked";
                 return false;
             }
 

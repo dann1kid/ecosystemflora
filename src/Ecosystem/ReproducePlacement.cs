@@ -6,6 +6,9 @@ namespace WildFarming.Ecosystem
 {
     internal static class ReproducePlacement
     {
+        static readonly List<SpreadCandidate> scratchCandidates = new List<SpreadCandidate>();
+        static readonly HashSet<BlockPos> scratchSeen = new HashSet<BlockPos>();
+
         readonly struct SpreadCandidate
         {
             public BlockPos Pos { get; }
@@ -100,8 +103,8 @@ namespace WildFarming.Ecosystem
             float minFitness,
             bool harshClimate)
         {
-            var candidates = new List<SpreadCandidate>();
-            var seen = new HashSet<BlockPos>();
+            scratchCandidates.Clear();
+            scratchSeen.Clear();
             IBlockAccessor acc = api.World.BlockAccessor;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
 
@@ -138,12 +141,12 @@ namespace WildFarming.Ecosystem
                         continue;
                     }
 
-                    if (!seen.Add(plantPos)) continue;
+                    if (!scratchSeen.Add(plantPos)) continue;
 
                     if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) continue;
 
-                    Block occupant = acc.GetBlock(plantPos);
-                    if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, occupant, out bool isEmpty))
+                    CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, plantPos);
+                    if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, in snap, out bool isEmpty))
                     {
                         continue;
                     }
@@ -151,18 +154,22 @@ namespace WildFarming.Ecosystem
                     float fitness;
                     bool displacing = false;
                     bool canOccupy = isEmpty
-                        || SpreadVacancy.CanOccupy(acc, plantPos, requirements, occupant, isEmpty);
+                        || SpreadVacancy.CanOccupy(acc, plantPos, requirements, snap.Space, isEmpty);
 
                     if (canOccupy)
                     {
-                        fitness = CellCompetition.SpreadScore(api, requirements, plantPos, harshClimate);
+                        EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
+                        EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(
+                            api, plantPos, in snap, requirements, cache);
+                        fitness = CellCompetition.SpreadScoreFromContext(
+                            api, requirements, plantPos, harshClimate, ctx);
                         if (fitness < minFitness) continue;
                         if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
                     }
                     else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
                     {
                         if (!CellCompetition.CanDisplace(
-                            api, requirements, occupant, plantPos, harshClimate,
+                            api, requirements, snap.Space, plantPos, harshClimate, in snap,
                             out float challengerScore, out float incumbentScore))
                         {
                             continue;
@@ -177,11 +184,14 @@ namespace WildFarming.Ecosystem
                         continue;
                     }
 
-                    candidates.Add(new SpreadCandidate(plantPos.Copy(), fitness, displacing));
+                    scratchCandidates.Add(new SpreadCandidate(plantPos.Copy(), fitness, displacing));
                 }
             }
 
-            return candidates;
+            var result = new List<SpreadCandidate>(scratchCandidates);
+            scratchCandidates.Clear();
+            scratchSeen.Clear();
+            return result;
         }
 
         static List<SpreadCandidate> FilterPreferEmpty(List<SpreadCandidate> candidates)

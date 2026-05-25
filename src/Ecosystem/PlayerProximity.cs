@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -6,6 +7,8 @@ namespace WildFarming.Ecosystem
 {
     internal static class PlayerProximity
     {
+        static readonly HashSet<long> activeChunkKeys = new HashSet<long>();
+
         public static bool IsNearAnyPlayer(ICoreAPI api, BlockPos pos, int radiusBlocks)
         {
             if (radiusBlocks <= 0) return true;
@@ -26,12 +29,47 @@ namespace WildFarming.Ecosystem
             return false;
         }
 
-        public static bool ChunkNearAnyPlayer(ICoreAPI api, Vec2i chunkCoord, int radiusBlocks)
+        /// <summary>
+        /// Build a set of chunk coord keys that fall within radiusBlocks of any online player.
+        /// Callers test membership via <see cref="IsActiveChunk"/>.
+        /// </summary>
+        public static HashSet<long> BuildActivePlayerChunks(ICoreAPI api, int radiusBlocks)
         {
+            activeChunkKeys.Clear();
+
+            ICoreServerAPI sapi = api as ICoreServerAPI;
+            if (sapi == null || radiusBlocks <= 0) return activeChunkKeys;
+
             int cs = Vintagestory.API.Config.GlobalConstants.ChunkSize;
-            int cx = chunkCoord.X * cs + cs / 2;
-            int cz = chunkCoord.Y * cs + cs / 2;
-            return IsNearAnyPlayer(api, new BlockPos(cx, 0, cz), radiusBlocks);
+            int chunkRadius = (radiusBlocks / cs) + 1;
+
+            foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                if (player?.Entity?.Pos == null) continue;
+                BlockPos ppos = player.Entity.Pos.AsBlockPos;
+                int pcx = ppos.X / cs;
+                int pcz = ppos.Z / cs;
+
+                for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
+                {
+                    for (int dz = -chunkRadius; dz <= chunkRadius; dz++)
+                    {
+                        activeChunkKeys.Add(ChunkKey(pcx + dx, pcz + dz));
+                    }
+                }
+            }
+
+            return activeChunkKeys;
+        }
+
+        public static bool IsActiveChunk(HashSet<long> activeChunks, Vec2i chunkCoord)
+        {
+            return activeChunks.Contains(ChunkKey(chunkCoord.X, chunkCoord.Y));
+        }
+
+        static long ChunkKey(int cx, int cz)
+        {
+            return ((long)cx << 32) | (uint)cz;
         }
     }
 }

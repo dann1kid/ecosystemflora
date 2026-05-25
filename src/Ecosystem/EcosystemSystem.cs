@@ -403,12 +403,18 @@ namespace WildFarming.Ecosystem
             int columnsLeft = cfg.MaxChunkColumnsScannedPerTick;
             int registrationsLeft = cfg.MaxRegistrationsPerTick;
 
+            HashSet<long> activePlayerChunks = null;
+            if (cfg.OnlyActivateNearPlayers)
+            {
+                activePlayerChunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+            }
+
             while (columnsLeft > 0 && pendingChunkScans.Count > 0 && registrationsLeft > 0)
             {
                 Vec2i chunkCoord = pendingChunkScans.Dequeue();
                 columnsLeft--;
 
-                if (cfg.OnlyActivateNearPlayers && !PlayerProximity.ChunkNearAnyPlayer(api, chunkCoord, cfg.PlayerActivationRadiusBlocks))
+                if (activePlayerChunks != null && !PlayerProximity.IsActiveChunk(activePlayerChunks, chunkCoord))
                 {
                     continue;
                 }

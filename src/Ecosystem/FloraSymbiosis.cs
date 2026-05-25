@@ -28,6 +28,12 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Rule> SymbiontRules = BuildRules();
 
+        static readonly Dictionary<long, BlockPos> hostCache = new Dictionary<long, BlockPos>();
+        static readonly Queue<long> hostCacheOrder = new Queue<long>();
+        const int MaxHostCacheEntries = 4096;
+        /// <summary>Sentinel: host lookup was done and nothing was found.</summary>
+        static readonly BlockPos NoHost = new BlockPos(-1, -1, -1, 0);
+
         static Dictionary<string, Rule> BuildRules()
         {
             return new Dictionary<string, Rule>
@@ -60,7 +66,21 @@ namespace WildFarming.Ecosystem
         {
             if (!TryGetRule(symbiontSpecies, out Rule rule)) return true;
 
-            return FindHost(acc, symbiontPos, rule, out _, out _) != null;
+            long key = PosKey(symbiontPos);
+            if (hostCache.TryGetValue(key, out BlockPos cached))
+            {
+                if (ReferenceEquals(cached, NoHost)) return false;
+                Block hostBlock = acc.GetBlock(cached);
+                if (hostBlock != null && hostBlock.Id != 0 && MatchesHostRule(rule, hostBlock))
+                {
+                    return true;
+                }
+                hostCache.Remove(key);
+            }
+
+            BlockPos found = FindHost(acc, symbiontPos, rule, out _, out BlockPos hostPos);
+            StoreHostCache(key, found != null ? hostPos : NoHost);
+            return found != null;
         }
 
         public static void CascadeOnHostRemoved(ICoreAPI api, BlockPos hostPos, Block hostBlock)
@@ -71,11 +91,12 @@ namespace WildFarming.Ecosystem
             if (eco == null) return;
 
             int radius = EcosystemConfig.Loaded.SymbiosisCascadeRadius;
+            InvalidateHostCacheAround(hostPos, radius);
             IBlockAccessor acc = api.World.BlockAccessor;
             bool treeHost = PlantCodeHelper.IsTreeLogGrownBlock(hostBlock);
             int scanDown = treeHost ? TreeCascadeVerticalSearchDown : NonTreeVerticalSearch;
             int scanUp = NonTreeVerticalSearch;
-            var scanPos = new BlockPos();
+            var scanPos = new BlockPos(0);
 
             for (int dx = -radius; dx <= radius; dx++)
             {
@@ -134,7 +155,7 @@ namespace WildFarming.Ecosystem
                 return FindTreeHostAbove(acc, symbiontPos, rule.MaxHostDistance, out hostBlock, out hostPos);
             }
 
-            var scanPos = new BlockPos();
+            var scanPos = new BlockPos(0);
             for (int dx = -rule.MaxHostDistance; dx <= rule.MaxHostDistance; dx++)
             {
                 for (int dz = -rule.MaxHostDistance; dz <= rule.MaxHostDistance; dz++)
@@ -169,7 +190,7 @@ namespace WildFarming.Ecosystem
         {
             hostBlock = null;
             hostPos = null;
-            var scanPos = new BlockPos();
+            var scanPos = new BlockPos(0);
 
             for (int dx = -maxHorizontalDistance; dx <= maxHorizontalDistance; dx++)
             {
@@ -212,6 +233,65 @@ namespace WildFarming.Ecosystem
             int dx = System.Math.Abs(a.X - b.X);
             int dz = System.Math.Abs(a.Z - b.Z);
             return System.Math.Max(dx, dz);
+        }
+
+        static bool MatchesHostRule(Rule rule, Block block)
+        {
+            for (int i = 0; i < rule.HostKeys.Length; i++)
+            {
+                string key = rule.HostKeys[i];
+                if (key == TreeHostToken && PlantCodeHelper.IsTreeLogGrownBlock(block))
+                    return true;
+
+                string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+                if (species != null && species == key)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Invalidate host cache entries near a removed host block.</summary>
+        public static void InvalidateHostCacheAround(BlockPos pos, int radius)
+        {
+            if (pos == null || hostCache.Count == 0) return;
+
+            var toRemove = new List<long>();
+            foreach (var kvp in hostCache)
+            {
+                BlockPos cached = kvp.Value;
+                if (ReferenceEquals(cached, NoHost)) continue;
+                if (HorizontalChebyshev(pos, cached) <= radius + 1)
+                {
+                    toRemove.Add(kvp.Key);
+                }
+            }
+
+            for (int i = 0; i < toRemove.Count; i++)
+            {
+                hostCache.Remove(toRemove[i]);
+            }
+        }
+
+        static void StoreHostCache(long key, BlockPos value)
+        {
+            if (!hostCache.ContainsKey(key))
+            {
+                hostCacheOrder.Enqueue(key);
+                while (hostCacheOrder.Count > MaxHostCacheEntries)
+                {
+                    long old = hostCacheOrder.Dequeue();
+                    hostCache.Remove(old);
+                }
+            }
+            hostCache[key] = value;
+        }
+
+        static long PosKey(BlockPos pos)
+        {
+            unchecked
+            {
+                return ((long)pos.X << 42) | ((long)(pos.Y & 0x1FFF) << 29) | (uint)pos.Z;
+            }
         }
     }
 }

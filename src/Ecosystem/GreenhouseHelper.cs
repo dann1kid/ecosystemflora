@@ -1,3 +1,4 @@
+using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -6,24 +7,47 @@ namespace WildFarming.Ecosystem
     /// <summary>Detects enclosed greenhouse rooms when survival mod systems are present.</summary>
     public static class GreenhouseHelper
     {
+        static bool resolved;
+        static ModSystem cachedRoomRegistry;
+        static MethodInfo getRoomMethod;
+        static PropertyInfo skylightProp;
+        static PropertyInfo nonSkylightProp;
+        static PropertyInfo exitCountProp;
+        static readonly object[] invokeArgs = new object[1];
+
         public static bool IsGreenhouse(ICoreAPI api, BlockPos pos)
         {
-            ModSystem sys = api.ModLoader.GetModSystem("RoomRegistry");
-            if (sys == null) return false;
+            if (!resolved)
+            {
+                Resolve(api);
+            }
 
-            // RoomRegistry lives in game assemblies; resolved at runtime to avoid a hard mod reference.
-            System.Reflection.MethodInfo method = sys.GetType().GetMethod("GetRoomForPosition");
-            if (method == null) return false;
+            if (getRoomMethod == null) return false;
 
-            object room = method.Invoke(sys, new object[] { pos });
+            invokeArgs[0] = pos;
+            object room = getRoomMethod.Invoke(cachedRoomRegistry, invokeArgs);
             if (room == null) return false;
 
-            System.Type roomType = room.GetType();
-            int skylight = (int)(roomType.GetProperty("SkylightCount")?.GetValue(room) ?? 0);
-            int nonSkylight = (int)(roomType.GetProperty("NonSkylightCount")?.GetValue(room) ?? 0);
-            int exits = (int)(roomType.GetProperty("ExitCount")?.GetValue(room) ?? 1);
+            int skylight = (int)(skylightProp?.GetValue(room) ?? 0);
+            int nonSkylight = (int)(nonSkylightProp?.GetValue(room) ?? 0);
+            int exits = (int)(exitCountProp?.GetValue(room) ?? 1);
 
             return skylight > nonSkylight && exits == 0;
+        }
+
+        static void Resolve(ICoreAPI api)
+        {
+            resolved = true;
+            cachedRoomRegistry = api.ModLoader.GetModSystem("RoomRegistry");
+            if (cachedRoomRegistry == null) return;
+
+            getRoomMethod = cachedRoomRegistry.GetType().GetMethod("GetRoomForPosition");
+            if (getRoomMethod == null) return;
+
+            System.Type returnType = getRoomMethod.ReturnType;
+            skylightProp = returnType.GetProperty("SkylightCount");
+            nonSkylightProp = returnType.GetProperty("NonSkylightCount");
+            exitCountProp = returnType.GetProperty("ExitCount");
         }
     }
 }

@@ -109,7 +109,7 @@ namespace WildFarming.Ecosystem
             int count = 0;
             int y0 = center.Y - 1;
             int y1 = center.Y + 2;
-            var scanPos = new BlockPos();
+            var scanPos = new BlockPos(0);
 
             for (int dx = -radius; dx <= radius; dx++)
             {

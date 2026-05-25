@@ -5,6 +5,7 @@ namespace WildFarming.Ecosystem
 {
     internal static class BlockFluidHelper
     {
+        static readonly BlockPos touchScratch = new BlockPos(0);
         public static bool IsFluid(Block block)
         {
             if (block == null || block.Id == 0) return false;
@@ -29,9 +30,10 @@ namespace WildFarming.Ecosystem
         public static bool TouchesFluid(IBlockAccessor acc, BlockPos plantPos)
         {
             Block space = acc.GetBlock(plantPos);
-            Block ground = acc.GetBlock(plantPos.DownCopy());
+            touchScratch.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            Block ground = acc.GetBlock(touchScratch);
             Block fluidAt = acc.GetBlock(plantPos, BlockLayersAccess.Fluid);
-            Block fluidBelow = acc.GetBlock(plantPos.DownCopy(), BlockLayersAccess.Fluid);
+            Block fluidBelow = acc.GetBlock(touchScratch, BlockLayersAccess.Fluid);
 
             return IsFluid(space)
                 || IsFluid(ground)
@@ -72,7 +74,7 @@ namespace WildFarming.Ecosystem
         {
             if (acc == null || center == null || radius < 0) return false;
 
-            var scanPos = new BlockPos();
+            var scanPos = new BlockPos(0);
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
@@ -137,7 +139,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            BlockPos gravelPos = plantPos.DownCopy();
+            var gravelPos = new BlockPos(plantPos.X, plantPos.Y - 1, plantPos.Z, plantPos.dimension);
             if (!IsReedBedSubstrate(acc.GetBlock(gravelPos)))
             {
                 reason = "Water block must sit directly on muddy or rock gravel bed";
@@ -166,7 +168,8 @@ namespace WildFarming.Ecosystem
                     return false;
                 }
 
-                if (IsDedicatedWaterCell(acc, plantPos.UpCopy()))
+                var abovePos = new BlockPos(plantPos.X, plantPos.Y + 1, plantPos.Z, plantPos.dimension);
+                if (IsDedicatedWaterCell(acc, abovePos))
                 {
                     reason = "Second water block above (column too deep)";
                     return false;
@@ -214,7 +217,7 @@ namespace WildFarming.Ecosystem
             if (!IsReedBedSubstrate(acc.GetBlock(gravelPos))) return -1;
 
             int count = 0;
-            BlockPos scan = gravelPos.UpCopy();
+            BlockPos scan = new BlockPos(gravelPos.X, gravelPos.Y + 1, gravelPos.Z, gravelPos.dimension);
             for (int i = 0; i < 6; i++)
             {
                 if (PlantCodeHelper.IsReedBlock(acc.GetBlock(scan))) return -1;
@@ -260,14 +263,18 @@ namespace WildFarming.Ecosystem
             return waterDepth >= minDepth && waterDepth <= maxDepth;
         }
 
+        static readonly BlockPos reedColumnScratch = new BlockPos(0);
+
         public static bool HasReedInSameColumn(IBlockAccessor acc, BlockPos plantPos, string species)
         {
             if (string.IsNullOrEmpty(species)) return false;
 
-            if (IsSameReedSpecies(acc.GetBlock(plantPos.UpCopy()), species)) return true;
-            if (IsSameReedSpecies(acc.GetBlock(plantPos.DownCopy()), species)) return true;
+            reedColumnScratch.Set(plantPos.X, plantPos.Y + 1, plantPos.Z);
+            if (IsSameReedSpecies(acc.GetBlock(reedColumnScratch), species)) return true;
+            reedColumnScratch.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            if (IsSameReedSpecies(acc.GetBlock(reedColumnScratch), species)) return true;
 
-            BlockPos scan = plantPos.DownCopy();
+            BlockPos scan = new BlockPos(plantPos.X, plantPos.Y - 1, plantPos.Z, plantPos.dimension);
             for (int i = 0; i < 6; i++)
             {
                 Block block = acc.GetBlock(scan);
@@ -290,9 +297,12 @@ namespace WildFarming.Ecosystem
             return PlantCodeHelper.GetEcologySpecies(block.Code) == species;
         }
 
+        static readonly BlockPos reedSiltScratch = new BlockPos(0);
+
         public static bool HasReedSiltSubstrate(IBlockAccessor acc, BlockPos plantPos, int maxDepth)
         {
-            return IsReedBedSubstrate(acc.GetBlock(plantPos.DownCopy()));
+            reedSiltScratch.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            return IsReedBedSubstrate(acc.GetBlock(reedSiltScratch));
         }
 
         public static bool MeetsReedWaterDepth(PlantRequirements req, IBlockAccessor acc, BlockPos plantPos)
@@ -300,13 +310,16 @@ namespace WildFarming.Ecosystem
             return IsValidReedPlantSite(acc, plantPos, req, out _);
         }
 
+        static readonly BlockPos clearanceScratch = new BlockPos(0);
+
         public static bool HasVerticalClearance(IBlockAccessor acc, BlockPos basePos, int verticalBlocks)
         {
             if (verticalBlocks <= 1) return true;
 
             for (int i = 1; i < verticalBlocks; i++)
             {
-                Block above = acc.GetBlock(basePos.UpCopy(i));
+                clearanceScratch.Set(basePos.X, basePos.Y + i, basePos.Z);
+                Block above = acc.GetBlock(clearanceScratch);
                 if (above.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable) continue;
                 if (IsFluid(above)) continue;
                 return false;
@@ -315,10 +328,13 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
+        static readonly BlockPos waterSurfScratch = new BlockPos(0);
+
         public static bool HasWaterSurfaceSupport(IBlockAccessor acc, BlockPos plantPos)
         {
-            Block below = acc.GetBlock(plantPos.DownCopy());
-            Block fluidBelow = acc.GetBlock(plantPos.DownCopy(), BlockLayersAccess.Fluid);
+            waterSurfScratch.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            Block below = acc.GetBlock(waterSurfScratch);
+            Block fluidBelow = acc.GetBlock(waterSurfScratch, BlockLayersAccess.Fluid);
             if (IsFluid(fluidBelow) || IsFluid(below)) return true;
             return IsFluid(acc.GetBlock(plantPos, BlockLayersAccess.Fluid));
         }
@@ -353,14 +369,17 @@ namespace WildFarming.Ecosystem
                 scan = PlantCodeHelper.GetColumnBase(acc, scan);
             }
 
-            while (IsWaterAt(acc, scan.DownCopy()))
+            var peekDown = new BlockPos(0);
+            peekDown.Set(scan.X, scan.Y - 1, scan.Z);
+            while (IsWaterAt(acc, peekDown))
             {
                 scan.Down();
+                peekDown.Set(scan.X, scan.Y - 1, scan.Z);
             }
 
             if (!IsWaterAt(acc, scan)) return false;
 
-            Block below = acc.GetBlock(scan.DownCopy());
+            Block below = acc.GetBlock(peekDown);
             if (!IsFertileSubstrate(below))
             {
                 return false;

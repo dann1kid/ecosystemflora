@@ -18,6 +18,7 @@ namespace WildFarming.Ecosystem
         readonly Dictionary<Vec2i, int> dueChunkEntryIndex = new Dictionary<Vec2i, int>();
         readonly Dictionary<Vec2i, int> stressChunkEntryIndex = new Dictionary<Vec2i, int>();
         readonly List<Vec2i> spatialChunkScratch = new List<Vec2i>();
+        readonly List<BlockPos> removeQueueScratch = new List<BlockPos>();
 
         public int Count => entries.Count;
 
@@ -25,21 +26,25 @@ namespace WildFarming.Ecosystem
 
         public IEnumerable<Vec2i> ChunkCoords => byChunk.Keys;
 
+        readonly List<Vec2i> nearPlayerScratch = new List<Vec2i>();
+
         public List<Vec2i> CollectChunksNearPlayers(ICoreAPI api, int radiusBlocks)
         {
-            var result = new List<Vec2i>();
-            if (api == null || radiusBlocks <= 0) return result;
+            nearPlayerScratch.Clear();
+            if (api == null || radiusBlocks <= 0) return nearPlayerScratch;
+
+            HashSet<long> activeChunks = PlayerProximity.BuildActivePlayerChunks(api, radiusBlocks);
 
             foreach (Vec2i chunk in byChunk.Keys)
             {
                 if (byChunk[chunk].Count == 0) continue;
-                if (PlayerProximity.ChunkNearAnyPlayer(api, chunk, radiusBlocks))
+                if (PlayerProximity.IsActiveChunk(activeChunks, chunk))
                 {
-                    result.Add(chunk);
+                    nearPlayerScratch.Add(chunk);
                 }
             }
 
-            return result;
+            return nearPlayerScratch;
         }
 
         public void Add(ReproducerEntry entry)
@@ -146,7 +151,7 @@ namespace WildFarming.Ecosystem
             int processed = 0;
             int scanned = 0;
             int scanBudget = entries.Count;
-            var removeQueue = new List<BlockPos>();
+            removeQueueScratch.Clear();
 
             while (processed < maxAttempts && scanned < scanBudget)
             {
@@ -156,7 +161,7 @@ namespace WildFarming.Ecosystem
                 ReproducerEntry entry = entries[dueGlobalRoundRobinIndex++];
                 scanned++;
 
-                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueue))
+                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueueScratch))
                 {
                     continue;
                 }
@@ -164,7 +169,7 @@ namespace WildFarming.Ecosystem
                 processed++;
             }
 
-            FlushRemoves(removeQueue);
+            FlushRemoves(removeQueueScratch);
             return processed;
         }
 
@@ -181,7 +186,7 @@ namespace WildFarming.Ecosystem
             int processed = 0;
             int scanned = 0;
             int scanBudget = CountEntriesInChunks(spatialChunkScratch);
-            var removeQueue = new List<BlockPos>();
+            removeQueueScratch.Clear();
 
             while (processed < maxAttempts && scanned < scanBudget)
             {
@@ -206,7 +211,7 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueue))
+                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueueScratch))
                 {
                     continue;
                 }
@@ -214,7 +219,7 @@ namespace WildFarming.Ecosystem
                 processed++;
             }
 
-            FlushRemoves(removeQueue);
+            FlushRemoves(removeQueueScratch);
             return processed;
         }
 
@@ -226,7 +231,7 @@ namespace WildFarming.Ecosystem
             int expired = 0;
             int scanned = 0;
             int scanBudget = entries.Count;
-            var removeQueue = new List<BlockPos>();
+            removeQueueScratch.Clear();
 
             while (expired < maxChecks && scanned < scanBudget)
             {
@@ -238,11 +243,11 @@ namespace WildFarming.Ecosystem
 
                 if (!tryExpire(entry)) continue;
 
-                removeQueue.Add(entry.Origin);
+                removeQueueScratch.Add(entry.Origin);
                 expired++;
             }
 
-            FlushStressRemoves(removeQueue, onExpired);
+            FlushStressRemoves(removeQueueScratch, onExpired);
             return expired;
         }
 
@@ -258,7 +263,7 @@ namespace WildFarming.Ecosystem
             int expired = 0;
             int scanned = 0;
             int scanBudget = CountEntriesInChunks(spatialChunkScratch);
-            var removeQueue = new List<BlockPos>();
+            removeQueueScratch.Clear();
 
             while (expired < maxChecks && scanned < scanBudget)
             {
@@ -285,11 +290,11 @@ namespace WildFarming.Ecosystem
 
                 if (!tryExpire(entry)) continue;
 
-                removeQueue.Add(entry.Origin);
+                removeQueueScratch.Add(entry.Origin);
                 expired++;
             }
 
-            FlushStressRemoves(removeQueue, onExpired);
+            FlushStressRemoves(removeQueueScratch, onExpired);
             return expired;
         }
 

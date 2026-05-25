@@ -71,10 +71,12 @@ namespace WildFarming.Ecosystem
         }
 
         static readonly LocalNiche DefaultNiche = new LocalNiche(MoistureLevel.Mesic, LightLevel.Partial);
+        static readonly BlockPos moistureScratch = new BlockPos(0);
 
         internal static MoistureLevel ClassifyMoisture(IBlockAccessor acc, BlockPos plantPos)
         {
-            Block ground = acc.GetBlock(plantPos.DownCopy());
+            moistureScratch.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            Block ground = acc.GetBlock(moistureScratch);
             string path = ground?.Code?.Path ?? "";
 
             if (path == "peat")

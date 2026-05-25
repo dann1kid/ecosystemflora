@@ -36,6 +36,8 @@ namespace WildFarming.Ecosystem
             return hits;
         }
 
+        static readonly BlockPos scanScratch = new BlockPos(0);
+
         static bool TryFindTopFlower(IBlockAccessor acc, int x, int z, int yMax, out Block block, out BlockPos pos)
         {
             block = null;
@@ -43,12 +45,13 @@ namespace WildFarming.Ecosystem
 
             for (int y = yMax; y >= 0; y--)
             {
-                pos = new BlockPos(x, y, z);
-                block = acc.GetBlock(pos);
+                scanScratch.Set(x, y, z);
+                block = acc.GetBlock(scanScratch);
                 if (block.Id == 0) continue;
 
                 if (EcologyAttributes.ReproduceEnabled(block))
                 {
+                    pos = scanScratch.Copy();
                     return true;
                 }
 

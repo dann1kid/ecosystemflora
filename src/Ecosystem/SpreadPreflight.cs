@@ -10,10 +10,10 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc,
             BlockPos plantPos,
             PlantRequirements requirements,
-            Block occupant,
+            in CellBlockSnapshot snap,
             out bool isEmpty)
         {
-            isEmpty = occupant == null || occupant.Id == 0;
+            isEmpty = snap.Space == null || snap.Space.Id == 0;
 
             if (acc == null || plantPos == null || requirements == null)
             {
@@ -23,7 +23,7 @@ namespace WildFarming.Ecosystem
             switch (requirements.Habitat)
             {
                 case EcologyHabitat.Terrestrial:
-                    return PassesTerrestrialPhysical(acc, plantPos, requirements, isEmpty);
+                    return PassesTerrestrialPhysical(in snap, requirements, isEmpty);
 
                 case EcologyHabitat.TerrestrialTree:
                 case EcologyHabitat.WaterSurface:
@@ -36,42 +36,38 @@ namespace WildFarming.Ecosystem
         }
 
         static bool PassesTerrestrialPhysical(
-            IBlockAccessor acc,
-            BlockPos plantPos,
+            in CellBlockSnapshot snap,
             PlantRequirements requirements,
             bool isEmpty)
         {
-            if (!isEmpty && !PlantCodeHelper.IsEcologySpreadParent(acc.GetBlock(plantPos)))
+            if (!isEmpty && !PlantCodeHelper.IsEcologySpreadParent(snap.Space))
             {
                 return false;
             }
 
-            Block space = acc.GetBlock(plantPos);
-            Block ground = acc.GetBlock(plantPos.DownCopy());
-
-            if (BlockFluidHelper.TouchesFluid(acc, plantPos))
+            if (snap.TouchesFluid)
             {
                 return false;
             }
 
-            if (!ground.SideSolid[BlockFacing.UP.Index])
+            if (!snap.Ground.SideSolid[BlockFacing.UP.Index])
             {
                 return false;
             }
 
-            if (WildSoilGroundRules.IsFarmland(ground))
+            if (WildSoilGroundRules.IsFarmland(snap.Ground))
             {
                 return false;
             }
 
-            if (isEmpty && space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
+            if (isEmpty && snap.Space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
                 return false;
             }
 
-            SoilKind groundKinds = SoilClassification.Classify(ground);
+            SoilKind groundKinds = SoilClassification.Classify(snap.Ground);
             if (!SoilClassification.MeetsSoilRequirements(
-                requirements, groundKinds, (int)ground.Fertility))
+                requirements, groundKinds, (int)snap.Ground.Fertility))
             {
                 return false;
             }

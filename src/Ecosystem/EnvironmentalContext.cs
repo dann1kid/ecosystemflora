@@ -79,10 +79,18 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             EnvironmentalColumnCache cache)
         {
+            CellBlockSnapshot snap = CellBlockSnapshot.Sample(api.World.BlockAccessor, plantPos);
+            return SampleForSpread(api, plantPos, in snap, requirements, cache);
+        }
+
+        internal static EnvironmentalContext SampleForSpread(
+            ICoreAPI api,
+            BlockPos plantPos,
+            in CellBlockSnapshot snap,
+            PlantRequirements requirements,
+            EnvironmentalColumnCache cache)
+        {
             IBlockAccessor acc = api.World.BlockAccessor;
-            BlockPos groundPos = plantPos.DownCopy();
-            Block ground = acc.GetBlock(groundPos);
-            Block space = acc.GetBlock(plantPos);
 
             float worldgenRainfall;
             bool hasClimate;
@@ -106,7 +114,7 @@ namespace WildFarming.Ecosystem
                 localForestCover = flora.GetLocalForestCover(api, plantPos);
             }
 
-            bool shallowWater = ComputeWaterRequirement(acc, plantPos, ground, requirements);
+            bool shallowWater = ComputeWaterRequirement(acc, plantPos, snap.Ground, requirements);
 
             return new EnvironmentalContext(
                 plantPos,
@@ -114,12 +122,12 @@ namespace WildFarming.Ecosystem
                 worldgenRainfall,
                 localForestCover,
                 false,
-                (int)ground.Fertility,
-                SoilClassification.Classify(ground),
-                ground.SideSolid[BlockFacing.UP.Index],
-                space.Replaceable,
+                (int)snap.Ground.Fertility,
+                SoilClassification.Classify(snap.Ground),
+                snap.Ground.SideSolid[BlockFacing.UP.Index],
+                snap.Space.Replaceable,
                 hasClimate,
-                BlockFluidHelper.TouchesFluid(acc, plantPos),
+                snap.TouchesFluid,
                 shallowWater);
         }
 
