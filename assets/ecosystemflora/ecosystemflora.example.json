@@ -51,5 +51,6 @@
   "FarmlandNutrientBridgeStrength": 1,
   "RespectLandClaims": true,
   "UseSeasonalEcology": true,
-  "SeasonalStressEnabled": true
+  "SeasonalStressEnabled": true,
+  "EnableFlowerDrygrass": true
 }

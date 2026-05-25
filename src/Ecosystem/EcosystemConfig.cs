@@ -159,5 +159,10 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Winter die-off and fall die-off via stress checks (terrestrial).</summary>
         public bool SeasonalStressEnabled { get; set; } = true;
+
+        // --- Flower drygrass drops (v2.5) ---
+
+        /// <summary>Append drygrass drops (knife/scythe) to flowers without removing original drops.</summary>
+        public bool EnableFlowerDrygrass { get; set; } = true;
     }
 }

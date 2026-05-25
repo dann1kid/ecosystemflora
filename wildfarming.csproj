@@ -41,6 +41,7 @@
   <ItemGroup>
     <None Include="assets\**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="modicon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('modicon.png')" />
   </ItemGroup>
 
   <!-- Copy built mod into the game Mods folder for F5 / attach debugging -->

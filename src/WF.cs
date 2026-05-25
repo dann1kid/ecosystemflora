@@ -19,6 +19,12 @@ namespace WildFarming
             }
         }
 
+        public override void AssetsFinalize(ICoreAPI api)
+        {
+            base.AssetsFinalize(api);
+            FlowerDrygrassDrops.Apply(api);
+        }
+
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
