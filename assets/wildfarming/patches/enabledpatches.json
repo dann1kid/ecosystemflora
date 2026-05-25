@@ -3,48 +3,48 @@
 		"file": "game:blocktypes/plant/flower.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/flower-lupine.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/fern.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/tallfern.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/tallgrass.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/reedpapyrus.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/waterlily.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	},
 	{
 		"file": "game:blocktypes/plant/aquatic/watercrowfoot.json",
 		"op": "add",
 		"path": "/entityClass",
-		"value": "EcosystemPlant"
+		"value": "EcoSystemLife"
 	}
 ]

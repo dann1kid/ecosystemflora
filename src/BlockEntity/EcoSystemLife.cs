@@ -4,7 +4,7 @@ using WildFarming.Ecosystem;
 namespace WildFarming
 {
     /// <summary>Server-side ecology on vanilla game plants (e.g. game:flower-*). No mod block replacement.</summary>
-    public class EcosystemPlantBlockEntity : BlockEntity
+    public class EcoSystemLifeBlockEntity : BlockEntity
     {
         public override void Initialize(ICoreAPI api)
         {

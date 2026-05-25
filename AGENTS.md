@@ -16,7 +16,7 @@ Quick constraints:
 - **Survival** — `CanSurviveAt` on `WildPlant`; death after failed checks, not blocked planting.
 - **Wild reproduce** — `CanReproduceAt` + registry; `MinFitness` only here.
 - Do **not** expand living trees, vines, mushrooms, or termites unless the user asks.
-- New logic under `src/Ecosystem/`.
+- BE: `src/BlockEntity/EcoSystemLife.cs`; new logic under `src/Ecosystem/`.
 - Target: VS **1.21+**, **.NET 10**, `wildfarming.sln`.
 - Do **not** run alongside **wildfarmingrevival**.
 

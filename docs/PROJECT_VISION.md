@@ -41,12 +41,12 @@
 | Принцип | Реализация |
 |---------|------------|
 | **Объект в мире** | `game:flower-*`, `tallplant-coopersreed/papyrus`, `waterlily`, `aquatic-watercrowfoot` |
-| **Мод при снятии** | Патч `entityClass: EcosystemPlant`; без мода — обычные блоки, сохранения целы |
+| **Мод при снятии** | Патч `entityClass: EcoSystemLife`; без мода — обычные блоки, сохранения целы |
 | **Дикое размножение** | Тот же ванильный блок (или корректный land/water для тростника) на соседней клетке |
 | **Семена / wildplant** | **Не** часть дикой экосистемы; не в сборке |
 | **Культивация игроком** | Ванильные механики игры |
 
-**Регистрация:** очередь сканирования чанков + `EcosystemPlant` BE. **Размножение:** round-robin по реестру, лимит попыток за тик.
+**Регистрация:** очередь сканирования чанков + `EcoSystemLife` BE. **Размножение:** round-robin по реестру, лимит попыток за тик.
 
 ### 2.4. Минимум механик (не тащить из Revival)
 
@@ -116,7 +116,7 @@ src/
     PlantCodeHelper.cs
     EcosystemConfig.cs
   BlockEntity/
-    EcosystemPlant.cs
+    EcoSystemLife.cs
 assets/wildfarming/
   patches/enabledpatches.json
 docs/
@@ -203,7 +203,7 @@ docs/
 - **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
 - **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
-- [ ] Chunk-scan без BE (техдолг; сейчас `EcosystemPlant` → план `EcoSystemLife`)
+- [ ] Chunk-scan без BE (техдолг; сейчас `EcoSystemLife`)
 - [ ] Perf фаза 3 — только при лагах на большом реестре (§12)
 - [ ] Handbook / dominant species — UX, post-ModDB
 - [ ] Сезонность spread/stress (v2.3); зимняя листва на стволах — **отложено** (визуал, отдельно от экосистемы)

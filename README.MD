@@ -18,7 +18,7 @@ Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainf
 
 ## What it does
 
-Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crowfoot). The mod patches `entityClass: EcosystemPlant` and registers mature plants for **wild reproduction**:
+Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crowfoot). The mod patches `entityClass: EcoSystemLife` and registers mature plants for **wild reproduction**:
 
 - scan neighbors in radius → filter by climate / soil / water / spacing
 - weighted pick among valid cells → place the same vanilla block type

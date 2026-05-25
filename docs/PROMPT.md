@@ -27,7 +27,7 @@ Habitat:
 
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
 
-Код: src/Ecosystem/, BlockEntity/EcosystemPlant.cs, assets/wildfarming/patches/enabledpatches.json.
+Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/wildfarming/patches/enabledpatches.json.
 
 Порт: VS 1.21+, .NET 10. Стадия: Ecosystem v2.1 — см. docs/PROGRESS.md.
 
