@@ -5,6 +5,7 @@
     <AssemblyName>wildfarming</AssemblyName>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
+  
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\wildfarming\</OutputPath>
   </PropertyGroup>
@@ -26,6 +27,15 @@
       <HintPath>$(APPDATA)\Vintagestory\VintagestoryAPI.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WildFarming.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <None Remove="tests\**" />
   </ItemGroup>
 
   <ItemGroup>

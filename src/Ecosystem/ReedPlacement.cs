@@ -32,7 +32,7 @@ namespace WildFarming.Ecosystem
                 BlockPos gravelPos = new BlockPos(x, gy, z);
                 if (!BlockFluidHelper.IsReedBedSubstrate(acc.GetBlock(gravelPos))) continue;
 
-                int waterLayers = BlockFluidHelper.CountWaterLayersAboveGravel(acc, gravelPos);
+                int waterLayers = ReedColumnHelper.CountWaterLayersAboveGravel(acc, gravelPos);
                 if (waterLayers < 0 || waterLayers > maxDepth) continue;
 
                 // gy+1 = either land on gravel or the single water block (reed goes inside it).
@@ -60,7 +60,7 @@ namespace WildFarming.Ecosystem
             ref int bestDist,
             PlantRequirements requirements)
         {
-            if (!BlockFluidHelper.IsValidReedPlantSite(acc, candidate, requirements, out _)) return;
+            if (!ReedColumnHelper.IsValidReedPlantSite(acc, candidate, requirements, out _)) return;
 
             int dist = System.Math.Abs(candidate.Y - originY);
             if (dist < bestDist)

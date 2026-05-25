@@ -242,7 +242,7 @@ namespace WildFarming.Ecosystem
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
 
-                if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, plantPos, out BlockPos columnBase))
+                if (!WaterColumnHelper.TrySnapCrowfootColumnBase(acc, plantPos, out BlockPos columnBase))
                 {
                     return false;
                 }
@@ -252,7 +252,7 @@ namespace WildFarming.Ecosystem
                 int height = CrowfootColumnPlacer.MeasureColumnHeight(acc, parentOrigin);
                 if (height < 2) height = 3;
 
-                if (BlockFluidHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
+                if (WaterColumnHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
                 {
                     if (waterDepth > 0 && waterDepth < height) height = waterDepth;
                 }

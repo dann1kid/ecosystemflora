@@ -56,13 +56,13 @@ namespace WildFarming.Ecosystem
             columnBase = null;
             reason = null;
 
-            if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, pos, out columnBase))
+            if (!WaterColumnHelper.TrySnapCrowfootColumnBase(acc, pos, out columnBase))
             {
                 reason = "Not underwater or no bed below";
                 return false;
             }
 
-            if (!BlockFluidHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
+            if (!WaterColumnHelper.TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
             {
                 reason = "No water column";
                 return false;

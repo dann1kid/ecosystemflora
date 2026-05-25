@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **отношение к оригинальному Wild Farming и Revival**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-22 (стадия: **Ecosystem v1.1**).
+Последнее обновление: 2026-05-25 (стадия: **Ecosystem v2.3**, версия `2.5.0`).
 
 ---
 
@@ -93,30 +93,54 @@ EcosystemSystem       →  Score >= MinFitness → SetBlock (ванильный 
 src/
   WF.cs
   Ecosystem/
-    EcosystemSystem.cs
-    ReproducerRegistry.cs
-    ChunkFlowerScanner.cs
-    ReproducePlacement.cs
-    SurfacePlacement.cs
-    ReedPlacement.cs
-    WaterPlacement.cs
-    CrowfootPlacement.cs
-    CrowfootColumnPlacer.cs
-    BlockFluidHelper.cs
-    EnvironmentalContext.cs
-    SuitabilityEvaluator.cs
-    PlantRequirements.cs
-    WildFlowerClimate.cs
-    WildAquaticEcology.cs
-    WildFlowerSpacing.cs
-    PlantSpacing.cs
-    SpeciesSpread.cs
-    EcosystemParticipant.cs
-    EcologyHabitat.cs
-    PlantCodeHelper.cs
-    EcosystemConfig.cs
+    EcosystemSystem.cs          # main system, tick scheduling
+    ReproducerRegistry.cs       # spatial registry, round-robin
+    ChunkFlowerScanner.cs       # chunk scan → register
+    ReproducePlacement.cs       # spread orchestration
+    SurfacePlacement.cs         # terrestrial placement
+    ReedPlacement.cs            # reed shore/shallow placement
+    WaterPlacement.cs           # water lily placement
+    CrowfootPlacement.cs        # crowfoot spread validation
+    CrowfootColumnPlacer.cs     # crowfoot column builder
+    BlockFluidHelper.cs         # core fluid/substrate primitives
+    ReedColumnHelper.cs         # reed column: site, depth, stacking
+    WaterColumnHelper.cs        # crowfoot column: snap, measure, depth
+    EnvironmentalContext.cs     # env sampling (split: spread/survival)
+    EnvironmentalColumnCache.cs # worldgen rain/forest cache per XZ
+    CellBlockSnapshot.cs        # pre-fetched block layers (struct)
+    SuitabilityEvaluator.cs     # fitness, survival, reproduce checks
+    CellCompetition.cs          # spread vs hold scoring, displacement
+    PlantRequirements.cs        # per-species requirements
+    SoilClassification.cs       # soil kind + fertility mapping
+    NicheSampler.cs             # local moisture + light
+    WildSpeciesNiche.cs         # niche preferences per species
+    WildSpeciesSeason.cs        # seasonal profiles per species
+    SeasonEcology.cs            # season multipliers for spread/stress
+    WildFlowerClimate.cs        # flower climate profiles
+    WildAquaticEcology.cs       # aquatic ecology profiles
+    WildFlowerSpacing.cs        # per-species spacing
+    PlantSpacing.cs             # spacing enforcement
+    SpeciesSpread.cs            # interval/chance calculation
+    FloraContextSampler.cs      # open/edge/forest context
+    FloraSymbiosis.cs           # host-tree dependency + cascade
+    EcologySpreadFitness.cs     # context + niche fitness multipliers
+    WildSpeciesModifiers.cs     # HoldStrength, ContextAffinity
+    EcosystemParticipant.cs     # IEcosystemParticipant impl
+    EcologyHabitat.cs           # habitat enum
+    PlantCodeHelper.cs          # species parsing, block code helpers
+    EcosystemConfig.cs          # config loading + presets
+    PlayerProximity.cs          # active chunk detection
+    GreenhouseHelper.cs         # greenhouse room detection (cached)
+    SpreadPreflight.cs          # cheap-first candidate filter
+    SpreadVacancy.cs            # aquatic vacancy check
+    LandClaimGuard.cs           # land claim respect
   BlockEntity/
-    EcoSystemLife.cs
+    EcoSystemLife.cs            # thin BE: register on load
+tests/
+  WildFarming.Tests.csproj     # xUnit, 46 tests
+  SeasonProfileTests.cs
+  SoilClassificationTests.cs
+  SuitabilityEvaluatorTests.cs
 assets/wildfarming/
   patches/enabledpatches.json
 docs/
@@ -166,17 +190,21 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v2.1`.** Единая конкуренция за клетку (§11); v1.x контент (tallgrass, drygrass, пресеты) — в main.
+**Стадия: `Ecosystem v2.3` (версия `2.5.0`).** Сезонность, ниша, perf audit, unit tests — готово к playtest перед ModDB.
 
 | Компонент | Статус |
 |-----------|--------|
 | Экосистема: цветы, люпин, tallgrass, ferns, berries, trees | ✅ |
-| Водная флора (4 вида) | ✅ код |
+| Водная флора (4 вида) | ✅ playtest (2026-05-24) |
 | Rain/forest + candidate pool + spacing | ✅ |
 | Cell competition (displace, stress, symbiosis, flora context) | ✅ |
-| Legacy в сборке | ⏸ |
+| Ниша: moisture/light, soil succession | ✅ |
+| Сезонность: spring boost, winter kill, fall die-off | ✅ |
+| Perf audit (фазы 1–3) | ✅ |
+| Unit tests (46 xUnit) | ✅ |
+| Legacy в сборке | ⏸ удалён |
 
-- `modinfo.json` — `2.4.1-ecosystem-v2.1`, game `1.21.0`
+- `modinfo.json` — `2.5.0`, game `1.21.0`
 - Конфиг: `wildfarming-ecosystem.json`
 
 ---
@@ -199,17 +227,20 @@ docs/
 
 Кратко:
 
-- **Mod DB** — отложено до баланса и playtest (покос, symbiosis); aquatic ✅ 2026-05-24.
-- **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
-- **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
+- **Mod DB** — следующий шаг после финального playtest.
+- [x] **v1.x** — tallgrass, drygrass-патч, пресеты баланса — ✅ в main.
+- [x] **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
+- [x] **v2.2** — ниша (moisture/light), сукцессия почвы — ✅.
+- [x] **v2.3** — сезонность spread/stress — ✅.
+- [x] **Perf audit** (фазы 1–3) — spatial tick, climate cache, scratch allocs, reflection cache — ✅.
+- [x] **Unit tests** — 46 тестов (season, classification, suitability) — ✅.
+- [x] **Refactor** — `BlockFluidHelper` → `ReedColumnHelper` + `WaterColumnHelper` — ✅.
+- [x] Land claims — `RespectLandClaims` / `LandClaimGuard` — ✅.
 - [ ] `modid` оставить `wildfarming` или переименовать при публикации
-- [ ] Chunk-scan без BE (техдолг; сейчас `EcoSystemLife`)
-- [ ] Perf фаза 3 — только при лагах на большом реестре (§12)
+- [ ] Chunk-scan без BE (техдолг; сейчас `EcoSystemLife` — требует playtest)
 - [ ] Handbook / dominant species — UX, post-ModDB
-- [ ] Сезонность spread/stress (v2.3); зимняя листва на стволах — **отложено** (визуал, отдельно от экосистемы)
-- [x] Land claims — `RespectLandClaims` / `LandClaimGuard`
-- [x] **Perf roadmap фаза 1** — spatial tick, climate cache, split sample (§12)
-- [ ] **v2.2 niche** — moisture/light MVP (§14); backlog: **сукцессия почвы** per species (plant/death)
+- [ ] Залежь — farmland без культуры → медленный N (опционально)
+- [ ] Зимняя листва на стволах — **отложено** (визуал, не экосистема)
 
 ---
 
@@ -404,11 +435,13 @@ ChunkScan         → очередь, лимитирован
 
 ### 12.5. Фазы (кратко)
 
-1. **Быстрые wins:** spatial tick, static climate cache, split sample, stress skip, no greenhouse on spread.
-2. **Средний refactor:** O(1) registry remove, cheap-first candidates, spacing hash.
-3. **Позже:** chunk column top-block cache, меньше аллокаций. Многопоточность — **не планируется**.
+1. **Быстрые wins:** spatial tick, static climate cache, split sample, stress skip, no greenhouse on spread — ✅.
+2. **Средний refactor:** O(1) registry remove, cheap-first candidates, spacing hash — ✅.
+3. **Perf audit:** `CellBlockSnapshot`, scratch `BlockPos`, reflection cache, scratch collections, `HashSet<long>` player chunks, `FloraSymbiosis` FIFO cache, `VerboseLogging` toggle — ✅.
 
-**Первый PR:** spatial tick + static climate cache — ✅ (2026-05-22).
+Многопоточность — **не планируется** (`BlockAccessor` не thread-safe).
+
+Все три фазы завершены (2026-05-25).
 
 ### 12.6. Конфиг-throttle
 

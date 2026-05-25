@@ -19,14 +19,14 @@ namespace WildFarming.Ecosystem
             switch (requirements.Habitat)
             {
                 case EcologyHabitat.ReedNearWater:
-                    return BlockFluidHelper.IsValidReedPlantSite(acc, plantPos, requirements, out _)
+                    return ReedColumnHelper.IsValidReedPlantSite(acc, plantPos, requirements, out _)
                         && !PlantCodeHelper.IsReedBlock(occupant);
 
                 case EcologyHabitat.WaterSurface:
                     return WaterPlacement.IsValidWaterLilySpreadSite(acc, plantPos);
 
                 case EcologyHabitat.UnderwaterColumn:
-                    return BlockFluidHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
+                    return WaterColumnHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
 
                 default:
                     return false;

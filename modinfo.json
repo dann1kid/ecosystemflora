@@ -1,10 +1,10 @@
 {
   "type": "code",
-  "modid": "wildfarming",
-  "name": "Wild Farming",
-  "description" : "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees: climate, soil, spacing, and natural spread.",
-  "authors": ["jakecool19"],
-  "version": "2.4.1-ecosystem-v2.1",
+  "modid": "ecosystemflora",
+  "name": "Ecosystem - Flora",
+  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Seasonal spread, cell competition, niche stress, soil succession — all on vanilla blocks.",
+  "authors": ["-"],
+  "version": "2.5.0",
   "side": "Universal",
   "dependencies": {
     "game": "1.21.0"

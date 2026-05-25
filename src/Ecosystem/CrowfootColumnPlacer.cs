@@ -14,12 +14,12 @@ namespace WildFarming.Ecosystem
             if (!EnsureBlocks(api)) return false;
 
             IBlockAccessor acc = api.World.BlockAccessor;
-            if (!BlockFluidHelper.TrySnapCrowfootColumnBase(acc, basePos, out BlockPos columnBase))
+            if (!WaterColumnHelper.TrySnapCrowfootColumnBase(acc, basePos, out BlockPos columnBase))
             {
                 return false;
             }
 
-            int waterLayers = BlockFluidHelper.CountContiguousWaterLayersUp(acc, columnBase);
+            int waterLayers = WaterColumnHelper.CountContiguousWaterLayersUp(acc, columnBase);
             if (waterLayers < 2) return false;
 
             if (targetHeight < 2) targetHeight = 2;
@@ -41,6 +41,7 @@ namespace WildFarming.Ecosystem
             if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
 
             bool surfaceCap = !BlockFluidHelper.IsWaterAt(acc, pos.UpCopy());
+
             Block cap = surfaceCap && preferFlower && rand.NextDouble() < 0.35 ? topBlock : tipBlock;
 
             acc.SetBlock(cap.BlockId, pos);
