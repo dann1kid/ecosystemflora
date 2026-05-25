@@ -55,13 +55,77 @@ Wild spread, displacement, and stress death are blocked inside **land claims**. 
 
 ### Easy to tune
 
-Choose a balance preset on first launch:
+Edit `ModConfig/ecosystemflora.json` (created on first launch).
 
-- **Natural** — slow, realistic spread
-- **Lush** — faster, greener meadows
-- **Sparse** — minimal, subtle changes
+#### Quick start — balance presets
 
-Or tweak 30+ individual settings in the config file. Toggle seasons, competition, symbiosis, niche stress — each feature can be turned on or off independently.
+Set `"BalancePreset"` to one of:
+
+| Preset | Style | Spread speed | Fitness gate | Spacing |
+|--------|-------|:---:|:---:|:---:|
+| `"natural"` *(default)* | Realistic | medium | 0.50 | 1 block |
+| `"lush"` | Greener, denser | fast | 0.40 | 1 block |
+| `"sparse"` | Minimal, subtle | slow | 0.65 | 2 blocks |
+| `"custom"` | Manual | — | — | — |
+
+Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `ReproduceChance`, `MinFitness`, `DefaultSameSpeciesSpacing`, `DefaultOtherSpeciesSpacing`, `MaxReproduceAttemptsPerTick`. Set `"custom"` to use your own values.
+
+#### Feature toggles (true/false)
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `EcosystemEnabled` | true | Master switch — disable all spread/competition |
+| `UseSeasonalEcology` | true | Spread rates follow spring/summer/fall/winter |
+| `SeasonalStressEnabled` | true | Winter and fall die-off |
+| `UseCellDisplacement` | true | Stronger species displace weaker ones |
+| `EnableStressDeath` | true | Plants in wrong niche die over time |
+| `EnableSymbiosis` | true | Some species boost each other |
+| `UseFloraContext` | true | Forest interior/edge affects spread |
+| `UseNicheContext` | true | Local soil + climate niche scoring |
+| `UseSoilSuccession` | true | Plants gradually change soil quality |
+| `UseFarmlandNutrientBridge` | true | Wild plants enrich tilled farmland N/P/K |
+| `RespectLandClaims` | true | No spread/death inside player claims |
+| `PlantSpacingEnabled` | true | Minimum distance between plants |
+| `HarshWildPlants` | true | Wild plants enforce survival checks |
+| `ApplyWorldgenRainForest` | true | Respect worldgen rain/forest values |
+| `UseCalendarScaledSpread` | true | Scale intervals to DaysPerYear |
+| `UseSpeciesSpreadRates` | true | Per-species spread rates from ecology table |
+
+#### Spread tuning (numbers)
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `ReproduceAttemptsPerYear` | 36 | Spread attempts per game year |
+| `ReproduceChance` | 0.25 | Base chance per attempt |
+| `MinFitness` | 0.50 | Minimum fitness to reproduce |
+| `ReproduceRadius` | 4 | Max horizontal spread distance (blocks) |
+| `ReproduceVerticalSearch` | 5 | Y-axis search range |
+| `MaxFailedSurvivalChecks` | 5 | Failed checks before plant dies |
+| `GrowthHoursMultiplier` | 1.0 | Scale sapling → mature growth time |
+
+#### Competition & niche tuning
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `DisplacementHoldMargin` | 1.25 | Challenger must beat incumbent × this |
+| `NicheStressThreshold` | 0.45 | Niche score below this = stress |
+| `SoilSuccessionStrength` | 1.0 | Speed of soil changes |
+| `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |
+| `FloraOpenInteriorPenalty` | 0.35 | Penalty for open-field species in forest |
+
+#### Performance
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `MaxReproduceAttemptsPerTick` | 48 | Spread checks per server tick |
+| `MaxStressChecksPerTick` | 24 | Stress checks per tick |
+| `MaxChunkColumnsScannedPerTick` | 3 | Chunk registration speed |
+| `MaxRegistrationsPerTick` | 256 | Plant registrations per tick |
+| `OnlyActivateNearPlayers` | false | Limit activity to player radius |
+| `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
+| `VerboseLogging` | false | Detailed server log output |
+
+All settings work together — presets give a good baseline, toggles let you disable features you don't want, and number fields let you fine-tune the balance.
 
 ### Requirements
 
