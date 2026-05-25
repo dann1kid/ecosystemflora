@@ -29,35 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="src\Block\**" />
-    <Compile Remove="src\Block Behavior\**" />
-    <Compile Remove="src\BlockEntity\BlockEntity*.cs" />
-    <Compile Remove="src\BlockEntity\BESeaweed.cs" />
-    <Compile Remove="src\BlockEntity\BEVines.cs" />
-    <Compile Remove="src\Item\ItemMushroomSpawn.cs" />
-    <Compile Remove="src\TreeGen\**" />
-    <Compile Remove="src\Util\**" />
-    <Compile Remove="src\BotanyConfig.cs" />
-    <Compile Remove="src\BlockEntity\WildPlant.cs" />
-    <Compile Remove="src\Item\WildSeed.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="assets\**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Legacy patches/blocks reference classes excluded from the MVP build -->
-    <None Remove="assets\wildfarming\patches\saplings.json" />
-    <None Remove="assets\wildfarming\patches\logsection.json" />
-    <None Remove="assets\wildfarming\patches\treedependents.json" />
-    <None Remove="assets\wildfarming\patches\vines.json" />
-    <None Remove="assets\wildfarming\patches\ferntree.json" />
-    <None Remove="assets\wildfarming\patches\log.json" />
-    <None Remove="assets\wildfarming\patches\saguarocactus.json" />
-    <None Remove="assets\wildfarming\blocktypes\wood\**\*" />
-    <None Remove="assets\wildfarming\blocktypes\mushroomsubstrate.json" />
-    <None Remove="assets\wildfarming\blocktypes\plant\wildplant*.json" />
-    <None Remove="assets\wildfarming\itemtypes\wildseeds*.json" />
-    <None Remove="assets\wildfarming\recipes\grid\flowerseeds.json" />
   </ItemGroup>
 
   <!-- Copy built mod into the game Mods folder for F5 / attach debugging -->
