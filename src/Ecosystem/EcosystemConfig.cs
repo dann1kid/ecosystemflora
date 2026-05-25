@@ -160,6 +160,20 @@ namespace WildFarming.Ecosystem
         /// <summary>Winter die-off and fall die-off via stress checks (terrestrial).</summary>
         public bool SeasonalStressEnabled { get; set; } = true;
 
+        // --- Trampling (v2.6) ---
+
+        /// <summary>Plants near frequently-visited positions accumulate trampling stress and die.</summary>
+        public bool EnableTrampling { get; set; } = true;
+
+        /// <summary>Horizontal distance (blocks) at which a player causes trampling exposure.</summary>
+        public int TramplingRadius { get; set; } = 1;
+
+        /// <summary>Cumulative near-player stress ticks before trampling counts as a failed survival check.</summary>
+        public int TramplingStressThreshold { get; set; } = 8;
+
+        /// <summary>Apply soil degradation when a plant is trampled to death.</summary>
+        public bool TramplingSoilDegradation { get; set; } = true;
+
         // --- Flower drygrass drops (v2.5) ---
 
         /// <summary>Append drygrass drops (knife/scythe) to flowers without removing original drops.</summary>

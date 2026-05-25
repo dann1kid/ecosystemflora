@@ -162,9 +162,22 @@ namespace WildFarming.Ecosystem
             return false;
         }
 
+        static readonly SoilImpact TrampledImpact = new SoilImpact
+        {
+            MoistureDelta = -8f,
+            FertilityTierDelta = -0.25f,
+        };
+
         public static bool TryGetImpact(string species, SoilSuccessionEvent evt, out SoilImpact impact)
         {
             impact = default;
+
+            if (evt == SoilSuccessionEvent.Trampled)
+            {
+                impact = TrampledImpact;
+                return true;
+            }
+
             if (!TryGetRole(species, out PlantSoilRole role)) return false;
             if (!ByRole.TryGetValue(role, out RoleProfile profile)) return false;
 

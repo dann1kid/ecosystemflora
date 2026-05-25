@@ -17,6 +17,9 @@ namespace WildFarming.Ecosystem
 
         public double NextStressCheckAt { get; set; }
 
+        /// <summary>Cumulative ticks spent near a player; resets when no player is close.</summary>
+        public int TramplingExposure { get; set; }
+
         internal int EntriesIndex { get; set; } = -1;
 
         internal int ChunkListIndex { get; set; } = -1;

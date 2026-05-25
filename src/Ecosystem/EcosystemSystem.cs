@@ -198,7 +198,8 @@ namespace WildFarming.Ecosystem
                 requirements, Sample(plantPos), EcosystemConfig.Loaded.HarshWildPlants);
         }
 
-        public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason)
+        public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason,
+            SoilSuccessionEvent soilEvent = SoilSuccessionEvent.Death)
         {
             if (api == null || pos == null) return;
             if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return;
@@ -215,7 +216,7 @@ namespace WildFarming.Ecosystem
             string species = PlantCodeHelper.GetEcologySpecies(block.Code);
             if (!string.IsNullOrEmpty(species))
             {
-                SoilSuccessionApplier.Apply(api, pos, species, SoilSuccessionEvent.Death);
+                SoilSuccessionApplier.Apply(api, pos, species, soilEvent);
             }
 
             registry.Remove(pos);
@@ -435,13 +436,20 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
+        readonly PlayerProximity.Snapshot tramplingSnapshot = new PlayerProximity.Snapshot();
+
         void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks)
         {
             if (maxChecks <= 0 || api == null || !EcosystemConfig.Loaded.EnableStressDeath) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            bool harsh = cfg.HarshWildPlants;
             IBlockAccessor acc = api.World.BlockAccessor;
+            trampledScratch.Clear();
+
+            bool trampling = cfg.EnableTrampling;
+            int tramplingRadius = cfg.TramplingRadius;
+            if (trampling) tramplingSnapshot.Refresh(api);
 
             registry.ProcessStress(
                 maxChecks,
@@ -477,8 +485,22 @@ namespace WildFarming.Ecosystem
                     {
                         entry.FailedSurvivalChecks++;
                     }
+                    else if (trampling
+                        && tramplingSnapshot.IsNear(entry.Origin, tramplingRadius))
+                    {
+                        entry.TramplingExposure++;
+                        if (entry.TramplingExposure >= cfg.TramplingStressThreshold)
+                        {
+                            entry.FailedSurvivalChecks++;
+                        }
+                        entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                        if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks) return false;
+                        trampledScratch.Add(entry.Origin);
+                        return true;
+                    }
                     else
                     {
+                        if (entry.TramplingExposure > 0) entry.TramplingExposure--;
                         entry.FailedSurvivalChecks = 0;
                         entry.NextStressCheckAt = now + cfg.StressRecheckHours;
                         return false;
@@ -492,7 +514,15 @@ namespace WildFarming.Ecosystem
 
                     return true;
                 },
-                pos => RemoveEcologyPlant(pos, cascadeSymbiosis: true, reason: "stress"),
+                pos =>
+                {
+                    bool trampled = trampledScratch.Remove(pos);
+                    RemoveEcologyPlant(pos, cascadeSymbiosis: true,
+                        reason: trampled ? "trampled" : "stress",
+                        soilEvent: trampled && cfg.TramplingSoilDegradation
+                            ? SoilSuccessionEvent.Trampled
+                            : SoilSuccessionEvent.Death);
+                },
                 activeChunks);
         }
 

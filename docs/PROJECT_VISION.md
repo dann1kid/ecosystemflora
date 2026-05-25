@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-25 (стадия: **Ecosystem v2.3**, версия `2.5.0`).
+Последнее обновление: 2026-05-25 (стадия: **Ecosystem v2.3**, версия `2.5.4`).
 
 ---
 
@@ -511,6 +511,91 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 - Кеш per XZ/Y как `FloraContextSampler` / `EnvironmentalColumnCache`; invalidation при SetBlock воды/дерева/почвы
 - Не дублировать worldgen rain/forest — влажность **локальная** (блок + соседи)
 - Чеклист: [`PROGRESS.md` → v2.2](PROGRESS.md#v22--ниша-почва-влажность-освещение)
+
+---
+
+## 15. Ягодные кусты 1.22 — trait inheritance (v3.0)
+
+VS 1.22 переработал ягодные кусты: новые блоки, block entity с нутриентами, возрастом и **наследственными чертами** (traits). Traits хранятся в `TreeAttributes` BE и передаются через черенки.
+
+### 15.1. Текущее поведение
+
+`ReproducePlacement.PlaceSpreadBlock` ставит блок через `new ItemStack(spreadBlock)` → `SetBlock`. Это не копирует данные BE родителя → дочерний куст **не наследует traits**, нутриенты не инициализируются.
+
+### 15.2. Целевое поведение
+
+При spread ягодного куста:
+
+1. Прочитать `TreeAttributes` BE родителя (traits)
+2. `SetBlock` для дочернего блока
+3. Скопировать traits в BE дочернего куста
+4. Инициализировать нутриенты/возраст как при посадке черенка
+
+Опционально: мутация — шанс потерять/приобрести trait при spread (природная вариативность vs клонирование).
+
+### 15.3. Совместимость
+
+- VS 1.21: ягодные кусты — `fruitingbush-wild-*` без traits; текущее поведение сохраняется
+- VS 1.22+: новые блоки + trait system; конфиг `CloneBerryTraits` (default true)
+
+---
+
+## 16. Attribute-based participant contract (v3.1)
+
+### 16.1. Проблема
+
+Все участники экосистемы захардкожены: `PlantCodeHelper` парсит коды `game:flower-*`, `game:tallgrass-*` и т.д.; gate `domain == "game"` отсекает сторонние моды. Добавление нового вида требует правки C#-кода.
+
+### 16.2. Решение: контракт через JSON-атрибуты
+
+Блок объявляет участие в экосистеме через атрибуты на blocktype:
+
+```json
+{
+  "attributes": {
+    "ecologyParticipant": true,
+    "ecologySpecies": "bluegrass",
+    "ecologyHabitat": "Terrestrial",
+    "ecologySpreadBlock": "game:wildgrass-bluegrass-0-free",
+    "ecologyMatureStages": ["3", "4"],
+    "ecologySpreadRate": 0.6,
+    "minTemp": 0, "maxTemp": 30,
+    "minRain": 0.3, "maxRain": 0.8,
+    "ecologyMinForest": 0, "ecologyMaxForest": 0.5,
+    "ecologySameSpeciesSpacing": 1,
+    "ecologyOtherSpeciesSpacing": 1,
+    "ecologyContextAffinity": "Open",
+    "ecologyHoldStrength": 0.8
+  }
+}
+```
+
+### 16.3. Точки интеграции
+
+| Компонент | Изменение |
+|-----------|-----------|
+| `EcosystemParticipant.TryFromBlock` | Если `ecologyParticipant == true` → строить участника из атрибутов; иначе → текущий хардкод |
+| `PlantCodeHelper.IsEcologyPlant` | Убрать gate `domain == "game"` для блоков с `ecologyParticipant` |
+| `PlantCodeHelper.GetEcologySpecies` | Атрибут `ecologySpecies` как приоритет перед парсингом кода |
+| `PlantRequirements.FromBlock` | Уже читает `minTemp`/`maxTemp`/`ecologySpreadRate` из атрибутов — подхватит |
+| `ChunkFlowerScanner` | `ReproduceEnabled` → `TryFromBlock` → автоматически |
+
+### 16.4. Архитектура контент-модов
+
+```
+[ecosystemflora]  — ядро: spread, stress, displacement, chunk scan
+      ↑ парсит ecologyParticipant
+[ecosystemgrass]  — ресурсный мод (JSON + текстуры, без C#):
+                    blocktypes в домене game:,
+                    атрибуты ecologyParticipant,
+                    шейпы/текстуры трав
+```
+
+Контент-мод не содержит C#-кода. Любой мод-автор может добавить виды, следуя контракту.
+
+### 16.5. Обратная совместимость
+
+Текущие хардкоженные виды (цветы, tallgrass, ferns, berries, деревья, aquatic) продолжают работать через старый путь. Attribute-based путь — приоритетный, хардкод — fallback.
 
 ---
 

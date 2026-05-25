@@ -30,6 +30,55 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
+        /// Snapshot of player positions for batch proximity checks within a single tick.
+        /// Avoids repeated <c>AllOnlinePlayers</c> iteration and <c>AsBlockPos</c> allocations.
+        /// </summary>
+        internal sealed class Snapshot
+        {
+            int[] xs;
+            int[] zs;
+            int count;
+
+            public void Refresh(ICoreAPI api)
+            {
+                ICoreServerAPI sapi = api as ICoreServerAPI;
+                if (sapi == null) { count = 0; return; }
+
+                var players = sapi.World.AllOnlinePlayers;
+                int n = players.Length;
+
+                if (xs == null || xs.Length < n)
+                {
+                    xs = new int[n];
+                    zs = new int[n];
+                }
+
+                count = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    IServerPlayer p = players[i] as IServerPlayer;
+                    if (p?.Entity?.Pos == null) continue;
+                    xs[count] = (int)p.Entity.Pos.X;
+                    zs[count] = (int)p.Entity.Pos.Z;
+                    count++;
+                }
+            }
+
+            public bool IsNear(BlockPos pos, int radiusBlocks)
+            {
+                if (count == 0) return false;
+                long rSq = (long)radiusBlocks * radiusBlocks;
+                for (int i = 0; i < count; i++)
+                {
+                    long dx = pos.X - xs[i];
+                    long dz = pos.Z - zs[i];
+                    if (dx * dx + dz * dz <= rSq) return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Build a set of chunk coord keys that fall within radiusBlocks of any online player.
         /// Callers test membership via <see cref="IsActiveChunk"/>.
         /// </summary>
