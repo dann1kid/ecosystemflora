@@ -52,5 +52,9 @@
   "RespectLandClaims": true,
   "UseSeasonalEcology": true,
   "SeasonalStressEnabled": true,
+  "EnableTrampling": true,
+  "TramplingRadius": 1,
+  "TramplingStressThreshold": 8,
+  "TramplingSoilDegradation": true,
   "EnableFlowerDrygrass": true
 }
