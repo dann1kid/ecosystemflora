@@ -49,6 +49,13 @@ namespace WildFarming.Ecosystem
 
         public bool ReproduceDebug { get; set; } = false;
 
+        /// <summary>
+        /// Master logging switch. When false, suppresses all Notification/Warning
+        /// log lines except startup and errors. VS string formatting + I/O is
+        /// expensive even for filtered log levels.
+        /// </summary>
+        public bool VerboseLogging { get; set; } = false;
+
         /// <summary>Max reproduction attempts per server tick (spreads CPU load).</summary>
         public int MaxReproduceAttemptsPerTick { get; set; } = 48;
 

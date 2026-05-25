@@ -72,7 +72,8 @@ namespace WildFarming.Ecosystem
                 string species = EcologyFernSpecies.All[i];
                 if (!BySpecies.ContainsKey(species))
                 {
-                    api.Logger.Warning("[wildfarming] Fern species missing ecology data: {0}", species);
+                    if (EcosystemConfig.Loaded.VerboseLogging)
+                        api.Logger.Warning("[wildfarming] Fern species missing ecology data: {0}", species);
                 }
             }
         }

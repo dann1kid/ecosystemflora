@@ -35,14 +35,14 @@ namespace WildFarming
 
                 EcosystemConfig cfg = EcosystemConfig.Loaded;
                 api.Logger.Notification(
-                    "[wildfarming] Ecosystem v2.1 — enabled={0}, displacement={1}, stress={2}, symbiosis={3}, landClaims={4}, seasonal={5}, debug={6}",
+                    "[wildfarming] Ecosystem v2.1 — enabled={0}, displacement={1}, stress={2}, symbiosis={3}, landClaims={4}, seasonal={5}, verbose={6}",
                     cfg.EcosystemEnabled,
                     cfg.UseCellDisplacement,
                     cfg.EnableStressDeath,
                     cfg.EnableSymbiosis,
                     cfg.RespectLandClaims,
                     cfg.UseSeasonalEcology,
-                    cfg.ReproduceDebug);
+                    cfg.VerboseLogging);
             }
         }
 

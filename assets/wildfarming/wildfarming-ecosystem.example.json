@@ -16,6 +16,7 @@
   "MaxFailedSurvivalChecks": 5,
   "GrowthHoursMultiplier": 1,
   "ReproduceDebug": false,
+  "VerboseLogging": false,
   "MaxReproduceAttemptsPerTick": 48,
   "MaxChunkColumnsScannedPerTick": 3,
   "MaxRegistrationsPerTick": 256,

@@ -225,7 +225,7 @@ namespace WildFarming.Ecosystem
             FloraContext?.InvalidateAround(pos, 2);
             InvalidateEnvironmentAround(pos);
 
-            if (EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
+            if (EcosystemConfig.Loaded.VerboseLogging && EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
             {
                 api.Logger.Notification(
                     "[wildfarming] Removed {0} at {1} ({2})",
@@ -304,7 +304,7 @@ namespace WildFarming.Ecosystem
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
                 SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
 
-                if (cfg.ReproduceDebug)
+                if (cfg.VerboseLogging && cfg.ReproduceDebug)
                 {
                     api.Logger.Notification(
                         "[wildfarming] Registered {0} at {1} spreadRate={2:0.##} interval={3:0.#}h chance={4:0.##} (registry {5})",
@@ -552,7 +552,8 @@ namespace WildFarming.Ecosystem
             Block spreadBlock = api.World.GetBlock(entry.JuvenileBlockCode);
             if (spreadBlock == null)
             {
-                api.Logger.Warning("[wildfarming] Spread block not found: {0}", entry.JuvenileBlockCode);
+                if (EcosystemConfig.Loaded.VerboseLogging)
+                    api.Logger.Warning("[wildfarming] Spread block not found: {0}", entry.JuvenileBlockCode);
                 return;
             }
 
@@ -567,7 +568,7 @@ namespace WildFarming.Ecosystem
                 cfg.ReproduceVerticalSearch,
                 maxSpawns,
                 api.World.Rand,
-                cfg.ReproduceDebug,
+                cfg.VerboseLogging && cfg.ReproduceDebug,
                 out string failureReason,
                 onPlaced: (pos, requirements, displaced) =>
                 {
@@ -586,7 +587,7 @@ namespace WildFarming.Ecosystem
                     InvalidateEnvironmentAround(pos);
                 });
 
-            if (cfg.ReproduceDebug && spawned == 0 && failureReason != null)
+            if (cfg.VerboseLogging && cfg.ReproduceDebug && spawned == 0 && failureReason != null)
             {
                 api.Logger.Notification("[wildfarming] No spread near {0}: {1}", entry.Origin, failureReason);
             }

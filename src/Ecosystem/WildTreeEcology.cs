@@ -84,7 +84,8 @@ namespace WildFarming.Ecosystem
                 string wood = AllWoods[i];
                 if (!ByWood.ContainsKey(wood))
                 {
-                    api.Logger.Warning("[wildfarming] Tree wood missing ecology data: {0}", wood);
+                    if (EcosystemConfig.Loaded.VerboseLogging)
+                        api.Logger.Warning("[wildfarming] Tree wood missing ecology data: {0}", wood);
                 }
             }
         }

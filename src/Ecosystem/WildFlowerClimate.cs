@@ -87,7 +87,8 @@ namespace WildFarming.Ecosystem
                 string species = EcologyFlowerSpecies.All[i];
                 if (!BySpecies.ContainsKey(species))
                 {
-                    api.Logger.Warning("[wildfarming] Flower species missing ecology data: {0}", species);
+                    if (EcosystemConfig.Loaded.VerboseLogging)
+                        api.Logger.Warning("[wildfarming] Flower species missing ecology data: {0}", species);
                 }
             }
         }

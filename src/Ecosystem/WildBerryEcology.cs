@@ -101,7 +101,8 @@ namespace WildFarming.Ecosystem
                 string type = AllTypes[i];
                 if (!ByType.ContainsKey(type))
                 {
-                    api.Logger.Warning("[wildfarming] Berry type missing ecology data: {0}", type);
+                    if (EcosystemConfig.Loaded.VerboseLogging)
+                        api.Logger.Warning("[wildfarming] Berry type missing ecology data: {0}", type);
                 }
             }
         }
