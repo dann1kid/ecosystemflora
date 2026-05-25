@@ -144,5 +144,13 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Do not spread, displace, stress-remove, or change soil inside land claims.</summary>
         public bool RespectLandClaims { get; set; } = true;
+
+        // --- Seasonal ecology (v2.3) ---
+
+        /// <summary>Spread chance and interval follow <see cref="WildSpeciesSeason"/> by game season.</summary>
+        public bool UseSeasonalEcology { get; set; } = true;
+
+        /// <summary>Winter die-off and fall die-off via stress checks (terrestrial).</summary>
+        public bool SeasonalStressEnabled { get; set; } = true;
     }
 }

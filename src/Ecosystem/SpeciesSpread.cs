@@ -1,20 +1,33 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
     /// <summary>Per-species spread timing from config baseline, SpreadRate, and world calendar.</summary>
     public static class SpeciesSpread
     {
-        public static double EffectiveIntervalHours(ICoreAPI api, EcosystemConfig cfg, PlantRequirements requirements)
+        public static double EffectiveIntervalHours(ICoreAPI api, BlockPos pos, EcosystemConfig cfg, PlantRequirements requirements)
         {
             if (cfg == null || requirements == null) return 24;
 
+            double interval;
             if (cfg.UseCalendarScaledSpread && api?.World?.Calendar != null)
             {
-                return EffectiveIntervalHoursCalendar(api.World.Calendar, cfg, requirements);
+                interval = EffectiveIntervalHoursCalendar(api.World.Calendar, cfg, requirements);
+            }
+            else
+            {
+                interval = EffectiveIntervalHoursLegacy(cfg, requirements);
             }
 
-            return EffectiveIntervalHoursLegacy(cfg, requirements);
+            if (cfg.UseSeasonalEcology && api != null && pos != null)
+            {
+                float mult = SeasonEcology.SpreadActivityMultiplier(api, pos, requirements);
+                if (mult > 0.05f) interval /= mult;
+                else interval *= 20;
+            }
+
+            return interval;
         }
 
         static double EffectiveIntervalHoursCalendar(IGameCalendar cal, EcosystemConfig cfg, PlantRequirements requirements)
@@ -58,15 +71,26 @@ namespace WildFarming.Ecosystem
             return interval;
         }
 
-        public static float EffectiveChance(EcosystemConfig cfg, PlantRequirements requirements)
+        public static float EffectiveChance(ICoreAPI api, BlockPos pos, EcosystemConfig cfg, PlantRequirements requirements)
         {
             if (cfg == null || requirements == null) return 0.25f;
+
+            float chance;
             if (!cfg.UseSpeciesSpreadRates || requirements.SpreadRate <= 0f)
             {
-                return cfg.ReproduceChance;
+                chance = cfg.ReproduceChance;
+            }
+            else
+            {
+                chance = cfg.ReproduceChance * requirements.SpreadRate;
             }
 
-            return System.Math.Min(1f, cfg.ReproduceChance * requirements.SpreadRate);
+            if (api != null && pos != null)
+            {
+                chance *= SeasonEcology.SpreadActivityMultiplier(api, pos, requirements);
+            }
+
+            return System.Math.Min(1f, chance);
         }
 
         static float SpreadMultiplier(EcosystemConfig cfg, PlantRequirements requirements)

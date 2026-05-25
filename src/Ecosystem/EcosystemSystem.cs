@@ -279,7 +279,7 @@ namespace WildFarming.Ecosystem
                 double nextAttempt = now;
                 if (cfg.StaggerReproduceAttempts)
                 {
-                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(api, cfg, requirements);
+                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(api, origin, cfg, requirements);
                     nextAttempt = now + api.World.Rand.NextDouble() * staggerSpan;
                 }
 
@@ -311,8 +311,8 @@ namespace WildFarming.Ecosystem
                         spreadBlockCode,
                         origin,
                         requirements.SpreadRate,
-                        SpeciesSpread.EffectiveIntervalHours(api, cfg, requirements),
-                        SpeciesSpread.EffectiveChance(cfg, requirements),
+                        SpeciesSpread.EffectiveIntervalHours(api, origin, cfg, requirements),
+                        SpeciesSpread.EffectiveChance(api, origin, cfg, requirements),
                         registry.Count);
                 }
 
@@ -467,6 +467,10 @@ namespace WildFarming.Ecosystem
                     {
                         entry.FailedSurvivalChecks++;
                     }
+                    else if (SeasonEcology.RollSeasonalStressFailure(api, entry.Origin, req))
+                    {
+                        entry.FailedSurvivalChecks++;
+                    }
                     else
                     {
                         entry.FailedSurvivalChecks = 0;
@@ -514,7 +518,7 @@ namespace WildFarming.Ecosystem
             registry.ProcessDue(
                 now,
                 cfg.MaxReproduceAttemptsPerTick,
-                entry => SpeciesSpread.EffectiveIntervalHours(api, cfg, entry.Requirements),
+                entry => SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
                 entry =>
                 {
                     Block block = acc.GetBlock(entry.Origin);
@@ -533,7 +537,10 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
 
-            float chance = SpeciesSpread.EffectiveChance(cfg, entry.Requirements);
+            BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
+                api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
+
+            float chance = SpeciesSpread.EffectiveChance(api, spreadOrigin, cfg, entry.Requirements);
             if (!skipChanceRoll && api.World.Rand.NextDouble() > chance) return;
 
             Block spreadBlock = api.World.GetBlock(entry.JuvenileBlockCode);
@@ -542,9 +549,6 @@ namespace WildFarming.Ecosystem
                 api.Logger.Warning("[wildfarming] Spread block not found: {0}", entry.JuvenileBlockCode);
                 return;
             }
-
-            BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
-                api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
 
             int spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
                 api,

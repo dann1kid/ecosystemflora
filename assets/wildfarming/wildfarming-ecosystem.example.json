@@ -48,5 +48,7 @@
   "SoilSuccessionStrength": 1,
   "UseFarmlandNutrientBridge": true,
   "FarmlandNutrientBridgeStrength": 1,
-  "RespectLandClaims": true
+  "RespectLandClaims": true,
+  "UseSeasonalEcology": true,
+  "SeasonalStressEnabled": true
 }
