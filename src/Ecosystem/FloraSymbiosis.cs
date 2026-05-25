@@ -69,17 +69,22 @@ namespace WildFarming.Ecosystem
             long key = PosKey(symbiontPos);
             if (hostCache.TryGetValue(key, out BlockPos cached))
             {
-                if (ReferenceEquals(cached, NoHost)) return false;
-                Block hostBlock = acc.GetBlock(cached);
-                if (hostBlock != null && hostBlock.Id != 0 && MatchesHostRule(rule, hostBlock))
+                if (!ReferenceEquals(cached, NoHost))
                 {
-                    return true;
+                    Block hostBlock = acc.GetBlock(cached);
+                    if (hostBlock != null && hostBlock.Id != 0 && MatchesHostRule(rule, hostBlock))
+                    {
+                        return true;
+                    }
                 }
                 hostCache.Remove(key);
             }
 
             BlockPos found = FindHost(acc, symbiontPos, rule, out _, out BlockPos hostPos);
-            StoreHostCache(key, found != null ? hostPos : NoHost);
+            if (found != null)
+            {
+                StoreHostCache(key, hostPos);
+            }
             return found != null;
         }
 
@@ -255,12 +260,13 @@ namespace WildFarming.Ecosystem
         {
             if (pos == null || hostCache.Count == 0) return;
 
+            int threshold = radius + 1;
             var toRemove = new List<long>();
             foreach (var kvp in hostCache)
             {
                 BlockPos cached = kvp.Value;
                 if (ReferenceEquals(cached, NoHost)) continue;
-                if (HorizontalChebyshev(pos, cached) <= radius + 1)
+                if (HorizontalChebyshev(pos, cached) <= threshold)
                 {
                     toRemove.Add(kvp.Key);
                 }

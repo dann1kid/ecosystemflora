@@ -107,6 +107,9 @@ namespace WildFarming.Ecosystem
             scratchSeen.Clear();
             IBlockAccessor acc = api.World.BlockAccessor;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
+            bool diag = cfg.VerboseLogging && cfg.ReproduceDebug;
+            int dNoSurface = 0, dSunlight = 0, dDupe = 0, dClaim = 0;
+            int dPreflight = 0, dOccupied = 0, dFitness = 0, dSpacing = 0, dDisplace = 0;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
@@ -133,21 +136,23 @@ namespace WildFarming.Ecosystem
                             acc, origin, dx, dz, verticalSearch, out plantPos, out _);
                     }
 
-                    if (!foundPos) continue;
+                    if (!foundPos) { dNoSurface++; continue; }
 
                     if (requirements.MinSunlight > 0
                         && !TreePlacement.HasEnoughSunlight(acc, plantPos, requirements.MinSunlight))
                     {
+                        dSunlight++;
                         continue;
                     }
 
-                    if (!scratchSeen.Add(plantPos)) continue;
+                    if (!scratchSeen.Add(plantPos)) { dDupe++; continue; }
 
-                    if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) continue;
+                    if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) { dClaim++; continue; }
 
                     CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, plantPos);
                     if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, in snap, out bool isEmpty))
                     {
+                        dPreflight++;
                         continue;
                     }
 
@@ -163,8 +168,8 @@ namespace WildFarming.Ecosystem
                             api, plantPos, in snap, requirements, cache);
                         fitness = CellCompetition.SpreadScoreFromContext(
                             api, requirements, plantPos, harshClimate, ctx);
-                        if (fitness < minFitness) continue;
-                        if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
+                        if (fitness < minFitness) { dFitness++; continue; }
+                        if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) { dSpacing++; continue; }
                     }
                     else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
                     {
@@ -172,20 +177,32 @@ namespace WildFarming.Ecosystem
                             api, requirements, snap.Space, plantPos, harshClimate, in snap,
                             out float challengerScore, out float incumbentScore))
                         {
+                            dDisplace++;
                             continue;
                         }
 
                         fitness = challengerScore;
                         displacing = true;
-                        if (fitness < minFitness) continue;
+                        if (fitness < minFitness) { dFitness++; continue; }
                     }
                     else
                     {
+                        dOccupied++;
                         continue;
                     }
 
                     scratchCandidates.Add(new SpreadCandidate(plantPos.Copy(), fitness, displacing));
                 }
+            }
+
+            if (diag && scratchCandidates.Count == 0)
+            {
+                api.Logger.Notification(
+                    "[ecosystemflora] spread reject {0} at {1}: noSurf={2} sun={3} dup={4} claim={5} preflight={6} occup={7} fit={8} space={9} displ={10}",
+                    requirements.Species ?? "?",
+                    origin,
+                    dNoSurface, dSunlight, dDupe, dClaim,
+                    dPreflight, dOccupied, dFitness, dSpacing, dDisplace);
             }
 
             var result = new List<SpreadCandidate>(scratchCandidates);
