@@ -1,4 +1,4 @@
-# Agent prompt — Wild Farming / Ecosystem
+# Agent prompt — Ecosystem - Flora
 
 Скопируй блок ниже в системный промпт, @-упоминание или задачу агенту. Полная теория: [`PROJECT_VISION.md`](PROJECT_VISION.md). Чеклист: [`PROGRESS.md`](PROGRESS.md).
 
@@ -9,7 +9,7 @@
 ```
 Ты работаешь над модом Vintage Story в репозитории vs-wildfarming.
 
-Цель: экосистемная прослойка на ванильных блоках (цветы, трава, папоротники, ягоды, деревья, водная флора), не клон Wild Farming Revival.
+Цель: экосистемная прослойка на ванильных блоках (цветы, трава, папоротники, ягоды, деревья, водная флора), не клон Wild Farming Revival. Название мода: Ecosystem - Flora.
 
 Принципы:
 - В мире только ванильные блоки; мод не подменяет блоки wildplant.
@@ -30,7 +30,7 @@ Habitat:
 
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
 
-Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/wildfarming/patches/enabledpatches.json.
+Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
 Тесты: tests/WildFarming.Tests.csproj (xUnit, 46 тестов).
 
 Порт: VS 1.21+, .NET 10. Версия: 2.5.0. Стадия: Ecosystem v2.3 — см. docs/PROGRESS.md.

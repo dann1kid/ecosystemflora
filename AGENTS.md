@@ -6,7 +6,7 @@ Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
-- what to reuse from legacy Wild Farming vs what to ignore;
+- what to reuse from the original Wild Farming idea vs what to ignore;
 - current repo stage: **Ecosystem v2.3** — see `docs/PROGRESS.md`;
 - agent rules and constraints.
 

@@ -1,6 +1,6 @@
-# Wild Farming / Ecosystem Mod — видение проекта
+# Ecosystem - Flora — видение проекта
 
-Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **отношение к оригинальному Wild Farming и Revival**, **текущая стадия репозитория**.
+Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
 Последнее обновление: 2026-05-25 (стадия: **Ecosystem v2.3**, версия `2.5.0`).
 
@@ -8,14 +8,14 @@
 
 ## 1. Зачем этот проект
 
-Цель — не клон [Wild Farming - Revival](https://mods.vintagestory.at/wildfarmingrevival), а **узкая экосистемная прослойка** для Vintage Story:
+Цель — **узкая экосистемная прослойка** для Vintage Story (не клон [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival)):
 
 - объекты **включены в мир** (климат, почва, соседи), а не живут как изолированные мини-игры;
 - **живой** объект обязан **размножаться**; без размножения это декор, не член экосистемы;
 - взаимодействие через **интерфейсы (capabilities / interests)** — целевая модель;
 - размножение **только на пригодных клетках** → читаемая «история» на ландшафте без отдельного worldgen.
 
-Использовать наработки JakeCool19 / Revival **как идеи**, не переносить весь feature set.
+Оригинальный Wild Farming (JakeCool19 v1.2.0) — только **вдохновение**; код полностью переписан, оригинал не в сборке.
 
 ---
 
@@ -141,7 +141,7 @@ tests/
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
-assets/wildfarming/
+assets/ecosystemflora/
   patches/enabledpatches.json
 docs/
 ```
@@ -184,7 +184,7 @@ docs/
 ### 6.2. Revival
 
 - Референс баланса и UX; **не** merge и не co-load.
-- Наш modid остаётся `wildfarming`, другая архитектура.
+- Наш modid: `ecosystemflora`, другая архитектура.
 
 ---
 
@@ -204,8 +204,8 @@ docs/
 | Unit tests (46 xUnit) | ✅ |
 | Legacy в сборке | ⏸ удалён |
 
-- `modinfo.json` — `2.5.0`, game `1.21.0`
-- Конфиг: `wildfarming-ecosystem.json`
+- `modinfo.json` — `2.5.0`, modid `ecosystemflora`, game `1.21.0`
+- Конфиг: `ecosystemflora.json`
 
 ---
 
@@ -236,7 +236,7 @@ docs/
 - [x] **Unit tests** — 46 тестов (season, classification, suitability) — ✅.
 - [x] **Refactor** — `BlockFluidHelper` → `ReedColumnHelper` + `WaterColumnHelper` — ✅.
 - [x] Land claims — `RespectLandClaims` / `LandClaimGuard` — ✅.
-- [ ] `modid` оставить `wildfarming` или переименовать при публикации
+- [x] `modid` → `ecosystemflora`
 - [ ] Chunk-scan без BE (техдолг; сейчас `EcoSystemLife` — требует playtest)
 - [ ] Handbook / dominant species — UX, post-ModDB
 - [ ] Залежь — farmland без культуры → медленный N (опционально)

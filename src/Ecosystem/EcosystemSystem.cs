@@ -38,7 +38,7 @@ namespace WildFarming.Ecosystem
 
             try
             {
-                EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("wildfarming-ecosystem.json");
+                EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("ecosystemflora.json");
                 if (fromDisk != null)
                 {
                     EcosystemConfig.Loaded = fromDisk;
@@ -55,7 +55,7 @@ namespace WildFarming.Ecosystem
                         EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
                     }
 
-                    api.StoreModConfig(cfg, "wildfarming-ecosystem.json");
+                    api.StoreModConfig(cfg, "ecosystemflora.json");
                 }
             }
             catch
@@ -66,7 +66,7 @@ namespace WildFarming.Ecosystem
                     EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
                 }
 
-                api.StoreModConfig(cfg, "wildfarming-ecosystem.json");
+                api.StoreModConfig(cfg, "ecosystemflora.json");
             }
         }
 
@@ -128,7 +128,7 @@ namespace WildFarming.Ecosystem
             }
 
             api.Logger.Notification(
-                "[wildfarming] Calendar: {0} days/year, {1} h/day; spread base {2} attempts/year (calendar-scaled={3})",
+                "[ecosystemflora] Calendar: {0} days/year, {1} h/day; spread base {2} attempts/year (calendar-scaled={3})",
                 cal.DaysPerYear,
                 cal.HoursPerDay,
                 attemptsPerYear,
@@ -228,7 +228,7 @@ namespace WildFarming.Ecosystem
             if (EcosystemConfig.Loaded.VerboseLogging && EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
             {
                 api.Logger.Notification(
-                    "[wildfarming] Removed {0} at {1} ({2})",
+                    "[ecosystemflora] Removed {0} at {1} ({2})",
                     PlantCodeHelper.GetEcologySpecies(block.Code) ?? block.Code?.Path,
                     pos,
                     reason);
@@ -307,7 +307,7 @@ namespace WildFarming.Ecosystem
                 if (cfg.VerboseLogging && cfg.ReproduceDebug)
                 {
                     api.Logger.Notification(
-                        "[wildfarming] Registered {0} at {1} spreadRate={2:0.##} interval={3:0.#}h chance={4:0.##} (registry {5})",
+                        "[ecosystemflora] Registered {0} at {1} spreadRate={2:0.##} interval={3:0.#}h chance={4:0.##} (registry {5})",
                         spreadBlockCode,
                         origin,
                         requirements.SpreadRate,
@@ -323,7 +323,7 @@ namespace WildFarming.Ecosystem
             }
             catch (System.Exception ex)
             {
-                api.Logger.Error("[wildfarming] RegisterReproducer failed at {0}: {1}", origin, ex);
+                api.Logger.Error("[ecosystemflora] RegisterReproducer failed at {0}: {1}", origin, ex);
             }
         }
 
@@ -553,7 +553,7 @@ namespace WildFarming.Ecosystem
             if (spreadBlock == null)
             {
                 if (EcosystemConfig.Loaded.VerboseLogging)
-                    api.Logger.Warning("[wildfarming] Spread block not found: {0}", entry.JuvenileBlockCode);
+                    api.Logger.Warning("[ecosystemflora] Spread block not found: {0}", entry.JuvenileBlockCode);
                 return;
             }
 
@@ -589,7 +589,7 @@ namespace WildFarming.Ecosystem
 
             if (cfg.VerboseLogging && cfg.ReproduceDebug && spawned == 0 && failureReason != null)
             {
-                api.Logger.Notification("[wildfarming] No spread near {0}: {1}", entry.Origin, failureReason);
+                api.Logger.Notification("[ecosystemflora] No spread near {0}: {1}", entry.Origin, failureReason);
             }
         }
     }

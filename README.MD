@@ -1,89 +1,83 @@
-# Wild Farming (ecosystem fork)
+# Ecosystem - Flora
 
-Vintage Story mod — **natural spread** for vanilla wild plants: climate, rainfall, forest density, spacing, seasonal ecology, and habitat-specific placement.
+A Vintage Story mod that makes wild flora **alive**. Flowers spread across meadows, ferns creep under forest canopy, reeds colonize shorelines, and trees seed new saplings — all following climate, soil, seasons, and competition. No custom blocks: your world stays vanilla-safe.
 
-**Docs:** [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md)
+## How it works
 
-**Stage:** `Ecosystem v2.3` (`2.5.0`) — seasonal spread/stress, cell competition, niche, soil succession, perf audit done, 46 unit tests.
+Every wild plant registered by the mod periodically tries to reproduce onto a neighboring cell. Whether it succeeds depends on the environment at that cell:
 
-**Build:** `dotnet build` → `bin/Debug/Mods/wildfarming/` (copies to `Mods\wildfarming` when client is closed).
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj`
+- **Climate** — temperature and rainfall from worldgen maps
+- **Soil** — fertility, type (forest floor, peat, sand, clay, gravel)
+- **Light and moisture** — shade under canopy, proximity to water
+- **Forest density** — counted from nearby tree trunks, not worldgen
+- **Season** — spring bloom boost, summer stability, fall die-off, winter dormancy
+- **Spacing** — plants respect distance from same/other species
 
+Plants don't just spread — they **compete**. A stronger species can displace a weaker one from an occupied cell. Plants that end up in the wrong niche (too dry, too dark, wrong soil) accumulate stress and eventually die. Forest understory (ferns, lily of the valley) depends on nearby trees — cut the tree, and its understory gradually withers.
 
-| Requirement | Version                |
-| ----------- | ---------------------- |
-| Game        | 1.21+ (`modinfo.json`) |
-| .NET SDK    | 10.x                  |
+The result: meadows fill in naturally, forest edges develop a distinct flora belt, clearings get reclaimed by fast colonizers first and then by perennials, and shorelines grow reeds and water lilies on their own.
 
+**Removing the mod leaves your world intact** — every placed block is vanilla.
 
-## What it does
+## What spreads
 
-Vanilla blocks stay in the world (`game:flower-*`, reeds, water lily, water crowfoot, ferns, berries, tree saplings). The mod patches `entityClass: EcoSystemLife` and registers mature plants for **wild reproduction**:
+| Group | Species | Notes |
+|-------|---------|-------|
+| **Meadow flowers** | Daisy, cornflower, poppy, heather, catmint, cowparsley, daffodil, and 13 more | 20 species + lupine |
+| **Tallgrass** | All vanilla tallgrass variants | Grass matrix under flowers |
+| **Ferns** | Eagle fern, cinnamon fern, deer fern, hart's tongue, tall fern | Forest understory; need shade and moisture |
+| **Berry bushes** | Blueberry, cranberry, strawberry, and 7 more | 10 wild species; soil + forest edge preference |
+| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings nearby; growth is vanilla |
+| **Reeds** | Cooper's reed, papyrus | Shore or shallow water over gravel bed |
+| **Water lily** | Waterlily | Open water surface |
+| **Water crowfoot** | Underwater column plant | 2–8 block depth, multi-section column |
 
-- scan neighbors in radius → filter by climate / soil / water / niche / spacing
-- seasonal multipliers per species (spring boost, winter dormancy, fall die-off)
-- weighted pick among valid cells → place the same vanilla block type
-- cell competition: challenger displaces weaker incumbents; stress death outside niche
-- symbiosis: forest understory dies when host tree is removed
+## Seasons
 
-**Not in build:** mod seeds, `wildplant` blocks, living trees (legacy under `src/`, excluded from csproj).
+Each species has a seasonal profile:
 
-## Plants in ecosystem
-
-
-| Group        | Examples                                                                     |
-| ------------ | ---------------------------------------------------------------------------- |
-| Flowers      | 20 × `game:flower-*` + lupine (knife/scythe → `drygrass`)                   |
-| Meadow grass | `game:tallgrass-*` (matrix under flowers)                                    |
-| Ferns        | `fern-*` (4 species) + `tallfern` — forest understory, shade, moisture       |
-| Berries      | `fruitingbush-wild-*` (10 species) — soil + `LocalForestCover`               |
-| Trees        | `log-grown-{wood}` → spread `sapling-{wood}-free` (14 species)               |
-| Reeds        | coopersreed (рогоз), papyrus (камыш) — on `muddygravel`, shallow water      |
-| Surface      | waterlily — on open water surface                                            |
-| Underwater   | water crowfoot (водяной лютик) — multi-block column, 2–8 depth              |
-
-
-Details and playtest checklist: [`docs/PROGRESS.md`](docs/PROGRESS.md).
+- **Spring** — boosted spread rate; early spring has an extra ramp
+- **Summer** — baseline activity
+- **Fall** — annual meadow flowers (daisy, poppy, heather) have a die-off chance; perennials slow down
+- **Winter** — most plants go dormant; annuals die, hardy grasses and aquatic plants survive better
 
 ## Config
 
-`%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json`
+Config file: `%AppData%\VintagestoryData\ModConfig\ecosystemflora.json`
 
-Reference template: [`assets/wildfarming/wildfarming-ecosystem.example.json`](assets/wildfarming/wildfarming-ecosystem.example.json)
+A reference template ships with the mod. The easiest way to tune the experience is the **`BalancePreset`** setting:
 
-Set **`BalancePreset`** to `natural` (default), `lush`, or `sparse` — spread tuning is applied on server start. Use `custom` to keep manual numbers only.
+| Preset | Feel | Spread attempts/year | Chance | Min fitness |
+|--------|------|---------------------|--------|-------------|
+| `natural` | Slow, realistic | 42 | 0.35 | 0.5 |
+| `lush` | Faster, greener | 60 | 0.45 | 0.4 |
+| `sparse` | Minimal, subtle | 24 | 0.2 | 0.65 |
 
+Key toggles:
 
-| Preset  | Attempts/year | Chance | MinFitness |
-| ------- | ------------- | ------ | ---------- |
-| natural | 42            | 0.35   | 0.5        |
-| lush    | 60            | 0.45   | 0.4        |
-| sparse  | 24            | 0.2    | 0.65       |
+| Setting | Default | What it does |
+|---------|---------|-------------|
+| `UseSeasonalEcology` | true | Plants follow the game calendar |
+| `UseCellDisplacement` | true | Stronger species can replace weaker ones |
+| `EnableStressDeath` | true | Plants die when stuck in the wrong niche |
+| `EnableSymbiosis` | true | Forest understory depends on nearby trees |
+| `RespectLandClaims` | true | No wild changes inside your land claims |
+| `VerboseLogging` | false | Detailed logs for diagnostics (keep off in play) |
 
+## Installation
 
-### Key config options
+1. Download the latest release
+2. Place the `ecosystemflora` folder into your `Mods` directory
+3. Start the game — default settings work well for most worlds
 
+**Requirements:** Vintage Story 1.21+
+**Do not** run alongside [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival).
 
-| Key                        | Default | Effect                                            |
-| -------------------------- | ------- | ------------------------------------------------- |
-| `UseCellDisplacement`      | true    | Spread can replace weaker ecology plants          |
-| `DisplacementHoldMargin`   | 1.25    | Challenger must beat hold × margin                |
-| `EnableStressDeath`        | true    | Plants die after repeated failed survival checks  |
-| `EnableSymbiosis`          | true    | Ferns/forest flowers die when nearby tree removed |
-| `UseFloraContext`          | true    | Forest-edge fitness multipliers                   |
-| `UseSeasonalEcology`       | true    | Spread and stress follow game calendar            |
-| `SeasonalStressEnabled`    | true    | Winter kill / fall die-off for terrestrial plants  |
-| `UseNicheContext`          | true    | Moisture + light niche multipliers                |
-| `RespectLandClaims`        | true    | No spread/displace/stress inside land claims      |
-| `VerboseLogging`           | false   | Enable detailed log output (perf cost)            |
+## For developers
 
+**Build:** `dotnet build` (.NET 10 SDK required)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (46 xUnit tests)
 
-Logs: use `VerboseLogging: true` + `ReproduceDebug: true` for diagnostics. Keep both `false` for normal play.
+Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md)
 
-## Legacy code
-
-Older systems remain in the repo but are **excluded from the build**. See `docs/PROJECT_VISION.md`.
-
-## Original mod
-
-Based on JakeCool19's Wild Farming (v1.2.0). Do not run alongside [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival).
+Originally inspired by JakeCool19's Wild Farming (v1.2.0). Fully rewritten.

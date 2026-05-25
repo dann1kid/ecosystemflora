@@ -76,7 +76,7 @@ namespace WildFarming.Ecosystem
                     if (logFailures)
                     {
                         api.Logger.Notification(
-                            "[wildfarming] {0} {1} at {2} ({3} candidates near {4})",
+                            "[ecosystemflora] {0} {1} at {2} ({3} candidates near {4})",
                             chosen.Displacing ? "Displaced" : "Spread",
                             spreadBlock.Code,
                             chosen.Pos,

@@ -72,7 +72,7 @@ namespace WildFarming.Ecosystem
                 if (!BySpecies.ContainsKey(species))
                 {
                     if (EcosystemConfig.Loaded.VerboseLogging)
-                        api.Logger.Warning("[wildfarming] Tallgrass species missing ecology data: {0}", species);
+                        api.Logger.Warning("[ecosystemflora] Tallgrass species missing ecology data: {0}", species);
                 }
             }
         }

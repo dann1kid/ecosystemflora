@@ -8,14 +8,14 @@
    .\tools\Configure-VS.ps1
    ```
 3. Выберите профиль запуска **Vintage Story (F5)** на панели отладки.
-4. **F5** — сборка, копирование мода в `Mods\wildfarming`, запуск `Vintagestory.exe` с подключённым отладчиком.
+4. **F5** — сборка, копирование мода в `Mods\ecosystemflora`, запуск `Vintagestory.exe` с подключённым отладчиком.
 
 ## Сборка и деплой
 
 | Конфигурация | Выход | Деплой в игру |
 |--------------|-------|----------------|
-| **Debug** | `bin\Debug\Mods\wildfarming\` | Да → `%AppData%\Vintagestory\Mods\wildfarming\` |
-| **Release** | `bin\Release\Mods\wildfarming\` | Да (можно отключить) |
+| **Debug** | `bin\Debug\Mods\ecosystemflora\` | Да → `%AppData%\Vintagestory\Mods\ecosystemflora\` |
+| **Release** | `bin\Release\Mods\ecosystemflora\` | Да (можно отключить) |
 
 Отключить автокопирование в свойствах проекта → **Build** → переменная MSBuild `DeployModToGame=false`,  
 или в `Directory.Build.user.props` в корне репозитория.
@@ -52,7 +52,7 @@
 2. В VS: **Debug → Attach to Process** (Ctrl+Alt+P).
 3. Процесс: **`Vintagestory.exe`**.
 4. Тип кода: **Managed (.NET Core, .NET 5+)** или **Automatic**.
-5. Убедитесь, что в `Mods\wildfarming` лежит свежая сборка (пересоберите Debug).
+5. Убедитесь, что в `Mods\ecosystemflora` лежит свежая сборка (пересоберите Debug).
 
 ## Структура solution
 
@@ -70,7 +70,7 @@ wildfarming.sln
 
 ## Конфиг мода (в игре)
 
-`%AppData%\VintagestoryData\ModConfig\wildfarming-ecosystem.json` — создаётся при первом запуске.
+`%AppData%\VintagestoryData\ModConfig\ecosystemflora.json` — создаётся при первом запуске.
 
 | Поле | По умолчанию | Смысл |
 |------|----------------|-------|
@@ -86,6 +86,6 @@ wildfarming.sln
 | Симптом | Действие |
 |---------|----------|
 | F5: файл не найден | `.\tools\Configure-VS.ps1` |
-| Breakpoint серый | Пересобрать Debug; проверить `wildfarming.pdb` в `Mods\wildfarming` |
+| Breakpoint серый | Пересобрать Debug; проверить `ecosystemflora.pdb` в `Mods\ecosystemflora` |
 | Мод не обновляется в игре | Проверить `DeployModToGame`; удалить старую папку мода вручную |
 | CS1705 System.Runtime | TargetFramework в csproj должен совпадать с игрой (`net10.0`) |
