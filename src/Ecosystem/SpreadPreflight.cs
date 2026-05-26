@@ -60,6 +60,11 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (WildSoilGroundRules.IsMyceliumHost(snap.Ground))
+            {
+                return false;
+            }
+
             if (isEmpty && snap.Space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
                 return false;

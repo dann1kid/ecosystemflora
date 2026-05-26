@@ -75,6 +75,11 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (WildSoilGroundRules.IsMyceliumHost(ground))
+            {
+                return false;
+            }
+
             if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
             {
                 return false;
