@@ -25,7 +25,7 @@ Install the mod, load your world, and watch it change over the seasons.
 - **5 fern species** — forest understory that needs shade and moisture
 - **10 wild berry bushes** — blueberry, cranberry, strawberry...
 - **14 tree species** — mature trunks spread free saplings; growth is vanilla
-- **Reeds and papyrus** — shore and shallow water over gravel beds
+- **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
 - **Water crowfoot** — underwater column plant, 2–8 blocks deep
 
@@ -63,6 +63,12 @@ Every block placed by the mod is a vanilla game block. **Removing the mod leaves
 
 Wild spread, displacement, and stress death are blocked inside **land claims**. Your gardens and farms are safe.
 
+Plants also never spread onto **farmland** or **mycelium blocks** (mushroom spawning ground) — mushrooms continue to regrow naturally.
+
+### Greenhouse support
+
+Flowers planted inside a fully enclosed glass-roofed room (a greenhouse) are protected from temperature stress — no land claim required. Grow tropical flowers in cold biomes inside your greenhouse.
+
 ### Easy to tune
 
 Edit `ModConfig/ecosystemflora.json` (created on first launch).
@@ -71,14 +77,14 @@ Edit `ModConfig/ecosystemflora.json` (created on first launch).
 
 Set `"BalancePreset"` to one of:
 
-| Preset | Style | Spread speed | Fitness gate | Spacing |
-|--------|-------|:---:|:---:|:---:|
-| `"natural"` *(default)* | Realistic | medium | 0.50 | 1 block |
-| `"lush"` | Greener, denser | fast | 0.40 | 1 block |
-| `"sparse"` | Minimal, subtle | slow | 0.65 | 2 blocks |
-| `"custom"` | Manual | — | — | — |
+| Preset | Style | Attempts/yr | Chance | Fitness | Spacing |
+|--------|-------|:---:|:---:|:---:|:---:|
+| `"natural"` *(default)* | Realistic | 72 | 0.50 | 0.45 | 1 block |
+| `"lush"` | Greener, denser | 120 | 0.65 | 0.35 | 1 block |
+| `"sparse"` | Minimal, subtle | 36 | 0.30 | 0.60 | 2 blocks |
+| `"custom"` | Manual | — | — | — | — |
 
-Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `ReproduceChance`, `MinFitness`, `DefaultSameSpeciesSpacing`, `DefaultOtherSpeciesSpacing`, `MaxReproduceAttemptsPerTick`. Set `"custom"` to use your own values.
+Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `ReproduceChance`, `MinFitness`, `DefaultSameSpeciesSpacing`, `DefaultOtherSpeciesSpacing`. Set `"custom"` to use your own values.
 
 #### Feature toggles (true/false)
 
@@ -108,9 +114,9 @@ Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 
 | Setting | Default | What it does |
 |---------|:-------:|-------------|
-| `ReproduceAttemptsPerYear` | 36 | Spread attempts per game year |
-| `ReproduceChance` | 0.25 | Base chance per attempt |
-| `MinFitness` | 0.50 | Minimum fitness to reproduce |
+| `ReproduceAttemptsPerYear` | 72 | Spread attempts per game year |
+| `ReproduceChance` | 0.50 | Base chance per attempt |
+| `MinFitness` | 0.45 | Minimum fitness to reproduce |
 | `ReproduceRadius` | 4 | Max horizontal spread distance (blocks) |
 | `ReproduceVerticalSearch` | 5 | Y-axis search range |
 | `MaxFailedSurvivalChecks` | 5 | Failed checks before plant dies |
@@ -137,8 +143,10 @@ Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 
 | Setting | Default | What it does |
 |---------|:-------:|-------------|
-| `TickBudgetMs` | 5 | Hard cap on ms per server tick (0 = unlimited) |
-| `MaxReproduceAttemptsPerTick` | 32 | Spread checks per server tick |
+| `TickBudgetMs` | 30 | Hard cap on ms per server tick for spread (0 = unlimited) |
+| `StressBudgetMs` | 0 | Hard cap for stress tick (0 = use TickBudgetMs) |
+| `StressTickIntervalMs` | 6000 | Interval between stress ticks (ms) |
+| `MaxReproduceAttemptsPerTick` | 64 | Spread checks per server tick |
 | `MaxStressChecksPerTick` | 16 | Stress checks per tick |
 | `MaxChunkColumnsScannedPerTick` | 3 | Chunk registration speed |
 | `MaxRegistrationsPerTick` | 192 | Plant registrations per tick |

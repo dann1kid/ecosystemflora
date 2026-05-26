@@ -36,7 +36,7 @@
 |--------|--------|
 | **Цветы** | `game:flower-*` (20 видов) + `flower-lupine-*` |
 | **Луг** | `tallgrass-*` — матрица под цветами |
-| **Тростник** | `tallplant-coopersreed-*` (рогоз), `tallplant-papyrus-*` (камыш) |
+| **Тростник** | `tallplant-coopersreed-*` (рогоз), `tallplant-tule-*` (камыш), `tallplant-papyrus-*` (папирус) |
 | **Поверхностная вода** | `waterlily` (кувшинка) |
 | **Подводный** | `aquatic-watercrowfoot-*` (водяной лютик: section / tip / top) |
 | **Деревья** | `log-grown-{wood}-*` → spread `sapling-{wood}-free` (14 пород; бамбук/aged — нет) |
@@ -75,7 +75,7 @@
 - **Регистрация:** при загрузке чанка (скан колонки) + `PendingTreeSaplings` для саженцев, посаженных модом, пока не появится `log-grown`.
 - **Без** living trunk / mod-блоков ствола; при снятии мода — обычные бревна и саженцы.
 
-### Рогоз и камыш (правила spread)
+### Рогоз, камыш и папирус (правила spread)
 
 Колонка снизу вверх для **мелководья**:
 
@@ -93,7 +93,9 @@
 | Дно не muddy/rock gravel | — | spread **запрещён** |
 | Уже есть рогоз в колонке (X/Z) | — | spread **запрещён** |
 
-**Камыш:** высота 2 блока; в воде — ровно 1 водный слой над илом (`ExactWaterDepth: 1`).
+**Камыш (tule):** те же правила, что у рогоза; умеренный климат (5–25°C); spread rate 2.5.
+
+**Папирус:** высота 2 блока; в воде — ровно 1 водный слой над илом (`ExactWaterDepth: 1`); жаркий климат (24–40°C).
 
 ### Водяной лютик
 
@@ -140,6 +142,7 @@
 | Рогоз на лугу | Только `muddygravel`/`gravel-*`; land — вода в 3 блоках |
 | Подводное дно озёр | `gravel-granite` и др. как reed bed (не только `muddygravel`) |
 | `ProcessStress` IndexOutOfRange при stress death | Удаление растений отложено до конца обхода; live `entries.Count` в round-robin |
+| Цветы вытесняют грибные споры | Spread запрещён на блоки с `MyceliumHost` (аналогично farmland) |
 
 ### Playtest
 
@@ -175,7 +178,7 @@
 | `PlantSpacingEnabled` | Дистанция между растениями |
 | `DefaultSameSpeciesSpacing` / `DefaultOtherSpeciesSpacing` | Базовые дистанции |
 | `SpacingVerticalSearch` | ±Y при проверке соседей |
-| `TickBudgetMs` | Жёсткий потолок ms/тик (default 5); 0 = без лимита |
+| `TickBudgetMs` | Жёсткий потолок ms/тик для spread (default 30); 0 = без лимита |
 | `MaxReproduceAttemptsPerTick` | Лимит CPU (spread) |
 | `MaxStressChecksPerTick` | Лимит CPU (stress) |
 | `MaxChunkColumnsScannedPerTick` / `MaxRegistrationsPerTick` | Очередь чанков |
@@ -186,6 +189,7 @@
 | `EnableStressDeath` / `MaxFailedSurvivalChecks` | Стресс-смерть при несоответствии нише |
 | `EnableSymbiosis` / `UseFloraContext` | Симбиоз с деревьями; локальный forest-edge контекст |
 | `RespectLandClaims` | Нет spread/displace/stress/soil внутри land claim |
+| *(hardcoded)* | Spread запрещён на farmland и на блоки с `MyceliumHost` (грибница) |
 | `UseSeasonalEcology` / `SeasonalStressEnabled` | Spread и зимняя/осенняя stress по сезону (`WildSpeciesSeason`) |
 | `EnableTrampling` / `TramplingRadius` / `TramplingStressThreshold` | Протаптывание (default **off**): растения гибнут рядом с часто ходящими игроками |
 | `TramplingSoilDegradation` | Деградация почвы на протоптанных тропах (default **off**) |
@@ -207,7 +211,8 @@
 | species | RU | Примечание |
 |---------|-----|------------|
 | `coopersreed` | рогоз | ил + 0–1 вода над илом |
-| `papyrus` | камыш | жаркий климат; 2 блока высотой |
+| `tule` | камыш | умеренный 5–25°C; те же правила |
+| `papyrus` | папирус | жаркий климат 24–40°C; 2 блока высотой |
 | `waterlily` | кувшинка | поверхность воды |
 | `watercrowfoot` | водяной лютик | подводная колонка |
 
@@ -357,9 +362,12 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 
 Контент-мод — чистый ресурсный мод (JSON + текстуры), не нуждается в C#. Экомод — платформа.
 
-### Обратная связь игроку (позже, post-ModDB)
+### Обратная связь игроку (handbook)
 
-- [ ] **Handbook / dominant species** — UX: подсказка «кто доминирует» в зоне (niche + flora context), не механика spread
+- [x] **Handbook** — 7 статических guide-страниц (overview, flowers, ferns, trees, berries, aquatic, tuning)
+- [x] **EcologyHandbookBehavior** — динамическая экология на страницах блоков (spread rate, climate, niche, season, symbiosis)
+- [x] **JSON patch** — handbook-behaviors.json добавляет поведение ко всем участникам экосистемы
+- [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне (позже)
 
 ### Playtest и техдолг
 
@@ -473,6 +481,8 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 | *(prev)* | Tech debt: split BlockFluidHelper → ReedColumnHelper + WaterColumnHelper; xUnit tests (46); docs/modinfo 2.5.0 |
 | *(pending)* | Perf phase 4: heightmap chunk scan, tick budget, lower defaults, NowValues cache; v2.7.0 |
 | *(pending)* | Perf phase 5: split tick budgets (stress/spread independent), faster spread defaults; v2.8.0 |
+| *(pending)* | Handbook integration: static guide pages + EcologyHandbookBehavior + JSON patches |
+| *(pending)* | Tule (камыш) as ecosystem participant; mycelium host protection |
 
 ---
 

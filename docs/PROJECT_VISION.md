@@ -133,7 +133,10 @@ src/
     GreenhouseHelper.cs         # greenhouse room detection (cached)
     SpreadPreflight.cs          # cheap-first candidate filter
     SpreadVacancy.cs            # aquatic vacancy check
+    WildSoilGroundRules.cs      # farmland + mycelium spread gates
     LandClaimGuard.cs           # land claim respect
+  Handbook/
+    EcologyHandbookBehavior.cs  # dynamic ecology info on block pages
   BlockEntity/
     EcoSystemLife.cs            # thin BE: register on load
 tests/
