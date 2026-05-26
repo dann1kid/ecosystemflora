@@ -140,8 +140,12 @@ namespace WildFarming.Ecosystem
             EnvironmentalContext spread = SampleForSpread(api, plantPos, requirements, cache);
             IBlockAccessor acc = api.World.BlockAccessor;
 
-            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
-            float temperature = now?.Temperature ?? 0f;
+            float temperature;
+            if (cache == null || !cache.TryGetNowTemperature(acc, plantPos, out temperature))
+            {
+                ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+                temperature = now?.Temperature ?? 0f;
+            }
 
             return new EnvironmentalContext(
                 spread.Position,

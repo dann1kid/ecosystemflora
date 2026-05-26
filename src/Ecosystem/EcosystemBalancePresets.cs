@@ -50,7 +50,7 @@ namespace WildFarming.Ecosystem
             cfg.MinFitness = 0.5f;
             cfg.DefaultSameSpeciesSpacing = 1;
             cfg.DefaultOtherSpeciesSpacing = 1;
-            cfg.MaxReproduceAttemptsPerTick = 48;
+            cfg.MaxReproduceAttemptsPerTick = 32;
         }
 
         static void ApplyLush(EcosystemConfig cfg)
@@ -60,7 +60,7 @@ namespace WildFarming.Ecosystem
             cfg.MinFitness = 0.4f;
             cfg.DefaultSameSpeciesSpacing = 1;
             cfg.DefaultOtherSpeciesSpacing = 1;
-            cfg.MaxReproduceAttemptsPerTick = 64;
+            cfg.MaxReproduceAttemptsPerTick = 48;
         }
 
         static void ApplySparse(EcosystemConfig cfg)
@@ -70,7 +70,7 @@ namespace WildFarming.Ecosystem
             cfg.MinFitness = 0.65f;
             cfg.DefaultSameSpeciesSpacing = 2;
             cfg.DefaultOtherSpeciesSpacing = 2;
-            cfg.MaxReproduceAttemptsPerTick = 32;
+            cfg.MaxReproduceAttemptsPerTick = 16;
         }
     }
 }

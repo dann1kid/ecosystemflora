@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -24,6 +25,7 @@ namespace WildFarming.Ecosystem
         internal EcologySpacingIndex SpacingIndex { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
+        readonly Stopwatch tickBudgetWatch = new Stopwatch();
 
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
@@ -85,7 +87,7 @@ namespace WildFarming.Ecosystem
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
-            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 500);
+            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 2000);
 
             if (api is ICoreServerAPI sapi)
             {
@@ -403,6 +405,9 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             int columnsLeft = cfg.MaxChunkColumnsScannedPerTick;
             int registrationsLeft = cfg.MaxRegistrationsPerTick;
+            long budgetTicks = cfg.TickBudgetMs > 0
+                ? cfg.TickBudgetMs * Stopwatch.Frequency / 1000
+                : 0;
 
             HashSet<long> activePlayerChunks = null;
             if (cfg.OnlyActivateNearPlayers)
@@ -410,8 +415,12 @@ namespace WildFarming.Ecosystem
                 activePlayerChunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
             }
 
+            tickBudgetWatch.Restart();
+
             while (columnsLeft > 0 && pendingChunkScans.Count > 0 && registrationsLeft > 0)
             {
+                if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) break;
+
                 Vec2i chunkCoord = pendingChunkScans.Dequeue();
                 columnsLeft--;
 
@@ -434,6 +443,8 @@ namespace WildFarming.Ecosystem
                     if (registrationsLeft <= 0) break;
                 }
             }
+
+            tickBudgetWatch.Stop();
         }
 
         readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
@@ -541,6 +552,7 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
 
             TryLogCalendarDebugOnce();
+            ColumnCache?.AdvanceGeneration();
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
@@ -548,8 +560,28 @@ namespace WildFarming.Ecosystem
 
             if (activeChunks != null && activeChunks.Count == 0) return;
 
+            long budgetTicks = cfg.TickBudgetMs > 0
+                ? cfg.TickBudgetMs * Stopwatch.Frequency / 1000
+                : 0;
+
+            tickBudgetWatch.Restart();
+
             ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks);
+
+            if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
+            {
+                tickBudgetWatch.Stop();
+                return;
+            }
+
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
+
+            if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
+            {
+                tickBudgetWatch.Stop();
+                return;
+            }
+
             IBlockAccessor acc = api.World.BlockAccessor;
 
             registry.ProcessDue(
@@ -558,6 +590,11 @@ namespace WildFarming.Ecosystem
                 entry => SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
                 entry =>
                 {
+                    if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
+                    {
+                        return true;
+                    }
+
                     Block block = acc.GetBlock(entry.Origin);
                     if (block.Id == 0 || !entry.IsMatureBlock(block))
                     {
@@ -568,6 +605,8 @@ namespace WildFarming.Ecosystem
                     return true;
                 },
                 activeChunks);
+
+            tickBudgetWatch.Stop();
         }
 
         void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)

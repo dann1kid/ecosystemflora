@@ -4,7 +4,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Caches static worldgen rainfall per XZ column (forest cover is local via FloraContextSampler).</summary>
+    /// <summary>Caches worldgen rainfall (permanent) and NowValues temperature (per tick generation).</summary>
     internal sealed class EnvironmentalColumnCache
     {
         struct WorldgenColumn
@@ -13,9 +13,23 @@ namespace WildFarming.Ecosystem
             public bool HasClimate;
         }
 
+        struct NowColumn
+        {
+            public float Temperature;
+            public long Generation;
+        }
+
         readonly Dictionary<long, WorldgenColumn> worldgenByXz = new Dictionary<long, WorldgenColumn>();
         const int MaxWorldgenEntries = 65536;
         readonly Queue<long> worldgenOrder = new Queue<long>();
+
+        readonly Dictionary<long, NowColumn> nowByXz = new Dictionary<long, NowColumn>();
+        const int MaxNowEntries = 4096;
+        readonly Queue<long> nowOrder = new Queue<long>();
+        long currentGeneration;
+
+        /// <summary>Call once at the start of each reproduce tick to invalidate stale NowValues.</summary>
+        public void AdvanceGeneration() => currentGeneration++;
 
         public bool TryGetWorldgenRainfall(IBlockAccessor acc, BlockPos plantPos, out float rainfall, out bool hasClimate)
         {
@@ -47,6 +61,25 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
+        public bool TryGetNowTemperature(IBlockAccessor acc, BlockPos plantPos, out float temperature)
+        {
+            temperature = 0f;
+            if (acc == null || plantPos == null) return false;
+
+            long key = ColumnKey(plantPos.X, plantPos.Z);
+            if (nowByXz.TryGetValue(key, out NowColumn cached) && cached.Generation == currentGeneration)
+            {
+                temperature = cached.Temperature;
+                return true;
+            }
+
+            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+            temperature = now?.Temperature ?? 0f;
+
+            StoreNow(key, new NowColumn { Temperature = temperature, Generation = currentGeneration });
+            return true;
+        }
+
         public void InvalidateColumn(int x, int z)
         {
             worldgenByXz.Remove(ColumnKey(x, z));
@@ -69,6 +102,8 @@ namespace WildFarming.Ecosystem
         {
             worldgenByXz.Clear();
             worldgenOrder.Clear();
+            nowByXz.Clear();
+            nowOrder.Clear();
         }
 
         void StoreWorldgen(long key, WorldgenColumn value)
@@ -84,6 +119,21 @@ namespace WildFarming.Ecosystem
             }
 
             worldgenByXz[key] = value;
+        }
+
+        void StoreNow(long key, NowColumn value)
+        {
+            if (!nowByXz.ContainsKey(key))
+            {
+                nowOrder.Enqueue(key);
+                while (nowOrder.Count > MaxNowEntries)
+                {
+                    long old = nowOrder.Dequeue();
+                    nowByXz.Remove(old);
+                }
+            }
+
+            nowByXz[key] = value;
         }
 
         static long ColumnKey(int x, int z) => ((long)x << 32) | (uint)z;

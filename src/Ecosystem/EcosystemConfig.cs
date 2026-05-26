@@ -57,19 +57,22 @@ namespace WildFarming.Ecosystem
         public bool VerboseLogging { get; set; } = false;
 
         /// <summary>Max reproduction attempts per server tick (spreads CPU load).</summary>
-        public int MaxReproduceAttemptsPerTick { get; set; } = 48;
+        public int MaxReproduceAttemptsPerTick { get; set; } = 32;
 
         /// <summary>Chunk columns to scan per tick after load (deferred registration).</summary>
         public int MaxChunkColumnsScannedPerTick { get; set; } = 3;
 
         /// <summary>Cap flower registrations per tick while draining the chunk queue.</summary>
-        public int MaxRegistrationsPerTick { get; set; } = 256;
+        public int MaxRegistrationsPerTick { get; set; } = 192;
+
+        /// <summary>Max milliseconds per game tick for ecosystem processing. 0 = no limit.</summary>
+        public int TickBudgetMs { get; set; } = 5;
 
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;
 
         /// <summary>If true, only register/tick plants within PlayerActivationRadiusBlocks of a player.</summary>
-        public bool OnlyActivateNearPlayers { get; set; } = false;
+        public bool OnlyActivateNearPlayers { get; set; } = true;
 
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
 
@@ -121,7 +124,7 @@ namespace WildFarming.Ecosystem
 
         public double StressRecheckHours { get; set; } = 18;
 
-        public int MaxStressChecksPerTick { get; set; } = 24;
+        public int MaxStressChecksPerTick { get; set; } = 16;
 
         public bool EnableSymbiosis { get; set; } = true;
 
@@ -163,7 +166,7 @@ namespace WildFarming.Ecosystem
         // --- Trampling (v2.6) ---
 
         /// <summary>Plants near frequently-visited positions accumulate trampling stress and die.</summary>
-        public bool EnableTrampling { get; set; } = true;
+        public bool EnableTrampling { get; set; } = false;
 
         /// <summary>Horizontal distance (blocks) at which a player causes trampling exposure.</summary>
         public int TramplingRadius { get; set; } = 1;
@@ -172,7 +175,7 @@ namespace WildFarming.Ecosystem
         public int TramplingStressThreshold { get; set; } = 8;
 
         /// <summary>Apply soil degradation when a plant is trampled to death.</summary>
-        public bool TramplingSoilDegradation { get; set; } = true;
+        public bool TramplingSoilDegradation { get; set; } = false;
 
         // --- Flower drygrass drops (v2.5) ---
 
