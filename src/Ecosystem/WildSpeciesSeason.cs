@@ -93,6 +93,7 @@ namespace WildFarming.Ecosystem
                 ["tallfern"] = EdgePerennial,
 
                 ["coopersreed"] = AquaticWarm,
+                ["tule"] = AquaticWarm,
                 ["papyrus"] = AquaticWarm,
                 ["waterlily"] = AquaticWarm,
                 ["watercrowfoot"] = AquaticWarm,

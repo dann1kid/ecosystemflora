@@ -35,6 +35,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (path.StartsWith("tallplant-coopersreed")) return "coopersreed";
+            if (path.StartsWith("tallplant-tule")) return "tule";
             if (path.StartsWith("tallplant-papyrus")) return "papyrus";
             if (path == "waterlily") return "waterlily";
             if (path.StartsWith("aquatic-watercrowfoot")) return "watercrowfoot";
@@ -177,7 +178,7 @@ namespace WildFarming.Ecosystem
         public static bool IsReedBlock(Block block)
         {
             string species = GetEcologySpecies(block?.Code);
-            return species == "coopersreed" || species == "papyrus";
+            return species == "coopersreed" || species == "tule" || species == "papyrus";
         }
 
         public static bool IsWatercrowfoot(AssetLocation code)
@@ -255,7 +256,7 @@ namespace WildFarming.Ecosystem
         public static Block ResolveReedSpreadBlock(ICoreAPI api, BlockPos plantPos, Block parentBlock)
         {
             string species = GetEcologySpecies(parentBlock?.Code);
-            if (species != "coopersreed" && species != "papyrus") return parentBlock;
+            if (species != "coopersreed" && species != "tule" && species != "papyrus") return parentBlock;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             string habitat = BlockFluidHelper.IsDedicatedWaterCell(acc, plantPos) ? "water" : "land";

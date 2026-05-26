@@ -38,6 +38,13 @@
 		"op": "add",
 		"path": "/behaviors/-",
 		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/tallplant-tule",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
 		"file": "game:blocktypes/plant/tallplant-papyrus",
 		"side": "client"
 	},
