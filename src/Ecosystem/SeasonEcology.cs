@@ -3,7 +3,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Calendar season multipliers for spread attempts and stress survival.</summary>
+    /// <summary>Monthly spread multipliers and seasonal stress (interpolated 12-month curves).</summary>
     internal static class SeasonEcology
     {
         public static float SpreadActivityMultiplier(ICoreAPI api, BlockPos pos, PlantRequirements requirements)
@@ -12,19 +12,15 @@ namespace WildFarming.Ecosystem
             if (api?.World?.Calendar == null || requirements == null || pos == null) return 1f;
 
             WildSpeciesSeason.Profile profile = WildSpeciesSeason.Resolve(requirements.Species);
-            EnumSeason season = api.World.Calendar.GetSeason(pos);
-            float mult = profile.SpreadMultiplier(season);
 
-            if (season == EnumSeason.Spring)
-            {
-                float rel = api.World.Calendar.GetSeasonRel(pos);
-                mult *= SpringRamp(rel);
-            }
+            IGameCalendar cal = api.World.Calendar;
+            float yearProgress = cal.DayOfYearf / cal.DaysPerYear;
+            float mult = profile.SpreadMultiplierInterpolated(yearProgress);
 
             return Clamp(mult, 0f, 3f);
         }
 
-        /// <summary>Extra failed survival tick from season (winter kill, fall die-off).</summary>
+        /// <summary>Monthly seasonal stress failure roll (replaces old winter/fall binary).</summary>
         public static bool RollSeasonalStressFailure(ICoreAPI api, BlockPos pos, PlantRequirements requirements)
         {
             if (!EcosystemConfig.Loaded.UseSeasonalEcology) return false;
@@ -34,28 +30,12 @@ namespace WildFarming.Ecosystem
             if (requirements.Habitat != EcologyHabitat.Terrestrial) return false;
 
             WildSpeciesSeason.Profile profile = WildSpeciesSeason.Resolve(requirements.Species);
-            EnumSeason season = api.World.Calendar.GetSeason(pos);
 
-            if (season == EnumSeason.Winter)
-            {
-                if (profile.WinterSurvival >= 1f) return false;
-                if (profile.WinterSurvival <= 0f) return true;
-                return api.World.Rand.NextDouble() > profile.WinterSurvival;
-            }
+            int month = api.World.Calendar.Month - 1;
+            float chance = profile.StressChance(month);
+            if (chance <= 0f) return false;
 
-            if (season == EnumSeason.Fall && profile.FallDieoffChance > 0f)
-            {
-                return api.World.Rand.NextDouble() < profile.FallDieoffChance;
-            }
-
-            return false;
-        }
-
-        static float SpringRamp(float seasonRel)
-        {
-            if (seasonRel <= 0.15f) return 1.35f;
-            if (seasonRel <= 0.4f) return 1.15f;
-            return 1f;
+            return api.World.Rand.NextDouble() < chance;
         }
 
         static float Clamp(float v, float min, float max)

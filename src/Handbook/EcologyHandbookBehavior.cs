@@ -151,15 +151,17 @@ namespace WildFarming.Handbook
             if (!WildSpeciesSeason.TryGet(species, out WildSpeciesSeason.Profile profile)) return;
 
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-season-spread",
-                profile.SpringSpread.ToString("0.#"),
-                profile.SummerSpread.ToString("0.#"),
-                profile.FallSpread.ToString("0.#"),
-                profile.WinterSpread.ToString("0.#")));
+                profile.SpreadMultiplier(Vintagestory.API.Common.EnumSeason.Spring).ToString("0.#"),
+                profile.SpreadMultiplier(Vintagestory.API.Common.EnumSeason.Summer).ToString("0.#"),
+                profile.SpreadMultiplier(Vintagestory.API.Common.EnumSeason.Fall).ToString("0.#"),
+                profile.SpreadMultiplier(Vintagestory.API.Common.EnumSeason.Winter).ToString("0.#")));
 
-            if (profile.WinterSurvival < 1f)
+            float winterStress = profile.StressChance(0);
+            if (winterStress > 0f)
             {
+                float survival = (1f - winterStress) * 100f;
                 dsc.AppendLine(Lang.Get("ecosystemflora:handbook-winter-survival",
-                    (profile.WinterSurvival * 100f).ToString("0")));
+                    survival.ToString("0")));
             }
         }
 

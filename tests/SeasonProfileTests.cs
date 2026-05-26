@@ -12,18 +12,20 @@ namespace WildFarming.Tests
         [InlineData("tallgrass")]
         [InlineData("bluebell")]
         [InlineData("coopersreed")]
+        [InlineData("tule")]
         public void Resolve_KnownSpecies_ReturnsProfile(string species)
         {
             var profile = WildSpeciesSeason.Resolve(species);
-            Assert.True(profile.SpringSpread > 0f);
-            Assert.True(profile.SummerSpread > 0f);
+            Assert.True(profile.SpreadMultiplier(EnumSeason.Spring) > 0f);
+            Assert.True(profile.SpreadMultiplier(EnumSeason.Summer) > 0f);
         }
 
         [Fact]
         public void Resolve_UnknownSpecies_ReturnsDefault()
         {
             var profile = WildSpeciesSeason.Resolve("nonexistent_plant_xyz");
-            Assert.True(profile.SpringSpread > 0f, "Default profile should have positive spring spread");
+            Assert.True(profile.SpreadMultiplier(EnumSeason.Spring) > 0f,
+                "Default profile should have positive spring spread");
         }
 
         [Fact]
@@ -46,31 +48,78 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void MeadowAnnual_WinterSpread_NearZero()
+        public void MeadowSummer_WinterSpread_NearZero()
         {
             var profile = WildSpeciesSeason.Resolve("wilddaisy");
-            Assert.True(profile.WinterSpread < 0.1f, "Annual meadow plants should barely spread in winter");
+            Assert.True(profile.SpreadMultiplier(EnumSeason.Winter) < 0.1f,
+                "Summer meadow annuals should barely spread in winter");
         }
 
         [Fact]
-        public void MeadowAnnual_SpringSpread_BoostedAboveOne()
+        public void MeadowSummer_PeakMonth_AboveOne()
         {
             var profile = WildSpeciesSeason.Resolve("wilddaisy");
-            Assert.True(profile.SpringSpread > 1f, "Annual meadow plants should have spring boost > 1");
+            float june = profile.SpreadMultiplierInterpolated(5f / 12f);
+            Assert.True(june > 1f, "Daisy should have peak spread > 1 in June");
         }
 
         [Fact]
-        public void AquaticWarm_WinterSurvival_Moderate()
+        public void EarlySpring_MarchApril_Peak()
+        {
+            var profile = WildSpeciesSeason.Resolve("daffodil");
+            float april = profile.SpreadMultiplierInterpolated(3f / 12f);
+            float july = profile.SpreadMultiplierInterpolated(6f / 12f);
+            Assert.True(april > july, "Daffodil should peak in spring, not summer");
+        }
+
+        [Fact]
+        public void Aquatic_WinterStress_Moderate()
         {
             var profile = WildSpeciesSeason.Resolve("coopersreed");
-            Assert.True(profile.WinterSurvival > 0.3f, "Aquatic warm species should survive winter moderately");
+            float janStress = profile.StressChance(0);
+            Assert.True(janStress > 0f && janStress < 0.7f,
+                "Aquatic species should have moderate winter stress");
         }
 
         [Fact]
-        public void ForestPerennial_FallDieoff_Low()
+        public void ForestSpring_FallStress_Low()
         {
             var profile = WildSpeciesSeason.Resolve("bluebell");
-            Assert.True(profile.FallDieoffChance < 0.3f, "Forest perennials should have low fall die-off");
+            float octStress = profile.StressChance(9);
+            Assert.True(octStress < 0.3f, "Forest perennials should have low fall stress");
+        }
+
+        [Fact]
+        public void MonthlyInterpolation_SmoothTransition()
+        {
+            var profile = WildSpeciesSeason.Resolve("catmint");
+            float prev = profile.SpreadMultiplierInterpolated(0f);
+            bool smooth = true;
+            for (int i = 1; i <= 24; i++)
+            {
+                float curr = profile.SpreadMultiplierInterpolated(i / 24f);
+                if (System.Math.Abs(curr - prev) > 1.0f) smooth = false;
+                prev = curr;
+            }
+            Assert.True(smooth, "Monthly interpolation should produce smooth transitions");
+        }
+
+        [Fact]
+        public void LateSummer_AugustPeak()
+        {
+            var profile = WildSpeciesSeason.Resolve("heather");
+            float aug = profile.SpreadMultiplierInterpolated(7f / 12f);
+            float mar = profile.SpreadMultiplierInterpolated(2f / 12f);
+            Assert.True(aug > mar, "Heather should peak in late summer, not early spring");
+        }
+
+        [Fact]
+        public void NoStress_InSummer()
+        {
+            var profile = WildSpeciesSeason.Resolve("wilddaisy");
+            Assert.Equal(0f, profile.StressChance(5));
+            Assert.Equal(0f, profile.StressChance(6));
+            Assert.Equal(0f, profile.StressChance(7));
         }
     }
 }
