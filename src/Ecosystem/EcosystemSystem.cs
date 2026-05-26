@@ -27,8 +27,6 @@ namespace WildFarming.Ecosystem
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
-        double nextFallowCheckHours;
-        int fallowRoundRobin;
 
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
@@ -246,7 +244,7 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false)
+        public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false, bool playerPlaced = false)
         {
             if (participant == null || api == null) return;
 
@@ -258,7 +256,8 @@ namespace WildFarming.Ecosystem
                 participant.SpreadBlockCode,
                 participant.MatureBlockCode,
                 participant.Requirements,
-                spawnBurst);
+                spawnBurst,
+                playerPlaced);
         }
 
         public void RegisterReproducer(
@@ -266,7 +265,8 @@ namespace WildFarming.Ecosystem
             AssetLocation spreadBlockCode,
             AssetLocation matureBlockCode,
             PlantRequirements requirements,
-            bool spawnBurst = false)
+            bool spawnBurst = false,
+            bool playerPlaced = false)
         {
             if (api == null || api.Side != EnumAppSide.Server) return;
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
@@ -313,7 +313,15 @@ namespace WildFarming.Ecosystem
 
                 registry.Add(entry);
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
-                SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
+                if (!playerPlaced)
+                    SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
+
+                // #region agent log
+                if (cfg.VerboseLogging && requirements?.Species == "lupine")
+                    DebugSession.Log("C", "EcosystemSystem.cs:RegisterReproducer",
+                        "lupine registered",
+                        $"{{\"pos\":\"{origin}\",\"playerPlaced\":{playerPlaced.ToString().ToLower()},\"nextAttempt\":{nextAttempt:F2},\"nextStress\":{entry.NextStressCheckAt:F2},\"now\":{now:F2}}}");
+                // #endregion
 
                 if (cfg.VerboseLogging && cfg.ReproduceDebug)
                 {
@@ -356,6 +364,26 @@ namespace WildFarming.Ecosystem
             if (blockSel?.Position == null || api == null) return;
             Block oldGround = oldBlockId > 0 ? api.World.Blocks[oldBlockId] : null;
             ScheduleFarmlandBridgeCheck(blockSel.Position, oldGround);
+            TryRegisterPlacedBlock(blockSel.Position);
+        }
+
+        void TryRegisterPlacedBlock(BlockPos pos)
+        {
+            if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
+            if (registry.Contains(pos)) return;
+
+            Block block = api.World.BlockAccessor.GetBlock(pos);
+            if (block == null || block.Id == 0) return;
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+            {
+                if (EcosystemConfig.Loaded.VerboseLogging)
+                    api.Logger.Notification("[EcoReg] Block {0} at {1} NOT a participant", block.Code?.Path, pos);
+                return;
+            }
+
+            RegisterReproducer(pos, participant, playerPlaced: true);
+            if (EcosystemConfig.Loaded.VerboseLogging)
+                api.Logger.Notification("[EcoReg] Registered placed block {0} at {1}", block.Code?.Path, pos);
         }
 
         void OnDidUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
@@ -482,15 +510,21 @@ namespace WildFarming.Ecosystem
 
                     if (req.Habitat != EcologyHabitat.Terrestrial) return false;
 
+                    if (cfg.VerboseLogging)
+                        api.Logger.Notification("[EcoStress] Checking {0} at {1}, species={2}",
+                            entry.Origin, now, req.Species);
+
                     if (cfg.EnableSymbiosis
                         && !string.IsNullOrEmpty(req.Species)
                         && FloraSymbiosis.TryGetRule(req.Species, out _)
                         && !FloraSymbiosis.HasRequiredHost(acc, entry.Origin, req.Species))
                     {
+                        if (cfg.VerboseLogging) api.Logger.Notification("[EcoStress] {0} FAIL symbiosis", req.Species);
                         entry.FailedSurvivalChecks++;
                     }
                     else if (!CanSurviveAt(entry.Origin, req))
                     {
+                        if (cfg.VerboseLogging) api.Logger.Notification("[EcoStress] {0} FAIL CanSurviveAt", req.Species);
                         entry.FailedSurvivalChecks++;
                     }
                     else if (cfg.UseNicheContext
@@ -499,10 +533,12 @@ namespace WildFarming.Ecosystem
                         && EcologySpreadFitness.NicheMultiplierFor(req, Niche.GetNiche(api, entry.Origin))
                             < cfg.NicheStressThreshold)
                     {
+                        if (cfg.VerboseLogging) api.Logger.Notification("[EcoStress] {0} FAIL niche", req.Species);
                         entry.FailedSurvivalChecks++;
                     }
                     else if (SeasonEcology.RollSeasonalStressFailure(api, entry.Origin, req))
                     {
+                        if (cfg.VerboseLogging) api.Logger.Notification("[EcoStress] {0} FAIL seasonal", req.Species);
                         entry.FailedSurvivalChecks++;
                     }
                     else if (trampling
@@ -524,6 +560,9 @@ namespace WildFarming.Ecosystem
                         if (entry.TramplingExposure > 0) entry.TramplingExposure--;
                         entry.FailedSurvivalChecks = 0;
                         entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                        if (cfg.VerboseLogging) api.Logger.Notification("[EcoStress] {0} HEALTHY → fallow check", req.Species);
+                        if (cfg.EnableFallowRestoration)
+                            FallowRestoration.TryRestoreNear(api, entry.Origin);
                         return false;
                     }
 
@@ -577,31 +616,6 @@ namespace WildFarming.Ecosystem
                 tickBudgetWatch.Stop();
             }
 
-            if (cfg.EnableFallowRestoration && now >= nextFallowCheckHours)
-            {
-                ProcessFallow(now, cfg);
-            }
-        }
-
-        void ProcessFallow(double now, EcosystemConfig cfg)
-        {
-            int count = registry.Count;
-            if (count == 0) return;
-
-            int checksThisTick = System.Math.Min(4, count);
-            for (int i = 0; i < checksThisTick; i++)
-            {
-                if (fallowRoundRobin >= count) fallowRoundRobin = 0;
-                var entry = registry.GetEntry(fallowRoundRobin);
-                fallowRoundRobin++;
-
-                if (entry == null || entry.Requirements == null) continue;
-                if (entry.Requirements.Habitat != EcologyHabitat.Terrestrial) continue;
-
-                FallowRestoration.TryRestoreNear(api, entry.Origin);
-            }
-
-            nextFallowCheckHours = now + cfg.FallowCheckIntervalHours / System.Math.Max(1, count / 100.0);
         }
 
         void OnReproduceTick(float dt)
@@ -633,6 +647,10 @@ namespace WildFarming.Ecosystem
 
             IBlockAccessor acc = api.World.BlockAccessor;
 
+            // #region agent log
+            bool lupineLogged = !cfg.VerboseLogging;
+            // #endregion
+
             registry.ProcessDue(
                 now,
                 cfg.MaxReproduceAttemptsPerTick,
@@ -643,6 +661,17 @@ namespace WildFarming.Ecosystem
                     {
                         return true;
                     }
+
+                    // #region agent log
+                    if (!lupineLogged && entry.Requirements?.Species == "lupine")
+                    {
+                        lupineLogged = true;
+                        Block dbgBlock = acc.GetBlock(entry.Origin);
+                        DebugSession.Log("C,E", "EcosystemSystem.cs:ProcessDue",
+                            "lupine reproduce tick",
+                            $"{{\"pos\":\"{entry.Origin}\",\"now\":{now:F2},\"nextAttempt\":{entry.NextAttemptHours:F2},\"blockId\":{dbgBlock?.Id ?? 0},\"isMature\":{entry.IsMatureBlock(dbgBlock).ToString().ToLower()}}}");
+                    }
+                    // #endregion
 
                     Block block = acc.GetBlock(entry.Origin);
                     if (block.Id == 0 || !entry.IsMatureBlock(block))

@@ -50,12 +50,8 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (!snap.Ground.SideSolid[BlockFacing.UP.Index])
-            {
-                return false;
-            }
-
-            if (WildSoilGroundRules.IsFarmland(snap.Ground))
+            bool isFarmland = WildSoilGroundRules.IsFarmland(snap.Ground);
+            if (!isFarmland && !snap.Ground.SideSolid[BlockFacing.UP.Index])
             {
                 return false;
             }
@@ -71,8 +67,9 @@ namespace WildFarming.Ecosystem
             }
 
             SoilKind groundKinds = SoilClassification.Classify(snap.Ground);
+            int fertility = isFarmland ? 150 : (int)snap.Ground.Fertility;
             if (!SoilClassification.MeetsSoilRequirements(
-                requirements, groundKinds, (int)snap.Ground.Fertility))
+                requirements, groundKinds, fertility))
             {
                 return false;
             }

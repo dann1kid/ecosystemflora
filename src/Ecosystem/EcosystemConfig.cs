@@ -164,9 +164,6 @@ namespace WildFarming.Ecosystem
         /// <summary>Multiplier on fallow nutrient restoration speed.</summary>
         public float FallowRestorationStrength { get; set; } = 1f;
 
-        /// <summary>Game hours between fallow restoration checks per plant.</summary>
-        public double FallowCheckIntervalHours { get; set; } = 48;
-
         /// <summary>Do not spread, displace, stress-remove, or change soil inside land claims.</summary>
         public bool RespectLandClaims { get; set; } = true;
 

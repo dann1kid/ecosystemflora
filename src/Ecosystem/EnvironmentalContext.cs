@@ -116,15 +116,26 @@ namespace WildFarming.Ecosystem
 
             bool shallowWater = ComputeWaterRequirement(acc, plantPos, snap.Ground, requirements);
 
+            int groundFertility = (int)snap.Ground.Fertility;
+            SoilKind soilKinds = SoilClassification.Classify(snap.Ground);
+            bool groundSolid = snap.Ground.SideSolid[BlockFacing.UP.Index];
+
+            bool isFarmland = WildSoilGroundRules.IsFarmland(snap.Ground);
+            if (isFarmland)
+            {
+                groundFertility = 150;
+                groundSolid = true;
+            }
+
             return new EnvironmentalContext(
                 plantPos,
                 0f,
                 worldgenRainfall,
                 localForestCover,
                 false,
-                (int)snap.Ground.Fertility,
-                SoilClassification.Classify(snap.Ground),
-                snap.Ground.SideSolid[BlockFacing.UP.Index],
+                groundFertility,
+                soilKinds,
+                groundSolid,
                 snap.Space.Replaceable,
                 hasClimate,
                 snap.TouchesFluid,

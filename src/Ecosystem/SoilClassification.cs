@@ -11,7 +11,11 @@ namespace WildFarming.Ecosystem
             string path = ground.Code?.Path ?? "";
             SoilKind kinds = SoilKind.None;
 
-            if (path.StartsWith("soil-high") || path.StartsWith("soil-compost"))
+            if (path.StartsWith("farmland"))
+            {
+                kinds |= SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert;
+            }
+            else if (path.StartsWith("soil-high") || path.StartsWith("soil-compost"))
             {
                 kinds |= SoilKind.HighFert;
             }
@@ -67,7 +71,7 @@ namespace WildFarming.Ecosystem
             return kinds;
         }
 
-        public static bool MeetsSoilRequirements(PlantRequirements req, SoilKind groundKinds, int groundFertility)
+        public static bool MeetsSoilRequirements(PlantRequirements req, SoilKind groundKinds, int groundFertility, bool skipMaxFertility = false)
         {
             if (req == null) return true;
 
@@ -77,12 +81,12 @@ namespace WildFarming.Ecosystem
             }
 
             if (req.MinGroundFertility > 0 && groundFertility < req.MinGroundFertility) return false;
-            if (req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility) return false;
+            if (!skipMaxFertility && req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility) return false;
 
             return true;
         }
 
-        public static string DescribeSoilFailure(PlantRequirements req, SoilKind groundKinds, int groundFertility)
+        public static string DescribeSoilFailure(PlantRequirements req, SoilKind groundKinds, int groundFertility, bool skipMaxFertility = false)
         {
             if (req == null) return null;
 
@@ -96,7 +100,7 @@ namespace WildFarming.Ecosystem
                 return "Soil not fertile enough (" + groundFertility + " < " + req.MinGroundFertility + ").";
             }
 
-            if (req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility)
+            if (!skipMaxFertility && req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility)
             {
                 return "Soil too rich (" + groundFertility + " > " + req.MaxGroundFertility + ").";
             }

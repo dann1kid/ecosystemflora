@@ -65,12 +65,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (!ground.SideSolid[BlockFacing.UP.Index])
-            {
-                return false;
-            }
-
-            if (WildSoilGroundRules.IsFarmland(ground))
+            if (!ground.SideSolid[BlockFacing.UP.Index] && !WildSoilGroundRules.IsFarmland(ground))
             {
                 return false;
             }

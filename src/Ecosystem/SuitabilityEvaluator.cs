@@ -6,9 +6,22 @@ namespace WildFarming.Ecosystem
 
         public static bool MeetsSurvivalRequirements(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
+            // #region agent log
+            if (EcosystemConfig.Loaded.VerboseLogging && req?.Species == "lupine")
+            {
+                string reason = "pass";
+                if (!ctx.HasClimate) reason = "no_climate";
+                else if (!ctx.GroundSideSolid) reason = "no_solid_ground";
+                else if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) reason = "soil_fail";
+                else if (harshClimate && !ctx.InGreenhouse && (ctx.Temperature < req.MinTemp || ctx.Temperature > req.MaxTemp)) reason = "temp_fail";
+                DebugSession.Log("A,B", "SuitabilityEvaluator.cs:MeetsSurvival", "lupine survival check",
+                    $"{{\"reason\":\"{reason}\",\"solidGround\":{ctx.GroundSideSolid.ToString().ToLower()},\"soilKind\":\"{ctx.GroundSoilKinds}\",\"fertility\":{ctx.GroundFertility},\"temp\":{ctx.Temperature},\"rain\":{ctx.WorldgenRainfall},\"forest\":{ctx.LocalForestCover},\"reqSoil\":\"{req.AllowedSoilKinds}\",\"reqMinFert\":{req.MinGroundFertility},\"reqMaxFert\":{req.MaxGroundFertility}}}");
+            }
+            // #endregion
+
             if (!ctx.HasClimate) return false;
             if (!ctx.GroundSideSolid) return false;
-            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
 
             if (harshClimate && !ctx.InGreenhouse)
             {
@@ -33,7 +46,7 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return "No climate data.";
             if (!ctx.GroundSideSolid) return "No solid ground below.";
-            string soil = SoilClassification.DescribeSoilFailure(req, ctx.GroundSoilKinds, ctx.GroundFertility);
+            string soil = SoilClassification.DescribeSoilFailure(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true);
             if (soil != null) return soil;
 
             if (harshClimate && !ctx.InGreenhouse)

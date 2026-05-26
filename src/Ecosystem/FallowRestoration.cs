@@ -5,12 +5,11 @@ using Vintagestory.API.MathTools;
 namespace WildFarming.Ecosystem
 {
     /// <summary>
-    /// Empty farmland near wild ecosystem plants slowly regains nutrients (fallow process).
-    /// Called periodically from the stress tick — iterates nearby farmland for each checked plant.
+    /// Empty farmland directly below a wild plant slowly regains nutrients (fallow process).
+    /// Called during stress checks for healthy plants. Cost: 1 GetBlock per plant (early-out).
     /// </summary>
     internal static class FallowRestoration
     {
-        const int SearchRadius = 2;
         const float MaxNutrientPerCheck = 2.5f;
         const float BaseNPerCheck = 1.5f;
         const float BasePPerCheck = 1.0f;
@@ -22,53 +21,57 @@ namespace WildFarming.Ecosystem
         {
             if (api == null || plantPos == null) return;
 
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!cfg.EnableFallowRestoration) return;
-
             IBlockAccessor acc = api.World.BlockAccessor;
+
+            scratchPos.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
+            Block ground = acc.GetBlock(scratchPos);
+
+            if (EcosystemConfig.Loaded.VerboseLogging)
+                api.Logger.Notification("[EcoFallow] Check beneath {0}: ground={1}, isFarmland={2}",
+                    plantPos, ground?.Code?.Path ?? "null", WildSoilGroundRules.IsFarmland(ground));
+
+            if (!WildSoilGroundRules.IsFarmland(ground)) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (cfg.RespectLandClaims && !LandClaimGuard.AllowsEcologyChange(api, scratchPos))
+                return;
+
+            BlockEntity be = acc.GetBlockEntity(scratchPos);
+            if (be is not IFarmlandBlockEntity farmland) return;
+            if (farmland.Nutrients == null || farmland.Nutrients.Length < 3) return;
+
+            if (HasCrop(acc)) return;
+
             float strength = cfg.FallowRestorationStrength;
+            PlantSoilRole role = ResolvePlantRole(acc, plantPos);
 
-            string species = null;
-            Block plantBlock = acc.GetBlock(plantPos);
-            if (plantBlock != null && plantBlock.Id != 0)
-            {
-                species = PlantCodeHelper.GetEcologySpecies(plantBlock.Code);
-            }
+            ApplyFallowBonus(farmland.Nutrients, role, strength);
+            be.MarkDirty(true);
 
-            PlantSoilRole role = PlantSoilRole.MeadowPerennial;
-            if (!string.IsNullOrEmpty(species))
-            {
-                WildSpeciesSoilSuccession.TryGetRole(species, out role);
-            }
-
-            for (int dx = -SearchRadius; dx <= SearchRadius; dx++)
-            {
-                for (int dz = -SearchRadius; dz <= SearchRadius; dz++)
-                {
-                    scratchPos.Set(plantPos.X + dx, plantPos.Y - 1, plantPos.Z + dz);
-
-                    Block ground = acc.GetBlock(scratchPos);
-                    if (!WildSoilGroundRules.IsFarmland(ground)) continue;
-
-                    if (cfg.RespectLandClaims && !LandClaimGuard.AllowsEcologyChange(api, scratchPos))
-                        continue;
-
-                    BlockEntity be = acc.GetBlockEntity(scratchPos);
-                    if (be is not IFarmlandBlockEntity farmland) continue;
-                    if (farmland.Nutrients == null || farmland.Nutrients.Length < 3) continue;
-
-                    if (HasCrop(acc, scratchPos)) continue;
-
-                    ApplyFallowBonus(farmland.Nutrients, role, strength);
-
-                    be.MarkDirty(true);
-                }
-            }
+            if (cfg.VerboseLogging)
+                api.Logger.Notification("[EcoFallow] Applied N+{0:F1} P+{1:F1} K+{2:F1} to farmland at {3}",
+                    ApplyN(role, strength), ApplyP(role, strength), ApplyK(role, strength), scratchPos);
         }
 
-        static bool HasCrop(IBlockAccessor acc, BlockPos farmlandPos)
+        static float ApplyN(PlantSoilRole role, float s) => role == PlantSoilRole.NitrogenFixer ? 2.5f * s : BaseNPerCheck * s;
+        static float ApplyP(PlantSoilRole role, float s) => BasePPerCheck * s;
+        static float ApplyK(PlantSoilRole role, float s) => BaseKPerCheck * s;
+
+        static PlantSoilRole ResolvePlantRole(IBlockAccessor acc, BlockPos plantPos)
         {
-            scratchPos.Set(farmlandPos.X, farmlandPos.Y + 1, farmlandPos.Z);
+            Block plantBlock = acc.GetBlock(plantPos);
+            if (plantBlock == null || plantBlock.Id == 0) return PlantSoilRole.MeadowPerennial;
+
+            string species = PlantCodeHelper.GetEcologySpecies(plantBlock.Code);
+            if (string.IsNullOrEmpty(species)) return PlantSoilRole.MeadowPerennial;
+
+            WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role);
+            return role;
+        }
+
+        static bool HasCrop(IBlockAccessor acc)
+        {
+            scratchPos.Up();
             Block above = acc.GetBlock(scratchPos);
             if (above == null || above.Id == 0) return false;
             return above.CropProps != null;
