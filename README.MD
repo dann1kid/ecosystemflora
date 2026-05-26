@@ -70,7 +70,7 @@ Key toggles:
 2. Place the `ecosystemflora` folder into your `Mods` directory
 3. Start the game — default settings work well for most worlds
 
-**Requirements:** Vintage Story 1.21+
+**Requirements:** Vintage Story 1.22+
 **Do not** run alongside [Wild Farming Revival](https://mods.vintagestory.at/wildfarmingrevival).
 
 ## For developers

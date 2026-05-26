@@ -45,32 +45,29 @@ namespace WildFarming.Ecosystem
 
         static void ApplyNatural(EcosystemConfig cfg)
         {
-            cfg.ReproduceAttemptsPerYear = 42;
-            cfg.ReproduceChance = 0.35f;
-            cfg.MinFitness = 0.5f;
+            cfg.ReproduceAttemptsPerYear = 72;
+            cfg.ReproduceChance = 0.5f;
+            cfg.MinFitness = 0.45f;
             cfg.DefaultSameSpeciesSpacing = 1;
             cfg.DefaultOtherSpeciesSpacing = 1;
-            cfg.MaxReproduceAttemptsPerTick = 32;
         }
 
         static void ApplyLush(EcosystemConfig cfg)
         {
-            cfg.ReproduceAttemptsPerYear = 60;
-            cfg.ReproduceChance = 0.45f;
-            cfg.MinFitness = 0.4f;
+            cfg.ReproduceAttemptsPerYear = 120;
+            cfg.ReproduceChance = 0.65f;
+            cfg.MinFitness = 0.35f;
             cfg.DefaultSameSpeciesSpacing = 1;
             cfg.DefaultOtherSpeciesSpacing = 1;
-            cfg.MaxReproduceAttemptsPerTick = 48;
         }
 
         static void ApplySparse(EcosystemConfig cfg)
         {
-            cfg.ReproduceAttemptsPerYear = 24;
-            cfg.ReproduceChance = 0.2f;
-            cfg.MinFitness = 0.65f;
+            cfg.ReproduceAttemptsPerYear = 36;
+            cfg.ReproduceChance = 0.3f;
+            cfg.MinFitness = 0.6f;
             cfg.DefaultSameSpeciesSpacing = 2;
             cfg.DefaultOtherSpeciesSpacing = 2;
-            cfg.MaxReproduceAttemptsPerTick = 16;
         }
     }
 }

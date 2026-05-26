@@ -15,6 +15,7 @@ namespace WildFarming.Ecosystem
         readonly Queue<Vec2i> pendingChunkScans = new Queue<Vec2i>();
 
         long reproduceListenerId;
+        long stressListenerId;
         long chunkScanListenerId;
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
@@ -87,6 +88,9 @@ namespace WildFarming.Ecosystem
             ColumnCache = new EnvironmentalColumnCache();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
+            int stressInterval = EcosystemConfig.Loaded.StressTickIntervalMs > 0
+                ? EcosystemConfig.Loaded.StressTickIntervalMs : 6000;
+            stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 2000);
 
             if (api is ICoreServerAPI sapi)
@@ -151,11 +155,13 @@ namespace WildFarming.Ecosystem
             if (api != null)
             {
                 if (reproduceListenerId != 0) api.Event.UnregisterGameTickListener(reproduceListenerId);
+                if (stressListenerId != 0) api.Event.UnregisterGameTickListener(stressListenerId);
                 if (chunkScanListenerId != 0) api.Event.UnregisterGameTickListener(chunkScanListenerId);
             }
 
             pendingChunkScans.Clear();
             reproduceListenerId = 0;
+            stressListenerId = 0;
             chunkScanListenerId = 0;
             chunkLoadedHandler = null;
             chunkUnloadedHandler = null;
@@ -450,7 +456,7 @@ namespace WildFarming.Ecosystem
         readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
         readonly PlayerProximity.Snapshot tramplingSnapshot = new PlayerProximity.Snapshot();
 
-        void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks)
+        void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks, long budgetTicks = 0)
         {
             if (maxChecks <= 0 || api == null || !EcosystemConfig.Loaded.EnableStressDeath) return;
 
@@ -466,6 +472,7 @@ namespace WildFarming.Ecosystem
                 maxChecks,
                 entry =>
                 {
+                    if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) return false;
                     if (now < entry.NextStressCheckAt) return false;
 
                     PlantRequirements req = entry.Requirements;
@@ -547,6 +554,26 @@ namespace WildFarming.Ecosystem
             return activeChunkScratch;
         }
 
+        void OnStressTick(float dt)
+        {
+            if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
+            if (!EcosystemConfig.Loaded.EnableStressDeath) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            double now = api.World.Calendar.TotalHours;
+            ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
+            if (activeChunks != null && activeChunks.Count == 0) return;
+
+            int stressBudgetMs = cfg.StressBudgetMs > 0 ? cfg.StressBudgetMs : cfg.TickBudgetMs;
+            long budgetTicks = stressBudgetMs > 0
+                ? stressBudgetMs * Stopwatch.Frequency / 1000
+                : 0;
+
+            tickBudgetWatch.Restart();
+            ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks, budgetTicks);
+            tickBudgetWatch.Stop();
+        }
+
         void OnReproduceTick(float dt)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
@@ -565,14 +592,6 @@ namespace WildFarming.Ecosystem
                 : 0;
 
             tickBudgetWatch.Restart();
-
-            ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks);
-
-            if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
-            {
-                tickBudgetWatch.Stop();
-                return;
-            }
 
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
 

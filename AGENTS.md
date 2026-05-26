@@ -18,7 +18,7 @@ Quick constraints:
 - **Seasonality** — `WildSpeciesSeason` profiles; `SeasonEcology` multipliers; winter/fall stress.
 - Do **not** expand living trees, vines, mushrooms, or termites unless the user asks.
 - BE: `src/BlockEntity/EcoSystemLife.cs`; new logic under `src/Ecosystem/`.
-- Target: VS **1.21+**, **.NET 10**, `wildfarming.sln`.
+- Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
 - Tests: `tests/WildFarming.Tests.csproj` (xUnit, 46 tests).
 - Do **not** run alongside **wildfarmingrevival**.
 

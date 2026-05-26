@@ -150,7 +150,7 @@ All settings work together — presets give a good baseline, toggles let you dis
 
 ### Requirements
 
-- Vintage Story **1.21+**
+- Vintage Story **1.22+**
 - Do **not** run alongside Wild Farming Revival
 
 ### Credits

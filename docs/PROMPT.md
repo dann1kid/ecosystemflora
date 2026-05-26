@@ -33,7 +33,7 @@ Habitat:
 Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
 Тесты: tests/WildFarming.Tests.csproj (xUnit, 46 тестов).
 
-Порт: VS 1.21+, .NET 10. Версия: 2.5.0. Стадия: Ecosystem v2.3 — см. docs/PROGRESS.md.
+Порт: VS 1.22+, .NET 10. Версия: 2.5.0. Стадия: Ecosystem v2.3 — см. docs/PROGRESS.md.
 
 Backlog (post-release): chunk-scan без EcoSystemLife BE; handbook/dominant species (UX); залежь; HoldStrength tuning. Листва зимой — отложено (визуал, не экосистема).
 

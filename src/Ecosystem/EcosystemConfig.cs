@@ -21,15 +21,15 @@ namespace WildFarming.Ecosystem
 
         public int ReproduceVerticalSearch { get; set; } = 5;
 
-        public float ReproduceChance { get; set; } = 0.25f;
+        public float ReproduceChance { get; set; } = 0.5f;
 
-        public float MinFitness { get; set; } = 0.5f;
+        public float MinFitness { get; set; } = 0.45f;
 
         /// <summary>Legacy: hours between attempts when <see cref="UseCalendarScaledSpread"/> is false.</summary>
         public double ReproduceIntervalHours { get; set; } = 24;
 
         /// <summary>Spread attempts per in-game year at SpreadRate=1 (scales with DaysPerYear).</summary>
-        public double ReproduceAttemptsPerYear { get; set; } = 36;
+        public double ReproduceAttemptsPerYear { get; set; } = 72;
 
         /// <summary>Use calendar DaysPerYear/HoursPerDay instead of fixed hours.</summary>
         public bool UseCalendarScaledSpread { get; set; } = true;
@@ -57,7 +57,7 @@ namespace WildFarming.Ecosystem
         public bool VerboseLogging { get; set; } = false;
 
         /// <summary>Max reproduction attempts per server tick (spreads CPU load).</summary>
-        public int MaxReproduceAttemptsPerTick { get; set; } = 32;
+        public int MaxReproduceAttemptsPerTick { get; set; } = 64;
 
         /// <summary>Chunk columns to scan per tick after load (deferred registration).</summary>
         public int MaxChunkColumnsScannedPerTick { get; set; } = 3;
@@ -65,8 +65,14 @@ namespace WildFarming.Ecosystem
         /// <summary>Cap flower registrations per tick while draining the chunk queue.</summary>
         public int MaxRegistrationsPerTick { get; set; } = 192;
 
-        /// <summary>Max milliseconds per game tick for ecosystem processing. 0 = no limit.</summary>
-        public int TickBudgetMs { get; set; } = 5;
+        /// <summary>Max milliseconds per game tick for spread processing. 0 = no limit.</summary>
+        public int TickBudgetMs { get; set; } = 30;
+
+        /// <summary>Max milliseconds per stress tick. Defaults to <see cref="TickBudgetMs"/> when 0.</summary>
+        public int StressBudgetMs { get; set; } = 0;
+
+        /// <summary>Interval (ms) between stress-check ticks. Higher = less CPU for stress, slower die-off.</summary>
+        public int StressTickIntervalMs { get; set; } = 6000;
 
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;
