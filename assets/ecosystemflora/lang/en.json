@@ -1,4 +1,62 @@
 {
-	"guide-title" : "Ecosystem - Flora",
-	"guide-text" : "<strong>Ecosystem - Flora</strong>\n\nA living ecosystem layer for Vintage Story. Wild plants spread, compete, and respond to their environment — all using vanilla blocks.\n\n<strong>Plants in the ecosystem</strong>\n• <strong>Meadow flowers</strong> (20 species) — daisies, cornflowers, poppies, catmint, heather, and more\n• <strong>Tallgrass</strong> — fills in as a grass matrix under flowers\n• <strong>Ferns</strong> (5 species) — forest understory; prefer shade and moisture\n• <strong>Berry bushes</strong> (10 wild species) — soil and forest edge preference\n• <strong>Trees</strong> (14 species) — mature trunks seed free saplings nearby\n• <strong>Reeds</strong> — cooper's reed and papyrus on gravel beds near water\n• <strong>Water lily</strong> — spreads across open water surfaces\n• <strong>Water crowfoot</strong> — underwater column plant, 2–8 blocks deep\n\n<strong>How spreading works</strong>\nMature plants periodically try to reproduce onto a nearby cell. Whether it succeeds depends on:\n• Climate — temperature and rainfall\n• Soil — fertility and type (forest floor, peat, sand, clay, gravel)\n• Light and moisture — shade under canopy, proximity to water\n• Forest density — counted from nearby tree trunks\n• Spacing — plants respect distance from same and other species\n\n<strong>Competition</strong>\nPlants don't just fill empty space — they compete. A stronger species can displace a weaker one from an occupied cell. Plants stuck in the wrong niche (too dry, wrong soil, not enough light) accumulate stress and eventually die.\n\n<strong>Symbiosis</strong>\nForest understory — ferns, lily of the valley, some berries — depends on nearby trees. Cut the tree, and its understory gradually withers.\n\n<strong>Seasons</strong>\n• <strong>Spring</strong> — boosted spread; meadows bloom early\n• <strong>Summer</strong> — steady growth\n• <strong>Fall</strong> — annual flowers die off; perennials slow down\n• <strong>Winter</strong> — most plants go dormant; annuals die, hardy species survive\n\n<strong>Land claims</strong>\nWild spread, displacement, and stress death are blocked inside land claims. Your gardens and farms stay safe.\n\n<strong>Configuration</strong>\nSet <em>BalancePreset</em> to <em>natural</em> (default), <em>lush</em>, or <em>sparse</em> to tune spread intensity. All features — seasons, competition, symbiosis, niche stress — can be toggled individually in the config file.\n\n<strong>Removing the mod</strong>\nEvery block placed by the mod is a vanilla game block. Removing the mod leaves your world completely intact."
+	"game:handbook-category-ecosystemflora:ecology": "Ecosystem - Flora",
+	"handbook-category-ecosystemflora:ecology": "Ecosystem - Flora",
+
+	"ecosystemflora:overview-title": "Ecosystem - Flora: Overview",
+	"ecosystemflora:overview-text": "<strong>Ecosystem - Flora</strong>\n\nA living ecosystem layer for Vintage Story. Wild plants spread, compete, and respond to their environment — all using vanilla blocks.\n\n<strong>Core mechanics</strong>\n• <strong>Spread</strong> — mature plants reproduce onto nearby cells based on fitness\n• <strong>Competition</strong> — stronger species displace weaker ones from occupied cells\n• <strong>Stress death</strong> — plants in wrong niche accumulate stress and die\n• <strong>Symbiosis</strong> — understory depends on nearby trees; cut the tree and it withers\n• <strong>Seasons</strong> — spring boost, fall die-off, winter dormancy\n• <strong>Niche</strong> — soil type, moisture, light level, forest context\n\n<strong>What determines spread success</strong>\n• Climate — temperature and rainfall from worldgen\n• Soil — fertility and kind (forest floor, peat, sand, clay, gravel)\n• Light and moisture — shade under canopy, proximity to water\n• Forest density — counted from nearby tree trunks (not worldgen)\n• Spacing — minimum distance between same and other species\n\n<strong>Land claims</strong>\nAll ecosystem actions are blocked inside land claims.\n\n<strong>Removing the mod</strong>\nEvery block is vanilla. Removing the mod leaves your world intact.\n\n<strong>Configuration</strong>\nPresets: <em>natural</em> (default), <em>lush</em>, <em>sparse</em>. All features can be toggled independently.",
+
+	"ecosystemflora:flowers-title": "Ecosystem: Meadow Flowers",
+	"ecosystemflora:flowers-text": "<strong>Meadow Flowers</strong> (21 species)\n\nFlowers form the backbone of meadow ecology. They compete for open ground and respond to climate and soil.\n\n<strong>Fast colonizers</strong> (spread rate 1.7–2.8, weak hold)\n• Horsetail — wide climate tolerance, very fast, displaced by climax species\n• Heather, Western Gorse — open meadows, poor soils\n• Red Top Grass — temperate open meadows\n• Mugwort — warm climates, quick colonizer\n• Cowparsley — moderate colonizer, meadows and edges\n• Lupine — nitrogen fixer, improves soil over time\n\n<strong>Steady meadow</strong> (spread rate 1.0–1.6, moderate hold)\n• Catmint — partial shade to open, edges\n• Cornflower — dry to mesic meadows, classic wildflower\n• Wild Daisy — open meadows, moderate hold\n• Forget-me-not — moist meadows\n• Woad — dry tolerant, wide climate\n• Bluebell — forest specialist, needs canopy\n\n<strong>Slow / localized</strong> (spread rate 0.3–0.65, strong hold)\n• Daffodil — warm, holds well once established\n• Ghost Pipe (white, pink, red) — cold forests, very slow\n• Orange Mallow — hot and dry, rare\n• Edelweiss — cold mountain edge, rare\n• Golden Poppy — narrow hot climate, very rare\n\n<strong>Forest species</strong>\nBluebell, Lily of the Valley, Ghost Pipes thrive in forest interior with strong hold and symbiosis dependency on nearby trees.",
+
+	"ecosystemflora:ferns-title": "Ecosystem: Ferns",
+	"ecosystemflora:ferns-text": "<strong>Ferns</strong> (5 species)\n\nFerns occupy the forest edge and understory. They prefer shade, moisture, and depend on nearby trees for survival.\n\n<strong>Species</strong>\n• <strong>Eagle Fern</strong> — classic edge fern, strong context bonus (x2.5), spread rate 1.4\n• <strong>Cinnamon Fern</strong> — forest edge, moderate speed\n• <strong>Deer Fern</strong> — similar to cinnamon fern\n• <strong>Hart's Tongue</strong> — slower, prefers deep shade\n• <strong>Tall Fern</strong> — 2 blocks tall, forest edge\n\n<strong>Behavior</strong>\n• Context affinity: <em>Edge</em> — bonus near forest borders\n• Symbiosis: depend on nearby trees (log-grown within 2–4 blocks)\n• Niche: prefer <em>Shade</em> to <em>Partial</em> light, <em>Mesic</em> to <em>Wet</em> moisture\n• When their host tree is cut, ferns accumulate stress and die\n• Minimum sunlight requirement: 7 (under canopy)",
+
+	"ecosystemflora:trees-title": "Ecosystem: Trees",
+	"ecosystemflora:trees-text": "<strong>Trees</strong> (14 species)\n\nMature trees (log-grown trunks) spread free saplings nearby. Growth from sapling to mature tree uses vanilla treegen — the mod only places the sapling.\n\n<strong>Supported species</strong>\nOak, Pine, Birch, Maple, Acacia, Kapok, Walnut, Larch, Redwood, Ebony, Purpleheart, Baldcypress, Mangrove, Joshua\n\n<strong>Behavior</strong>\n• Parent: base of a log-grown column (detected by chunk scan)\n• Offspring: sapling-{wood}-free placed on soil with sunlight ≥ 11\n• Spread radius follows per-species settings\n• Climate requirements (temperature, rainfall) match worldgen\n• Saplings may grow or die naturally — only vanilla treegen decides\n• No mod blocks in the world; removing the mod = normal logs and saplings\n\n<strong>Not included</strong>\nBamboo and aged wood variants are excluded. No living-trunk mechanics.",
+
+	"ecosystemflora:berries-title": "Ecosystem: Berry Bushes",
+	"ecosystemflora:berries-text": "<strong>Berry Bushes</strong> (10 wild species)\n\nWild berry bushes spread slowly and prefer forest edges with appropriate soil.\n\n<strong>Species</strong>\n• Blueberry, Blackberry, Black Currant, Red Currant, White Currant\n• Cranberry, Strawberry, Beautyberry, Cloudberry, Lingonberry\n\n<strong>Behavior</strong>\n• Context affinity: mostly <em>Edge</em> (bonus at forest borders)\n• Soil: prefer forest floor and medium-fertility soils\n• LocalForestCover: need nearby trees for optimal fitness\n• Slow spread rate (0.5–0.8), strong hold once established\n• Strawberry is the exception: open meadow, fast but weak hold\n\n<strong>Soil succession</strong>\nBerry bushes contribute to soil enrichment over their lifetime. When they die naturally, they improve the soil tier beneath them.",
+
+	"ecosystemflora:aquatic-title": "Ecosystem: Aquatic Flora",
+	"ecosystemflora:aquatic-text": "<strong>Aquatic Flora</strong> (4 species)\n\nWater plants have unique placement rules tied to substrate and water depth.\n\n<strong>Cooper's Reed (Cattail)</strong>\n• Shore: on muddygravel or gravel, water within 3 blocks (land-normal variant)\n• Shallow water: exactly 1 water block above gravel bed (water-normal variant)\n• No spread into deep water (2+ blocks)\n• No vertical stacking in same column\n\n<strong>Papyrus</strong>\n• Similar to reed but prefers warm climates\n• 2 blocks tall\n• Exactly 1 water layer above substrate\n\n<strong>Water Lily</strong>\n• Spreads across open water surfaces\n• Needs still water, no current obstructions\n\n<strong>Water Crowfoot</strong>\n• Underwater column plant: section blocks with tip/top (~35% flowering)\n• Water depth: 2–8 blocks above substrate\n• Registry tracks the column base block\n• Substrate: gravel or muddygravel",
+
+	"ecosystemflora:tuning-title": "Ecosystem: Configuration Guide",
+	"ecosystemflora:tuning-text": "<strong>Configuration</strong>\n\nConfig file: ModConfig/ecosystemflora.json\n\n<strong>Balance Presets</strong>\n• <em>natural</em> (default) — realistic spread, 72 attempts/year, 50% chance\n• <em>lush</em> — faster, greener meadows, 120 attempts/year\n• <em>sparse</em> — minimal, subtle changes, 36 attempts/year\n• <em>custom</em> — all values from your manual edits\n\n<strong>Key toggles</strong>\n• EcosystemEnabled — master switch\n• UseSeasonalEcology — seasonal spread multipliers\n• UseCellDisplacement — stronger displaces weaker\n• EnableStressDeath — wrong niche = eventual death\n• EnableSymbiosis — understory depends on trees\n• RespectLandClaims — no changes inside claims\n• EnableTrampling — player paths kill plants (off by default)\n\n<strong>Performance tuning</strong>\n• TickBudgetMs (default 30) — ms per tick for spread processing\n• StressTickIntervalMs (default 6000) — stress runs on a separate timer\n• MaxReproduceAttemptsPerTick (default 64) — cap per tick\n• OnlyActivateNearPlayers — only process near players (192 blocks)\n\n<strong>Tip</strong>\nDelete old config to get new defaults after an update. Or manually add new fields.",
+
+	"ecosystemflora:handbook-ecology-header": "Ecology",
+	"ecosystemflora:handbook-spread": "Spread rate: {0}",
+	"ecosystemflora:handbook-climate": "Temperature: {0}°C to {1}°C",
+	"ecosystemflora:handbook-rainfall": "Rainfall: {0} – {1}",
+	"ecosystemflora:handbook-forest": "Forest cover: {0} – {1}",
+	"ecosystemflora:handbook-context": "Preferred zone: {0}",
+	"ecosystemflora:handbook-hold": "Hold strength: {0}",
+	"ecosystemflora:handbook-season-spread": "Seasonal spread: Spring {0}x, Summer {1}x, Fall {2}x, Winter {3}x",
+	"ecosystemflora:handbook-winter-survival": "Winter survival: {0}%",
+	"ecosystemflora:handbook-niche-moisture": "Moisture preference: {0}",
+	"ecosystemflora:handbook-niche-light": "Light preference: {0}",
+	"ecosystemflora:handbook-symbiosis": "Depends on nearby trees (symbiosis)",
+
+	"ecosystemflora:spread-veryslow": "Very slow",
+	"ecosystemflora:spread-slow": "Slow",
+	"ecosystemflora:spread-moderate": "Moderate",
+	"ecosystemflora:spread-fast": "Fast",
+	"ecosystemflora:spread-veryfast": "Very fast",
+
+	"ecosystemflora:context-open": "Open meadow",
+	"ecosystemflora:context-edge": "Forest edge",
+	"ecosystemflora:context-forest": "Forest interior",
+
+	"ecosystemflora:hold-weak": "Weak (colonizer)",
+	"ecosystemflora:hold-moderate": "Moderate",
+	"ecosystemflora:hold-strong": "Strong (climax)",
+
+	"ecosystemflora:moisture-dry": "Dry",
+	"ecosystemflora:moisture-mesic": "Mesic",
+	"ecosystemflora:moisture-wet": "Wet",
+	"ecosystemflora:moisture-shoreline": "Shoreline",
+
+	"ecosystemflora:light-deepshade": "Deep shade",
+	"ecosystemflora:light-shade": "Shade",
+	"ecosystemflora:light-partial": "Partial",
+	"ecosystemflora:light-open": "Open"
 }

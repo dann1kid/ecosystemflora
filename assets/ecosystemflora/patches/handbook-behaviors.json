@@ -1,0 +1,72 @@
+[
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/flower/*",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/tallgrass",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/fern/*",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/tallfern",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/tallplant-coopersreed",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/tallplant-papyrus",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/waterlily",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/plant/aquatic-watercrowfoot",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/wood/fruitingbush/*",
+		"side": "client"
+	},
+	{
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"file": "game:blocktypes/wood/sapling/*",
+		"side": "client"
+	}
+]

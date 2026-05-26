@@ -1,5 +1,6 @@
 ﻿using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
+using WildFarming.Handbook;
 
 namespace WildFarming
 {
@@ -11,6 +12,7 @@ namespace WildFarming
         {
             base.StartPre(api);
             api.RegisterBlockEntityClass("EcoSystemLife", typeof(EcoSystemLifeBlockEntity));
+            api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
 
             if (api.Side == EnumAppSide.Server)
             {

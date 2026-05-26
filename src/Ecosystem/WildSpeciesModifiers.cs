@@ -97,6 +97,16 @@ namespace WildFarming.Ecosystem
             return new Profile(FloraContextAffinity.Forest, bonus, interiorPenalty, hold);
         }
 
+        public static bool TryGet(string species, out Profile profile)
+        {
+            profile = DefaultOpen;
+            if (string.IsNullOrEmpty(species)) return false;
+            if (BySpecies.TryGetValue(species, out profile)) return true;
+            if (WildFernEcology.TryGet(species, out _)) { profile = DefaultEdge; return true; }
+            if (WildTreeEcology.TryGet(species, out _)) { profile = DefaultForest; return true; }
+            return true;
+        }
+
         public static void ApplyTo(PlantRequirements req)
         {
             if (req == null || string.IsNullOrEmpty(req.Species)) return;
