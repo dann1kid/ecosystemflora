@@ -37,7 +37,7 @@ namespace WildFarming.Ecosystem
         public static bool MeetsPlacementRequirements(PlantRequirements req, IEnvironmentalContext ctx)
         {
             if (!ctx.GroundSideSolid) return false;
-            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
             if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
             return true;
         }
@@ -68,7 +68,7 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.HasClimate) return 0f;
             if (!ctx.GroundSideSolid) return 0f;
-            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return 0f;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return 0f;
             if (ctx.TouchesFluid) return 0f;
 
             float score = 1f;
@@ -104,7 +104,7 @@ namespace WildFarming.Ecosystem
             else
             {
                 if (!ctx.GroundSideSolid) return 0f;
-                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return 0f;
+                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return 0f;
                 if (ctx.TouchesFluid) return 0f;
             }
 
@@ -141,7 +141,7 @@ namespace WildFarming.Ecosystem
 
             if (ctx.TouchesFluid) return false;
             if (!ctx.GroundSideSolid) return false;
-            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
+            if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
 
             if (!occupied && ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
 
@@ -172,7 +172,7 @@ namespace WildFarming.Ecosystem
             {
                 if (ctx.TouchesFluid) return false;
                 if (!ctx.GroundSideSolid) return false;
-                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility)) return false;
+                if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
                 if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
             }
 
