@@ -45,6 +45,16 @@ Plants don't blindly fill every empty cell. They **compete**:
 - **Fall** — annual flowers die off; perennials slow down
 - **Winter** — most plants go dormant; annuals die, hardy species survive
 
+### Paths form where you walk
+
+Players trample nearby plants over time. Walk the same route often enough and flora dies off, soil degrades, and a natural path appears. Leave the area alone and the ecosystem will reclaim it.
+
+*Trampling is experimental and off by default — enable it in the config.*
+
+### Bonus: drygrass from flowers
+
+Cut any wildflower with a knife or scythe and it drops drygrass along with its usual drops — no need to hunt for plain grass.
+
 ### Your world stays safe
 
 Every block placed by the mod is a vanilla game block. **Removing the mod leaves your world completely intact** — no orphaned custom blocks, no broken chunks.
@@ -90,6 +100,9 @@ Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `ApplyWorldgenRainForest` | true | Respect worldgen rain/forest values |
 | `UseCalendarScaledSpread` | true | Scale intervals to DaysPerYear |
 | `UseSpeciesSpreadRates` | true | Per-species spread rates from ecology table |
+| `EnableTrampling` | false | Plants near player paths accumulate stress and die |
+| `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
+| `EnableFlowerDrygrass` | true | Flowers drop drygrass when cut with knife/scythe |
 
 #### Spread tuning (numbers)
 
@@ -113,15 +126,23 @@ Presets overwrite **6 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |
 | `FloraOpenInteriorPenalty` | 0.35 | Penalty for open-field species in forest |
 
+#### Trampling tuning
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `TramplingRadius` | 1 | Detection range around player (blocks) |
+| `TramplingStressThreshold` | 8 | Stress ticks before a trampled plant dies |
+
 #### Performance
 
 | Setting | Default | What it does |
 |---------|:-------:|-------------|
-| `MaxReproduceAttemptsPerTick` | 48 | Spread checks per server tick |
-| `MaxStressChecksPerTick` | 24 | Stress checks per tick |
+| `TickBudgetMs` | 5 | Hard cap on ms per server tick (0 = unlimited) |
+| `MaxReproduceAttemptsPerTick` | 32 | Spread checks per server tick |
+| `MaxStressChecksPerTick` | 16 | Stress checks per tick |
 | `MaxChunkColumnsScannedPerTick` | 3 | Chunk registration speed |
-| `MaxRegistrationsPerTick` | 256 | Plant registrations per tick |
-| `OnlyActivateNearPlayers` | false | Limit activity to player radius |
+| `MaxRegistrationsPerTick` | 192 | Plant registrations per tick |
+| `OnlyActivateNearPlayers` | true | Limit activity to player radius |
 | `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
 | `VerboseLogging` | false | Detailed server log output |
 

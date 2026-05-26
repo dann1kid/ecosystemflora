@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-25 (стадия: **Ecosystem v2.3**, версия `2.5.4`).
+Последнее обновление: 2026-05-26 (стадия: **Ecosystem v2.3**, версия `2.7.0`).
 
 ---
 
@@ -190,7 +190,7 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v2.3` (версия `2.5.0`).** Сезонность, ниша, perf audit, unit tests — готово к playtest перед ModDB.
+**Стадия: `Ecosystem v2.3` (версия `2.7.0`).** Сезонность, ниша, perf audit, unit tests — готово к playtest перед ModDB.
 
 | Компонент | Статус |
 |-----------|--------|
@@ -204,7 +204,7 @@ docs/
 | Unit tests (46 xUnit) | ✅ |
 | Legacy в сборке | ⏸ удалён |
 
-- `modinfo.json` — `2.5.0`, modid `ecosystemflora`, game `1.21.0`
+- `modinfo.json` — `2.7.0`, modid `ecosystemflora`, game `1.21.0`
 - Конфиг: `ecosystemflora.json`
 
 ---
@@ -438,14 +438,15 @@ ChunkScan         → очередь, лимитирован
 1. **Быстрые wins:** spatial tick, static climate cache, split sample, stress skip, no greenhouse on spread — ✅.
 2. **Средний refactor:** O(1) registry remove, cheap-first candidates, spacing hash — ✅.
 3. **Perf audit:** `CellBlockSnapshot`, scratch `BlockPos`, reflection cache, scratch collections, `HashSet<long>` player chunks, `FloraSymbiosis` FIFO cache, `VerboseLogging` toggle — ✅.
+4. **Tick starvation fix (v2.7):** heightmap chunk scan, per-tick time-budget (`Stopwatch`), lower defaults, NowValues temperature cache, `OnlyActivateNearPlayers` default true — ✅.
 
 Многопоточность — **не планируется** (`BlockAccessor` не thread-safe).
 
-Все три фазы завершены (2026-05-25).
+Все четыре фазы завершены (2026-05-26).
 
 ### 12.6. Конфиг-throttle
 
-`OnlyActivateNearPlayers`, `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
+`OnlyActivateNearPlayers` (default true), `TickBudgetMs` (default 5), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
 
 ---
 
