@@ -27,6 +27,8 @@ namespace WildFarming.Ecosystem
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
+        double nextFallowCheckHours;
+        int fallowRoundRobin;
 
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
@@ -557,21 +559,49 @@ namespace WildFarming.Ecosystem
         void OnStressTick(float dt)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
-            if (!EcosystemConfig.Loaded.EnableStressDeath) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
             ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
             if (activeChunks != null && activeChunks.Count == 0) return;
 
-            int stressBudgetMs = cfg.StressBudgetMs > 0 ? cfg.StressBudgetMs : cfg.TickBudgetMs;
-            long budgetTicks = stressBudgetMs > 0
-                ? stressBudgetMs * Stopwatch.Frequency / 1000
-                : 0;
+            if (cfg.EnableStressDeath)
+            {
+                int stressBudgetMs = cfg.StressBudgetMs > 0 ? cfg.StressBudgetMs : cfg.TickBudgetMs;
+                long budgetTicks = stressBudgetMs > 0
+                    ? stressBudgetMs * Stopwatch.Frequency / 1000
+                    : 0;
 
-            tickBudgetWatch.Restart();
-            ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks, budgetTicks);
-            tickBudgetWatch.Stop();
+                tickBudgetWatch.Restart();
+                ProcessStress(now, cfg.MaxStressChecksPerTick, activeChunks, budgetTicks);
+                tickBudgetWatch.Stop();
+            }
+
+            if (cfg.EnableFallowRestoration && now >= nextFallowCheckHours)
+            {
+                ProcessFallow(now, cfg);
+            }
+        }
+
+        void ProcessFallow(double now, EcosystemConfig cfg)
+        {
+            int count = registry.Count;
+            if (count == 0) return;
+
+            int checksThisTick = System.Math.Min(4, count);
+            for (int i = 0; i < checksThisTick; i++)
+            {
+                if (fallowRoundRobin >= count) fallowRoundRobin = 0;
+                var entry = registry.GetEntry(fallowRoundRobin);
+                fallowRoundRobin++;
+
+                if (entry == null || entry.Requirements == null) continue;
+                if (entry.Requirements.Habitat != EcologyHabitat.Terrestrial) continue;
+
+                FallowRestoration.TryRestoreNear(api, entry.Origin);
+            }
+
+            nextFallowCheckHours = now + cfg.FallowCheckIntervalHours / System.Math.Max(1, count / 100.0);
         }
 
         void OnReproduceTick(float dt)

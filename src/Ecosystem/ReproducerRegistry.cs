@@ -22,6 +22,12 @@ namespace WildFarming.Ecosystem
 
         public int Count => entries.Count;
 
+        public ReproducerEntry GetEntry(int index)
+        {
+            if (index < 0 || index >= entries.Count) return null;
+            return entries[index];
+        }
+
         public bool Contains(BlockPos pos) => byPos.ContainsKey(pos);
 
         public IEnumerable<Vec2i> ChunkCoords => byChunk.Keys;
