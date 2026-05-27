@@ -1,6 +1,7 @@
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
+using WildFarming.Ecosystem;
 using WildFarming.Network;
 
 namespace WildFarming.Client
@@ -53,7 +54,8 @@ namespace WildFarming.Client
 
         string BuildTitle()
         {
-            return Lang.Get("ecosystemflora:inspect-title", report.Species ?? "?");
+            string species = EcologyInspectLineFormat.FormatSpeciesEcho(report.Species ?? string.Empty);
+            return Lang.Get("ecosystemflora:inspect-title", species);
         }
 
         static string BuildBody(EcologyInspectReportPacket report)
@@ -63,11 +65,12 @@ namespace WildFarming.Client
                 .Append("</strong> ").Append(report.X).Append(", ")
                 .Append(report.Y).Append(", ").Append(report.Z).AppendLine("<br/>");
 
-            if (report.Lines != null)
+            InspectLineLite[] lines = report.InspectLines;
+            if (lines != null)
             {
-                for (int i = 0; i < report.Lines.Length; i++)
+                foreach (InspectLineLite line in lines)
                 {
-                    sb.Append(report.Lines[i]).Append("<br/>");
+                    sb.Append(EcologyInspectLineFormat.FormatInspectLine(line)).Append("<br/>");
                 }
             }
 

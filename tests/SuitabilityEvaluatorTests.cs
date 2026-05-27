@@ -1,5 +1,6 @@
 using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
+using WildFarming.Network;
 using Xunit;
 
 namespace WildFarming.Tests
@@ -144,6 +145,25 @@ namespace WildFarming.Tests
         {
             var ctx = new StubContext();
             Assert.Null(SuitabilityEvaluator.DescribeSurvivalFailure(DefaultReq(), ctx, harshClimate: false));
+            Assert.Null(SuitabilityEvaluator.TryInspectSurvivalFailureLine(DefaultReq(), ctx, harshClimate: false));
+        }
+
+        [Fact]
+        public void TryInspect_NoClimate_ReturnsNull()
+        {
+            var ctx = new StubContext { HasClimate = false };
+            Assert.Null(SuitabilityEvaluator.TryInspectSurvivalFailureLine(DefaultReq(), ctx, harshClimate: true));
+        }
+
+        [Fact]
+        public void TryInspectSurvivalLine_WrongSoil_ReturnsSoilTypeLine()
+        {
+            var req = DefaultReq();
+            req.AllowedSoilKinds = SoilKind.HighFert;
+            var ctx = new StubContext { GroundSoilKinds = SoilKind.Sand };
+            InspectLineLite line = SuitabilityEvaluator.TryInspectSurvivalFailureLine(req, ctx, harshClimate: true);
+            Assert.NotNull(line);
+            Assert.Equal("ecosystemflora:inspect-survival-fail-soil-type", line.Key);
         }
     }
 }

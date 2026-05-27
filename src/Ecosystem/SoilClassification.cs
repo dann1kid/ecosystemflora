@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using WildFarming.Network;
 
 namespace WildFarming.Ecosystem
 {
@@ -103,6 +104,57 @@ namespace WildFarming.Ecosystem
             if (!skipMaxFertility && req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility)
             {
                 return "Soil too rich (" + groundFertility + " > " + req.MaxGroundFertility + ").";
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc cref="DescribeSoilFailure"/>
+        internal static InspectLineLite TryInspectSoilFailureLine(
+            PlantRequirements req,
+            SoilKind groundKinds,
+            int groundFertility,
+            bool skipMaxFertility = false)
+        {
+            if (req == null) return null;
+
+            if (req.AllowedSoilKinds != SoilKind.None && (groundKinds & req.AllowedSoilKinds) == 0)
+            {
+                return new InspectLineLite
+                {
+                    Key = "ecosystemflora:inspect-survival-fail-soil-type",
+                    Args =
+                    [
+                        EcologyInspectLineFormat.SoilIntPrefix + (int)groundKinds,
+                        EcologyInspectLineFormat.SoilIntPrefix + (int)req.AllowedSoilKinds,
+                    ],
+                };
+            }
+
+            if (req.MinGroundFertility > 0 && groundFertility < req.MinGroundFertility)
+            {
+                return new InspectLineLite
+                {
+                    Key = "ecosystemflora:inspect-survival-fail-soil-low-fert",
+                    Args =
+                    [
+                        groundFertility.ToString(),
+                        req.MinGroundFertility.ToString(),
+                    ],
+                };
+            }
+
+            if (!skipMaxFertility && req.MaxGroundFertility > 0 && groundFertility > req.MaxGroundFertility)
+            {
+                return new InspectLineLite
+                {
+                    Key = "ecosystemflora:inspect-survival-fail-soil-high-fert",
+                    Args =
+                    [
+                        groundFertility.ToString(),
+                        req.MaxGroundFertility.ToString(),
+                    ],
+                };
             }
 
             return null;

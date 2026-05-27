@@ -95,5 +95,29 @@
 	"ecosystemflora:inspect-line-survival-bad": "Climate survival: {0}",
 	"ecosystemflora:inspect-line-scan-header": "Nearby ecology (~{0} blocks):",
 	"ecosystemflora:inspect-line-scan-empty": "No registered plants in range.",
-	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%"
+	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%",
+
+	"ecosystemflora:inspect-list-separator": ", ",
+
+	"ecosystemflora:soilkind-none": "none",
+	"ecosystemflora:soilkind-highfert": "rich soil",
+	"ecosystemflora:soilkind-mediumfert": "medium fertility soil",
+	"ecosystemflora:soilkind-lowfert": "poor soil",
+	"ecosystemflora:soilkind-forestfloor": "forest floor",
+	"ecosystemflora:soilkind-peat": "peat",
+	"ecosystemflora:soilkind-sand": "sand",
+	"ecosystemflora:soilkind-clay": "clay",
+	"ecosystemflora:soilkind-gravel": "gravel / rocky",
+	"ecosystemflora:soilkind-barren": "barren / packed",
+
+	"ecosystemflora:inspect-survival-fail-no-ground": "Climate survival: no solid ground below.",
+	"ecosystemflora:inspect-survival-fail-soil-type": "Climate survival: soil type mismatch (here: {0}; needs one of: {1}).",
+	"ecosystemflora:inspect-survival-fail-soil-low-fert": "Climate survival: soil not fertile enough ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-soil-high-fert": "Climate survival: soil too fertile ({0} > {1}).",
+	"ecosystemflora:inspect-survival-fail-too-hot": "Climate survival: too hot.",
+	"ecosystemflora:inspect-survival-fail-too-cold": "Climate survival: too cold.",
+	"ecosystemflora:inspect-survival-fail-rain-low": "Climate survival: rainfall too low ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-rain-high": "Climate survival: rainfall too high ({0} > {1}).",
+	"ecosystemflora:inspect-survival-fail-forest-sparse": "Climate survival: local forest cover too sparse ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-forest-dense": "Climate survival: local forest cover too dense ({0} > {1})."
 }

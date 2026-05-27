@@ -7,6 +7,17 @@ namespace WildFarming.Network
         public const string Name = "ecosystemflora-ecologyinspect";
     }
 
+    /// <summary>Localized on the client: <see cref="Key"/> is a lang path; args use prefixes L: (nested key), I: (soil kind bitfield int).</summary>
+    [ProtoContract]
+    public class InspectLineLite
+    {
+        [ProtoMember(1)]
+        public string Key { get; set; }
+
+        [ProtoMember(2)]
+        public string[] Args { get; set; }
+    }
+
     [ProtoContract]
     public class EcologyInspectRequestPacket
     {
@@ -39,7 +50,10 @@ namespace WildFarming.Network
         public bool InRegistry;
 
         [ProtoMember(6)]
-        public string[] Lines;
+        public InspectLineLite[] InspectLines;
+
+        [ProtoMember(11)]
+        public string ErrorLangKey;
 
         [ProtoMember(7)]
         public string[] ScanSpecies;

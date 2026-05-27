@@ -41,6 +41,14 @@ namespace WildFarming.Ecosystem
                 out EcologyInspectReportPacket report,
                 out string errorKey))
             {
+                if (report != null
+                    && !string.IsNullOrEmpty(report.ErrorLangKey)
+                    && player is IServerPlayer errPlayer)
+                {
+                    channel.SendPacket(report, errPlayer);
+                    return;
+                }
+
                 if (!string.IsNullOrEmpty(errorKey))
                 {
                     sapi.SendMessage(

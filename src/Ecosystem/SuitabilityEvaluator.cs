@@ -1,3 +1,5 @@
+using WildFarming.Network;
+
 namespace WildFarming.Ecosystem
 {
     public static class SuitabilityEvaluator
@@ -29,26 +31,133 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        public static string DescribeSurvivalFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
+        public static InspectLineLite TryInspectSurvivalFailureLine(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
         {
-            if (!ctx.HasClimate) return "No climate data.";
-            if (!ctx.GroundSideSolid) return "No solid ground below.";
-            string soil = SoilClassification.DescribeSoilFailure(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true);
-            if (soil != null) return soil;
+            if (req == null || !ctx.HasClimate) return null;
+
+            if (!ctx.GroundSideSolid)
+            {
+                return new InspectLineLite { Key = "ecosystemflora:inspect-survival-fail-no-ground" };
+            }
+
+            InspectLineLite soilLine =
+                SoilClassification.TryInspectSoilFailureLine(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true);
+            if (soilLine != null) return soilLine;
 
             if (harshClimate && !ctx.InGreenhouse)
             {
-                if (ctx.Temperature > req.MaxTemp) return "Too hot.";
-                if (ctx.Temperature < req.MinTemp) return "Too cold.";
+                if (ctx.Temperature > req.MaxTemp)
+                {
+                    return new InspectLineLite { Key = "ecosystemflora:inspect-survival-fail-too-hot" };
+                }
+
+                if (ctx.Temperature < req.MinTemp)
+                {
+                    return new InspectLineLite { Key = "ecosystemflora:inspect-survival-fail-too-cold" };
+                }
             }
 
-            string rainfall = DescribeRainfallFailure(req, ctx);
-            if (rainfall != null) return rainfall;
+            if (EcosystemConfig.Loaded.ApplyWorldgenRainForest)
+            {
+                if (ctx.WorldgenRainfall < req.MinRain)
+                {
+                    return new InspectLineLite
+                    {
+                        Key = "ecosystemflora:inspect-survival-fail-rain-low",
+                        Args =
+                        [
+                            ctx.WorldgenRainfall.ToString("0.00"),
+                            req.MinRain.ToString("0.00"),
+                        ],
+                    };
+                }
 
-            string forest = DescribeLocalForestFailure(req, ctx);
-            if (forest != null) return forest;
+                if (ctx.WorldgenRainfall > req.MaxRain)
+                {
+                    return new InspectLineLite
+                    {
+                        Key = "ecosystemflora:inspect-survival-fail-rain-high",
+                        Args =
+                        [
+                            ctx.WorldgenRainfall.ToString("0.00"),
+                            req.MaxRain.ToString("0.00"),
+                        ],
+                    };
+                }
+            }
+
+            if (ctx.LocalForestCover < req.MinForest)
+            {
+                return new InspectLineLite
+                {
+                    Key = "ecosystemflora:inspect-survival-fail-forest-sparse",
+                    Args =
+                    [
+                        ctx.LocalForestCover.ToString("0.00"),
+                        req.MinForest.ToString("0.00"),
+                    ],
+                };
+            }
+
+            if (ctx.LocalForestCover > req.MaxForest)
+            {
+                return new InspectLineLite
+                {
+                    Key = "ecosystemflora:inspect-survival-fail-forest-dense",
+                    Args =
+                    [
+                        ctx.LocalForestCover.ToString("0.00"),
+                        req.MaxForest.ToString("0.00"),
+                    ],
+                };
+            }
 
             return null;
+        }
+
+        /// <summary>English debug/fallback matching <see cref="TryInspectSurvivalFailureLine"/> (server API).</summary>
+        internal static string EnglishInspectSurvivalFallback(InspectLineLite line)
+        {
+            if (line == null || string.IsNullOrEmpty(line.Key))
+            {
+                return null;
+            }
+
+            string[] args = line.Args;
+
+            switch (line.Key)
+            {
+                case "ecosystemflora:inspect-survival-fail-no-ground":
+                    return "No solid ground below.";
+                case "ecosystemflora:inspect-survival-fail-soil-type":
+                    return $"Ground type not allowed (got {ParseInspectSoilMask(args?[0])}, need overlap with {ParseInspectSoilMask(args?[1])}).";
+                case "ecosystemflora:inspect-survival-fail-soil-low-fert":
+                    return $"Soil not fertile enough ({args?[0]} < {args?[1]}).";
+                case "ecosystemflora:inspect-survival-fail-soil-high-fert":
+                    return $"Soil too rich ({args?[0]} > {args?[1]}).";
+                case "ecosystemflora:inspect-survival-fail-too-hot":
+                    return "Too hot.";
+                case "ecosystemflora:inspect-survival-fail-too-cold":
+                    return "Too cold.";
+                case "ecosystemflora:inspect-survival-fail-rain-low":
+                    return $"Rainfall too low ({args?[0]} < {args?[1]}).";
+                case "ecosystemflora:inspect-survival-fail-rain-high":
+                    return $"Rainfall too high ({args?[0]} > {args?[1]}).";
+                case "ecosystemflora:inspect-survival-fail-forest-sparse":
+                    return $"Local forest too sparse ({args?[0]} < {args?[1]}).";
+                case "ecosystemflora:inspect-survival-fail-forest-dense":
+                    return $"Local forest too dense ({args?[0]} > {args?[1]}).";
+                default:
+                    return line.Key;
+            }
+        }
+
+        public static string DescribeSurvivalFailure(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
+        {
+            if (!ctx.HasClimate) return "No climate data.";
+
+            InspectLineLite fail = TryInspectSurvivalFailureLine(req, ctx, harshClimate);
+            return fail == null ? null : EnglishInspectSurvivalFallback(fail);
         }
 
         public static float Score(PlantRequirements req, IEnvironmentalContext ctx, bool harshClimate)
@@ -281,6 +390,21 @@ namespace WildFarming.Ecosystem
             }
 
             return null;
+        }
+
+        static SoilKind ParseInspectSoilMask(string coded, SoilKind fallback = SoilKind.None)
+        {
+            if (string.IsNullOrEmpty(coded) || coded.Length < 3 || coded[0] != 'I' || coded[1] != ':')
+            {
+                return fallback;
+            }
+
+            if (!int.TryParse(coded.Substring(2), out int mask))
+            {
+                return fallback;
+            }
+
+            return (SoilKind)mask;
         }
 
         static bool InRange(float value, float min, float max) => value >= min && value <= max;

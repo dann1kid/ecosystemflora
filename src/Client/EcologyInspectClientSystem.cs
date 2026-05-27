@@ -73,6 +73,13 @@ namespace WildFarming.Client
         void OnReport(EcologyInspectReportPacket report)
         {
             if (report == null) return;
+
+            if (!string.IsNullOrEmpty(report.ErrorLangKey))
+            {
+                capi.ShowChatMessage(Lang.Get(report.ErrorLangKey));
+                return;
+            }
+
             dialog.ShowReport(report);
         }
     }

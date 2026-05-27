@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using WildFarming.Network;
 
@@ -25,6 +24,7 @@ namespace WildFarming.Ecosystem
             if (api == null || player == null || pos == null)
             {
                 errorLangKey = "ecosystemflora:inspect-error-noplant";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
@@ -32,18 +32,21 @@ namespace WildFarming.Ecosystem
             if (!cfg.EnableEcologyInspect)
             {
                 errorLangKey = "ecosystemflora:inspect-error-disabled";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
             if (!cfg.EcosystemEnabled)
             {
                 errorLangKey = "ecosystemflora:inspect-error-ecosystem-off";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
             if (!CheckCooldown(player, cfg))
             {
                 errorLangKey = "ecosystemflora:inspect-error-cooldown";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
@@ -52,6 +55,7 @@ namespace WildFarming.Ecosystem
             if (block == null || block.Id == 0)
             {
                 errorLangKey = "ecosystemflora:inspect-error-noplant";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
@@ -59,22 +63,24 @@ namespace WildFarming.Ecosystem
             if (string.IsNullOrEmpty(species))
             {
                 errorLangKey = "ecosystemflora:inspect-error-noplant";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
             if (cfg.RespectLandClaims && !LandClaimGuard.AllowsEcologyChange(api, pos))
             {
                 errorLangKey = "ecosystemflora:inspect-error-claim";
+                report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
                 return false;
             }
 
             MarkCooldown(player);
 
-            var lines = new List<string>();
+            var inspectLines = new List<InspectLineLite>();
             PlantRequirements req = PlantRequirements.FromBlock(block);
 
-            AppendStaticProfile(lines, species);
-            AppendLiveState(api, pos, species, block, req, lines);
+            AppendStaticProfile(inspectLines, species);
+            AppendLiveState(api, pos, species, block, req, inspectLines);
 
             EcologySpacingIndex spacing = EcosystemSystem.Instance?.SpacingIndex;
             int radius = cfg.EcologyInspectScanRadius;
@@ -89,7 +95,7 @@ namespace WildFarming.Ecosystem
             {
                 EcologyAreaScanner.Scan(
                     spacing, pos, radius, cfg.SpacingVerticalSearch, out scanSpecies, out scanCounts, out scanTotal);
-                AppendAreaScan(lines, radius, scanSpecies, scanCounts, scanTotal);
+                AppendAreaScan(inspectLines, radius, scanSpecies, scanCounts, scanTotal);
             }
 
             report = new EcologyInspectReportPacket
@@ -99,7 +105,7 @@ namespace WildFarming.Ecosystem
                 Z = pos.Z,
                 Species = species,
                 InRegistry = EcosystemSystem.Instance?.RegistryContains(pos) ?? false,
-                Lines = lines.ToArray(),
+                InspectLines = inspectLines.ToArray(),
                 ScanSpecies = scanSpecies,
                 ScanCounts = scanCounts,
                 ScanTotal = scanTotal,
@@ -123,21 +129,33 @@ namespace WildFarming.Ecosystem
             lastInspectUtcMs[player.PlayerUID] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        static void AppendStaticProfile(List<string> lines, string species)
+        static void AddInspectLine(List<InspectLineLite> list, string key, params string[] args)
         {
-            lines.Add(Lang.Get("ecosystemflora:inspect-line-dominance", DescribeDominanceLabel(species)));
+            if (args == null || args.Length == 0)
+            {
+                list.Add(new InspectLineLite { Key = key });
+                return;
+            }
+
+            list.Add(new InspectLineLite { Key = key, Args = args });
+        }
+
+        static void AppendStaticProfile(List<InspectLineLite> lines, string species)
+        {
+            AddInspectLine(lines, "ecosystemflora:inspect-line-dominance", "L:" + GetDominanceLabelLangKey(species));
 
             if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
             {
-                string hold;
-                if (mod.HoldStrength < 0.8f) hold = Lang.Get("ecosystemflora:hold-weak");
-                else if (mod.HoldStrength > 1.1f) hold = Lang.Get("ecosystemflora:hold-strong");
-                else hold = Lang.Get("ecosystemflora:hold-moderate");
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-hold", hold));
+                string holdKey = mod.HoldStrength < 0.8f
+                    ? "ecosystemflora:hold-weak"
+                    : mod.HoldStrength > 1.1f
+                        ? "ecosystemflora:hold-strong"
+                        : "ecosystemflora:hold-moderate";
+                AddInspectLine(lines, "ecosystemflora:inspect-line-hold", "L:" + holdKey);
             }
         }
 
-        internal static string DescribeDominanceLabel(string species)
+        internal static string GetDominanceLabelLangKey(string species)
         {
             float spreadRate = 1f;
             if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry flower))
@@ -151,18 +169,17 @@ namespace WildFarming.Ecosystem
             else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
                 spreadRate = grass.SpreadRate;
 
-            if (species == "tallgrass")
-                return Lang.Get("ecosystemflora:dominance-matrix");
+            if (species == "tallgrass") return "ecosystemflora:dominance-matrix";
 
             if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
             {
                 if (mod.HoldStrength < 0.8f && spreadRate >= 1.5f)
-                    return Lang.Get("ecosystemflora:dominance-colonizer");
+                    return "ecosystemflora:dominance-colonizer";
                 if (mod.HoldStrength > 1.1f)
-                    return Lang.Get("ecosystemflora:dominance-climax");
+                    return "ecosystemflora:dominance-climax";
             }
 
-            return Lang.Get("ecosystemflora:dominance-stable");
+            return "ecosystemflora:dominance-stable";
         }
 
         static void AppendLiveState(
@@ -171,7 +188,7 @@ namespace WildFarming.Ecosystem
             string species,
             Block block,
             PlantRequirements req,
-            List<string> lines)
+            List<InspectLineLite> lines)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool harsh = cfg.HarshWildPlants;
@@ -179,25 +196,28 @@ namespace WildFarming.Ecosystem
             if (EcosystemSystem.Instance != null
                 && EcosystemSystem.Instance.TryGetReproducer(pos, out ReproducerEntry entry))
             {
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-registered"));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-registered");
+
                 if (cfg.EnableStressDeath && entry.FailedSurvivalChecks > 0)
                 {
-                    lines.Add(Lang.Get(
+                    AddInspectLine(
+                        lines,
                         "ecosystemflora:inspect-line-stress",
-                        entry.FailedSurvivalChecks,
-                        cfg.MaxFailedSurvivalChecks));
+                        entry.FailedSurvivalChecks.ToString(),
+                        cfg.MaxFailedSurvivalChecks.ToString());
                 }
                 else if (cfg.EnableStressDeath)
                 {
-                    lines.Add(Lang.Get("ecosystemflora:inspect-line-stress-ok"));
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-stress-ok");
                 }
 
                 if (cfg.EnableTrampling && entry.TramplingExposure > 0)
                 {
-                    lines.Add(Lang.Get(
+                    AddInspectLine(
+                        lines,
                         "ecosystemflora:inspect-line-trample",
-                        entry.TramplingExposure,
-                        cfg.TramplingStressThreshold));
+                        entry.TramplingExposure.ToString(),
+                        cfg.TramplingStressThreshold.ToString());
                 }
 
                 if (api.World?.Calendar != null)
@@ -205,18 +225,18 @@ namespace WildFarming.Ecosystem
                     double hoursLeft = entry.NextAttemptHours - api.World.Calendar.TotalHours;
                     if (hoursLeft < 0) hoursLeft = 0;
                     double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
-                    lines.Add(Lang.Get("ecosystemflora:inspect-line-next-spread", daysLeft.ToString("0.#")));
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-next-spread", daysLeft.ToString("0.#"));
                 }
             }
             else
             {
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-not-registered"));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
             }
 
             if (cfg.UseSeasonalEcology && api.World?.Calendar != null)
             {
                 float seasonMult = SeasonEcology.SpreadActivityMultiplier(api, pos, req);
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-season-now", seasonMult.ToString("0.##")));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-season-now", seasonMult.ToString("0.##"));
             }
 
             if (WildSpeciesNiche.TryGet(species, out _))
@@ -226,50 +246,57 @@ namespace WildFarming.Ecosystem
                 {
                     LocalNiche local = nicheSampler.GetNiche(api, pos);
                     float nicheMult = EcologySpreadFitness.NicheMultiplierFor(req, local);
-                    if (nicheMult < cfg.NicheStressThreshold)
-                        lines.Add(Lang.Get("ecosystemflora:inspect-line-niche-bad", nicheMult.ToString("0.##")));
-                    else
-                        lines.Add(Lang.Get("ecosystemflora:inspect-line-niche-ok", nicheMult.ToString("0.##")));
+                    AddInspectLine(
+                        lines,
+                        nicheMult < cfg.NicheStressThreshold
+                            ? "ecosystemflora:inspect-line-niche-bad"
+                            : "ecosystemflora:inspect-line-niche-ok",
+                        nicheMult.ToString("0.##"));
                 }
             }
 
             if (FloraSymbiosis.TryGetRule(species, out _))
             {
                 bool host = FloraSymbiosis.HasRequiredHost(api.World.BlockAccessor, pos, species);
-                lines.Add(host
-                    ? Lang.Get("ecosystemflora:inspect-line-symbiosis-ok")
-                    : Lang.Get("ecosystemflora:inspect-line-symbiosis-missing"));
+                AddInspectLine(
+                    lines,
+                    host
+                        ? "ecosystemflora:inspect-line-symbiosis-ok"
+                        : "ecosystemflora:inspect-line-symbiosis-missing");
             }
 
             EnvironmentalContext ctx = EnvironmentalContext.SampleForSurvival(api, pos, req);
+
             if (!ctx.HasClimate)
             {
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-no-climate"));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-no-climate");
             }
             else if (!SuitabilityEvaluator.MeetsSurvivalRequirements(req, ctx, harsh))
             {
-                string reason = SuitabilityEvaluator.DescribeSurvivalFailure(req, ctx, harsh);
-                if (!string.IsNullOrEmpty(reason))
-                    lines.Add(Lang.Get("ecosystemflora:inspect-line-survival-bad", reason));
+                InspectLineLite failLine = SuitabilityEvaluator.TryInspectSurvivalFailureLine(req, ctx, harsh);
+                if (failLine != null)
+                {
+                    lines.Add(failLine);
+                }
             }
             else
             {
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-survival-ok"));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-survival-ok");
             }
         }
 
         static void AppendAreaScan(
-            List<string> lines,
+            List<InspectLineLite> lines,
             int radius,
             string[] scanSpecies,
             int[] scanCounts,
             int scanTotal)
         {
-            lines.Add(Lang.Get("ecosystemflora:inspect-line-scan-header", radius));
+            AddInspectLine(lines, "ecosystemflora:inspect-line-scan-header", radius.ToString());
 
             if (scanTotal <= 0 || scanSpecies == null || scanCounts == null)
             {
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-scan-empty"));
+                AddInspectLine(lines, "ecosystemflora:inspect-line-scan-empty");
                 return;
             }
 
@@ -277,7 +304,13 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < show; i++)
             {
                 int pct = (int)System.Math.Round(100.0 * scanCounts[i] / scanTotal);
-                lines.Add(Lang.Get("ecosystemflora:inspect-line-scan-row", i + 1, scanSpecies[i], pct));
+
+                AddInspectLine(
+                    lines,
+                    "ecosystemflora:inspect-line-scan-row",
+                    (i + 1).ToString(),
+                    "L:ecosystemflora:species-" + scanSpecies[i],
+                    pct.ToString());
             }
         }
     }

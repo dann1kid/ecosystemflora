@@ -84,8 +84,8 @@
 	"ecosystemflora:inspect-line-stress": "Стресс: {0} / {1} неудачных проверок.",
 	"ecosystemflora:inspect-line-stress-ok": "Стресс: в норме.",
 	"ecosystemflora:inspect-line-trample": "Протаптывание: {0} / {1}.",
-	"ecosystemflora:inspect-line-next-spread": "Следующая попытка spread ~через {0} дн.",
-	"ecosystemflora:inspect-line-season-now": "Сезонная активность spread сейчас: ×{0}.",
+	"ecosystemflora:inspect-line-next-spread": "Следующая попытка распространения ~через {0} дн.",
+	"ecosystemflora:inspect-line-season-now": "Сезонная активность распространения сейчас: ×{0}.",
 	"ecosystemflora:inspect-line-niche-ok": "Соответствие нише: ×{0}.",
 	"ecosystemflora:inspect-line-niche-bad": "Стресс ниши: ×{0} (ниже порога).",
 	"ecosystemflora:inspect-line-symbiosis-ok": "Симбиоз: дерево-хозяин рядом.",
@@ -95,5 +95,29 @@
 	"ecosystemflora:inspect-line-survival-bad": "Климат: {0}",
 	"ecosystemflora:inspect-line-scan-header": "Экология рядом (~{0} блоков):",
 	"ecosystemflora:inspect-line-scan-empty": "В радиусе нет растений из реестра.",
-	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%"
+	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%",
+
+	"ecosystemflora:inspect-list-separator": ", ",
+
+	"ecosystemflora:soilkind-none": "нет",
+	"ecosystemflora:soilkind-highfert": "плодородная почва",
+	"ecosystemflora:soilkind-mediumfert": "средняя плодородность",
+	"ecosystemflora:soilkind-lowfert": "бедная почва",
+	"ecosystemflora:soilkind-forestfloor": "лесная подстилка",
+	"ecosystemflora:soilkind-peat": "торф",
+	"ecosystemflora:soilkind-sand": "песок",
+	"ecosystemflora:soilkind-clay": "глина",
+	"ecosystemflora:soilkind-gravel": "гравий / камень",
+	"ecosystemflora:soilkind-barren": "бедная / утоптанная",
+
+	"ecosystemflora:inspect-survival-fail-no-ground": "Выживание по климату: нет твёрдого грунта под клеткой.",
+	"ecosystemflora:inspect-survival-fail-soil-type": "Выживание по климату: неподходящий тип почвы (здесь: {0}; нужен один из: {1}).",
+	"ecosystemflora:inspect-survival-fail-soil-low-fert": "Выживание по климату: слишком низкая плодородность почвы ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-soil-high-fert": "Выживание по климату: слишком высокая плодородность почвы ({0} > {1}).",
+	"ecosystemflora:inspect-survival-fail-too-hot": "Выживание по климату: слишком жарко.",
+	"ecosystemflora:inspect-survival-fail-too-cold": "Выживание по климату: слишком холодно.",
+	"ecosystemflora:inspect-survival-fail-rain-low": "Выживание по климату: слишком мало осадков ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-rain-high": "Выживание по климату: слишком много осадков ({0} > {1}).",
+	"ecosystemflora:inspect-survival-fail-forest-sparse": "Выживание по климату: слишком редкий лес поблизости ({0} < {1}).",
+	"ecosystemflora:inspect-survival-fail-forest-dense": "Выживание по климату: слишком густой лес поблизости ({0} > {1})."
 }
