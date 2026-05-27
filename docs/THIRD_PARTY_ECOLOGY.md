@@ -1,5 +1,7 @@
 # Third-party blocks as ecosystem participants (v3.1)
 
+**Sample content mod:** [`examples/ecologysample-mynewplant/`](../examples/ecologysample-mynewplant/README.md) in this tree (also publishable as a **standalone public repo** — see `PUBLISHING.md` there). Three blocktypes, vanilla texture placeholders, no C#.
+
 When **`EnableThirdPartyParticipants`** is `true` in `ecosystemflora.json` (default), any block type from any mod can register for wild spread if it declares JSON **attributes** on the block type.
 
 Vanilla `game:` plants keep using path-based rules; third-party mode is **additive**.
@@ -17,7 +19,7 @@ Vanilla `game:` plants keep using path-based rules; third-party mode is **additi
 
 | Attribute | Notes |
 |-----------|--------|
-| `ecologyMatureBlock` | Mature parent identity for registry (default: spread block or this block’s code). |
+| `ecologyMatureBlock` | Mature parent identity in the spread registry. **Required on the mature block** when `ecologySpreadBlock` points to a different block (e.g. sprout); otherwise the registry treats the sprout code as “mature” and spread never runs. On sprout, set this to the mature block code. |
 | `ecologyReproduce` | Default `true`; set `false` to opt a block type out while keeping other attrs. |
 | `minTemp`, `maxTemp`, `minRain`, `maxRain`, `minForest`, `maxForest` | Climate (same as vanilla block attrs). |
 | `ecologySpreadRate`, `ecologySpreadRadius` | Per-type tuning. |
