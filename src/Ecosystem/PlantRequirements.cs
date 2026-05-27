@@ -127,7 +127,8 @@ namespace WildFarming.Ecosystem
             float minForest = attrs != null ? attrs["minForest"].AsFloat(float.NaN) : float.NaN;
             float maxForest = attrs != null ? attrs["maxForest"].AsFloat(float.NaN) : float.NaN;
             float spreadRate = attrs != null ? attrs["ecologySpreadRate"].AsFloat(float.NaN) : float.NaN;
-            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            bool thirdPartyParticipant = PlantCodeHelper.IsThirdPartyEcologyBlock(block);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             EcologyHabitat habitat = EcologyHabitat.Terrestrial;
             int maxWaterDepth = 0;
             int minWaterDepth = 0;
@@ -142,7 +143,76 @@ namespace WildFarming.Ecosystem
             SoilKind allowedSoils = SoilKind.None;
             int minSunlight = attrs != null ? attrs["ecologyMinSunlight"].AsInt(0) : 0;
 
-            if (!string.IsNullOrEmpty(species) && WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
+            if (thirdPartyParticipant && attrs != null)
+            {
+                habitat = PlantCodeHelper.ParseEcologyHabitat(attrs["ecologyHabitat"].AsString("Terrestrial"));
+
+                switch (habitat)
+                {
+                    case EcologyHabitat.ReedNearWater:
+                        maxWaterDepth = attrs["ecologyMaxWaterDepth"].AsInt(1);
+                        minWaterDepth = attrs["ecologyMinWaterDepth"].AsInt(0);
+                        verticalBlocks = attrs["ecologyVerticalBlocks"].AsInt(1);
+                        exactWaterDepth = attrs["ecologyExactWaterDepth"].AsInt(-1);
+                        minForest = 0f;
+                        maxForest = 1f;
+                        minFertility = 0;
+                        sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(0);
+                        otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(1);
+                        if (float.IsNaN(minTemp)) minTemp = 3f;
+                        if (float.IsNaN(maxTemp)) maxTemp = 23f;
+                        if (float.IsNaN(minRain)) minRain = 0.4f;
+                        if (float.IsNaN(maxRain)) maxRain = 1f;
+                        if (float.IsNaN(spreadRate)) spreadRate = 2.5f;
+                        break;
+
+                    case EcologyHabitat.WaterSurface:
+                        maxWaterDepth = attrs["ecologyMaxWaterDepth"].AsInt(2);
+                        minWaterDepth = attrs["ecologyMinWaterDepth"].AsInt(1);
+                        verticalBlocks = attrs["ecologyVerticalBlocks"].AsInt(1);
+                        minForest = 0f;
+                        maxForest = 1f;
+                        minFertility = 0;
+                        sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(1);
+                        otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(1);
+                        if (float.IsNaN(minTemp)) minTemp = 10f;
+                        if (float.IsNaN(maxTemp)) maxTemp = 40f;
+                        if (float.IsNaN(minRain)) minRain = 0.5f;
+                        if (float.IsNaN(maxRain)) maxRain = 1f;
+                        if (float.IsNaN(spreadRate)) spreadRate = 2.2f;
+                        break;
+
+                    case EcologyHabitat.UnderwaterColumn:
+                        maxWaterDepth = attrs["ecologyMaxWaterDepth"].AsInt(8);
+                        minWaterDepth = attrs["ecologyMinWaterDepth"].AsInt(2);
+                        verticalBlocks = attrs["ecologyVerticalBlocks"].AsInt(1);
+                        minForest = 0f;
+                        maxForest = 1f;
+                        minFertility = 0;
+                        sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(1);
+                        otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(1);
+                        if (float.IsNaN(minTemp)) minTemp = -10f;
+                        if (float.IsNaN(maxTemp)) maxTemp = 40f;
+                        if (float.IsNaN(minRain)) minRain = 0.5f;
+                        if (float.IsNaN(maxRain)) maxRain = 1f;
+                        if (float.IsNaN(spreadRate)) spreadRate = 2f;
+                        break;
+
+                    case EcologyHabitat.TerrestrialTree:
+                        sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(-1);
+                        otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(-1);
+                        minSunlight = attrs["ecologyMinSunlight"].AsInt(11);
+                        if (float.IsNaN(minTemp)) minTemp = -5f;
+                        if (float.IsNaN(maxTemp)) maxTemp = 35f;
+                        break;
+
+                    default:
+                        sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(-1);
+                        otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(-1);
+                        break;
+                }
+            }
+            else if (!string.IsNullOrEmpty(species) && WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
             {
                 habitat = aquatic.Habitat;
                 maxWaterDepth = aquatic.MaxWaterDepth;

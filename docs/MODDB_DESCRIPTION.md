@@ -23,7 +23,7 @@ Install the mod, load your world, and watch it change over the seasons.
 - **20 flower species** — daisies, cornflowers, poppies, catmint, heather, and more
 - **Tallgrass** — fills in as a grass matrix under flowers
 - **5 fern species** — forest understory that needs shade and moisture
-- **10 wild berry bushes** — blueberry, cranberry, strawberry...
+- **10 wild berry bushes** — blueberry, cranberry, strawberry… (in **1.22+**, wild berry spread can **clone parent traits** when `CloneBerryTraits` is on — see config)
 - **14 tree species** — mature trunks spread free saplings; growth is vanilla
 - **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
@@ -65,7 +65,7 @@ Cut any wildflower with a knife or scythe and it drops drygrass along with its u
 
 ### Your world stays safe
 
-Every block placed by the mod is a vanilla game block. **Removing the mod leaves your world completely intact** — no orphaned custom blocks, no broken chunks.
+The mod does not replace vanilla worldgen blocks. Vanilla parents stay vanilla when you remove the mod. **Optional integration:** other mods can register their own plant blocktypes via JSON (`ecologyParticipant`, etc.); see the repo **`docs/THIRD_PARTY_ECOLOGY.md`** or turn it off with `EnableThirdPartyParticipants: false` if you want only built-in vanilla paths.
 
 ### Respects your builds
 
@@ -120,6 +120,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableTrampling` | false | Plants near player paths accumulate stress and die |
 | `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
 | `EnableFlowerDrygrass` | true | Flowers drop drygrass when cut with knife/scythe |
+| `CloneBerryTraits` | true | Wild berry spread copies **berry traits** from the parent bush (Vintage Story **1.22+**) |
+| `EnableThirdPartyParticipants` | true | Allow other mods to declare ecosystem parents on their blocktypes via JSON attributes |
 
 #### Spread tuning (numbers)
 

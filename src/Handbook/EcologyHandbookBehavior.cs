@@ -22,26 +22,26 @@ namespace WildFarming.Handbook
             Block block = inSlot?.Itemstack?.Block;
             if (block == null) return;
 
-            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (string.IsNullOrEmpty(species)) return;
+
+            PlantRequirements req = PlantRequirements.FromBlock(block);
 
             dsc.AppendLine();
             dsc.AppendLine("<strong>" + Lang.Get("ecosystemflora:handbook-ecology-header") + "</strong>");
 
-            AppendSpreadRate(dsc, species);
-            AppendClimate(dsc, species);
+            AppendSpreadRate(dsc, req.SpreadRate);
+            AppendClimate(dsc, species, req, block);
             AppendContext(dsc, species);
             AppendHoldStrength(dsc, species);
-            AppendDominanceHint(dsc, species);
+            AppendDominanceHint(dsc, species, req);
             AppendNiche(dsc, species);
             AppendSeason(dsc, species);
             AppendSymbiosis(dsc, species);
         }
 
-        static void AppendSpreadRate(StringBuilder dsc, string species)
+        static void AppendSpreadRate(StringBuilder dsc, float rate)
         {
-            float rate = GetSpreadRate(species);
-
             string label = GetSpreadLabel(rate);
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-spread", label));
         }
@@ -55,8 +55,23 @@ namespace WildFarming.Handbook
             return Lang.Get("ecosystemflora:spread-veryslow");
         }
 
-        static void AppendClimate(StringBuilder dsc, string species)
+        static void AppendClimate(StringBuilder dsc, string species, PlantRequirements req, Block block)
         {
+            if (block != null && PlantCodeHelper.IsThirdPartyEcologyBlock(block) && req != null)
+            {
+                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-climate",
+                    req.MinTemp.ToString("0"), req.MaxTemp.ToString("0")));
+                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-rainfall",
+                    req.MinRain.ToString("0.##"), req.MaxRain.ToString("0.##")));
+                if (req.MinForest > 0.01f || req.MaxForest < 0.99f)
+                {
+                    dsc.AppendLine(Lang.Get("ecosystemflora:handbook-forest",
+                        req.MinForest.ToString("0.##"), req.MaxForest.ToString("0.##")));
+                }
+
+                return;
+            }
+
             if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry entry))
             {
                 dsc.AppendLine(Lang.Get("ecosystemflora:handbook-climate",
@@ -101,11 +116,11 @@ namespace WildFarming.Handbook
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-hold", label));
         }
 
-        static void AppendDominanceHint(StringBuilder dsc, string species)
+        static void AppendDominanceHint(StringBuilder dsc, string species, PlantRequirements req)
         {
             // Lightweight UX: explain what kind of "dominant" this plant tends to be in succession.
             // This is not a territory scanner; it helps players interpret spread/competition behavior.
-            float spreadRate = GetSpreadRate(species);
+            float spreadRate = req != null ? req.SpreadRate : 1f;
 
             if (!WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
             {
@@ -185,33 +200,6 @@ namespace WildFarming.Handbook
             {
                 dsc.AppendLine(Lang.Get("ecosystemflora:handbook-symbiosis"));
             }
-        }
-
-        static float GetSpreadRate(string species)
-        {
-            float rate = 1f;
-            if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry entry))
-            {
-                rate = entry.SpreadRate;
-            }
-            else if (WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fernEntry))
-            {
-                rate = fernEntry.SpreadRate;
-            }
-            else if (WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berryProfile))
-            {
-                rate = berryProfile.SpreadRate;
-            }
-            else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeProfile))
-            {
-                rate = treeProfile.SpreadRate;
-            }
-            else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grassEntry))
-            {
-                rate = grassEntry.SpreadRate;
-            }
-
-            return rate;
         }
     }
 }

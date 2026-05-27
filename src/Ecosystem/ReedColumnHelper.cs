@@ -154,7 +154,7 @@ namespace WildFarming.Ecosystem
         static bool IsSameReedSpecies(Block block, string species)
         {
             if (block == null || block.Id == 0) return false;
-            return PlantCodeHelper.GetEcologySpecies(block.Code) == species;
+            return PlantCodeHelper.ResolveEcologySpecies(block) == species;
         }
 
         static readonly BlockPos reedSiltScratch = new BlockPos(0);

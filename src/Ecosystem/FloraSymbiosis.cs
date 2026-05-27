@@ -115,7 +115,7 @@ namespace WildFarming.Ecosystem
                         Block block = acc.GetBlock(scanPos);
                         if (!PlantCodeHelper.IsEcologySpreadParent(block)) continue;
 
-                        string symbiontSpecies = PlantCodeHelper.GetEcologySpecies(block.Code);
+                        string symbiontSpecies = PlantCodeHelper.ResolveEcologySpecies(block);
                         if (!TryGetRule(symbiontSpecies, out Rule rule)) continue;
 
                         if (!SymbiontLinkedToRemovedHost(rule, hostBlock, hostPos, scanPos)) continue;
@@ -140,7 +140,7 @@ namespace WildFarming.Ecosystem
                     return true;
                 }
 
-                string hostSpecies = PlantCodeHelper.GetEcologySpecies(hostBlock.Code);
+                string hostSpecies = PlantCodeHelper.ResolveEcologySpecies(hostBlock);
                 if (hostSpecies != null && hostSpecies == key)
                 {
                     return true;
@@ -248,7 +248,7 @@ namespace WildFarming.Ecosystem
                 if (key == TreeHostToken && PlantCodeHelper.IsTreeLogGrownBlock(block))
                     return true;
 
-                string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+                string species = PlantCodeHelper.ResolveEcologySpecies(block);
                 if (species != null && species == key)
                     return true;
             }

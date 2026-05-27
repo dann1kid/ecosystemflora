@@ -59,7 +59,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (string.IsNullOrEmpty(species))
             {
                 errorLangKey = "ecosystemflora:inspect-error-noplant";

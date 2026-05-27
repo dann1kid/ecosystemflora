@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-26 (стадия: **Ecosystem v2.3**, версия `2.8.0`).
+Последнее обновление: 2026-05-27 (стадия: **Ecosystem v3.1**, версия **`3.1.0`**; актуальный чеклист — [`PROGRESS.md`](PROGRESS.md)).
 
 ---
 
@@ -150,7 +150,7 @@ src/
   BlockEntity/
     EcoSystemLife.cs            # thin BE: register on load
 tests/
-  WildFarming.Tests.csproj     # xUnit, 64 tests
+  WildFarming.Tests.csproj     # xUnit, 72 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -203,29 +203,26 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v2.3` (версия `2.8.0`).** Сезонность, ниша, perf audit, unit tests — **опубликовано на ModDB**.
+**Стадия: `Ecosystem v3.1`, версия `3.1.0`.** Помимо ванильной флоры: **v3.0** — клонирование **traits** диких ягодников при spread (`CloneBerryTraits`); **v3.1** — участники через **JSON атрибуты** на blocktype (`ecologyParticipant`, см. **[`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)**), конфиг **`EnableThirdPartyParticipants`**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora).
 
 | Компонент | Статус |
 |-----------|--------|
-| Экосистема: цветы, люпин, tallgrass, ferns, berries, trees | ✅ |
-| Водная флора (4 вида) | ✅ playtest (2026-05-24) |
-| Rain/forest + candidate pool + spacing | ✅ |
-| Cell competition (displace, stress, symbiosis, flora context) | ✅ |
-| Ниша: moisture/light, soil succession | ✅ |
-| Сезонность: spring boost, winter kill, fall die-off | ✅ |
-| Perf audit (фазы 1–3) | ✅ |
-| Unit tests (46 xUnit) | ✅ |
-| Legacy в сборке | ⏸ удалён |
+| Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
+| Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
+| Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
+| Юнит-тесты (xUnit) | ✅ **72** |
+| Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
+| Legacy JakeCool в сборке | ⏸ удалён |
 
-- `modinfo.json` — `2.8.0`, modid `ecosystemflora`, game `1.22.0`
-- Конфиг: `ecosystemflora.json`
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.0**).
+- **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
 
 ## 8. Правила для агентов
 
 1. **Не расширять** trees / vines / mushrooms без явного запроса.
-2. **Дикая экосистема** — только ванильные блоки в мире.
+2. **Дикая экосистема** — в мире **ванильные блоки** родителей от `game:` и **другие blocktypes**, если мод-автор объявил [`ecologyParticipant`](THIRD_PARTY_ECOLOGY.md) (без подмены vanilla `wildplant`).
 3. **Размножение** — только `Score >= MinFitness` и habitat-specific placement.
 4. **Тростник** — не ломать правило «ил + один водный блок»; не ставить `gravel+2` над столбом воды.
 5. **Производительность** — очереди и лимиты; не трогать блоки из фоновых потоков.
@@ -247,7 +244,7 @@ docs/
 - [x] **v2.3** — сезонность spread/stress — ✅.
 - [x] **12-месячные кривые** — `WildSpeciesSeason` + `SeasonEcology` (интерполяция по году) — ✅.
 - [x] **Perf audit** (фазы 1–5) — spatial tick, split stress/spread budget — ✅.
-- [x] **Unit tests** — 64 теста (season, classification, suitability, vacancy, ecology inspect survival) — ✅.
+- [x] **Unit tests** — 72 теста (season, classification, suitability, vacancy, ecology inspect survival, third-party attrs) — ✅.
 - [x] **Refactor** — `BlockFluidHelper` → `ReedColumnHelper` + `WaterColumnHelper` — ✅.
 - [x] Land claims — `RespectLandClaims` / `LandClaimGuard` — ✅.
 - [x] `modid` → `ecosystemflora`
@@ -256,6 +253,8 @@ docs/
 - [x] **v2.10** — spread hotfixes (`PlantVacancyRules`, active mycelium BE only) — ✅.
 - [x] **v2.11** — Ecology inspect (хоткей I, protobuf), chunk-scan до конца чанка, строки отчёта локализуются на клиенте — ✅.
 - [x] **v2.11.4** — ключи **`ecosystemflora:species-{id}`** для заголовка осмотра и топа «экология рядом» (en / ru / de); пояснение доли в строке топа — ✅.
+- [x] **v3.0** — spread диких ягодников **копирует traits** родителя (`CloneBerryTraits`, рефлексия `OnGrownFromCutting`) — ✅.
+- [x] **v3.1** — JSON-контракт для сторонних модов (`EnableThirdPartyParticipants`, `PlantCodeHelper.ResolveEcologySpecies`, …); гайд **[`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)** — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).
@@ -562,6 +561,8 @@ VS 1.22 переработал ягодные кусты: новые блоки,
 ---
 
 ## 16. Attribute-based participant contract (v3.1)
+
+**Реализовано** (см. **[`docs/THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)**): конфиг `EnableThirdPartyParticipants`, `PlantCodeHelper.IsThirdPartyEcologyBlock` / `ResolveEcologySpecies`, `EcosystemParticipant.TryFromBlock`, `PlantRequirements.FromBlock` (ветка по `ecologyHabitat`).
 
 ### 16.1. Проблема
 

@@ -218,5 +218,13 @@ namespace WildFarming.Ecosystem
         /// (same path as maturing a cutting). When false, vanilla random wild traits apply.
         /// </summary>
         public bool CloneBerryTraits { get; set; } = true;
+
+        // --- Third-party ecology (v3.1) ---
+
+        /// <summary>
+        /// When true, blocks may register using JSON attributes (<c>ecologyParticipant</c>, etc.)
+        /// without matching hardcoded vanilla <c>game:</c> paths.
+        /// </summary>
+        public bool EnableThirdPartyParticipants { get; set; } = true;
     }
 }

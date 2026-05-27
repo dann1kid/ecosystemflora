@@ -109,7 +109,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            string incumbentSpecies = PlantCodeHelper.GetEcologySpecies(incumbentBlock.Code);
+            string incumbentSpecies = PlantCodeHelper.ResolveEcologySpecies(incumbentBlock);
             if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;
 
             EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;

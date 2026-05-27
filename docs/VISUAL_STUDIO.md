@@ -74,12 +74,15 @@ wildfarming.sln
 
 | Поле | По умолчанию | Смысл |
 |------|----------------|-------|
+| `BalancePreset` | `"natural"` | Пресет перезаписывает часть полей при старте (см. `ecosystemflora.example.json`) |
 | `ReproduceRadius` | 4 | Радиус дикого размножения |
-| `ReproduceChance` | 0.08 | Шанс попытки |
-| `MinFitness` | 0.65 | Порог только для **reproduce**, не для посадки |
+| `ReproduceChance` | 0.50 | Шанс попытки (при пресете `natural`) |
+| `MinFitness` | 0.45 | Порог только для **reproduce**, не для посадки |
 | `MaxFailedSurvivalChecks` | 5 | Сколько раз ×18ч в плохом климате до смерти ростка |
 | `HarshWildPlants` | true | Учитывать min/maxTemp при выживании |
 | `GrowthHoursMultiplier` | 1 | Ускорение роста для тестов (0.1 = в 10 раз быстрее) |
+| `CloneBerryTraits` | true | Клонирование traits ягодника при spread |
+| `EnableThirdPartyParticipants` | true | JSON-участники из других модов (`ecologyParticipant`) |
 
 ## Устранение проблем
 

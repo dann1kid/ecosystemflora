@@ -33,7 +33,7 @@ namespace WildFarming.Ecosystem
             Block block = acc.GetBlock(pos);
             if (!PlantCodeHelper.IsEcologyPlant(block)) return;
 
-            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (string.IsNullOrEmpty(species)) return;
 
             Remove(pos);
@@ -42,7 +42,7 @@ namespace WildFarming.Ecosystem
             {
                 Pos = pos.Copy(),
                 Species = species,
-                Habitat = PlantCodeHelper.GetEcologyHabitat(block.Code),
+                Habitat = PlantCodeHelper.GetEcologyHabitat(block),
                 IsReed = PlantCodeHelper.IsReedBlock(block),
             };
 

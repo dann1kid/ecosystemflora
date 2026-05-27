@@ -1,6 +1,6 @@
 # Ecosystem - Flora
 
-A Vintage Story mod that makes wild flora **alive**. Flowers spread across meadows, ferns creep under forest canopy, reeds colonize shorelines, and trees seed new saplings — all following climate, soil, seasons, and competition. No custom blocks: your world stays vanilla-safe.
+A Vintage Story mod that makes wild flora **alive**. Flowers spread across meadows, ferns creep under forest canopy, reeds colonize shorelines, and trees seed new saplings — all following climate, soil, seasons, and competition. This mod does not add its own block IDs: spread uses **vanilla parents** by default; other mods can opt in via JSON (**[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)**).
 
 ## How it works
 
@@ -17,7 +17,7 @@ Plants don't just spread — they **compete**. A stronger species can displace a
 
 The result: meadows fill in naturally, forest edges develop a distinct flora belt, clearings get reclaimed by fast colonizers first and then by perennials, and shorelines grow reeds and water lilies on their own.
 
-**Removing the mod leaves your world intact** — every placed block is vanilla.
+**Removing the mod leaves your world intact** — vanilla parents stay vanilla. Other mods may register their own blocks as spread parents via optional JSON attributes (see **`docs/THIRD_PARTY_ECOLOGY.md`**); disable with `EnableThirdPartyParticipants: false` if you want only hardcoded vanilla paths.
 
 ## What spreads
 
@@ -49,11 +49,11 @@ A reference template ships with the mod. The easiest way to tune the experience 
 
 | Preset | Feel | Spread attempts/year | Chance | Min fitness |
 |--------|------|---------------------|--------|-------------|
-| `natural` | Slow, realistic | 42 | 0.35 | 0.5 |
-| `lush` | Faster, greener | 60 | 0.45 | 0.4 |
-| `sparse` | Minimal, subtle | 24 | 0.2 | 0.65 |
+| `natural` | Slow, realistic | 72 | 0.50 | 0.45 |
+| `lush` | Faster, greener | 120 | 0.65 | 0.35 |
+| `sparse` | Minimal, subtle | 36 | 0.30 | 0.60 |
 
-Key toggles:
+Set `BalancePreset` to `custom` to use your own numeric fields (see the example JSON in the mod assets).
 
 | Setting | Default | What it does |
 |---------|---------|-------------|
@@ -63,6 +63,8 @@ Key toggles:
 | `EnableSymbiosis` | true | Forest understory depends on nearby trees |
 | `RespectLandClaims` | true | No wild changes inside your land claims |
 | `VerboseLogging` | false | Detailed logs for diagnostics (keep off in play) |
+| `CloneBerryTraits` | true | Wild berry spread copies parent **traits** (VS 1.22+) |
+| `EnableThirdPartyParticipants` | true | Other mods can register blocktypes with `ecologyParticipant` |
 
 ## Installation
 
@@ -76,8 +78,8 @@ Key toggles:
 ## For developers
 
 **Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (46 xUnit tests)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (72 xUnit tests)
 
-Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md)
+Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 
 Originally inspired by JakeCool19's Wild Farming (v1.2.0). Fully rewritten.

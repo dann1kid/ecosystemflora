@@ -69,5 +69,7 @@
   "EcologyInspectScanRadius": 16,
   "EnableEcologyAreaScan": true,
 
-  "CloneBerryTraits": true
+  "CloneBerryTraits": true,
+
+  "EnableThirdPartyParticipants": true
 }

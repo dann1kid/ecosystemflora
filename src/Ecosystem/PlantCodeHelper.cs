@@ -1,18 +1,88 @@
+using System;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
     public static class PlantCodeHelper
     {
+        /// <summary>True when attributes declare a reproducible ecology plant from any mod domain (v3.1).</summary>
+        public static bool IsThirdPartyEcologyBlock(Block block)
+        {
+            if (!EcosystemConfig.Loaded.EnableThirdPartyParticipants || block?.Attributes == null || block.Code == null) return false;
+            if (!block.Attributes["ecologyParticipant"].AsBool(false)) return false;
+            if (string.IsNullOrWhiteSpace(block.Attributes["ecologySpecies"].AsString(null))) return false;
+            return !string.IsNullOrWhiteSpace(block.Attributes["ecologySpreadBlock"].AsString(null));
+        }
+
+        /// <summary>Reads <c>ecologySpecies</c> when <c>ecologyParticipant</c> is enabled; otherwise vanilla path rules.</summary>
+        public static string ResolveEcologySpecies(Block block)
+        {
+            if (block?.Attributes != null && EcosystemConfig.Loaded.EnableThirdPartyParticipants
+                && block.Attributes["ecologyParticipant"].AsBool(false))
+            {
+                string declared = block.Attributes["ecologySpecies"].AsString(null)?.Trim();
+                if (!string.IsNullOrEmpty(declared)) return declared;
+            }
+
+            return GetEcologySpecies(block?.Code);
+        }
+
+        /// <summary>Parses <c>ecologyHabitat</c> attribute values (English enum names).</summary>
+        public static EcologyHabitat ParseEcologyHabitat(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return EcologyHabitat.Terrestrial;
+            raw = raw.Trim();
+            return Enum.TryParse(raw, ignoreCase: true, out EcologyHabitat h) ? h : EcologyHabitat.Terrestrial;
+        }
+
+        /// <summary><c>domain:path</c> or path with <paramref name="defaultDomain"/>.</summary>
+        public static AssetLocation ResolveEcologyAsset(string raw, string defaultDomain)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            raw = raw.Trim().Replace('\\', '/');
+            int colon = raw.IndexOf(':');
+            if (colon > 0)
+            {
+                string dom = raw.Substring(0, colon).Trim();
+                string path = raw.Substring(colon + 1).Trim();
+                return new AssetLocation(dom, path);
+            }
+
+            defaultDomain ??= "game";
+            return new AssetLocation(defaultDomain, raw);
+        }
+
+        /// <summary>Habitat from third-party attrs or inferred from vanilla block code.</summary>
+        public static EcologyHabitat GetEcologyHabitat(Block block)
+        {
+            if (block?.Attributes != null && EcosystemConfig.Loaded.EnableThirdPartyParticipants
+                && block.Attributes["ecologyParticipant"].AsBool(false))
+            {
+                return ParseEcologyHabitat(block.Attributes["ecologyHabitat"].AsString("Terrestrial"));
+            }
+
+            return GetEcologyHabitat(block?.Code);
+        }
+
         public static bool IsEcologyPlant(Block block)
+        {
+            if (block?.Code == null) return false;
+            if (IsThirdPartyEcologyBlock(block)) return true;
+            if (block.Code.Domain != "game") return false;
+            if (TryGetEcologySpecies(block.Code, out _)) return true;
+            return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
+        }
+
+        /// <summary>Vanilla game-domain ecology only (excludes declared third-party JSON participants).</summary>
+        public static bool IsVanillaEcologyPlant(Block block)
         {
             if (block?.Code == null || block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
         }
-
-        public static bool IsVanillaEcologyPlant(Block block) => IsEcologyPlant(block);
 
         public static bool TryGetEcologySpecies(AssetLocation blockCode, out string species)
         {
@@ -90,6 +160,7 @@ namespace WildFarming.Ecosystem
         {
             if (block == null) return false;
             if (IsTreeSaplingBlock(block)) return false;
+            if (IsThirdPartyEcologyBlock(block)) return true;
             if (IsWildBerryBushBlock(block)) return true;
             if (IsTreeLogGrownBlock(block)) return true;
             return IsEcologyPlant(block);
@@ -177,6 +248,9 @@ namespace WildFarming.Ecosystem
 
         public static bool IsReedBlock(Block block)
         {
+            if (block != null && IsThirdPartyEcologyBlock(block) && GetEcologyHabitat(block) == EcologyHabitat.ReedNearWater)
+                return true;
+
             string species = GetEcologySpecies(block?.Code);
             return species == "coopersreed" || species == "tule" || species == "papyrus";
         }
@@ -200,7 +274,9 @@ namespace WildFarming.Ecosystem
 
         public static BlockPos GetReproduceAnchor(IBlockAccessor acc, BlockPos pos, AssetLocation blockCode)
         {
-            if (GetEcologySpecies(blockCode) == "watercrowfoot")
+            Block at = acc?.GetBlock(pos);
+            string speciesResolved = at != null ? ResolveEcologySpecies(at) : GetEcologySpecies(blockCode);
+            if (speciesResolved == "watercrowfoot")
             {
                 return GetColumnBase(acc, pos);
             }
@@ -234,6 +310,12 @@ namespace WildFarming.Ecosystem
         {
             if (block?.Code == null) return null;
 
+            if (IsThirdPartyEcologyBlock(block))
+            {
+                AssetLocation spread = ResolveEcologyAsset(block.Attributes["ecologySpreadBlock"].AsString(""), block.Code.Domain);
+                return spread?.Path?.Length > 0 ? spread : null;
+            }
+
             string wood = GetTreeWood(block);
             if (wood != null && IsTreeLogGrownBlock(block))
             {
@@ -244,7 +326,7 @@ namespace WildFarming.Ecosystem
 
             if (IsTreeSaplingBlock(block)) return null;
 
-            if (GetEcologySpecies(block.Code) == "watercrowfoot")
+            if (ResolveEcologySpecies(block) == "watercrowfoot")
             {
                 return new AssetLocation("game:aquatic-watercrowfoot-section");
             }
@@ -255,8 +337,19 @@ namespace WildFarming.Ecosystem
         /// <summary>Pick land-normal vs water-normal from target cell (vanilla habitat).</summary>
         public static Block ResolveReedSpreadBlock(ICoreAPI api, BlockPos plantPos, Block parentBlock)
         {
-            string species = GetEcologySpecies(parentBlock?.Code);
-            if (species != "coopersreed" && species != "tule" && species != "papyrus") return parentBlock;
+            if (parentBlock == null) return null;
+
+            EcologyHabitat h = GetEcologyHabitat(parentBlock);
+            string species = ResolveEcologySpecies(parentBlock);
+            bool vanillaReed = species == "coopersreed" || species == "tule" || species == "papyrus";
+            if (!vanillaReed && h != EcologyHabitat.ReedNearWater)
+                return parentBlock;
+
+            if (!vanillaReed)
+            {
+                // Third-party reed: mod block is already the correct land/water variant for its type.
+                return parentBlock;
+            }
 
             IBlockAccessor acc = api.World.BlockAccessor;
             string habitat = BlockFluidHelper.IsDedicatedWaterCell(acc, plantPos) ? "water" : "land";
@@ -276,6 +369,20 @@ namespace WildFarming.Ecosystem
 
         public static AssetLocation MatureBlockLocation(Block block)
         {
+            if (IsThirdPartyEcologyBlock(block))
+            {
+                JsonObject attrs = block.Attributes;
+                string matureRaw = attrs?["ecologyMatureBlock"].AsString(null);
+                if (!string.IsNullOrWhiteSpace(matureRaw))
+                {
+                    AssetLocation mature = ResolveEcologyAsset(matureRaw, block.Code.Domain);
+                    if (mature?.Path?.Length > 0) return mature;
+                }
+
+                AssetLocation spread = SpreadBlockCode(block);
+                return spread ?? block.Code;
+            }
+
             AssetLocation vanilla = SpreadBlockCode(block);
             if (vanilla != null) return vanilla;
 

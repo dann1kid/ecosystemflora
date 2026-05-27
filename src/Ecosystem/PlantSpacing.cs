@@ -53,7 +53,7 @@ namespace WildFarming.Ecosystem
                         Block block = acc.GetBlock(checkPos);
                         if (!PlantCodeHelper.IsEcologyPlant(block)) continue;
 
-                        string otherSpecies = PlantCodeHelper.GetEcologySpecies(block.Code);
+                        string otherSpecies = PlantCodeHelper.ResolveEcologySpecies(block);
                         if (string.IsNullOrEmpty(otherSpecies)) continue;
 
                         EcologyHabitat otherHabitat = PlantCodeHelper.GetEcologyHabitat(block.Code);

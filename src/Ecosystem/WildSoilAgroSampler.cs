@@ -19,7 +19,7 @@ namespace WildFarming.Ecosystem
                 Block block = acc.GetBlock(pos);
                 if (block == null || block.Id == 0) return;
 
-                string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+                string species = PlantCodeHelper.ResolveEcologySpecies(block);
                 if (string.IsNullOrEmpty(species)) return;
                 if (!WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role)) return;
 

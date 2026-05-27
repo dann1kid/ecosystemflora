@@ -226,7 +226,7 @@ namespace WildFarming.Ecosystem
                 FloraSymbiosis.CascadeOnHostRemoved(api, pos, block);
             }
 
-            string species = PlantCodeHelper.GetEcologySpecies(block.Code);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (!string.IsNullOrEmpty(species))
             {
                 SoilSuccessionApplier.Apply(api, pos, species, soilEvent);
@@ -243,7 +243,7 @@ namespace WildFarming.Ecosystem
             {
                 api.Logger.Notification(
                     "[ecosystemflora] Removed {0} at {1} ({2})",
-                    PlantCodeHelper.GetEcologySpecies(block.Code) ?? block.Code?.Path,
+                    PlantCodeHelper.ResolveEcologySpecies(block) ?? block.Code?.Path,
                     pos,
                     reason);
             }

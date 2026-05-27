@@ -2,7 +2,7 @@ using Vintagestory.API.Common;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Any vanilla ecology plant (flowers, reeds, water lily, mature log-grown trees).</summary>
+    /// <summary>Registered ecology organism: vanilla paths or declared third-party <c>ecologyParticipant</c> blocks.</summary>
     public sealed class EcosystemParticipant : IEcosystemParticipant
     {
         public AssetLocation BlockCode { get; }
@@ -26,6 +26,16 @@ namespace WildFarming.Ecosystem
 
             string path = block.Code.Path;
             if (path != null && path.Contains("-harvested-")) return false;
+
+            if (PlantCodeHelper.IsThirdPartyEcologyBlock(block))
+            {
+                AssetLocation spreadTp = PlantCodeHelper.SpreadBlockCode(block);
+                if (spreadTp == null) return false;
+
+                AssetLocation matureTp = PlantCodeHelper.MatureBlockLocation(block) ?? spreadTp;
+                participant = new EcosystemParticipant(block, PlantRequirements.FromBlock(block), spreadTp, matureTp);
+                return true;
+            }
 
             if (!PlantCodeHelper.IsEcologySpreadParent(block)) return false;
 

@@ -49,7 +49,7 @@ namespace WildFarming.Ecosystem
             Block plantBlock = acc.GetBlock(plantPos);
             if (plantBlock == null || plantBlock.Id == 0) return PlantSoilRole.MeadowPerennial;
 
-            string species = PlantCodeHelper.GetEcologySpecies(plantBlock.Code);
+                string species = PlantCodeHelper.ResolveEcologySpecies(plantBlock);
             if (string.IsNullOrEmpty(species)) return PlantSoilRole.MeadowPerennial;
 
             WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role);

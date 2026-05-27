@@ -54,7 +54,7 @@ namespace WildFarming.Client
             }
 
             Block block = capi.World.BlockAccessor.GetBlock(sel.Position);
-            if (block == null || string.IsNullOrEmpty(PlantCodeHelper.GetEcologySpecies(block.Code)))
+            if (block == null || string.IsNullOrEmpty(PlantCodeHelper.ResolveEcologySpecies(block)))
             {
                 capi.ShowChatMessage(Lang.Get("ecosystemflora:inspect-error-noplant"));
                 return true;
