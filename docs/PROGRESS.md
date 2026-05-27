@@ -320,6 +320,7 @@ Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x
 | **Залежь** — восстановление N на пашне под дикими растениями | [x] v2.9 |
 | **Trampling** — тропы от игроков (`EnableTrampling`, default off) | [x] v2.6 |
 | **Ecology inspect** — хоткей **I**, диалог: состояние растения + топ-3 вида рядом (`SpacingIndex`) | [x] v2.11 |
+| **Chunk scan resume** — курсор `(lx,lz)`; незавершённый чанк снова в очереди до полного прохода | [x] v2.11.2 |
 | **Dominant species UX** — карта доминанты по чанку/HUD (без осмотра) | [ ] backlog |
 | **Выпас животных / `tallgrass-eaten`** — husbandry, не spread | [ ] backlog (вне scope) |
 

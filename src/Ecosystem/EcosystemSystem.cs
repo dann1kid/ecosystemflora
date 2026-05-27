@@ -12,7 +12,7 @@ namespace WildFarming.Ecosystem
 
         ICoreAPI api;
         readonly ReproducerRegistry registry = new ReproducerRegistry();
-        readonly Queue<Vec2i> pendingChunkScans = new Queue<Vec2i>();
+        readonly Queue<PendingChunkScan> pendingChunkScans = new Queue<PendingChunkScan>();
 
         long reproduceListenerId;
         long stressListenerId;
@@ -348,7 +348,7 @@ namespace WildFarming.Ecosystem
         void OnChunkColumnLoaded(Vec2i chunkCoord, IWorldChunk[] chunks)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            pendingChunkScans.Enqueue(chunkCoord);
+            pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord));
         }
 
         void OnChunkColumnUnloaded(Vec3i chunkCoord)
@@ -450,18 +450,25 @@ namespace WildFarming.Ecosystem
             {
                 if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) break;
 
-                Vec2i chunkCoord = pendingChunkScans.Dequeue();
+                PendingChunkScan job = pendingChunkScans.Dequeue();
                 queuePasses--;
-                columnsLeft--;
 
-                if (activePlayerChunks != null && !PlayerProximity.IsActiveChunk(activePlayerChunks, chunkCoord))
+                if (activePlayerChunks != null && !PlayerProximity.IsActiveChunk(activePlayerChunks, job.ChunkCoord))
                 {
-                    pendingChunkScans.Enqueue(chunkCoord);
+                    pendingChunkScans.Enqueue(job);
                     continue;
                 }
 
-                List<ChunkFlowerHit> hits = ChunkFlowerScanner.ScanColumn(chunkCoord, acc, registrationsLeft);
-                foreach (ChunkFlowerHit hit in hits)
+                columnsLeft--;
+
+                ChunkScanResult scan = ChunkFlowerScanner.ScanChunk(
+                    job.ChunkCoord,
+                    acc,
+                    registrationsLeft,
+                    job.NextLx,
+                    job.NextLz);
+
+                foreach (ChunkFlowerHit hit in scan.Hits)
                 {
                     if (registry.Contains(hit.Pos)) continue;
 
@@ -472,6 +479,11 @@ namespace WildFarming.Ecosystem
                     RegisterReproducer(anchor, participant, spawnBurst: false);
                     registrationsLeft--;
                     if (registrationsLeft <= 0) break;
+                }
+
+                if (!scan.Completed)
+                {
+                    pendingChunkScans.Enqueue(new PendingChunkScan(job.ChunkCoord, scan.ResumeLx, scan.ResumeLz));
                 }
             }
 

@@ -9,10 +9,18 @@ namespace WildFarming.Ecosystem
     /// <summary>Finds ecology parents (flowers, log-grown trees, …) per column instead of walking every block.</summary>
     internal static class ChunkFlowerScanner
     {
-        public static List<ChunkFlowerHit> ScanColumn(Vec2i chunkCoord, IBlockAccessor acc, int maxHits)
+        public static ChunkScanResult ScanChunk(
+            Vec2i chunkCoord,
+            IBlockAccessor acc,
+            int maxHits,
+            int startLx = 0,
+            int startLz = 0)
         {
             var hits = new List<ChunkFlowerHit>();
-            if (maxHits <= 0) return hits;
+            if (maxHits <= 0)
+            {
+                return new ChunkScanResult(hits, startLx, startLz, completed: false);
+            }
 
             int chunkSize = GlobalConstants.ChunkSize;
             int x0 = chunkCoord.X * chunkSize;
@@ -21,10 +29,17 @@ namespace WildFarming.Ecosystem
             IMapChunk mapChunk = acc.GetMapChunk(chunkCoord.X, chunkCoord.Y);
             int fallbackY = acc.MapSizeY - 1;
 
-            for (int lx = 0; lx < chunkSize; lx++)
+            int resumeLx = startLx;
+            int resumeLz = startLz;
+
+            for (int lx = startLx; lx < chunkSize; lx++)
             {
-                for (int lz = 0; lz < chunkSize; lz++)
+                int lzStart = lx == startLx ? startLz : 0;
+                for (int lz = lzStart; lz < chunkSize; lz++)
                 {
+                    resumeLx = lx;
+                    resumeLz = lz;
+
                     int x = x0 + lx;
                     int z = z0 + lz;
                     int topY = GetSurfaceY(mapChunk, lx, lz, chunkSize, fallbackY);
@@ -32,12 +47,32 @@ namespace WildFarming.Ecosystem
                     if (TryFindTopFlower(acc, x, z, topY, out Block block, out BlockPos pos))
                     {
                         hits.Add(new ChunkFlowerHit(pos, block.Code));
-                        if (hits.Count >= maxHits) return hits;
+                        if (hits.Count >= maxHits)
+                        {
+                            return AdvanceCursor(chunkSize, lx, lz, hits);
+                        }
                     }
                 }
             }
 
-            return hits;
+            return new ChunkScanResult(hits, 0, 0, completed: true);
+        }
+
+        static ChunkScanResult AdvanceCursor(int chunkSize, int lx, int lz, List<ChunkFlowerHit> hits)
+        {
+            lz++;
+            if (lz >= chunkSize)
+            {
+                lx++;
+                lz = 0;
+            }
+
+            if (lx >= chunkSize)
+            {
+                return new ChunkScanResult(hits, 0, 0, completed: true);
+            }
+
+            return new ChunkScanResult(hits, lx, lz, completed: false);
         }
 
         static int GetSurfaceY(IMapChunk mapChunk, int lx, int lz, int chunkSize, int fallbackY)
@@ -80,6 +115,22 @@ namespace WildFarming.Ecosystem
         }
     }
 
+    internal readonly struct ChunkScanResult
+    {
+        public List<ChunkFlowerHit> Hits { get; }
+        public int ResumeLx { get; }
+        public int ResumeLz { get; }
+        public bool Completed { get; }
+
+        public ChunkScanResult(List<ChunkFlowerHit> hits, int resumeLx, int resumeLz, bool completed)
+        {
+            Hits = hits;
+            ResumeLx = resumeLx;
+            ResumeLz = resumeLz;
+            Completed = completed;
+        }
+    }
+
     internal readonly struct ChunkFlowerHit
     {
         public BlockPos Pos { get; }
@@ -89,6 +140,20 @@ namespace WildFarming.Ecosystem
         {
             Pos = pos;
             BlockCode = blockCode;
+        }
+    }
+
+    internal readonly struct PendingChunkScan
+    {
+        public Vec2i ChunkCoord { get; }
+        public int NextLx { get; }
+        public int NextLz { get; }
+
+        public PendingChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0)
+        {
+            ChunkCoord = chunkCoord;
+            NextLx = nextLx;
+            NextLz = nextLz;
         }
     }
 }
