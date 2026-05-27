@@ -1,7 +1,7 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v2.3` — сезонность, ниша, perf audit, unit tests; **опубликовано на ModDB**.  
-**Версия мода:** `2.8.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10  
+**Текущая стадия:** `Ecosystem v2.9` — fallow restoration, farmland spread, MaxFertility fix; **опубликовано на ModDB**.  
+**Версия мода:** `2.9.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10  
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
 Последнее обновление: 2026-05-26.
@@ -483,6 +483,7 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 | *(pending)* | Perf phase 5: split tick budgets (stress/spread independent), faster spread defaults; v2.8.0 |
 | *(pending)* | Handbook integration: static guide pages + EcologyHandbookBehavior + JSON patches |
 | *(pending)* | Tule (камыш) as ecosystem participant; mycelium host protection |
+| *(pending)* | 12-month seasonal curves; fallow restoration; farmland spread; MaxFertility fix; player-placed auto-register; v2.9.0 |
 
 ---
 

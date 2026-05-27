@@ -40,10 +40,12 @@ Plants don't blindly fill every empty cell. They **compete**:
 
 ### Seasons matter
 
-- **Spring** — boosted spread; meadows bloom early
-- **Summer** — steady growth
-- **Fall** — annual flowers die off; perennials slow down
-- **Winter** — most plants go dormant; annuals die, hardy species survive
+Each species follows its own **12-month seasonal curve** — spread peaks in species-appropriate months and stress accumulates in harsh ones:
+
+- **Spring** — meadows bloom; colonizers rush cleared ground
+- **Summer** — steady peak for most species
+- **Fall** — annuals die off; perennials slow down
+- **Winter** — dormancy; annuals die, hardy perennials survive
 
 ### Paths form where you walk
 
@@ -63,7 +65,7 @@ Every block placed by the mod is a vanilla game block. **Removing the mod leaves
 
 Wild spread, displacement, and stress death are blocked inside **land claims**. Your gardens and farms are safe.
 
-Plants also never spread onto **farmland** or **mycelium blocks** (mushroom spawning ground) — mushrooms continue to regrow naturally.
+Plants never spread onto **mycelium blocks** (mushroom spawning ground) — mushrooms continue to regrow naturally. Unclaimed empty **farmland** can be colonized by wild plants over time, and those plants slowly restore soil nutrients (fallow restoration).
 
 ### Greenhouse support
 
@@ -100,6 +102,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `UseNicheContext` | true | Local soil + climate niche scoring |
 | `UseSoilSuccession` | true | Plants gradually change soil quality |
 | `UseFarmlandNutrientBridge` | true | Wild plants enrich tilled farmland N/P/K |
+| `EnableFallowRestoration` | true | Healthy plants on farmland slowly restore nutrients |
 | `RespectLandClaims` | true | No spread/death inside player claims |
 | `PlantSpacingEnabled` | true | Minimum distance between plants |
 | `HarshWildPlants` | true | Wild plants enforce survival checks |
@@ -130,6 +133,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `NicheStressThreshold` | 0.45 | Niche score below this = stress |
 | `SoilSuccessionStrength` | 1.0 | Speed of soil changes |
 | `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |
+| `FallowRestorationStrength` | 1.0 | Scale of fallow restoration bonus |
 | `FloraOpenInteriorPenalty` | 0.35 | Penalty for open-field species in forest |
 
 #### Trampling tuning
