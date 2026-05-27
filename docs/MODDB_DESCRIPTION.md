@@ -53,6 +53,12 @@ Players trample nearby plants over time. Walk the same route often enough and fl
 
 *Trampling is experimental and off by default — enable it in the config.*
 
+### Ecology inspect (hotkey **I**)
+
+Aim at any wild ecosystem plant and press **I** to open a small report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, and a short tally of dominant species nearby (uses the mod’s spacing index). All UI strings follow **your client language**; inspect errors also show localized chat messages instead of the server locale.
+
+*Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
+
 ### Bonus: drygrass from flowers
 
 Cut any wildflower with a knife or scythe and it drops drygrass along with its usual drops — no need to hunt for plain grass.
@@ -109,6 +115,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `ApplyWorldgenRainForest` | true | Respect worldgen rain/forest values |
 | `UseCalendarScaledSpread` | true | Scale intervals to DaysPerYear |
 | `UseSpeciesSpreadRates` | true | Per-species spread rates from ecology table |
+| `EnableEcologyInspect` | true | Hotkey **I**: in-world ecology report for the plant you aim at |
+| `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `EnableTrampling` | false | Plants near player paths accumulate stress and die |
 | `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
 | `EnableFlowerDrygrass` | true | Flowers drop drygrass when cut with knife/scythe |
@@ -153,8 +161,10 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `StressTickIntervalMs` | 6000 | Interval between stress ticks (ms) |
 | `MaxReproduceAttemptsPerTick` | 64 | Spread checks per server tick |
 | `MaxStressChecksPerTick` | 16 | Stress checks per tick |
-| `MaxChunkColumnsScannedPerTick` | 3 | Chunk registration speed |
-| `MaxRegistrationsPerTick` | 192 | Plant registrations per tick |
+| `MaxChunkColumnsScannedPerTick` | 6 | Chunk registration pacing (unfinished chunks stay queued) |
+| `MaxRegistrationsPerTick` | 512 | Max new plant registrations per server tick |
+| `EnableEcologyInspect` | true | Hotkey **I**: in-world ecology report for aimed plant |
+| `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `OnlyActivateNearPlayers` | true | Limit activity to player radius |
 | `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
 | `VerboseLogging` | false | Detailed server log output |

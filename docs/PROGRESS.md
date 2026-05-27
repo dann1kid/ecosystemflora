@@ -1,10 +1,10 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v2.10` — spread hotfixes (вакантность, mycelium BE), displacement/hold; **опубликовано на ModDB**.  
-**Версия мода:** `2.10.5` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 62 (xUnit)  
+**Текущая стадия:** `Ecosystem v2.11` — Ecology inspect (хоткей **I**), клиентская локализация диалога; chunk-scan с докруткой до полного чанка.  
+**Версия мода:** `2.11.3` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 64 (xUnit)  
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление: 2026-05-27.
+Последнее обновление: 2026-05-28.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов).
 
@@ -45,7 +45,7 @@
 
 | Слой | Поведение |
 |------|-----------|
-| **Объект** | Ванильные блоки; регистрация — `ChunkFlowerScanner` при загрузке чанка (без `entityClass` патчей); **деревья** — скан чанка по `log-grown` |
+| **Объект** | Ванильные блоки; регистрация — очередь `PendingChunkScan` + `ChunkFlowerScanner.ScanChunk` (возобновление с `(lx,lz)`, без обрыва середины чанка из‑за лимита регистраций); без `entityClass` патчей; **деревья** — скан чанка по `log-grown` |
 | **Участник** | `IEcosystemParticipant` → `EcosystemParticipant` |
 | **Среда** | Температура (сезон), `WorldgenRainfall`, **`LocalForestCover`** (соседние стволы), почва, жидкость |
 | **Клетка-кандидат** | Скан в радиусе → **взвешенный** выбор по fitness |
@@ -105,7 +105,7 @@
 
 ### Архитектура (код)
 
-- [x] `EcosystemSystem`, `ReproducerRegistry`, `ChunkFlowerScanner`
+- [x] `EcosystemSystem`, `ReproducerRegistry`, `ChunkFlowerScanner`, `EcologyInspectService`, `EcologyInspectServerSystem`, канал protobuf `ecosystemflora-ecologyinspect`
 - [x] `EnvironmentalContext` — rainfall (worldgen) + `LocalForestCover` (соседние деревья)
 - [x] `SpreadVacancy` — spread aquatic в водные клетки (не только air)
 - [x] `SuitabilityEvaluator` — ветки по `EcologyHabitat`
@@ -183,7 +183,11 @@
 | `TickBudgetMs` | Жёсткий потолок ms/тик для spread (default 30); 0 = без лимита |
 | `MaxReproduceAttemptsPerTick` | Лимит CPU (spread) |
 | `MaxStressChecksPerTick` | Лимит CPU (stress) |
-| `MaxChunkColumnsScannedPerTick` / `MaxRegistrationsPerTick` | Очередь чанков |
+| `MaxChunkColumnsScannedPerTick` / `MaxRegistrationsPerTick` | Обработка очереди чанков за тик; скан продолжается до конца чанка через курсор (см. v2.11.2) |
+| `EnableEcologyInspect` | Осмотр растения по хоткею (**I**): запрос → отчёт по сети |
+| `EcologyInspectCooldownSeconds` | Кулдаун между запросами осмотра |
+| `EcologyInspectScanRadius` | Радиус зонального скана (доминанты в `SpacingIndex`, 4–32) |
+| `EnableEcologyAreaScan` | Включить блок «экология рядом» в отчёте |
 | `ReproduceDebug` / `VerboseLogging` | Лог spread / Skip; master-switch логирования |
 | `OnlyActivateNearPlayers` | Default **true** — реестр только в радиусе игроков |
 | `PlayerActivationRadiusBlocks` | Радиус активации (192 по умолчанию) |
@@ -222,7 +226,7 @@
 
 ## Roadmap / TODO
 
-Mod DB — **опубликовано** 2026-05-26. Hotfix по отзывам, далее v3.x.
+Mod DB — **опубликовано** 2026-05-26. Серия **v2.11.x** (осмотр экологии, скан чанка, локализация); далее акцент на **v3.x**.
 
 **Следующие итерации:**
 
@@ -239,7 +243,7 @@ Mod DB — **опубликовано** 2026-05-26. Hotfix по отзывам, 
 | 2 | **Strip** legacy JakeCool (мёртвый код/assets вне сборки) | [x] done |
 | 3 | **Rename** `EcosystemPlant` → `EcoSystemLife` | [x] done |
 | 4 | Рефактор + **perf-анализ** (фаза 3 — по результатам) | [x] done |
-| 5 | **Unit-тесты** — чистые функции (scoring, classification, season) | [x] 46 tests |
+| 5 | **Unit-тесты** — чистые функции (scoring, classification, season, inspect/survival) | [x] 64 tests |
 | 6 | **Разбить `BlockFluidHelper`** → `ReedColumnHelper`, `WaterColumnHelper` | [x] done |
 | 7 | ModDB + hotfix по отзывам | [x] опубликовано 2026-05-26 |
 
@@ -252,7 +256,7 @@ Mod DB — **опубликовано** 2026-05-26. Hotfix по отзывам, 
 - [x] Зимнее/осеннее отмирание — `SeasonalStressEnabled` (terrestrial stress)
 - [x] **12-месячные кривые per species** — `WildSpeciesSeason` (`float[12]` spread + stress), `SeasonEcology.SpreadMultiplierInterpolated`; шаблоны видов + fallback
 
-Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x** (2026-05-27).
+Mod DB — **опубликовано** (2026-05-26); линейка релизов **2.10.x** (2026-05-27) → **2.11.x** (inspect, возобновляемый chunk-scan, локализация диалога).
 
 ### v1.x — контент и баланс
 
@@ -309,6 +313,13 @@ Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x
 - [x] **Displacement/hold** — hold без `SpreadRate`; `DisplacementHoldMargin` 1.18; `EmptySpreadFitnessMultiplier`; пресеты `UseCalendarScaledSpread` + `UseSpeciesSpreadRates`
 - [x] **Chunk scan** — неактивные чанки снова в очереди; `ReproduceIntervalHours: 0` → fallback 24h
 - [x] Playtest: луг заполняется после фиксов (2026-05-27)
+
+### v2.11 — Ecology inspect, chunk scan, локализация UI
+
+- [x] **Хоткей и сеть** — `EcologyInspectClientSystem` / `EcologyInspectServerSystem`, protobuf-канал `ecosystemflora-ecologyinspect`; зависимость сборки на `protobuf-net.dll` из папки игры
+- [x] **Отчёт** — `EcologyInspectService.TryBuildReport`: живое состояние из реестра и окружения; опционально `EcologyAreaScanner` + `EcologySpacingIndex` для топа видов в радиусе (`EcologyInspectScanRadius`, clamp 4–32)
+- [x] **Chunk scan resume (v2.11.2)** — очередь `PendingChunkScan (chunk, lx, lz)` и `ChunkFlowerScanner.ScanChunk`: проход не обрывается серединой чанка из‑за лимита регистраций; удалённые от игрока чанки только возвращаются в хвост очереди
+- [x] **Клиентская локализация (v2.11.3)** — сервер шлёт `InspectLineLite[]` (ключ + аргументы; в аргументах префиксы `L:` и `I:` для вложенных ключей и масок почвы); ошибки осмотра — поле `ErrorLangKey`, показ в чате через `Lang.Get` на клиенте; полные ключи причин survival — `inspect-survival-fail-*`
 
 ### Баланс и UX (post-ModDB)
 
@@ -400,7 +411,7 @@ Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x
 - [x] **Handbook** — 7 статических guide-страниц (overview, flowers, ferns, trees, berries, aquatic, tuning)
 - [x] **EcologyHandbookBehavior** — динамическая экология на страницах блоков (spread rate, climate, niche, season, symbiosis)
 - [x] **JSON patch** — handbook-behaviors.json добавляет поведение ко всем участникам экосистемы
-- [x] **Ecology inspect** — клавиша **I** (настраивается): диалог с живым состоянием + скан ~16 блоков (v2.11)
+- [x] **Ecology inspect** — клавиша **I** (настраивается): диалог с живым состоянием + скан радиуса из конфига; строки собираются на **клиенте** по `InspectLineLite` (v2.11.3)
 - [ ] **Dominant species UX** — карта/оверлей доминанты без ручного осмотра (позже)
 
 ### Playtest и техдолг
@@ -518,6 +529,8 @@ Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x
 | *(done)* | Handbook: static pages + `EcologyHandbookBehavior` + JSON patches |
 | *(done)* | v2.9: fallow, farmland spread, MaxFertility fix, player-placed register |
 | *(done)* | v2.10: mycelium BE, `PlantVacancyRules`, displacement/hold tuning |
+| *(done)* | v2.11: Ecology inspect (I), protobuf channel, `SpacingIndex` area scan |
+| *(done)* | v2.11.2–2.11.3: chunk scan resume; inspect i18n (`InspectLineLite`, `ErrorLangKey`) |
 | *(done)* | 12-month `WildSpeciesSeason` curves; tule in `WildAquaticEcology` |
 
 ---

@@ -95,7 +95,12 @@ src/
   Ecosystem/
     EcosystemSystem.cs          # main system, tick scheduling
     ReproducerRegistry.cs       # spatial registry, round-robin
-    ChunkFlowerScanner.cs       # chunk scan → register
+    ChunkFlowerScanner.cs       # очередь PendingChunkScan, ScanChunk — регистрация при загрузке чанка
+    EcologyInspectService.cs    # снимок для UI «осмотр экологии»
+    EcologyInspectServerSystem.cs
+    EcologySpacingIndex.cs      # учёт позиций для скана «видов рядом»
+    EcologyAreaScanner.cs
+    EcologyInspectLineFormat.cs # клиентское разрешение InspectLineLite (не на сервере)
     ReproducePlacement.cs       # spread orchestration
     SurfacePlacement.cs         # terrestrial placement
     ReedPlacement.cs            # reed shore/shallow placement
@@ -135,12 +140,17 @@ src/
     SpreadVacancy.cs            # aquatic vacancy check
     WildSoilGroundRules.cs      # farmland + mycelium spread gates
     LandClaimGuard.cs           # land claim respect
+  Client/
+    EcologyInspectClientSystem.cs
+    EcologyInspectDialog.cs
+  Network/
+    EcologyInspectPackets.cs   # InspectLineLite, protobuf channel
   Handbook/
     EcologyHandbookBehavior.cs  # dynamic ecology info on block pages
   BlockEntity/
     EcoSystemLife.cs            # thin BE: register on load
 tests/
-  WildFarming.Tests.csproj     # xUnit, 46 tests
+  WildFarming.Tests.csproj     # xUnit, 64 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -237,13 +247,14 @@ docs/
 - [x] **v2.3** — сезонность spread/stress — ✅.
 - [x] **12-месячные кривые** — `WildSpeciesSeason` + `SeasonEcology` (интерполяция по году) — ✅.
 - [x] **Perf audit** (фазы 1–5) — spatial tick, split stress/spread budget — ✅.
-- [x] **Unit tests** — 62 теста (season, classification, suitability, vacancy) — ✅.
+- [x] **Unit tests** — 64 теста (season, classification, suitability, vacancy, ecology inspect survival) — ✅.
 - [x] **Refactor** — `BlockFluidHelper` → `ReedColumnHelper` + `WaterColumnHelper` — ✅.
 - [x] Land claims — `RespectLandClaims` / `LandClaimGuard` — ✅.
 - [x] `modid` → `ecosystemflora`
 - [x] **Handbook** — статические guide-страницы + `EcologyHandbookBehavior` — ✅.
 - [x] **Залежь** — `FallowRestoration` на пустой пашне под диким растением — ✅.
 - [x] **v2.10** — spread hotfixes (`PlantVacancyRules`, active mycelium BE only) — ✅.
+- [x] **v2.11** — Ecology inspect (хоткей I, protobuf), chunk-scan до конца чанка, строки отчёта локализуются на клиенте — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).
