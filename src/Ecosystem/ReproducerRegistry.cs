@@ -30,6 +30,8 @@ namespace WildFarming.Ecosystem
 
         public bool Contains(BlockPos pos) => byPos.ContainsKey(pos);
 
+        public bool TryGetEntry(BlockPos pos, out ReproducerEntry entry) => byPos.TryGetValue(pos, out entry);
+
         public IEnumerable<Vec2i> ChunkCoords => byChunk.Keys;
 
         readonly List<Vec2i> nearPlayerScratch = new List<Vec2i>();

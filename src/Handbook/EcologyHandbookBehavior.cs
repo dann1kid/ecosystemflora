@@ -32,6 +32,7 @@ namespace WildFarming.Handbook
             AppendClimate(dsc, species);
             AppendContext(dsc, species);
             AppendHoldStrength(dsc, species);
+            AppendDominanceHint(dsc, species);
             AppendNiche(dsc, species);
             AppendSeason(dsc, species);
             AppendSymbiosis(dsc, species);
@@ -39,27 +40,7 @@ namespace WildFarming.Handbook
 
         static void AppendSpreadRate(StringBuilder dsc, string species)
         {
-            float rate = 1f;
-            if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry entry))
-            {
-                rate = entry.SpreadRate;
-            }
-            else if (WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fernEntry))
-            {
-                rate = fernEntry.SpreadRate;
-            }
-            else if (WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berryProfile))
-            {
-                rate = berryProfile.SpreadRate;
-            }
-            else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeProfile))
-            {
-                rate = treeProfile.SpreadRate;
-            }
-            else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grassEntry))
-            {
-                rate = grassEntry.SpreadRate;
-            }
+            float rate = GetSpreadRate(species);
 
             string label = GetSpreadLabel(rate);
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-spread", label));
@@ -120,6 +101,39 @@ namespace WildFarming.Handbook
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-hold", label));
         }
 
+        static void AppendDominanceHint(StringBuilder dsc, string species)
+        {
+            // Lightweight UX: explain what kind of "dominant" this plant tends to be in succession.
+            // This is not a territory scanner; it helps players interpret spread/competition behavior.
+            float spreadRate = GetSpreadRate(species);
+
+            if (!WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
+            {
+                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-dominance", Lang.Get("ecosystemflora:dominance-stable")));
+                return;
+            }
+
+            string label;
+            if (species == "tallgrass")
+            {
+                label = Lang.Get("ecosystemflora:dominance-matrix");
+            }
+            else if (mod.HoldStrength < 0.8f && spreadRate >= 1.5f)
+            {
+                label = Lang.Get("ecosystemflora:dominance-colonizer");
+            }
+            else if (mod.HoldStrength > 1.1f)
+            {
+                label = Lang.Get("ecosystemflora:dominance-climax");
+            }
+            else
+            {
+                label = Lang.Get("ecosystemflora:dominance-stable");
+            }
+
+            dsc.AppendLine(Lang.Get("ecosystemflora:handbook-dominance", label));
+        }
+
         static void AppendNiche(StringBuilder dsc, string species)
         {
             if (!WildSpeciesNiche.TryGet(species, out WildSpeciesNiche.Profile profile)) return;
@@ -171,6 +185,33 @@ namespace WildFarming.Handbook
             {
                 dsc.AppendLine(Lang.Get("ecosystemflora:handbook-symbiosis"));
             }
+        }
+
+        static float GetSpreadRate(string species)
+        {
+            float rate = 1f;
+            if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry entry))
+            {
+                rate = entry.SpreadRate;
+            }
+            else if (WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fernEntry))
+            {
+                rate = fernEntry.SpreadRate;
+            }
+            else if (WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berryProfile))
+            {
+                rate = berryProfile.SpreadRate;
+            }
+            else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeProfile))
+            {
+                rate = treeProfile.SpreadRate;
+            }
+            else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grassEntry))
+            {
+                rate = grassEntry.SpreadRate;
+            }
+
+            return rate;
         }
     }
 }

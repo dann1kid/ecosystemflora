@@ -1,10 +1,10 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v2.9` — fallow restoration, farmland spread, MaxFertility fix; **опубликовано на ModDB**.  
-**Версия мода:** `2.9.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10  
+**Текущая стадия:** `Ecosystem v2.10` — spread hotfixes (вакантность, mycelium BE), displacement/hold; **опубликовано на ModDB**.  
+**Версия мода:** `2.10.5` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 62 (xUnit)  
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление: 2026-05-26.
+Последнее обновление: 2026-05-27.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов).
 
@@ -142,7 +142,9 @@
 | Рогоз на лугу | Только `muddygravel`/`gravel-*`; land — вода в 3 блоках |
 | Подводное дно озёр | `gravel-granite` и др. как reed bed (не только `muddygravel`) |
 | `ProcessStress` IndexOutOfRange при stress death | Удаление растений отложено до конца обхода; live `entries.Count` в round-robin |
-| Цветы вытесняют грибные споры | Spread запрещён на блоки с `MyceliumHost` (аналогично farmland) |
+| Ложный `noSurf` на пустой яме | Air + replaceable; mycelium только при активном `BlockEntityMycelium` (не `MyceliumHost` на почве) |
+| `preflight` при снеге/мусоре | `PlantVacancyRules` — «пусто» = air **или** replaceable ≥ 5000; единые правила с `SurfacePlacement` |
+| Цветы на грибнице | Spread запрещён только при **активном** mycelium BE под клеткой |
 
 ### Playtest
 
@@ -248,9 +250,9 @@ Mod DB — **опубликовано** 2026-05-26. Hotfix по отзывам, 
 - [x] `WildSpeciesSeason` — spread по `EnumSeason`, `WinterSurvival`, `FallDieoffChance`
 - [x] `SeasonEcology` — chance, interval, fitness; весенний ramp (`GetSeasonRel`)
 - [x] Зимнее/осеннее отмирание — `SeasonalStressEnabled` (terrestrial stress)
-- [ ] (позже) кривая 12 месяцев per species
+- [x] **12-месячные кривые per species** — `WildSpeciesSeason` (`float[12]` spread + stress), `SeasonEcology.SpreadMultiplierInterpolated`; шаблоны видов + fallback
 
-Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам — текущий режим.
+Mod DB — **опубликовано** (2026-05-26); hotfix spread — **2.10.x** (2026-05-27).
 
 ### v1.x — контент и баланс
 
@@ -288,9 +290,38 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 - [x] Playtest v2.2 niche (2026-05): доминанты по зонам соблюдаются (луг, опушка); лес у воды — не проверен (редкая локация, багрепорт при необходимости)
 - [x] **Сукцессия почвы (block-only)** — tier в блоке; `forestfloor` → `soil` только при **death** гумусных ролей; лес/колонизаторы — вариант `forestfloor`; без RAM; без death при ручном сломе
 - [x] **Мост на пашню (block-only)** — `WildSoilAgroSampler` + tier soil до вспашки; `UseFarmlandNutrientBridge`
-- [ ] **Залежь** — farmland без культуры + ванильные сорняки → медленный N (опционально)
+- [x] **Залежь (fallow)** — `FallowRestoration`: пустая пашня **под диким растением** экосистемы восстанавливает N/P/K (`EnableFallowRestoration`); роль почвы из `PlantSoilRole` — **это основная реализация залежи**
 
 См. [PROJECT_VISION.md §14](PROJECT_VISION.md#14-ниша-почва-влажность-освещение-v22).
+
+### v2.9 — пашня, залежь, spread на farmland
+
+- [x] **MaxFertility** — `skipMaxFertility: true` на spread/survival (высокоплодная почва не режет колонизацию)
+- [x] **Spread на пустую пашню** — `IsFarmland` как опора (`SideSolid` bypass), fertility 150 в preflight/context
+- [x] **`FallowRestoration`** + `EnableFallowRestoration` / `FallowRestorationStrength`
+- [x] **`FarmlandTillBridge`** — N/P/K при вспашке от tier soil + ролей растений над клеткой
+- [x] **Player-placed auto-register** — `OnDidPlaceBlock` → `TryRegisterPlacedBlock` (`playerPlaced: true`)
+
+### v2.10 — spread hotfixes и displacement
+
+- [x] **`PlantVacancyRules`** — единая вакантность (air / replaceable), fluid-слой `Id==0` не блокирует
+- [x] **Mycelium** — `HasActiveMycelium` (BE), не `BlockBehaviorMyceliumHost` на типе блока
+- [x] **Displacement/hold** — hold без `SpreadRate`; `DisplacementHoldMargin` 1.18; `EmptySpreadFitnessMultiplier`; пресеты `UseCalendarScaledSpread` + `UseSpeciesSpreadRates`
+- [x] **Chunk scan** — неактивные чанки снова в очереди; `ReproduceIntervalHours: 0` → fallback 24h
+- [x] Playtest: луг заполняется после фиксов (2026-05-27)
+
+### Баланс и UX (post-ModDB)
+
+| Пункт | Статус |
+|-------|--------|
+| `HoldStrength` / `DisplacementHoldMargin` / soft empty preference | [x] v2.10 |
+| Пресеты `natural` / `lush` / `sparse` | [x] v1.x |
+| **Handbook** — 7 guide-страниц + `EcologyHandbookBehavior` + patch | [x] |
+| **Залежь** — восстановление N на пашне под дикими растениями | [x] v2.9 |
+| **Trampling** — тропы от игроков (`EnableTrampling`, default off) | [x] v2.6 |
+| **Ecology inspect** — хоткей **I**, диалог: состояние растения + топ-3 вида рядом (`SpacingIndex`) | [x] v2.11 |
+| **Dominant species UX** — карта доминанты по чанку/HUD (без осмотра) | [ ] backlog |
+| **Выпас животных / `tallgrass-eaten`** — husbandry, не spread | [ ] backlog (вне scope) |
 
 ### v2.0 (устарело → заменено v2.1)
 
@@ -367,7 +398,8 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 - [x] **Handbook** — 7 статических guide-страниц (overview, flowers, ferns, trees, berries, aquatic, tuning)
 - [x] **EcologyHandbookBehavior** — динамическая экология на страницах блоков (spread rate, climate, niche, season, symbiosis)
 - [x] **JSON patch** — handbook-behaviors.json добавляет поведение ко всем участникам экосистемы
-- [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне (позже)
+- [x] **Ecology inspect** — клавиша **I** (настраивается): диалог с живым состоянием + скан ~16 блоков (v2.11)
+- [ ] **Dominant species UX** — карта/оверлей доминанты без ручного осмотра (позже)
 
 ### Playtest и техдолг
 
@@ -481,9 +513,10 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 | *(prev)* | Tech debt: split BlockFluidHelper → ReedColumnHelper + WaterColumnHelper; xUnit tests (46); docs/modinfo 2.5.0 |
 | *(pending)* | Perf phase 4: heightmap chunk scan, tick budget, lower defaults, NowValues cache; v2.7.0 |
 | *(pending)* | Perf phase 5: split tick budgets (stress/spread independent), faster spread defaults; v2.8.0 |
-| *(pending)* | Handbook integration: static guide pages + EcologyHandbookBehavior + JSON patches |
-| *(pending)* | Tule (камыш) as ecosystem participant; mycelium host protection |
-| *(pending)* | 12-month seasonal curves; fallow restoration; farmland spread; MaxFertility fix; player-placed auto-register; v2.9.0 |
+| *(done)* | Handbook: static pages + `EcologyHandbookBehavior` + JSON patches |
+| *(done)* | v2.9: fallow, farmland spread, MaxFertility fix, player-placed register |
+| *(done)* | v2.10: mycelium BE, `PlantVacancyRules`, displacement/hold tuning |
+| *(done)* | 12-month `WildSpeciesSeason` curves; tule in `WildAquaticEcology` |
 
 ---
 

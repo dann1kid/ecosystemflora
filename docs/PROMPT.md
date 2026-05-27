@@ -17,7 +17,9 @@
 - Среда из API: EnvironmentalContext (температура, WorldgenRainfall, LocalForestCover, почва, жидкость, ниша).
 - v2.1: единая конкуренция за клетку — spread на пустые + displacement занятых (CellCompetition), stress death, symbiosis. БЕЗ DisturbedTracker.
 - v2.2: ниша — moisture/light (NicheSampler, WildSpeciesNiche), сукцессия почвы (block-only).
-- v2.3: сезонность — WildSpeciesSeason, SeasonEcology; зимняя выживаемость, осеннее отмирание, весенний бонус.
+- v2.3: сезонность — WildSpeciesSeason (12 месяцев), SeasonEcology; интерполяция spread по году.
+- v2.9: залежь (FallowRestoration), spread на пустую пашню, player-placed register.
+- v2.10: PlantVacancyRules, mycelium только active BE; displacement/hold tuning.
 - SpreadScore = fitness × Context × SpreadRate × SeasonMultiplier; HoldScore = fitness × Context × HoldStrength.
 - Опушка emergent через FloraContext + displacement, не отдельный биом.
 
@@ -31,11 +33,11 @@ Habitat:
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
 
 Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
-Тесты: tests/WildFarming.Tests.csproj (xUnit, 46 тестов).
+Тесты: tests/WildFarming.Tests.csproj (xUnit, 62 теста).
 
-Порт: VS 1.22+, .NET 10. Версия: 2.5.0. Стадия: Ecosystem v2.3 — см. docs/PROGRESS.md.
+Порт: VS 1.22+, .NET 10. Версия: 2.10.5. Стадия: Ecosystem v2.10 — см. docs/PROGRESS.md.
 
-Backlog (post-release): chunk-scan без EcoSystemLife BE; handbook/dominant species (UX); залежь; HoldStrength tuning. Листва зимой — отложено (визуал, не экосистема).
+Backlog: v3.0 berry trait clone; v3.1 attribute API; dominant species UX; aquatic edge cases; выпас/tallgrass-eaten (husbandry). Листва зимой — отложено (визуал).
 
 Коммиты — только по запросу пользователя.
 ```

@@ -235,14 +235,18 @@ docs/
 - [x] **v2.1** — единая конкуренция за клетку (§11); playtest лугов ✅ (2026-05-22).
 - [x] **v2.2** — ниша (moisture/light), сукцессия почвы — ✅.
 - [x] **v2.3** — сезонность spread/stress — ✅.
-- [x] **Perf audit** (фазы 1–3) — spatial tick, climate cache, scratch allocs, reflection cache — ✅.
-- [x] **Unit tests** — 46 тестов (season, classification, suitability) — ✅.
+- [x] **12-месячные кривые** — `WildSpeciesSeason` + `SeasonEcology` (интерполяция по году) — ✅.
+- [x] **Perf audit** (фазы 1–5) — spatial tick, split stress/spread budget — ✅.
+- [x] **Unit tests** — 62 теста (season, classification, suitability, vacancy) — ✅.
 - [x] **Refactor** — `BlockFluidHelper` → `ReedColumnHelper` + `WaterColumnHelper` — ✅.
 - [x] Land claims — `RespectLandClaims` / `LandClaimGuard` — ✅.
 - [x] `modid` → `ecosystemflora`
-- [ ] Chunk-scan без BE (техдолг; сейчас `EcoSystemLife` — требует playtest)
-- [ ] Handbook / dominant species — UX, post-ModDB
-- [ ] Залежь — farmland без культуры → медленный N (опционально)
+- [x] **Handbook** — статические guide-страницы + `EcologyHandbookBehavior` — ✅.
+- [x] **Залежь** — `FallowRestoration` на пустой пашне под диким растением — ✅.
+- [x] **v2.10** — spread hotfixes (`PlantVacancyRules`, active mycelium BE only) — ✅.
+- [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
+- [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
+- [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).
 - [ ] Зимняя листва на стволах — **отложено** (визуал, не экосистема)
 
 ---
@@ -505,11 +509,11 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 
 **Роли** (`PlantSoilRole`) — `WildSpeciesSoilSuccession`: MeadowColonizer, MeadowPerennial, ForestUnderstory, WetlandHerb, GrassMatrix, **NitrogenFixer** (lupine), …
 
-**События:** spread (register) и death (`RemoveEcologyPlant`). Spread на `farmland-*` **запрещён** (`SpreadPreflight`, `SurfacePlacement`).
+**События:** spread (register) и death (`RemoveEcologyPlant`). **Колонизация пустой пашни** разрешена (farmland как опора; без культуры сверху). **Сукцессия tier почвы** на `farmland-*` не применяется (`IsWildSpreadGround` → false). **Активная грибница** (mycelium BE) — spread запрещён.
 
-**Конфиг:** `UseSoilSuccession`, `SoilSuccessionStrength`, `UseFarmlandNutrientBridge`, `FarmlandNutrientBridgeStrength`.
+**Конфиг:** `UseSoilSuccession`, `SoilSuccessionStrength`, `UseFarmlandNutrientBridge`, `FarmlandNutrientBridgeStrength`, `EnableFallowRestoration`, `FallowRestorationStrength`.
 
-**TODO:** persist agro/tier в chunk moddata; залежь (farmland + дикая трава без культуры).
+**TODO (опционально):** persist agro/tier в chunk moddata; отдельно — восстановление N/P/K от **ванильных** сорняков без `IEcosystemParticipant` (залежь через участников уже есть — `FallowRestoration`).
 
 ### 14.5. Реализация (принципы)
 

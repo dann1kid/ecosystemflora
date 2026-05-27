@@ -18,8 +18,8 @@
   "ReproduceDebug": false,
   "VerboseLogging": false,
   "MaxReproduceAttemptsPerTick": 64,
-  "MaxChunkColumnsScannedPerTick": 3,
-  "MaxRegistrationsPerTick": 192,
+  "MaxChunkColumnsScannedPerTick": 6,
+  "MaxRegistrationsPerTick": 512,
   "TickBudgetMs": 30,
   "StressBudgetMs": 0,
   "StressTickIntervalMs": 6000,
@@ -62,5 +62,10 @@
   "TramplingRadius": 1,
   "TramplingStressThreshold": 8,
   "TramplingSoilDegradation": false,
-  "EnableFlowerDrygrass": true
+  "EnableFlowerDrygrass": true,
+
+  "EnableEcologyInspect": true,
+  "EcologyInspectCooldownSeconds": 2.0,
+  "EcologyInspectScanRadius": 16,
+  "EnableEcologyAreaScan": true
 }

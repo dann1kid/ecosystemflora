@@ -183,5 +183,50 @@ namespace WildFarming.Ecosystem
             int dz = System.Math.Abs(a.Z - b.Z);
             return System.Math.Max(dx, dz);
         }
+
+        /// <summary>Counts ecology plants in horizontal radius (Chebyshev), ±verticalSearch on Y.</summary>
+        public void CountSpeciesNear(
+            BlockPos center,
+            int radius,
+            int verticalSearch,
+            Dictionary<string, int> tally)
+        {
+            if (center == null || tally == null || radius <= 0) return;
+
+            int y0 = center.Y - verticalSearch;
+            int y1 = center.Y + verticalSearch;
+            int chunkSize = GlobalConstants.ChunkSize;
+
+            int minCx = (center.X - radius) / chunkSize;
+            int maxCx = (center.X + radius) / chunkSize;
+            int minCz = (center.Z - radius) / chunkSize;
+            int maxCz = (center.Z + radius) / chunkSize;
+
+            for (int cx = minCx; cx <= maxCx; cx++)
+            {
+                for (int cz = minCz; cz <= maxCz; cz++)
+                {
+                    if (!byChunk.TryGetValue(new Vec2i(cx, cz), out List<SpacingRecord> list))
+                    {
+                        continue;
+                    }
+
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        SpacingRecord rec = list[i];
+                        BlockPos p = rec.Pos;
+                        if (p.Y < y0 || p.Y > y1) continue;
+                        if (HorizontalChebyshev(center, p) > radius) continue;
+
+                        if (!tally.ContainsKey(rec.Species))
+                        {
+                            tally[rec.Species] = 0;
+                        }
+
+                        tally[rec.Species]++;
+                    }
+                }
+            }
+        }
     }
 }

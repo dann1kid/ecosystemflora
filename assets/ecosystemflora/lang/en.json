@@ -30,6 +30,7 @@
 	"ecosystemflora:handbook-forest": "Forest cover: {0} – {1}",
 	"ecosystemflora:handbook-context": "Preferred zone: {0}",
 	"ecosystemflora:handbook-hold": "Hold strength: {0}",
+	"ecosystemflora:handbook-dominance": "Succession role: {0}",
 	"ecosystemflora:handbook-season-spread": "Seasonal spread: Spring {0}x, Summer {1}x, Fall {2}x, Winter {3}x",
 	"ecosystemflora:handbook-winter-survival": "Winter survival: {0}%",
 	"ecosystemflora:handbook-niche-moisture": "Moisture preference: {0}",
@@ -50,6 +51,11 @@
 	"ecosystemflora:hold-moderate": "Moderate",
 	"ecosystemflora:hold-strong": "Strong (climax)",
 
+	"ecosystemflora:dominance-colonizer": "Colonizer (fast, easily displaced)",
+	"ecosystemflora:dominance-stable": "Stable competitor (moderate spread and hold)",
+	"ecosystemflora:dominance-climax": "Climax (slow to spread, hard to displace)",
+	"ecosystemflora:dominance-matrix": "Meadow matrix (fills gaps under flowers)",
+
 	"ecosystemflora:moisture-dry": "Dry",
 	"ecosystemflora:moisture-mesic": "Mesic",
 	"ecosystemflora:moisture-wet": "Wet",
@@ -58,5 +64,36 @@
 	"ecosystemflora:light-deepshade": "Deep shade",
 	"ecosystemflora:light-shade": "Shade",
 	"ecosystemflora:light-partial": "Partial",
-	"ecosystemflora:light-open": "Open"
+	"ecosystemflora:light-open": "Open",
+
+	"ecosystemflora:inspect-hotkey-name": "Ecology: inspect plant",
+	"ecosystemflora:inspect-title": "Ecology: {0}",
+	"ecosystemflora:inspect-pos": "Position",
+
+	"ecosystemflora:inspect-error-notarget": "Aim at a wild plant to inspect.",
+	"ecosystemflora:inspect-error-noplant": "That block is not part of the ecosystem.",
+	"ecosystemflora:inspect-error-disabled": "Ecology inspect is disabled in config.",
+	"ecosystemflora:inspect-error-ecosystem-off": "Ecosystem is disabled.",
+	"ecosystemflora:inspect-error-claim": "Cannot inspect inside a land claim.",
+	"ecosystemflora:inspect-error-cooldown": "Wait a moment before inspecting again.",
+
+	"ecosystemflora:inspect-line-dominance": "Succession role: {0}",
+	"ecosystemflora:inspect-line-hold": "Hold strength: {0}",
+	"ecosystemflora:inspect-line-registered": "Active in spread registry.",
+	"ecosystemflora:inspect-line-not-registered": "Not in spread registry (vanilla block only).",
+	"ecosystemflora:inspect-line-stress": "Stress: {0} / {1} failed checks.",
+	"ecosystemflora:inspect-line-stress-ok": "Stress: healthy.",
+	"ecosystemflora:inspect-line-trample": "Trampling exposure: {0} / {1}.",
+	"ecosystemflora:inspect-line-next-spread": "Next spread attempt in ~{0} days.",
+	"ecosystemflora:inspect-line-season-now": "Seasonal spread activity now: ×{0}.",
+	"ecosystemflora:inspect-line-niche-ok": "Local niche fit: ×{0}.",
+	"ecosystemflora:inspect-line-niche-bad": "Local niche stress: ×{0} (below threshold).",
+	"ecosystemflora:inspect-line-symbiosis-ok": "Symbiosis: host tree nearby.",
+	"ecosystemflora:inspect-line-symbiosis-missing": "Symbiosis: no host tree — at risk.",
+	"ecosystemflora:inspect-line-no-climate": "No climate data at this position.",
+	"ecosystemflora:inspect-line-survival-ok": "Climate survival: OK.",
+	"ecosystemflora:inspect-line-survival-bad": "Climate survival: {0}",
+	"ecosystemflora:inspect-line-scan-header": "Nearby ecology (~{0} blocks):",
+	"ecosystemflora:inspect-line-scan-empty": "No registered plants in range.",
+	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%"
 }

@@ -206,6 +206,11 @@ namespace WildFarming.Ecosystem
                 requirements, Sample(plantPos), EcosystemConfig.Loaded.HarshWildPlants);
         }
 
+        public bool RegistryContains(BlockPos pos) => registry.Contains(pos);
+
+        public bool TryGetReproducer(BlockPos pos, out ReproducerEntry entry) =>
+            registry.TryGetEntry(pos, out entry);
+
         public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason,
             SoilSuccessionEvent soilEvent = SoilSuccessionEvent.Death)
         {

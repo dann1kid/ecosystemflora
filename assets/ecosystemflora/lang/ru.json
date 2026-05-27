@@ -30,6 +30,7 @@
 	"ecosystemflora:handbook-forest": "Лесной покров: {0} – {1}",
 	"ecosystemflora:handbook-context": "Предпочитаемая зона: {0}",
 	"ecosystemflora:handbook-hold": "Сила удержания: {0}",
+	"ecosystemflora:handbook-dominance": "Роль в сукцессии: {0}",
 	"ecosystemflora:handbook-season-spread": "Сезонность: Весна {0}x, Лето {1}x, Осень {2}x, Зима {3}x",
 	"ecosystemflora:handbook-winter-survival": "Зимняя выживаемость: {0}%",
 	"ecosystemflora:handbook-niche-moisture": "Предпочтение влажности: {0}",
@@ -50,6 +51,11 @@
 	"ecosystemflora:hold-moderate": "Умеренная",
 	"ecosystemflora:hold-strong": "Сильная (климакс)",
 
+	"ecosystemflora:dominance-colonizer": "Колонизатор (быстрый, легко вытесняется)",
+	"ecosystemflora:dominance-stable": "Стабильный конкурент (умеренная скорость и удержание)",
+	"ecosystemflora:dominance-climax": "Климакс (медленно распространяется, трудно вытеснить)",
+	"ecosystemflora:dominance-matrix": "Матрица луга (заполняет пустоты под цветами)",
+
 	"ecosystemflora:moisture-dry": "Сухо",
 	"ecosystemflora:moisture-mesic": "Мезическая",
 	"ecosystemflora:moisture-wet": "Влажно",
@@ -58,5 +64,36 @@
 	"ecosystemflora:light-deepshade": "Глубокая тень",
 	"ecosystemflora:light-shade": "Тень",
 	"ecosystemflora:light-partial": "Полутень",
-	"ecosystemflora:light-open": "Открыто"
+	"ecosystemflora:light-open": "Открыто",
+
+	"ecosystemflora:inspect-hotkey-name": "Экология: осмотр растения",
+	"ecosystemflora:inspect-title": "Экология: {0}",
+	"ecosystemflora:inspect-pos": "Позиция",
+
+	"ecosystemflora:inspect-error-notarget": "Наведите прицел на дикое растение.",
+	"ecosystemflora:inspect-error-noplant": "Этот блок не участвует в экосистеме.",
+	"ecosystemflora:inspect-error-disabled": "Осмотр отключён в конфиге.",
+	"ecosystemflora:inspect-error-ecosystem-off": "Экосистема отключена.",
+	"ecosystemflora:inspect-error-claim": "Осмотр внутри land claim недоступен.",
+	"ecosystemflora:inspect-error-cooldown": "Подождите перед повторным осмотром.",
+
+	"ecosystemflora:inspect-line-dominance": "Роль в сукцессии: {0}",
+	"ecosystemflora:inspect-line-hold": "Сила удержания: {0}",
+	"ecosystemflora:inspect-line-registered": "В реестре распространения.",
+	"ecosystemflora:inspect-line-not-registered": "Не в реестре (только ванильный блок).",
+	"ecosystemflora:inspect-line-stress": "Стресс: {0} / {1} неудачных проверок.",
+	"ecosystemflora:inspect-line-stress-ok": "Стресс: в норме.",
+	"ecosystemflora:inspect-line-trample": "Протаптывание: {0} / {1}.",
+	"ecosystemflora:inspect-line-next-spread": "Следующая попытка spread ~через {0} дн.",
+	"ecosystemflora:inspect-line-season-now": "Сезонная активность spread сейчас: ×{0}.",
+	"ecosystemflora:inspect-line-niche-ok": "Соответствие нише: ×{0}.",
+	"ecosystemflora:inspect-line-niche-bad": "Стресс ниши: ×{0} (ниже порога).",
+	"ecosystemflora:inspect-line-symbiosis-ok": "Симбиоз: дерево-хозяин рядом.",
+	"ecosystemflora:inspect-line-symbiosis-missing": "Симбиоз: нет дерева — риск гибели.",
+	"ecosystemflora:inspect-line-no-climate": "Нет данных климата в этой точке.",
+	"ecosystemflora:inspect-line-survival-ok": "Выживание по климату: OK.",
+	"ecosystemflora:inspect-line-survival-bad": "Климат: {0}",
+	"ecosystemflora:inspect-line-scan-header": "Экология рядом (~{0} блоков):",
+	"ecosystemflora:inspect-line-scan-empty": "В радиусе нет растений из реестра.",
+	"ecosystemflora:inspect-line-scan-row": "{0}. {1} — {2}%"
 }

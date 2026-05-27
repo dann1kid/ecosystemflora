@@ -60,10 +60,10 @@ namespace WildFarming.Ecosystem
         public int MaxReproduceAttemptsPerTick { get; set; } = 64;
 
         /// <summary>Chunk columns to scan per tick after load (deferred registration).</summary>
-        public int MaxChunkColumnsScannedPerTick { get; set; } = 3;
+        public int MaxChunkColumnsScannedPerTick { get; set; } = 6;
 
         /// <summary>Cap flower registrations per tick while draining the chunk queue.</summary>
-        public int MaxRegistrationsPerTick { get; set; } = 192;
+        public int MaxRegistrationsPerTick { get; set; } = 512;
 
         /// <summary>Max milliseconds per game tick for spread processing. 0 = no limit.</summary>
         public int TickBudgetMs { get; set; } = 30;
@@ -196,5 +196,19 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Append drygrass drops (knife/scythe) to flowers without removing original drops.</summary>
         public bool EnableFlowerDrygrass { get; set; } = true;
+
+        // --- Ecology inspect UI (client dialog, server snapshot) ---
+
+        /// <summary>Allow inspect hotkey (default I) — opens dialog with live plant + area scan.</summary>
+        public bool EnableEcologyInspect { get; set; } = true;
+
+        /// <summary>Minimum seconds between inspect requests per player.</summary>
+        public double EcologyInspectCooldownSeconds { get; set; } = 2.0;
+
+        /// <summary>Horizontal radius (blocks) for nearby-species tally in inspect dialog.</summary>
+        public int EcologyInspectScanRadius { get; set; } = 16;
+
+        /// <summary>Include top species near crosshair plant in inspect report.</summary>
+        public bool EnableEcologyAreaScan { get; set; } = true;
     }
 }
