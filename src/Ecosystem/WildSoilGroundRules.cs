@@ -1,5 +1,5 @@
-using System.Linq;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
@@ -12,11 +12,19 @@ namespace WildFarming.Ecosystem
             return !string.IsNullOrEmpty(path) && path.StartsWith("farmland");
         }
 
-        public static bool IsMyceliumHost(Block ground)
+        /// <summary>
+        /// True when vanilla mushroom regrowth has an active <c>Mycelium</c> block entity here.
+        /// Do not use <see cref="BlockBehaviorMyceliumHost"/> on the block type — most soils carry that behavior.
+        /// </summary>
+        public static bool HasActiveMycelium(IBlockAccessor acc, BlockPos groundPos)
         {
-            if (ground == null || ground.Id == 0) return false;
-            return ground.BlockBehaviors != null
-                && ground.BlockBehaviors.Any(b => b.GetType().Name == "BlockBehaviorMyceliumHost");
+            if (acc == null || groundPos == null) return false;
+
+            BlockEntity be = acc.GetBlockEntity(groundPos);
+            if (be == null) return false;
+
+            string typeName = be.GetType().Name;
+            return typeName == "BlockEntityMycelium" || typeName.Contains("Mycelium");
         }
 
         public static bool IsWildSpreadGround(Block ground)

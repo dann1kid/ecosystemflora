@@ -271,7 +271,7 @@ Mod DB — **опубликовано** (2026-05-26); hotfix по отзывам
 - [x] Aquatic shore spacing — `ApplyCrossHabitatSpacing` (default false)
 - [x] Config template v2.1 — `ecosystemflora.example.json`
 - [x] Land claims — `RespectLandClaims`, `LandClaimGuard` (spread, displace, stress, soil, crowfoot)
-- [ ] Тюнинг `HoldStrength` / `DisplacementHoldMargin` по playtest
+- [x] Тюнинг `HoldStrength` / `DisplacementHoldMargin` — hold без SpreadRate, margin 1.18, soft empty preference, таблица видов
 
 ### v2.2 — ниша: почва, влажность, освещение
 

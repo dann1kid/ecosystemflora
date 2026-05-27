@@ -136,7 +136,7 @@ namespace WildFarming.Ecosystem
                 groundFertility,
                 soilKinds,
                 groundSolid,
-                snap.Space.Replaceable,
+                PlantVacancyRules.EffectiveSpaceReplaceable(snap.Space),
                 hasClimate,
                 snap.TouchesFluid,
                 shallowWater);

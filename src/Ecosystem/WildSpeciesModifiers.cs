@@ -35,50 +35,63 @@ namespace WildFarming.Ecosystem
         {
             return new Dictionary<string, Profile>
             {
-                // Fast spread, weak hold — lose occupied cells to climax species
-                ["horsetail"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.65f),
-                ["heather"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.7f),
-                ["westerngorse"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.7f),
-                ["redtopgrass"] = new Profile(FloraContextAffinity.Open, 1.05f, 0.35f, 0.65f),
-                ["mugwort"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.68f),
-                ["cowparsley"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.75f),
-                ["catmint"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.8f),
-                ["lupine"] = new Profile(FloraContextAffinity.Open, 1.15f, 0.35f, 0.72f),
+                // Colonizers — high SpreadRate, low HoldStrength (succession gives way to perennials)
+                ["horsetail"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.58f),
+                ["heather"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
+                ["westerngorse"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
+                ["redtopgrass"] = new Profile(FloraContextAffinity.Open, 1.05f, 0.35f, 0.55f),
+                ["mugwort"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
+                ["cowparsley"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.68f),
+                ["catmint"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.72f),
+                ["lupine"] = new Profile(FloraContextAffinity.Open, 1.15f, 0.35f, 0.60f),
 
-                ["cornflower"] = Open(1.2f, hold: 1.05f),
-                ["wilddaisy"] = Open(1.1f, hold: 1.05f),
-                ["forgetmenot"] = Open(1.05f, hold: 1.1f),
-                ["woad"] = Open(1.15f, hold: 1f),
-                ["daffodil"] = Open(1f, hold: 1.15f),
+                // Meadow perennials — moderate hold
+                ["cornflower"] = Open(1.2f, hold: 1.0f),
+                ["wilddaisy"] = Open(1.1f, hold: 1.0f),
+                ["forgetmenot"] = Open(1.05f, hold: 1.05f),
+                ["woad"] = Open(1.15f, hold: 0.95f),
 
-                ["bluebell"] = Forest(2f, hold: 1.25f),
-                ["lilyofthevalley"] = Forest(2.5f, hold: 1.3f),
-                ["ghostpipewhite"] = Forest(1.2f, 0.5f, 1.2f),
-                ["ghostpipepink"] = Forest(1.2f, 0.5f, 1.2f),
-                ["ghostpipered"] = Forest(1.2f, 0.5f, 1.2f),
+                // Slow / localized — strong hold once established
+                ["daffodil"] = Open(1f, hold: 1.2f),
+                ["goldenpoppy"] = Open(1f, 0.45f, 1.22f),
+                ["edelweiss"] = Edge(1.3f, hold: 1.18f),
 
-                ["orangemallow"] = Open(1f, 0.4f, 1.1f),
-                ["edelweiss"] = Edge(1.3f, hold: 1.2f),
-                ["goldenpoppy"] = Open(1f, 0.45f, 1.15f),
+                // Forest understory climax
+                ["bluebell"] = Forest(2f, hold: 1.28f),
+                ["lilyofthevalley"] = Forest(2.5f, hold: 1.32f),
+                ["ghostpipewhite"] = Forest(1.2f, 0.5f, 1.15f),
+                ["ghostpipepink"] = Forest(1.2f, 0.5f, 1.15f),
+                ["ghostpipered"] = Forest(1.2f, 0.5f, 1.15f),
+                ["orangemallow"] = Open(1f, 0.4f, 1.12f),
 
-                ["eaglefern"] = Edge(2.5f, hold: 1.15f),
-                ["cinnamonfern"] = Edge(2.2f, hold: 1.1f),
-                ["deerfern"] = Edge(2.2f, hold: 1.1f),
-                ["hartstongue"] = Edge(1.8f, hold: 1.05f),
-                ["tallfern"] = Edge(2f, hold: 1.1f),
+                // Ferns — edge/forest, hold ground under canopy
+                ["eaglefern"] = Edge(2.5f, hold: 1.18f),
+                ["cinnamonfern"] = Edge(2.2f, hold: 1.12f),
+                ["deerfern"] = Edge(2.2f, hold: 1.12f),
+                ["hartstongue"] = Edge(1.8f, hold: 1.08f),
+                ["tallfern"] = Edge(2f, hold: 1.12f),
 
-                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.85f),
+                // Grass matrix — weak hold so flowers can replace turf
+                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.72f),
 
-                ["blueberry"] = Edge(2f, hold: 1.2f),
-                ["blackcurrant"] = Edge(1.6f, hold: 1.15f),
-                ["redcurrant"] = Edge(1.5f, hold: 1.1f),
-                ["whitecurrant"] = Edge(1.5f, hold: 1.1f),
-                ["cranberry"] = Edge(1.4f, hold: 1.1f),
-                ["strawberry"] = Open(1.2f, hold: 0.85f),
+                // Shore / aquatic
+                ["coopersreed"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.65f),
+                ["tule"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.68f),
+                ["papyrus"] = new Profile(FloraContextAffinity.Open, 1.05f, 0.35f, 0.82f),
+                ["waterlily"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.88f),
+                ["watercrowfoot"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.95f),
+
+                // Berries — edge; strawberry colonizes, blueberry holds
+                ["blueberry"] = Edge(2f, hold: 1.22f),
+                ["blackcurrant"] = Edge(1.6f, hold: 1.12f),
+                ["redcurrant"] = Edge(1.5f, hold: 1.08f),
+                ["whitecurrant"] = Edge(1.5f, hold: 1.08f),
+                ["cranberry"] = Edge(1.4f, hold: 1.08f),
+                ["strawberry"] = Open(1.2f, hold: 0.78f),
                 ["beautyberry"] = Edge(1.5f, hold: 1.1f),
-                ["cloudberry"] = Open(1f, 0.4f, 1f),
-                ["blackberry"] = Edge(1.7f, hold: 1.15f),
-                ["raspberry"] = Edge(1.6f, hold: 1.1f),
+                ["cloudberry"] = Open(1f, 0.4f, 0.92f),
+                ["blackberry"] = Edge(1.7f, hold: 1.12f),
+                ["raspberry"] = Edge(1.6f, hold: 1.08f),
             };
         }
 

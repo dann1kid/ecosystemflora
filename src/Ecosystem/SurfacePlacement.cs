@@ -29,7 +29,7 @@ namespace WildFarming.Ecosystem
             {
                 int y = origin.Y + dy;
                 scanPos.Set(x, y, z);
-                if (!IsValidPlantSite(acc, scanPos)) continue;
+                if (!TryValidatePlantSite(acc, scanPos, out _)) continue;
 
                 int dist = System.Math.Abs(dy);
                 if (dist < bestDist)
@@ -41,7 +41,10 @@ namespace WildFarming.Ecosystem
 
             if (best == null)
             {
-                failureReason = "No valid surface near column";
+                scanPos.Set(x, origin.Y, z);
+                TryValidatePlantSite(acc, scanPos, out string atSameY);
+                failureReason =
+                    $"No valid surface in column [{x},{z}] dy=±{verticalSearch}; dy=0: {atSameY}";
                 return false;
             }
 
@@ -49,38 +52,102 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos)
+        /// <summary>True when a terrestrial plant cell is physically valid (cheap block gates).</summary>
+        public static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos) =>
+            TryValidatePlantSite(acc, pos, out _);
+
+        /// <summary>Returns false with a concise reason suitable for diagnostics (VerboseLogging).</summary>
+        static bool TryValidatePlantSite(IBlockAccessor acc, BlockPos pos, out string rejectReason)
         {
+            rejectReason = null;
             Block space = acc.GetBlock(pos);
             groundScratch.Set(pos.X, pos.Y - 1, pos.Z);
             Block ground = acc.GetBlock(groundScratch);
 
             Block fluidAt = acc.GetBlock(pos, BlockLayersAccess.Fluid);
             Block fluidBelow = acc.GetBlock(groundScratch, BlockLayersAccess.Fluid);
-            if (BlockFluidHelper.IsFluid(space)
-                || BlockFluidHelper.IsFluid(ground)
-                || BlockFluidHelper.IsFluid(fluidAt)
-                || BlockFluidHelper.IsFluid(fluidBelow))
+            if (PlantVacancyRules.TouchesSpreadBlockingFluid(space, ground, fluidAt, fluidBelow))
             {
+                if (BlockFluidHelper.IsFluid(space))
+                    rejectReason = $"space is fluid ({space.Code})";
+                else if (BlockFluidHelper.IsFluid(ground))
+                    rejectReason = $"ground is fluid ({ground.Code})";
+                else if (fluidAt != null && fluidAt.Id != 0 && BlockFluidHelper.IsFluid(fluidAt))
+                    rejectReason = $"fluidAt layer ({fluidAt.Code})";
+                else
+                    rejectReason = $"fluidBelow layer ({fluidBelow?.Code})";
                 return false;
             }
 
-            if (!ground.SideSolid[BlockFacing.UP.Index] && !WildSoilGroundRules.IsFarmland(ground))
+            if (!PlantVacancyRules.IsSupportingGround(ground))
             {
+                rejectReason =
+                    $"ground up not solid ({ground.Code?.Path}, SideSolid.UP={ground.SideSolid[BlockFacing.UP.Index]}, farmland={WildSoilGroundRules.IsFarmland(ground)})";
                 return false;
             }
 
-            if (WildSoilGroundRules.IsMyceliumHost(ground))
+            if (WildSoilGroundRules.HasActiveMycelium(acc, groundScratch))
             {
+                rejectReason = $"active mycelium BE under cell ({ground.Code?.Path})";
                 return false;
             }
 
-            if (space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
+            if (PlantVacancyRules.IsVacantPlantSpace(space))
             {
-                return false;
+                return true;
             }
 
-            return true;
+            int rep = space.Replaceable;
+            int minRep = SuitabilityEvaluator.ReproduceMinReplaceable;
+            string path = space.Code?.Path ?? ("id=" + space.Id);
+            rejectReason = $"space replaceable {rep} < {minRep} ({path})";
+            return false;
+        }
+
+        /// <summary>Logs every Y in the vertical search window (VerboseLogging + ReproduceDebug).</summary>
+        public static void LogColumnDyProbe(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos origin,
+            int dx,
+            int dz,
+            int verticalSearch,
+            string label)
+        {
+            if (api == null || acc == null || origin == null) return;
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.VerboseLogging || !cfg.ReproduceDebug) return;
+
+            int x = origin.X + dx;
+            int z = origin.Z + dz;
+
+            api.Logger.Notification(
+                "[ecosystemflora] surface column probe {0} origin={1} column=[{2},{3}] dy=±{4}",
+                label ?? "?",
+                origin,
+                x,
+                z,
+                verticalSearch);
+
+            for (int dy = verticalSearch; dy >= -verticalSearch; dy--)
+            {
+                int y = origin.Y + dy;
+                scanPos.Set(x, y, z);
+                bool ok = TryValidatePlantSite(acc, scanPos, out string reason);
+                Block space = acc.GetBlock(scanPos);
+                groundScratch.Set(x, y - 1, z);
+                Block ground = acc.GetBlock(groundScratch);
+
+                api.Logger.Notification(
+                    "[ecosystemflora]   dy={0,3} y={1,4} space={2} rep={3} ground={4} solidUp={5} -> {6}",
+                    dy,
+                    y,
+                    space.Id == 0 ? "air" : space.Code?.Path ?? ("id=" + space.Id),
+                    space.Replaceable,
+                    ground.Code?.Path ?? ("id=" + ground.Id),
+                    ground.SideSolid[BlockFacing.UP.Index],
+                    ok ? "OK" : reason);
+            }
         }
     }
 }

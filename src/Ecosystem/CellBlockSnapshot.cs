@@ -23,11 +23,8 @@ namespace WildFarming.Ecosystem
             FluidBelow = fluidBelow;
         }
 
-        public bool TouchesFluid =>
-            BlockFluidHelper.IsFluid(Space)
-            || BlockFluidHelper.IsFluid(Ground)
-            || BlockFluidHelper.IsFluid(FluidAt)
-            || BlockFluidHelper.IsFluid(FluidBelow);
+        public bool TouchesFluid => PlantVacancyRules.TouchesSpreadBlockingFluid(
+            Space, Ground, FluidAt, FluidBelow);
 
         static readonly BlockPos scratchDown = new BlockPos(0);
 

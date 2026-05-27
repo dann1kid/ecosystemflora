@@ -57,16 +57,20 @@ namespace WildFarming.Ecosystem
 
         static double EffectiveIntervalHoursLegacy(EcosystemConfig cfg, PlantRequirements requirements)
         {
-            double interval = cfg.ReproduceIntervalHours;
+            double baseHours = cfg.ReproduceIntervalHours > 0 ? cfg.ReproduceIntervalHours : 24;
+
+            double interval = baseHours;
             if (cfg.UseSpeciesSpreadRates && requirements.SpreadRate > 0f)
             {
-                interval = cfg.ReproduceIntervalHours / requirements.SpreadRate;
+                interval = baseHours / requirements.SpreadRate;
             }
 
             if (cfg.MinSpeciesReproduceIntervalHours > 0)
             {
                 interval = System.Math.Max(interval, cfg.MinSpeciesReproduceIntervalHours);
             }
+
+            if (interval < 0.25) interval = 0.25;
 
             return interval;
         }

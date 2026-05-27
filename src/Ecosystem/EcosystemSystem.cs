@@ -440,15 +440,18 @@ namespace WildFarming.Ecosystem
 
             tickBudgetWatch.Restart();
 
-            while (columnsLeft > 0 && pendingChunkScans.Count > 0 && registrationsLeft > 0)
+            int queuePasses = pendingChunkScans.Count;
+            while (columnsLeft > 0 && queuePasses > 0 && registrationsLeft > 0)
             {
                 if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) break;
 
                 Vec2i chunkCoord = pendingChunkScans.Dequeue();
+                queuePasses--;
                 columnsLeft--;
 
                 if (activePlayerChunks != null && !PlayerProximity.IsActiveChunk(activePlayerChunks, chunkCoord))
                 {
+                    pendingChunkScans.Enqueue(chunkCoord);
                     continue;
                 }
 

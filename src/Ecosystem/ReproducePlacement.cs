@@ -57,7 +57,7 @@ namespace WildFarming.Ecosystem
 
             if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells)
             {
-                candidates = FilterPreferEmpty(candidates);
+                ApplyEmptySpreadPreference(candidates, EcosystemConfig.Loaded.EmptySpreadFitnessMultiplier);
             }
 
             int placed = 0;
@@ -203,6 +203,22 @@ namespace WildFarming.Ecosystem
                     origin,
                     dNoSurface, dSunlight, dDupe, dClaim,
                     dPreflight, dOccupied, dFitness, dSpacing, dDisplace);
+
+                if (requirements.Habitat == EcologyHabitat.Terrestrial && dNoSurface > 0)
+                {
+                    SurfacePlacement.TryFindPlantPos(
+                        acc, origin, 1, 0, verticalSearch, out _, out string surfProbe);
+                    api.Logger.Notification(
+                        "[ecosystemflora] surface summary {0} dx=1 dz=0 ±{1}: {2}",
+                        requirements.Species ?? "?",
+                        verticalSearch,
+                        surfProbe);
+
+                    SurfacePlacement.LogColumnDyProbe(
+                        api, acc, origin, 1, 0, verticalSearch, requirements.Species + " dx+1");
+                    SurfacePlacement.LogColumnDyProbe(
+                        api, acc, origin, 0, 1, verticalSearch, requirements.Species + " dz+1");
+                }
             }
 
             var result = new List<SpreadCandidate>(scratchCandidates);
@@ -211,15 +227,29 @@ namespace WildFarming.Ecosystem
             return result;
         }
 
-        static List<SpreadCandidate> FilterPreferEmpty(List<SpreadCandidate> candidates)
+        /// <summary>Favor empty cells but keep displacement candidates in the weighted pool.</summary>
+        static void ApplyEmptySpreadPreference(List<SpreadCandidate> candidates, float emptyMultiplier)
         {
-            var empty = new List<SpreadCandidate>();
+            if (emptyMultiplier <= 1f || candidates.Count == 0) return;
+
+            bool hasEmpty = false;
+            bool hasDisplacing = false;
             for (int i = 0; i < candidates.Count; i++)
             {
-                if (!candidates[i].Displacing) empty.Add(candidates[i]);
+                if (candidates[i].Displacing) hasDisplacing = true;
+                else hasEmpty = true;
             }
 
-            return empty.Count > 0 ? empty : candidates;
+            if (!hasEmpty || !hasDisplacing) return;
+
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                SpreadCandidate c = candidates[i];
+                if (!c.Displacing)
+                {
+                    candidates[i] = new SpreadCandidate(c.Pos, c.Fitness * emptyMultiplier, false);
+                }
+            }
         }
 
         static int PickWeightedIndex(List<SpreadCandidate> candidates, System.Random rand)

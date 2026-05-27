@@ -45,6 +45,8 @@ namespace WildFarming.Ecosystem
 
         static void ApplyNatural(EcosystemConfig cfg)
         {
+            cfg.UseCalendarScaledSpread = true;
+            cfg.UseSpeciesSpreadRates = true;
             cfg.ReproduceAttemptsPerYear = 72;
             cfg.ReproduceChance = 0.5f;
             cfg.MinFitness = 0.45f;
@@ -54,6 +56,8 @@ namespace WildFarming.Ecosystem
 
         static void ApplyLush(EcosystemConfig cfg)
         {
+            cfg.UseCalendarScaledSpread = true;
+            cfg.UseSpeciesSpreadRates = true;
             cfg.ReproduceAttemptsPerYear = 120;
             cfg.ReproduceChance = 0.65f;
             cfg.MinFitness = 0.35f;
@@ -63,6 +67,8 @@ namespace WildFarming.Ecosystem
 
         static void ApplySparse(EcosystemConfig cfg)
         {
+            cfg.UseCalendarScaledSpread = true;
+            cfg.UseSpeciesSpreadRates = true;
             cfg.ReproduceAttemptsPerYear = 36;
             cfg.ReproduceChance = 0.3f;
             cfg.MinFitness = 0.6f;

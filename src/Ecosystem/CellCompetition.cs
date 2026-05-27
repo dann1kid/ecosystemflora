@@ -79,11 +79,6 @@ namespace WildFarming.Ecosystem
                 hold *= incumbent.HoldStrength;
             }
 
-            if (incumbent.SpreadRate > 0f)
-            {
-                hold *= System.Math.Min(incumbent.SpreadRate, 2f);
-            }
-
             return hold;
         }
 

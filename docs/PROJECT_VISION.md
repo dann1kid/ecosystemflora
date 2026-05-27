@@ -322,13 +322,13 @@ else                      → Open            // 1.0
 На клетке-кандидате для вида-challenger:
 
 ```
-spreadScore = ReproduceFitness × ContextMultiplier × SpreadRate
-holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(SpreadRate, 2)
+spreadScore = ReproduceFitness × ContextMultiplier × SpreadRate × SeasonMultiplier
+holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength
 ```
 
 - **Пустая клетка** — победитель с max `spreadScore` (weighted random среди прошедших `MinFitness`).
 - **Занятая** ecology-клетка — challenger **вытесняет** incumbent, если  
-  `spreadScore ≥ holdScore × DisplacementHoldMargin` (конфиг, default 1.25).
+  `spreadScore ≥ holdScore × DisplacementHoldMargin` (конфиг, default 1.18).
 - **Стресс-смерть** — incumbent не проходит `MeetsSurvivalRequirements` (или потерял host-симбиота) N раз → блок снимается → снова конкуренция.
 
 Опушка **не отдельный биом**: edge-виды выигрывают у open-видов у леса через `ContextMultiplier` + displacement.
@@ -357,7 +357,8 @@ holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength × min(Sprea
 | Key | Default |
 |-----|---------|
 | `UseCellDisplacement` | true |
-| `DisplacementHoldMargin` | 1.25 |
+| `DisplacementHoldMargin` | 1.18 |
+| `EmptySpreadFitnessMultiplier` | 2.5 (with `PreferSpreadToEmptyCells`) |
 | `EnableStressDeath` | true |
 | `StressRecheckHours` | 18 |
 | `EnableSymbiosis` | true |

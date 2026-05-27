@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Seasonal spread, cell competition, niche stress, soil succession — all on vanilla blocks.",
   "authors": ["-"],
-  "version": "2.10.0",
+  "version": "2.10.5",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

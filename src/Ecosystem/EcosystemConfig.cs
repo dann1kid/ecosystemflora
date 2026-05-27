@@ -123,8 +123,11 @@ namespace WildFarming.Ecosystem
         /// <summary>When empty cells exist in spread radius, pick only among them (mowing / gap colonization).</summary>
         public bool PreferSpreadToEmptyCells { get; set; } = true;
 
-        /// <summary>Challenger spread score must exceed incumbent hold × this margin.</summary>
-        public float DisplacementHoldMargin { get; set; } = 1.25f;
+        /// <summary>Challenger spreadScore must exceed incumbent holdScore × this (lower = more turnover).</summary>
+        public float DisplacementHoldMargin { get; set; } = 1.18f;
+
+        /// <summary>When <see cref="PreferSpreadToEmptyCells"/> is on, multiply empty-cell fitness by this (displacement still possible).</summary>
+        public float EmptySpreadFitnessMultiplier { get; set; } = 2.5f;
 
         public bool EnableStressDeath { get; set; } = true;
 

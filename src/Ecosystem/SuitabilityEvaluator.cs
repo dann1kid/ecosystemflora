@@ -25,7 +25,7 @@ namespace WildFarming.Ecosystem
         {
             if (!ctx.GroundSideSolid) return false;
             if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
-            if (ctx.SpaceReplaceable < req.MinReplaceable) return false;
+            if (!PlantVacancyRules.MeetsMinReplaceable(ctx.SpaceReplaceable, req.MinReplaceable)) return false;
             return true;
         }
 
@@ -130,7 +130,8 @@ namespace WildFarming.Ecosystem
             if (!ctx.GroundSideSolid) return false;
             if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
 
-            if (!occupied && ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+            if (!occupied && !PlantVacancyRules.MeetsMinReplaceable(ctx.SpaceReplaceable, ReproduceMinReplaceable))
+                return false;
 
             if (!MeetsRainfall(req, ctx)) return false;
             if (!MeetsLocalForest(req, ctx)) return false;
@@ -143,12 +144,14 @@ namespace WildFarming.Ecosystem
         {
             if (req.Habitat == EcologyHabitat.WaterSurface)
             {
-                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!PlantVacancyRules.MeetsMinReplaceable(ctx.SpaceReplaceable, ReproduceMinReplaceable))
+                    return false;
                 if (!ctx.HasShallowWater) return false;
             }
             else if (req.Habitat == EcologyHabitat.ReedNearWater)
             {
-                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!PlantVacancyRules.MeetsMinReplaceable(ctx.SpaceReplaceable, ReproduceMinReplaceable))
+                    return false;
                 if (!ctx.HasShallowWater) return false;
             }
             else if (req.Habitat == EcologyHabitat.UnderwaterColumn)
@@ -160,7 +163,8 @@ namespace WildFarming.Ecosystem
                 if (ctx.TouchesFluid) return false;
                 if (!ctx.GroundSideSolid) return false;
                 if (!SoilClassification.MeetsSoilRequirements(req, ctx.GroundSoilKinds, ctx.GroundFertility, skipMaxFertility: true)) return false;
-                if (ctx.SpaceReplaceable < ReproduceMinReplaceable) return false;
+                if (!PlantVacancyRules.MeetsMinReplaceable(ctx.SpaceReplaceable, ReproduceMinReplaceable))
+                    return false;
             }
 
             if (!MeetsRainfall(req, ctx)) return false;

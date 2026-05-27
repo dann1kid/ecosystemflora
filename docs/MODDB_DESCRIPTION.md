@@ -129,7 +129,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 
 | Setting | Default | What it does |
 |---------|:-------:|-------------|
-| `DisplacementHoldMargin` | 1.25 | Challenger must beat incumbent × this |
+| `DisplacementHoldMargin` | 1.18 | Challenger must beat incumbent × this |
+| `EmptySpreadFitnessMultiplier` | 2.5 | Empty-cell spread weight when mixed with displacement |
 | `NicheStressThreshold` | 0.45 | Niche score below this = stress |
 | `SoilSuccessionStrength` | 1.0 | Speed of soil changes |
 | `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |

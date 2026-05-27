@@ -13,7 +13,7 @@ namespace WildFarming.Ecosystem
             in CellBlockSnapshot snap,
             out bool isEmpty)
         {
-            isEmpty = snap.Space == null || snap.Space.Id == 0;
+            isEmpty = PlantVacancyRules.IsVacantPlantSpace(snap.Space);
 
             if (acc == null || plantPos == null || requirements == null)
             {
@@ -23,7 +23,7 @@ namespace WildFarming.Ecosystem
             switch (requirements.Habitat)
             {
                 case EcologyHabitat.Terrestrial:
-                    return PassesTerrestrialPhysical(in snap, requirements, isEmpty);
+                    return PassesTerrestrialPhysical(acc, plantPos, in snap, requirements, isEmpty);
 
                 case EcologyHabitat.TerrestrialTree:
                 case EcologyHabitat.WaterSurface:
@@ -36,6 +36,8 @@ namespace WildFarming.Ecosystem
         }
 
         static bool PassesTerrestrialPhysical(
+            IBlockAccessor acc,
+            BlockPos plantPos,
             in CellBlockSnapshot snap,
             PlantRequirements requirements,
             bool isEmpty)
@@ -45,29 +47,26 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (snap.TouchesFluid)
+            if (PlantVacancyRules.TouchesSpreadBlockingFluid(in snap))
             {
                 return false;
             }
 
-            bool isFarmland = WildSoilGroundRules.IsFarmland(snap.Ground);
-            if (!isFarmland && !snap.Ground.SideSolid[BlockFacing.UP.Index])
+            if (!PlantVacancyRules.IsSupportingGround(snap.Ground))
             {
                 return false;
             }
 
-            if (WildSoilGroundRules.IsMyceliumHost(snap.Ground))
-            {
-                return false;
-            }
-
-            if (isEmpty && snap.Space.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
+            BlockPos groundPos = plantPos.DownCopy();
+            if (WildSoilGroundRules.HasActiveMycelium(acc, groundPos))
             {
                 return false;
             }
 
             SoilKind groundKinds = SoilClassification.Classify(snap.Ground);
-            int fertility = isFarmland ? 150 : (int)snap.Ground.Fertility;
+            int fertility = WildSoilGroundRules.IsFarmland(snap.Ground)
+                ? 150
+                : (int)snap.Ground.Fertility;
             if (!SoilClassification.MeetsSoilRequirements(
                 requirements, groundKinds, fertility, skipMaxFertility: true))
             {
