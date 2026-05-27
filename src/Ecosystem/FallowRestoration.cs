@@ -25,11 +25,6 @@ namespace WildFarming.Ecosystem
 
             scratchPos.Set(plantPos.X, plantPos.Y - 1, plantPos.Z);
             Block ground = acc.GetBlock(scratchPos);
-
-            if (EcosystemConfig.Loaded.VerboseLogging)
-                api.Logger.Notification("[EcoFallow] Check beneath {0}: ground={1}, isFarmland={2}",
-                    plantPos, ground?.Code?.Path ?? "null", WildSoilGroundRules.IsFarmland(ground));
-
             if (!WildSoilGroundRules.IsFarmland(ground)) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
@@ -47,15 +42,7 @@ namespace WildFarming.Ecosystem
 
             ApplyFallowBonus(farmland.Nutrients, role, strength);
             be.MarkDirty(true);
-
-            if (cfg.VerboseLogging)
-                api.Logger.Notification("[EcoFallow] Applied N+{0:F1} P+{1:F1} K+{2:F1} to farmland at {3}",
-                    ApplyN(role, strength), ApplyP(role, strength), ApplyK(role, strength), scratchPos);
         }
-
-        static float ApplyN(PlantSoilRole role, float s) => role == PlantSoilRole.NitrogenFixer ? 2.5f * s : BaseNPerCheck * s;
-        static float ApplyP(PlantSoilRole role, float s) => BasePPerCheck * s;
-        static float ApplyK(PlantSoilRole role, float s) => BaseKPerCheck * s;
 
         static PlantSoilRole ResolvePlantRole(IBlockAccessor acc, BlockPos plantPos)
         {
