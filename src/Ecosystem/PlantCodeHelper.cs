@@ -379,8 +379,9 @@ namespace WildFarming.Ecosystem
                     if (mature?.Path?.Length > 0) return mature;
                 }
 
-                AssetLocation spread = SpreadBlockCode(block);
-                return spread ?? block.Code;
+                // Third-party default: the block itself is the "mature identity" in the registry.
+                // If a mod wants a separate sprout/juvenile block, it should set ecologyMatureBlock on that sprout.
+                return block.Code;
             }
 
             AssetLocation vanilla = SpreadBlockCode(block);
