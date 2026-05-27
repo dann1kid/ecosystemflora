@@ -70,6 +70,7 @@
   "EnableEcologyAreaScan": true,
 
   "CloneBerryTraits": true,
+  "BerryTraitMutationChance": 0.0,
 
   "EnableThirdPartyParticipants": true
 }

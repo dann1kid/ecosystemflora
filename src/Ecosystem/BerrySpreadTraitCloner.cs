@@ -36,20 +36,39 @@ namespace WildFarming.Ecosystem
 
             if (parentBh == null || childBh == null) return false;
 
-            string csv = TraitsToCsv(parentBh);
+            string csv = TraitsToCsv(parentBh, api.World.Rand);
             onGrownFromCuttingMethod.Invoke(childBh, new object[] { csv });
             offspringBe.MarkDirty(true);
             return true;
         }
 
-        static string TraitsToCsv(object berryBehavior)
+        static string TraitsToCsv(object berryBehavior, Random rand)
         {
             object state = bStateField?.GetValue(berryBehavior);
             if (state == null) return string.Empty;
 
             object traitsRaw = traitsField?.GetValue(state);
             string[] traits = traitsRaw as string[];
-            return traits != null && traits.Length > 0 ? string.Join(",", traits) : string.Empty;
+            if (traits == null || traits.Length == 0) return string.Empty;
+
+            double mutationChance = EcosystemConfig.Loaded?.BerryTraitMutationChance ?? 0.0;
+            if (mutationChance > 0 && rand != null && rand.NextDouble() < mutationChance)
+            {
+                // Safe mutation: drop a random trait. Avoid inventing new trait names.
+                int drop = rand.Next(traits.Length);
+                if (traits.Length == 1) return string.Empty;
+
+                var mutated = new List<string>(traits.Length - 1);
+                for (int i = 0; i < traits.Length; i++)
+                {
+                    if (i == drop) continue;
+                    if (!string.IsNullOrWhiteSpace(traits[i])) mutated.Add(traits[i]);
+                }
+
+                return mutated.Count > 0 ? string.Join(",", mutated) : string.Empty;
+            }
+
+            return string.Join(",", traits);
         }
 
         static object TryGetBerryBehavior(BlockEntity entity)

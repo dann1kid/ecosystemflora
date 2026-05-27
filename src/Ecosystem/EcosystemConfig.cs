@@ -219,6 +219,12 @@ namespace WildFarming.Ecosystem
         /// </summary>
         public bool CloneBerryTraits { get; set; } = true;
 
+        /// <summary>
+        /// Chance (0..1) that a berry offspring loses one random trait during spread cloning.
+        /// Default 0 = no mutations.
+        /// </summary>
+        public double BerryTraitMutationChance { get; set; } = 0.0;
+
         // --- Third-party ecology (v3.1) ---
 
         /// <summary>
