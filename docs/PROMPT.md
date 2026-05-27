@@ -20,7 +20,7 @@
 - v2.3: сезонность — WildSpeciesSeason (12 месяцев), SeasonEcology; интерполяция spread по году.
 - v2.9: залежь (FallowRestoration), spread на пустую пашню, player-placed register.
 - v2.10: PlantVacancyRules, mycelium только active BE; displacement/hold tuning.
-- v2.11: Ecology inspect (хоткей I, protobuf канал); chunk-scan с курсором до конца чанка; текст отчёта на клиенте (`InspectLineLite`, `ErrorLangKey`).
+- v2.11.x: Ecology inspect (хоткей I, protobuf канал); chunk-scan с курсором до конца чанка; отчёт на клиенте — `InspectLineLite`, `ErrorLangKey`; имена видов — ключи `ecosystemflora:species-{id}` в `assets/ecosystemflora/lang/` (en/ru/de).
 - SpreadScore = fitness × Context × SpreadRate × SeasonMultiplier; HoldScore = fitness × Context × HoldStrength.
 - Опушка emergent через FloraContext + displacement, не отдельный биом.
 
@@ -36,9 +36,11 @@ Habitat:
 Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
 Тесты: tests/WildFarming.Tests.csproj (xUnit, 64 теста).
 
-Порт: VS 1.22+, .NET 10. Версия: 2.11.3. Стадия: Ecosystem v2.11 — см. docs/PROGRESS.md.
+- v3.0: berry spread clones parent fruit traits (`CloneBerryTraits`, `BerrySpreadTraitCloner` → vanilla `BEBehaviorFruitingBush.OnGrownFromCutting`).
 
-Backlog: v3.0 berry trait clone; v3.1 attribute API; dominant species UX; aquatic edge cases; выпас/tallgrass-eaten (husbandry). Листва зимой — отложено (визуал).
+Порт: VS 1.22+, .NET 10. Версия: 3.0.0. Стадия: Ecosystem v3.0 — см. docs/PROGRESS.md.
+
+Backlog: v3.1 attribute API; dominant species UX; aquatic edge cases; выпас/tallgrass-eaten (husbandry). Листва зимой — отложено (визуал).
 
 Коммиты — только по запросу пользователя.
 ```

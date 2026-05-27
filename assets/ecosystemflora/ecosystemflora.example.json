@@ -67,5 +67,7 @@
   "EnableEcologyInspect": true,
   "EcologyInspectCooldownSeconds": 2.0,
   "EcologyInspectScanRadius": 16,
-  "EnableEcologyAreaScan": true
+  "EnableEcologyAreaScan": true,
+
+  "CloneBerryTraits": true
 }

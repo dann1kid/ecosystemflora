@@ -255,6 +255,7 @@ docs/
 - [x] **Залежь** — `FallowRestoration` на пустой пашне под диким растением — ✅.
 - [x] **v2.10** — spread hotfixes (`PlantVacancyRules`, active mycelium BE only) — ✅.
 - [x] **v2.11** — Ecology inspect (хоткей I, protobuf), chunk-scan до конца чанка, строки отчёта локализуются на клиенте — ✅.
+- [x] **v2.11.4** — ключи **`ecosystemflora:species-{id}`** для заголовка осмотра и топа «экология рядом» (en / ru / de); пояснение доли в строке топа — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).

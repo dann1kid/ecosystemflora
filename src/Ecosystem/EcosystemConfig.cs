@@ -210,5 +210,13 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Include top species near crosshair plant in inspect report.</summary>
         public bool EnableEcologyAreaScan { get; set; } = true;
+
+        // --- Berry spread (v3.0, VS 1.22+ fruiting bush BE) ---
+
+        /// <summary>
+        /// When true, wild berry spread copies the parent bush's genetic traits to the new bush
+        /// (same path as maturing a cutting). When false, vanilla random wild traits apply.
+        /// </summary>
+        public bool CloneBerryTraits { get; set; } = true;
     }
 }

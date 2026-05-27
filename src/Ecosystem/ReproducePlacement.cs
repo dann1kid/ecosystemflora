@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
@@ -329,6 +330,14 @@ namespace WildFarming.Ecosystem
             accessor.SetBlock(spreadBlock.BlockId, plantPos, stack);
 
             if (accessor.GetBlock(plantPos).Id != spreadBlock.Id) return false;
+
+            if (EcosystemConfig.Loaded.CloneBerryTraits
+                && api.Side == EnumAppSide.Server
+                && requirements?.Habitat == EcologyHabitat.Terrestrial
+                && PlantCodeHelper.IsWildBerryBushBlock(spreadBlock))
+            {
+                BerrySpreadTraitCloner.TryCloneFromParent(api, parentOrigin, plantPos);
+            }
 
             accessor.MarkBlockDirty(plantPos);
             return true;

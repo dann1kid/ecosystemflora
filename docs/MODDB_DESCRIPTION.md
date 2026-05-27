@@ -163,8 +163,6 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `MaxStressChecksPerTick` | 16 | Stress checks per tick |
 | `MaxChunkColumnsScannedPerTick` | 6 | Chunk registration pacing (unfinished chunks stay queued) |
 | `MaxRegistrationsPerTick` | 512 | Max new plant registrations per server tick |
-| `EnableEcologyInspect` | true | Hotkey **I**: in-world ecology report for aimed plant |
-| `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `OnlyActivateNearPlayers` | true | Limit activity to player radius |
 | `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
 | `VerboseLogging` | false | Detailed server log output |
