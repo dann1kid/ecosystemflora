@@ -19,7 +19,7 @@ Vanilla `game:` plants keep using path-based rules; third-party mode is **additi
 
 | Attribute | Notes |
 |-----------|--------|
-| `ecologyMatureBlock` | Mature parent identity in the spread registry. **Required on the mature block** when `ecologySpreadBlock` points to a different block (e.g. sprout); otherwise the registry treats the sprout code as “mature” and spread never runs. On sprout, set this to the mature block code. |
+| `ecologyMatureBlock` | Mature parent identity in the spread registry. **Recommended on sprout/juvenile** to point to the mature code. On the mature block, if you omit it, the default is **the block itself**. |
 | `ecologyReproduce` | Default `true`; set `false` to opt a block type out while keeping other attrs. |
 | `minTemp`, `maxTemp`, `minRain`, `maxRain`, `minForest`, `maxForest` | Climate (same as vanilla block attrs). |
 | `ecologySpreadRate`, `ecologySpreadRadius` | Per-type tuning. |
