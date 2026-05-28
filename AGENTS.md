@@ -19,7 +19,7 @@ Quick constraints:
 - Do **not** expand living trees, vines, mushrooms, or termites unless the user asks.
 - BE: `src/BlockEntity/EcoSystemLife.cs`; new logic under `src/Ecosystem/`.
 - Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
-- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 86 tests).
+- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 90 tests).
 - Do **not** run alongside **wildfarmingrevival**.
 
 Entry: `src/WF.cs`, `src/Ecosystem/EcosystemSystem.cs`. Docs: `docs/PROJECT_VISION.md`, `docs/PROMPT.md`, `docs/THIRD_PARTY_ECOLOGY.md`, `docs/VISUAL_STUDIO.md`.

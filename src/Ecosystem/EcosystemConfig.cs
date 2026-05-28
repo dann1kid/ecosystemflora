@@ -22,6 +22,15 @@ namespace WildFarming.Ecosystem
         /// <summary>Reeds/tule/papyrus spread only from mat edge, one orthogonal cell (rhizome front).</summary>
         public bool UseRhizomeSpreadForReeds { get; set; } = true;
 
+        /// <summary>Rare wind/water seed or stem-fragment jump for rhizome reeds.</summary>
+        public bool RhizomeSeedDispersalEnabled { get; set; } = true;
+
+        /// <summary>Multiplier on per-species seed dispersal chance.</summary>
+        public float RhizomeSeedDispersalChanceScale { get; set; } = 1f;
+
+        /// <summary>Fitness multiplier for distant seed/fragment candidates (harder establishment).</summary>
+        public float RhizomeSeedDispersalFitnessScale { get; set; } = 0.25f;
+
         public int ReproduceVerticalSearch { get; set; } = 5;
 
         public float ReproduceChance { get; set; } = 0.5f;

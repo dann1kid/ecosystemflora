@@ -81,6 +81,11 @@ namespace WildFarming.Ecosystem
 
         public bool UsesRhizomeSpread => SpreadMode == SpreadMode.RhizomeMat;
 
+        /// <summary>Per attempt, chance to use seed/fragment dispersal (rhizome reeds).</summary>
+        public float SeedDispersalChance { get; set; }
+
+        public int SeedDispersalRadius { get; set; }
+
         public int GetRequiredSpacingTo(string otherSpecies, EcosystemConfig cfg)
         {
             if (string.IsNullOrEmpty(otherSpecies)) return 0;
@@ -151,6 +156,8 @@ namespace WildFarming.Ecosystem
             int minSunlight = attrs != null ? attrs["ecologyMinSunlight"].AsInt(0) : 0;
             SpreadMode spreadMode = SpreadMode.Independent;
             bool suppressRhizomeSpread = false;
+            float seedDispersalChance = attrs != null ? attrs["ecologySeedDispersalChance"].AsFloat(0f) : 0f;
+            int seedDispersalRadius = attrs != null ? attrs["ecologySeedDispersalRadius"].AsInt(0) : 0;
 
             if (attrs != null)
             {
@@ -254,6 +261,8 @@ namespace WildFarming.Ecosystem
                 minFertility = 0;
                 sameSpacing = aquatic.SameSpeciesSpacing;
                 otherSpacing = aquatic.OtherSpeciesSpacing;
+                if (seedDispersalChance <= 0f) seedDispersalChance = aquatic.SeedDispersalChance;
+                if (seedDispersalRadius <= 0) seedDispersalRadius = aquatic.SeedDispersalRadius;
             }
             else if (!string.IsNullOrEmpty(species) && WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fern))
             {
@@ -390,6 +399,8 @@ namespace WildFarming.Ecosystem
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
                 SpreadMode = spreadMode,
                 SuppressRhizomeSpread = suppressRhizomeSpread,
+                SeedDispersalChance = seedDispersalChance,
+                SeedDispersalRadius = seedDispersalRadius,
             };
 
             WildPlantSoil.ApplyTo(requirements);

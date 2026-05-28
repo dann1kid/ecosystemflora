@@ -42,17 +42,25 @@ namespace WildFarming.Ecosystem
             failureReason = null;
             if (maxSpawns <= 0) return 0;
 
-            if (requirements != null && requirements.SpreadRadius > 0)
+            RhizomeCollectMode rhizomeMode = RhizomeCollectMode.NotApplicable;
+            int searchRadius = radius;
+
+            if (requirements != null && requirements.UsesRhizomeSpread)
             {
-                radius = requirements.SpreadRadius;
+                rhizomeMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, rhizomeMode, radius);
+            }
+            else if (requirements != null && requirements.SpreadRadius > 0)
+            {
+                searchRadius = requirements.SpreadRadius;
             }
 
             List<SpreadCandidate> candidates = CollectSpreadCandidates(
-                api, origin, radius, verticalSearch, requirements, minFitness, harshClimate);
+                api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, rhizomeMode);
 
             if (candidates.Count == 0)
             {
-                failureReason = "No competitive cells in radius " + radius;
+                failureReason = "No competitive cells in radius " + searchRadius;
                 return 0;
             }
 
@@ -102,7 +110,8 @@ namespace WildFarming.Ecosystem
             int verticalSearch,
             PlantRequirements requirements,
             float minFitness,
-            bool harshClimate)
+            bool harshClimate,
+            RhizomeCollectMode rhizomeMode = RhizomeCollectMode.NotApplicable)
         {
             scratchCandidates.Clear();
             scratchSeen.Clear();
@@ -110,7 +119,7 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool diag = cfg.VerboseLogging && cfg.ReproduceDebug;
 
-            if (requirements.UsesRhizomeSpread
+            if (rhizomeMode == RhizomeCollectMode.RhizomeEdge
                 && !RhizomeSpread.IsFrontier(
                     acc,
                     origin,
@@ -119,6 +128,11 @@ namespace WildFarming.Ecosystem
             {
                 return scratchCandidates;
             }
+
+            float seedFitnessScale = rhizomeMode == RhizomeCollectMode.SeedDispersal
+                ? cfg.RhizomeSeedDispersalFitnessScale
+                : 1f;
+            if (seedFitnessScale <= 0f) seedFitnessScale = 0.01f;
 
             int dNoSurface = 0, dSunlight = 0, dDupe = 0, dClaim = 0;
             int dPreflight = 0, dOccupied = 0, dFitness = 0, dSpacing = 0, dDisplace = 0;
@@ -129,7 +143,7 @@ namespace WildFarming.Ecosystem
                 {
                     if (dx == 0 && dz == 0) continue;
 
-                    if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
+                    if (rhizomeMode == RhizomeCollectMode.RhizomeEdge && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
 
                     bool foundPos;
                     BlockPos plantPos;
@@ -182,6 +196,7 @@ namespace WildFarming.Ecosystem
                             api, plantPos, in snap, requirements, cache);
                         fitness = CellCompetition.SpreadScoreFromContext(
                             api, requirements, plantPos, harshClimate, ctx);
+                        fitness *= seedFitnessScale;
                         if (fitness < minFitness) { dFitness++; continue; }
                         if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) { dSpacing++; continue; }
                     }
