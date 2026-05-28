@@ -74,6 +74,9 @@ namespace WildFarming.Ecosystem
                 case PlantSoilRole.NitrogenFixer:
                     n = 25f; p = 5f; k = 5f;
                     break;
+                case PlantSoilRole.SoilDepleter:
+                    n = 2f; p = 1f; k = 2f;
+                    break;
             }
 
             AddNutrient(nutrients, 0, n * strength);

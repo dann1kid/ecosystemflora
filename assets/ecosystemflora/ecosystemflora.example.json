@@ -51,6 +51,7 @@
   "NicheStressThreshold": 0.45,
   "UseSoilSuccession": true,
   "SoilSuccessionStrength": 1,
+  "SoilSuccessionSkipWhenBuiltAbove": true,
   "UseFarmlandNutrientBridge": true,
   "FarmlandNutrientBridgeStrength": 1,
   "EnableFallowRestoration": true,

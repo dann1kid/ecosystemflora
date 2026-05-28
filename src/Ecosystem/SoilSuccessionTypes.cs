@@ -10,6 +10,8 @@ namespace WildFarming.Ecosystem
         GrassMatrix,
         /// <summary>Legume-style wild plants (e.g. lupine) — strong N bonus when soil is tilled.</summary>
         NitrogenFixer,
+        /// <summary>Heath/dry colonizers that lean on poor soil (slight depletion while living).</summary>
+        SoilDepleter,
     }
 
     public enum SoilSuccessionEvent

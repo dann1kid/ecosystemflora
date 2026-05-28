@@ -34,7 +34,7 @@ Habitat:
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
 
 Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
-Тесты: tests/WildFarming.Tests.csproj (xUnit, 72 теста).
+Тесты: tests/WildFarming.Tests.csproj (xUnit, 76 тестов).
 
 - v3.0: berry spread clones parent fruit traits (`CloneBerryTraits`, `BerrySpreadTraitCloner` → vanilla `BEBehaviorFruitingBush.OnGrownFromCutting`).
 - v3.1: third-party blocks declare `ecologyParticipant` / `ecologySpecies` / `ecologySpreadBlock` / `ecologyHabitat` on blocktype JSON; `EnableThirdPartyParticipants` (see `docs/THIRD_PARTY_ECOLOGY.md`).

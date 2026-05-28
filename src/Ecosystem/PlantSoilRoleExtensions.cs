@@ -19,7 +19,8 @@ namespace WildFarming.Ecosystem
         /// <summary>Perennial, tallgrass matrix, lupine — humus on natural death can reclaim forest floor to soil.</summary>
         public static bool ProducesHumus(this PlantSoilRole role)
         {
-            return role == PlantSoilRole.MeadowPerennial
+            return role == PlantSoilRole.MeadowColonizer
+                || role == PlantSoilRole.MeadowPerennial
                 || role == PlantSoilRole.GrassMatrix
                 || role == PlantSoilRole.NitrogenFixer;
         }

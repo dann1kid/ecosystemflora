@@ -73,6 +73,10 @@ Wild spread, displacement, and stress death are blocked inside **land claims**. 
 
 Plants never spread onto **mycelium blocks** (mushroom spawning ground) — mushrooms continue to regrow naturally. Unclaimed empty **farmland** can be colonized by wild plants over time, and those plants slowly restore soil nutrients (fallow restoration).
 
+### Soil succession (optional)
+
+With **`UseSoilSuccession`** on (default), meadow spread and natural plant death **enrich** soil tiers over time. **Heather** and **western gorse** are exceptions — they slightly dry poor soils while growing. Prefer spread and competition only, with no soil block swaps? Set **`UseSoilSuccession: false`**. **`SoilSuccessionSkipWhenBuiltAbove`** (default on) skips soil changes under slabs and builds — compatible with **Terrain Slabs** and similar mods.
+
 ### Greenhouse support
 
 Flowers planted inside a fully enclosed glass-roofed room (a greenhouse) are protected from temperature stress — no land claim required. Grow tropical flowers in cold biomes inside your greenhouse.
@@ -106,7 +110,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableSymbiosis` | true | Some species boost each other |
 | `UseFloraContext` | true | Forest interior/edge affects spread |
 | `UseNicheContext` | true | Local soil + climate niche scoring |
-| `UseSoilSuccession` | true | Plants gradually change soil quality |
+| `UseSoilSuccession` | true | Wild plants gradually enrich soil (humus on spread/death). Set **false** for spread-only — no soil block swaps |
+| `SoilSuccessionSkipWhenBuiltAbove` | true | Skip soil swaps when slabs or builds sit on the column (Terrain Slabs compatibility) |
 | `UseFarmlandNutrientBridge` | true | Wild plants enrich tilled farmland N/P/K |
 | `EnableFallowRestoration` | true | Healthy plants on farmland slowly restore nutrients |
 | `RespectLandClaims` | true | No spread/death inside player claims |
@@ -142,7 +147,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `DisplacementHoldMargin` | 1.18 | Challenger must beat incumbent × this |
 | `EmptySpreadFitnessMultiplier` | 2.5 | Empty-cell spread weight when mixed with displacement |
 | `NicheStressThreshold` | 0.45 | Niche score below this = stress |
-| `SoilSuccessionStrength` | 1.0 | Speed of soil changes |
+| `SoilSuccessionStrength` | 1.0 | Speed of soil tier changes |
+| `BerryTraitMutationChance` | 0.0 | Chance wild berry spread drops one parent trait (0 = off) |
 | `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |
 | `FallowRestorationStrength` | 1.0 | Scale of fallow restoration bonus |
 | `FloraOpenInteriorPenalty` | 0.35 | Penalty for open-field species in forest |

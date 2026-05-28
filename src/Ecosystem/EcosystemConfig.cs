@@ -155,6 +155,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Multiplier on spread/death soil impact deltas.</summary>
         public float SoilSuccessionStrength { get; set; } = 1f;
 
+        /// <summary>Do not swap soil blocks when slabs or other builds occupy the column above ground.</summary>
+        public bool SoilSuccessionSkipWhenBuiltAbove { get; set; } = true;
+
         /// <summary>When soil is tilled, add N/P/K from dominant wild plant role + tier.</summary>
         public bool UseFarmlandNutrientBridge { get; set; } = true;
 

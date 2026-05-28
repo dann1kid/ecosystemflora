@@ -17,9 +17,30 @@ namespace WildFarming.Ecosystem
 
         static readonly BlockPos scratchPos = new BlockPos(0);
 
+        const float SpreadDripFactor = 0.35f;
+
         public static void TryRestoreNear(ICoreAPI api, BlockPos plantPos)
         {
             if (api == null || plantPos == null) return;
+            if (!EcosystemConfig.Loaded.EnableFallowRestoration) return;
+
+            PlantSoilRole role = ResolvePlantRole(api.World.BlockAccessor, plantPos);
+            TryApplyNutrients(api, plantPos, role, EcosystemConfig.Loaded.FallowRestorationStrength);
+        }
+
+        /// <summary>Slow N/P/K drip when a wild plant spreads onto empty farmland.</summary>
+        public static void TryApplySpreadDrip(ICoreAPI api, BlockPos plantPos, PlantSoilRole role)
+        {
+            if (api == null || plantPos == null) return;
+            if (!EcosystemConfig.Loaded.EnableFallowRestoration) return;
+
+            float strength = EcosystemConfig.Loaded.FallowRestorationStrength * SpreadDripFactor;
+            TryApplyNutrients(api, plantPos, role, strength);
+        }
+
+        static void TryApplyNutrients(ICoreAPI api, BlockPos plantPos, PlantSoilRole role, float strength)
+        {
+            if (strength <= 0f) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
 
@@ -36,9 +57,6 @@ namespace WildFarming.Ecosystem
             if (farmland.Nutrients == null || farmland.Nutrients.Length < 3) return;
 
             if (HasCrop(acc)) return;
-
-            float strength = cfg.FallowRestorationStrength;
-            PlantSoilRole role = ResolvePlantRole(acc, plantPos);
 
             ApplyFallowBonus(farmland.Nutrients, role, strength);
             be.MarkDirty(true);
@@ -90,6 +108,9 @@ namespace WildFarming.Ecosystem
                     break;
                 case PlantSoilRole.WetlandHerb:
                     n = 1.5f; p = 0.8f; k = 0.5f;
+                    break;
+                case PlantSoilRole.SoilDepleter:
+                    n = 0.4f; p = 0.3f; k = 0.5f;
                     break;
             }
 

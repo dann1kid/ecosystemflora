@@ -14,7 +14,6 @@ namespace WildFarming.Ecosystem
             if (api == null || plantPos == null || string.IsNullOrEmpty(species)) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!cfg.UseSoilSuccession) return;
 
             PlantRequirements req = PlantRequirements.FromBlock(api.World.BlockAccessor.GetBlock(plantPos));
             if (req.Habitat == EcologyHabitat.ReedNearWater
@@ -24,8 +23,16 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (!WildSpeciesSoilSuccession.TryGetImpact(species, evt, out SoilImpact impact)) return;
             if (!WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role)) return;
+
+            if (evt == SoilSuccessionEvent.Spread && cfg.EnableFallowRestoration)
+            {
+                FallowRestoration.TryApplySpreadDrip(api, plantPos, role);
+            }
+
+            if (!cfg.UseSoilSuccession) return;
+
+            if (!WildSpeciesSoilSuccession.TryGetImpact(species, evt, out SoilImpact impact)) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos groundPos = plantPos.DownCopy();
@@ -33,6 +40,11 @@ namespace WildFarming.Ecosystem
 
             Block ground = acc.GetBlock(groundPos);
             if (!WildSoilBlockMapper.IsSuccessionTarget(ground)) return;
+
+            if (cfg.SoilSuccessionSkipWhenBuiltAbove && !SoilSuccessionGuard.CanModifyGroundBelow(acc, groundPos))
+            {
+                return;
+            }
 
             WildSoilComposition composition = WildSoilComposition.FromBlock(api, ground, groundPos);
             composition.ApplyImpact(impact, cfg.SoilSuccessionStrength);

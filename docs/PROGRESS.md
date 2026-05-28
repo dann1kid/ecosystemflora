@@ -1,10 +1,10 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v3.1` — участники экосистемы через **JSON-атрибуты** (`ecologyParticipant`, `ecologySpecies`, …); `ResolveEcologySpecies` / отключение `EnableThirdPartyParticipants`; см. **`docs/THIRD_PARTY_ECOLOGY.md`**. Плюс v3.0: **traits** ягод при spread (`CloneBerryTraits`).  
-**Версия мода:** `3.1.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 72 (xUnit)  
+**Текущая стадия:** `Ecosystem v3.1.2` — баланс сукцессии почвы (луг обогащает; вереск/утёсник — depleter), совместимость с Terrain Slabs, приглушённый сезонный spread водных; плюс v3.1 JSON-участники и v3.0 traits ягод.  
+**Версия мода:** `3.1.2` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 76 (xUnit)  
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-05-27 (код под modinfo **3.1.0**).
+Последнее обновление документации: 2026-05-28 (код под modinfo **3.1.2**).
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки как участники).
 
@@ -190,6 +190,10 @@
 | `EnableEcologyAreaScan` | Включить блок «экология рядом» в отчёте |
 | `CloneBerryTraits` | **v3.0:** при spread ягоды клонировать черты родителя (`BEBehaviorFruitingBush.OnGrownFromCutting`; default **true**) |
 | `EnableThirdPartyParticipants` | **v3.1:** блоки с `ecologyParticipant` + `ecologySpecies` + `ecologySpreadBlock` из любых доменов модов (default **true**) |
+| `BerryTraitMutationChance` | **v3.1.1:** шанс потери одного trait при spread ягод (default **0**) |
+| `UseSoilSuccession` | Смена tier почвы при spread/death; **false** = только spread без подмены soil |
+| `SoilSuccessionSkipWhenBuiltAbove` | **v3.1.2:** не менять почву под slab/постройкой (default **true**) |
+| `SoilSuccessionStrength` | Множитель силы сукцессии |
 | `ReproduceDebug` / `VerboseLogging` | Лог spread / Skip; master-switch логирования |
 | `OnlyActivateNearPlayers` | Default **true** — реестр только в радиусе игроков |
 | `PlayerActivationRadiusBlocks` | Радиус активации (192 по умолчанию) |

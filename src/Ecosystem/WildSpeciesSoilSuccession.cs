@@ -27,13 +27,13 @@ namespace WildFarming.Ecosystem
                 [PlantSoilRole.MeadowColonizer] = new RoleProfile(
                     spread: new SoilImpact
                     {
-                        MoistureDelta = -4f,
-                        FertilityTierDelta = 0.10f,
+                        MoistureDelta = -2f,
+                        FertilityTierDelta = 0.12f,
                     },
                     death: new SoilImpact
                     {
-                        MoistureDelta = -6f,
-                        FertilityTierDelta = -0.15f,
+                        MoistureDelta = -1f,
+                        FertilityTierDelta = 0.18f,
                     }),
 
                 [PlantSoilRole.MeadowPerennial] = new RoleProfile(
@@ -90,12 +90,24 @@ namespace WildFarming.Ecosystem
                     spread: new SoilImpact
                     {
                         MoistureDelta = 12f,
-                        FertilityTierDelta = -0.05f,
+                        FertilityTierDelta = 0.08f,
                     },
                     death: new SoilImpact
                     {
                         MoistureDelta = 6f,
-                        FertilityTierDelta = 0.05f,
+                        FertilityTierDelta = 0.12f,
+                    }),
+
+                [PlantSoilRole.SoilDepleter] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = -4f,
+                        FertilityTierDelta = -0.06f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = 0f,
+                        FertilityTierDelta = 0.06f,
                     }),
 
                 [PlantSoilRole.NitrogenFixer] = new RoleProfile(
@@ -119,8 +131,8 @@ namespace WildFarming.Ecosystem
                 ["wilddaisy"] = PlantSoilRole.MeadowColonizer,
                 ["cornflower"] = PlantSoilRole.MeadowColonizer,
                 ["goldenpoppy"] = PlantSoilRole.MeadowColonizer,
-                ["heather"] = PlantSoilRole.MeadowColonizer,
-                ["westerngorse"] = PlantSoilRole.MeadowColonizer,
+                ["heather"] = PlantSoilRole.SoilDepleter,
+                ["westerngorse"] = PlantSoilRole.SoilDepleter,
                 ["forgetmenot"] = PlantSoilRole.MeadowPerennial,
                 ["cowparsley"] = PlantSoilRole.MeadowPerennial,
                 ["catmint"] = PlantSoilRole.ForestEdge,

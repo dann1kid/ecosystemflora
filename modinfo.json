@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Seasonal spread, cell competition, niche stress, soil succession — all on vanilla blocks.",
+  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Seasonal spread, cell competition, niche stress, soil succession (meadow enriches; heather/gorse deplete). Spread-only mode, Terrain Slabs guard, fallow drip on spread. Third-party plants via ecologyParticipant JSON; berry trait cloning with optional mutations; toned aquatic seasonal spread.",
   "authors": ["-"],
-  "version": "3.1.0",
+  "version": "3.1.2",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"
