@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-27 (стадия: **Ecosystem v3.1**, версия **`3.1.0`**; актуальный чеклист — [`PROGRESS.md`](PROGRESS.md)).
+Последнее обновление: 2026-05-28 (стадия **Ecosystem v3.1.6**, версия **`3.1.6`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -41,7 +41,7 @@
 | Принцип | Реализация |
 |---------|------------|
 | **Объект в мире** | `game:flower-*`, `tallplant-coopersreed/papyrus`, `waterlily`, `aquatic-watercrowfoot` |
-| **Мод при снятии** | Патч `entityClass: EcoSystemLife`; без мода — обычные блоки, сохранения целы |
+| **Мод при снятии** | Без патчей `entityClass`; `EcoSystemLife` BE самоудаляется на старых чанках; блоки остаются ванильными |
 | **Дикое размножение** | Тот же ванильный блок (или корректный land/water для тростника) на соседней клетке |
 | **Семена / wildplant** | **Не** часть дикой экосистемы; не в сборке |
 | **Культивация игроком** | Ванильные механики игры |
@@ -83,9 +83,11 @@ EcosystemSystem       →  Score >= MinFitness → SetBlock (ванильный 
 
 **Цветы:** ванильный цветок → регистрация → spread на соседнюю клетку с подходящим климатом/почвой/rain/forest.
 
-**Тростник:** привязка к `muddygravel`; в мелководье — ровно один водный блок между илом и поверхностью, рогоз **внутри** этого блока (`water-normal`).
+**Тростник:** ризомный mat (кромка + rare seed) при `UseRhizomeSpreadForReeds`; размещение — ил + один водный блок в мелководье.
 
-**Водяной лютик:** колонка section с tip/top в подводной толще (2–8 блоков воды над дном).
+**Кувшинка:** плавучий mat при `UseSurfaceMatSpreadForLilies`.
+
+**Водяной лютик:** колонка section с tip/top в подводной толще (2–8 блоков воды над дном); spread пока independent (см. GAPS).
 
 ### 3.4. Структура кода (фактическая)
 
@@ -203,18 +205,18 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.1`, версия `3.1.0`.** Помимо ванильной флоры: **v3.0** — клонирование **traits** диких ягодников при spread (`CloneBerryTraits`); **v3.1** — участники через **JSON атрибуты** на blocktype (`ecologyParticipant`, см. **[`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)**), конфиг **`EnableThirdPartyParticipants`**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora).
+**Стадия: `Ecosystem v3.1.6`, версия `3.1.6`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat spread + inspect. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
 | Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
 | Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **72** |
+| Юнит-тесты (xUnit) | ✅ **99** |
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.0**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.6**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -254,7 +256,9 @@ docs/
 - [x] **v2.11** — Ecology inspect (хоткей I, protobuf), chunk-scan до конца чанка, строки отчёта локализуются на клиенте — ✅.
 - [x] **v2.11.4** — ключи **`ecosystemflora:species-{id}`** для заголовка осмотра и топа «экология рядом» (en / ru / de); пояснение доли в строке топа — ✅.
 - [x] **v3.0** — spread диких ягодников **копирует traits** родителя (`CloneBerryTraits`, рефлексия `OnGrownFromCutting`) — ✅.
-- [x] **v3.1** — JSON-контракт для сторонних модов (`EnableThirdPartyParticipants`, `PlantCodeHelper.ResolveEcologySpecies`, …); гайд **[`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)** — ✅.
+- [x] **v3.1** — сторонние blocktypes через JSON `ecologyParticipant` — ✅.
+- [x] **v3.1.3–6** — aquatic mat spread (rhizome, seed, lily), inspect mat lines, handbook — ✅.
+- [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).

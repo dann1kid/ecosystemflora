@@ -10,6 +10,20 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 ---
 
+## What changed in 3.1.x (for players)
+
+**3.1.0** — Other mods can register plants via JSON (`ecologyParticipant`). Optional berry trait mutation on spread.
+
+**3.1.2** — Soil succession rebalanced: meadows enrich soil; heather and western gorse slightly dry poor soils. Soil changes skip columns with slabs/builds above (Terrain Slabs friendly).
+
+**3.1.3–3.1.5** — **Reeds, tule, and papyrus** spread from the **edge** of a stand (rhizome mat), not random radius jumps. Rare seed/fragment jumps colonize distant banks. **Water lily** spreads as a **floating pad mat** on open water with similar rare seed jumps. **Water crowfoot** unchanged (legacy radius spread).
+
+**3.1.6** — Handbook and **inspect (I)** show spread mode, mat edge yes/no, and seed chance. Tune mat spread in config: `UseRhizomeSpreadForReeds`, `UseSurfaceMatSpreadForLilies`, `RhizomeSeedDispersal*`.
+
+Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
+
+---
+
 ## Full description
 
 ### Your world comes alive
@@ -27,7 +41,7 @@ Install the mod, load your world, and watch it change over the seasons.
 - **14 tree species** — mature trunks spread free saplings; growth is vanilla
 - **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
-- **Water crowfoot** — underwater column plant, 2–8 blocks deep
+- **Water crowfoot** — underwater column plant, 2–8 blocks deep (legacy radius spread; mat logic not applied yet)
 
 ### Not just spreading — competing
 
@@ -55,7 +69,7 @@ Players trample nearby plants over time. Walk the same route often enough and fl
 
 ### Ecology inspect (hotkey **I**)
 
-Aim at any wild ecosystem plant and press **I** to open a small report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, and a short tally of dominant species nearby (uses the mod’s spacing index). All UI strings follow **your client language**; inspect errors also show localized chat messages instead of the server locale.
+Aim at any wild ecosystem plant and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), and dominant species nearby.
 
 *Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
 

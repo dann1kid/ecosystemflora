@@ -1,6 +1,6 @@
 # Agent prompt — Ecosystem - Flora
 
-Скопируй блок ниже в системный промпт, @-упоминание или задачу агенту. Полная теория: [`PROJECT_VISION.md`](PROJECT_VISION.md). Чеклист: [`PROGRESS.md`](PROGRESS.md).
+Скопируй блок ниже в системный промпт, @-упоминание или задачу агенту. Полная теория: [`PROJECT_VISION.md`](PROJECT_VISION.md). Чеклист: [`PROGRESS.md`](PROGRESS.md). Пробелы: [`GAPS.md`](GAPS.md).
 
 ---
 
@@ -12,36 +12,34 @@
 Цель: экосистемная прослойка на ванильных блоках (цветы, трава, папоротники, ягоды, деревья, водная флора), не клон Wild Farming Revival. Название мода: Ecosystem - Flora.
 
 Принципы:
-- В мире ванильные блоки родителей; дополнительно сторонние blocktypes могут входить через JSON `ecologyParticipant` (`docs/THIRD_PARTY_ECOLOGY.md`); мод не подменяет wildplant для ванили.
-- Живое = зарегистрировано в EcosystemSystem и периодически spread (IEcosystemParticipant / EcosystemParticipant).
-- Среда из API: EnvironmentalContext (температура, WorldgenRainfall, LocalForestCover, почва, жидкость, ниша).
-- v2.1: единая конкуренция за клетку — spread на пустые + displacement занятых (CellCompetition), stress death, symbiosis. БЕЗ DisturbedTracker.
-- v2.2: ниша — moisture/light (NicheSampler, WildSpeciesNiche), сукцессия почвы (block-only).
-- v2.3: сезонность — WildSpeciesSeason (12 месяцев), SeasonEcology; интерполяция spread по году.
-- v2.9: залежь (FallowRestoration), spread на пустую пашню, player-placed register.
-- v2.10: PlantVacancyRules, mycelium только active BE; displacement/hold tuning.
-- v2.11.x: Ecology inspect (хоткей I, protobuf канал); chunk-scan с курсором до конца чанка; отчёт на клиенте — `InspectLineLite`, `ErrorLangKey`; имена видов — ключи `ecosystemflora:species-{id}` в `assets/ecosystemflora/lang/` (en/ru/de).
-- SpreadScore = fitness × Context × SpreadRate × SeasonMultiplier; HoldScore = fitness × Context × HoldStrength.
-- Опушка emergent через FloraContext + displacement, не отдельный биом.
+- В мире ванильные блоки родителей; сторонние blocktypes — JSON `ecologyParticipant` (`docs/THIRD_PARTY_ECOLOGY.md`).
+- Живое = зарегистрировано в EcosystemSystem и периодически spread.
+- Среда: EnvironmentalContext (температура, WorldgenRainfall, LocalForestCover, почва, жидкость, ниша).
+- v2.1: spread + displacement + stress + symbiosis. БЕЗ DisturbedTracker.
+- v2.2–2.3: niche, soil succession, WildSpeciesSeason.
+- v2.11: Ecology inspect (I) — mat edge, seed %, stress, season (InspectLineLite, i18n на клиенте).
+- Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
-- Terrestrial — game:flower-*, flower-lupine, tallgrass, fern, berries
-- TerrestrialTree — log-grown → sapling spread
-- ReedNearWater — coopersreed, papyrus
-- WaterSurface — waterlily
-- UnderwaterColumn — aquatic-watercrowfoot
+- Terrestrial — flowers, tallgrass, fern, berries
+- TerrestrialTree — log-grown → sapling
+- ReedNearWater — coopersreed, tule, papyrus (rhizome mat default)
+- WaterSurface — waterlily (surface mat default)
+- UnderwaterColumn — watercrowfoot
 
-Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant/WildSeed.
+Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant.
 
-Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs, assets/ecosystemflora/patches/enabledpatches.json.
-Тесты: tests/WildFarming.Tests.csproj (xUnit, 99 тестов).
+Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs (legacy self-remove).
+Тесты: 99 (xUnit). Версия: 3.1.6.
 
-- v3.0: berry spread clones parent fruit traits (`CloneBerryTraits`, `BerrySpreadTraitCloner` → vanilla `BEBehaviorFruitingBush.OnGrownFromCutting`).
-- v3.1: third-party blocks declare `ecologyParticipant` / `ecologySpecies` / `ecologySpreadBlock` / `ecologyHabitat` on blocktype JSON; `EnableThirdPartyParticipants` (see `docs/THIRD_PARTY_ECOLOGY.md`).
+v3.0: CloneBerryTraits, BerryTraitMutationChance.
+v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).
+v3.1.2: soil succession balance, SoilSuccessionSkipWhenBuiltAbove.
+v3.1.3–6: UseRhizomeSpreadForReeds, UseSurfaceMatSpreadForLilies, RhizomeSeedDispersal*.
 
-Порт: VS 1.22+, .NET 10. Версия: 3.1.0. Стадия: Ecosystem v3.1 — см. docs/PROGRESS.md.
+Валидация баланса пользователем: логи (VerboseLogging + ReproduceDebug) + осмотр (I).
 
-Backlog: dominant species UX; aquatic edge cases; выпас/tallgrass-eaten (husbandry). Листва зимой — отложено (визуал).
+Backlog: см. docs/GAPS.md (crowfoot, de handbook, dominant UX, fauna companion).
 
 Коммиты — только по запросу пользователя.
 ```
@@ -50,4 +48,4 @@ Backlog: dominant species UX; aquatic edge cases; выпас/tallgrass-eaten (hu
 
 ## One-liner
 
-VS ecosystem mod: vanilla plants, seasonal spread, unified cell competition (spread + displace + stress + symbiosis), niche, soil succession, flora context; not Revival.
+VS ecosystem mod: vanilla plants, seasonal spread, cell competition, mat spread for aquatic, niche, soil succession; inspect (I) for debugging; not Revival.
