@@ -8,5 +8,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Shore reeds: only mat edge, one orthogonal step (rhizome front).</summary>
         RhizomeMat = 1,
+
+        /// <summary>Water lily: floating pad mat, eight-connected edge on open water.</summary>
+        SurfaceMat = 2,
     }
 }

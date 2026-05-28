@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Rhizome + rare seed spread for reeds. Seasonal spread, cell competition, niche stress, soil succession. Third-party plants via ecologyParticipant JSON.",
+  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Rhizome reeds, floating lily mats, rare seed jumps. Seasonal spread, cell competition, niche stress, soil succession. Third-party plants via ecologyParticipant JSON.",
   "authors": ["-"],
-  "version": "3.1.4",
+  "version": "3.1.5",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

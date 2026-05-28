@@ -81,7 +81,12 @@ namespace WildFarming.Ecosystem
 
         public bool UsesRhizomeSpread => SpreadMode == SpreadMode.RhizomeMat;
 
-        /// <summary>Per attempt, chance to use seed/fragment dispersal (rhizome reeds).</summary>
+        public bool UsesSurfaceMatSpread => SpreadMode == SpreadMode.SurfaceMat;
+
+        /// <summary>When true, never promote water-surface habitat to <see cref="SpreadMode.SurfaceMat"/>.</summary>
+        public bool SuppressSurfaceMatSpread { get; set; }
+
+        /// <summary>Per attempt, chance to use seed/fragment dispersal (mat spread).</summary>
         public float SeedDispersalChance { get; set; }
 
         public int SeedDispersalRadius { get; set; }
@@ -156,6 +161,7 @@ namespace WildFarming.Ecosystem
             int minSunlight = attrs != null ? attrs["ecologyMinSunlight"].AsInt(0) : 0;
             SpreadMode spreadMode = SpreadMode.Independent;
             bool suppressRhizomeSpread = false;
+            bool suppressSurfaceMatSpread = false;
             float seedDispersalChance = attrs != null ? attrs["ecologySeedDispersalChance"].AsFloat(0f) : 0f;
             int seedDispersalRadius = attrs != null ? attrs["ecologySeedDispersalRadius"].AsInt(0) : 0;
 
@@ -168,9 +174,14 @@ namespace WildFarming.Ecosystem
                     {
                         spreadMode = SpreadMode.RhizomeMat;
                     }
+                    else if (string.Equals(spreadModeAttr, "surfacemat", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        spreadMode = SpreadMode.SurfaceMat;
+                    }
                     else if (string.Equals(spreadModeAttr, "independent", System.StringComparison.OrdinalIgnoreCase))
                     {
                         suppressRhizomeSpread = true;
+                        suppressSurfaceMatSpread = true;
                     }
                 }
             }
@@ -399,6 +410,7 @@ namespace WildFarming.Ecosystem
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
                 SpreadMode = spreadMode,
                 SuppressRhizomeSpread = suppressRhizomeSpread,
+                SuppressSurfaceMatSpread = suppressSurfaceMatSpread,
                 SeedDispersalChance = seedDispersalChance,
                 SeedDispersalRadius = seedDispersalRadius,
             };
@@ -407,6 +419,7 @@ namespace WildFarming.Ecosystem
             WildSpeciesModifiers.ApplyTo(requirements);
             WildSpeciesNiche.ApplyTo(requirements);
             RhizomeSpread.ApplyTo(requirements);
+            SurfaceMatSpread.ApplyTo(requirements);
             return requirements;
         }
     }

@@ -60,6 +60,7 @@
   "UseSeasonalEcology": true,
   "SeasonalStressEnabled": true,
   "UseRhizomeSpreadForReeds": true,
+  "UseSurfaceMatSpreadForLilies": true,
   "RhizomeSeedDispersalEnabled": true,
   "RhizomeSeedDispersalChanceScale": 1.0,
   "RhizomeSeedDispersalFitnessScale": 0.25,

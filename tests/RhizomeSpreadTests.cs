@@ -83,7 +83,7 @@ namespace WildFarming.Tests
         public void ResolveSearchRadius_SeedMode_UsesSpeciesRadius()
         {
             var req = new PlantRequirements { Species = "coopersreed", SpreadRadius = 1, SeedDispersalRadius = 6 };
-            int radius = RhizomeSpread.ResolveSearchRadius(req, RhizomeCollectMode.SeedDispersal, 4);
+            int radius = RhizomeSpread.ResolveSearchRadius(req, MatSpreadCollectMode.SeedDispersal, 4);
             Assert.Equal(6, radius);
         }
 
@@ -91,7 +91,7 @@ namespace WildFarming.Tests
         public void ResolveSearchRadius_RhizomeMode_UsesOneBlock()
         {
             var req = new PlantRequirements { SpreadRadius = 1 };
-            int radius = RhizomeSpread.ResolveSearchRadius(req, RhizomeCollectMode.RhizomeEdge, 4);
+            int radius = RhizomeSpread.ResolveSearchRadius(req, MatSpreadCollectMode.MatEdge, 4);
             Assert.Equal(1, radius);
         }
 

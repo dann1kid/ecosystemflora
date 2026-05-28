@@ -31,6 +31,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Fitness multiplier for distant seed/fragment candidates (harder establishment).</summary>
         public float RhizomeSeedDispersalFitnessScale { get; set; } = 0.25f;
 
+        /// <summary>Water lily spreads as a floating pad mat (eight-connected edge), not reed rhizome.</summary>
+        public bool UseSurfaceMatSpreadForLilies { get; set; } = true;
+
         public int ReproduceVerticalSearch { get; set; } = 5;
 
         public float ReproduceChance { get; set; } = 0.5f;

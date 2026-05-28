@@ -3,22 +3,24 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Rhizome-style spread for reed mats: frontier plants, orthogonal step only.</summary>
-    internal static class RhizomeSpread
+    /// <summary>Floating pad mat spread for water-surface plants (water lily).</summary>
+    internal static class SurfaceMatSpread
     {
-        internal const int DefaultVerticalReach = 2;
-        internal const float DefaultSeedDispersalChance = 0.08f;
-        internal const int DefaultSeedDispersalRadius = 5;
+        internal const int DefaultVerticalReach = 1;
 
-        static readonly int[][] OrthogonalDirs = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+        static readonly int[][] Neighbor8 =
+        {
+            new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 },
+            new[] { 1, 1 }, new[] { 1, -1 }, new[] { -1, 1 }, new[] { -1, -1 },
+        };
 
         public static void ApplyTo(PlantRequirements req)
         {
-            if (req == null || req.Habitat != EcologyHabitat.ReedNearWater || req.SuppressRhizomeSpread) return;
+            if (req == null || req.Habitat != EcologyHabitat.WaterSurface || req.SuppressSurfaceMatSpread) return;
 
-            if (req.SpreadMode != SpreadMode.RhizomeMat && !EcosystemConfig.Loaded.UseRhizomeSpreadForReeds) return;
+            if (req.SpreadMode != SpreadMode.SurfaceMat && !EcosystemConfig.Loaded.UseSurfaceMatSpreadForLilies) return;
 
-            req.SpreadMode = SpreadMode.RhizomeMat;
+            req.SpreadMode = SpreadMode.SurfaceMat;
             if (req.SpreadRadius <= 0) req.SpreadRadius = 1;
 
             if (WildAquaticEcology.TryGet(req.Species, out WildAquaticEcology.Profile aquatic))
@@ -30,7 +32,7 @@ namespace WildFarming.Ecosystem
 
         public static MatSpreadCollectMode ResolveCollectMode(PlantRequirements req, System.Random rand)
         {
-            if (req == null || !req.UsesRhizomeSpread || rand == null) return MatSpreadCollectMode.NotApplicable;
+            if (req == null || !req.UsesSurfaceMatSpread || rand == null) return MatSpreadCollectMode.NotApplicable;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.RhizomeSeedDispersalEnabled) return MatSpreadCollectMode.MatEdge;
@@ -50,18 +52,14 @@ namespace WildFarming.Ecosystem
             }
 
             int radius = req.SeedDispersalRadius;
-            if (radius <= 0)
+            if (radius <= 0
+                && WildAquaticEcology.TryGet(req.Species, out WildAquaticEcology.Profile aquatic)
+                && aquatic.SeedDispersalRadius > 0)
             {
-                if (WildAquaticEcology.TryGet(req.Species, out WildAquaticEcology.Profile aquatic)
-                    && aquatic.SeedDispersalRadius > 0)
-                {
-                    radius = aquatic.SeedDispersalRadius;
-                }
-                else
-                {
-                    radius = DefaultSeedDispersalRadius;
-                }
+                radius = aquatic.SeedDispersalRadius;
             }
+
+            if (radius <= 0) radius = 4;
 
             return radius;
         }
@@ -78,7 +76,7 @@ namespace WildFarming.Ecosystem
                 chance = aquatic.SeedDispersalChance;
             }
 
-            if (chance <= 0f) chance = DefaultSeedDispersalChance;
+            if (chance <= 0f) return 0f;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             float scale = cfg != null ? cfg.RhizomeSeedDispersalChanceScale : 1f;
@@ -87,21 +85,21 @@ namespace WildFarming.Ecosystem
             return System.Math.Min(1f, chance * scale);
         }
 
-        public static bool IsOrthogonalStep(int dx, int dz)
+        /// <summary>Chebyshev distance 1 — pad touches including diagonals.</summary>
+        public static bool IsMatStep(int dx, int dz)
         {
-            return System.Math.Abs(dx) + System.Math.Abs(dz) == 1;
+            return System.Math.Max(System.Math.Abs(dx), System.Math.Abs(dz)) == 1;
         }
 
-        /// <summary>True when at least one horizontal neighbor column lacks same-species reed.</summary>
         public static bool IsFrontier(IBlockAccessor acc, BlockPos origin, string species, int verticalReach = DefaultVerticalReach)
         {
             if (acc == null || origin == null || string.IsNullOrEmpty(species)) return true;
 
             if (verticalReach < 0) verticalReach = 0;
 
-            for (int i = 0; i < OrthogonalDirs.Length; i++)
+            for (int i = 0; i < Neighbor8.Length; i++)
             {
-                if (!NeighborColumnHasSameSpecies(acc, origin, OrthogonalDirs[i][0], OrthogonalDirs[i][1], species, verticalReach))
+                if (!NeighborHasSameSpecies(acc, origin, Neighbor8[i][0], Neighbor8[i][1], species, verticalReach))
                 {
                     return true;
                 }
@@ -110,7 +108,7 @@ namespace WildFarming.Ecosystem
             return false;
         }
 
-        static bool NeighborColumnHasSameSpecies(
+        static bool NeighborHasSameSpecies(
             IBlockAccessor acc,
             BlockPos origin,
             int dx,
@@ -125,11 +123,18 @@ namespace WildFarming.Ecosystem
             {
                 var checkPos = new BlockPos(nx, y, nz, origin.dimension);
                 Block block = acc.GetBlock(checkPos);
-                if (!PlantCodeHelper.IsReedBlock(block)) continue;
-                if (PlantCodeHelper.ResolveEcologySpecies(block) == species) return true;
+                if (!IsSameSurfaceSpecies(block, species)) continue;
+                return true;
             }
 
             return false;
+        }
+
+        static bool IsSameSurfaceSpecies(Block block, string species)
+        {
+            if (block == null || block.Id == 0 || string.IsNullOrEmpty(species)) return false;
+            if (PlantCodeHelper.ResolveEcologySpecies(block) != species) return false;
+            return PlantCodeHelper.GetEcologyHabitat(block) == EcologyHabitat.WaterSurface;
         }
     }
 }

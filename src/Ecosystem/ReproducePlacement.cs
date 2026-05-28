@@ -42,13 +42,18 @@ namespace WildFarming.Ecosystem
             failureReason = null;
             if (maxSpawns <= 0) return 0;
 
-            RhizomeCollectMode rhizomeMode = RhizomeCollectMode.NotApplicable;
+            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable;
             int searchRadius = radius;
 
             if (requirements != null && requirements.UsesRhizomeSpread)
             {
-                rhizomeMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
-                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, rhizomeMode, radius);
+                matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.UsesSurfaceMatSpread)
+            {
+                matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = SurfaceMatSpread.ResolveSearchRadius(requirements, matMode, radius);
             }
             else if (requirements != null && requirements.SpreadRadius > 0)
             {
@@ -56,7 +61,7 @@ namespace WildFarming.Ecosystem
             }
 
             List<SpreadCandidate> candidates = CollectSpreadCandidates(
-                api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, rhizomeMode);
+                api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, matMode);
 
             if (candidates.Count == 0)
             {
@@ -111,7 +116,7 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             float minFitness,
             bool harshClimate,
-            RhizomeCollectMode rhizomeMode = RhizomeCollectMode.NotApplicable)
+            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable)
         {
             scratchCandidates.Clear();
             scratchSeen.Clear();
@@ -119,17 +124,28 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool diag = cfg.VerboseLogging && cfg.ReproduceDebug;
 
-            if (rhizomeMode == RhizomeCollectMode.RhizomeEdge
-                && !RhizomeSpread.IsFrontier(
-                    acc,
-                    origin,
-                    requirements.Species,
-                    verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : RhizomeSpread.DefaultVerticalReach))
+            if (matMode == MatSpreadCollectMode.MatEdge)
             {
-                return scratchCandidates;
+                int verticalReach = verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : RhizomeSpread.DefaultVerticalReach;
+
+                if (requirements.UsesRhizomeSpread
+                    && !RhizomeSpread.IsFrontier(acc, origin, requirements.Species, verticalReach))
+                {
+                    return scratchCandidates;
+                }
+
+                if (requirements.UsesSurfaceMatSpread
+                    && !SurfaceMatSpread.IsFrontier(
+                        acc,
+                        origin,
+                        requirements.Species,
+                        verticalSearch > 0 ? System.Math.Min(verticalSearch, 2) : SurfaceMatSpread.DefaultVerticalReach))
+                {
+                    return scratchCandidates;
+                }
             }
 
-            float seedFitnessScale = rhizomeMode == RhizomeCollectMode.SeedDispersal
+            float seedFitnessScale = matMode == MatSpreadCollectMode.SeedDispersal
                 ? cfg.RhizomeSeedDispersalFitnessScale
                 : 1f;
             if (seedFitnessScale <= 0f) seedFitnessScale = 0.01f;
@@ -143,7 +159,11 @@ namespace WildFarming.Ecosystem
                 {
                     if (dx == 0 && dz == 0) continue;
 
-                    if (rhizomeMode == RhizomeCollectMode.RhizomeEdge && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
+                    if (matMode == MatSpreadCollectMode.MatEdge)
+                    {
+                        if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
+                        if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
+                    }
 
                     bool foundPos;
                     BlockPos plantPos;
