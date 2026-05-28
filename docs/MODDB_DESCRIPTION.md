@@ -105,7 +105,31 @@ Flowers planted inside a fully enclosed glass-roofed room (a greenhouse) are pro
 
 ### Easy to tune
 
-Edit `ModConfig/ecosystemflora.json` (created on first launch).
+Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.
+
+#### Config keys added or changed since 3.1.2
+
+| Key | Default | Since | What it does |
+|-----|:-------:|:-----:|--------------|
+| `SoilSuccessionSkipWhenBuiltAbove` | true | **3.1.2** | Skip soil tier swaps when a slab or build sits on the column (Terrain Slabs friendly) |
+| `UseRhizomeSpreadForReeds` | true | **3.1.3** | Cattail/tule/papyrus: rhizome **mat edge** spread. **false** = legacy radius-4 |
+| `RhizomeSeedDispersalEnabled` | true | **3.1.4** | Rare virtual seed/fragment jumps for reed and lily mats (no item seeds) |
+| `RhizomeSeedDispersalChanceScale` | 1.0 | **3.1.4** | Multiplier on per-species seed jump chance |
+| `RhizomeSeedDispersalFitnessScale` | 0.25 | **3.1.4** | Harder establishment for distant seed landing sites |
+| `UseSurfaceMatSpreadForLilies` | true | **3.1.5** | Water lily: floating **pad mat** on open water. **false** = legacy radius spread |
+| `EnableFlowerDrygrass` | true | **3.1.7** | Meadow harvest: **empty hotbar** → flower/tallgrass **block**; **knife/scythe** → **drygrass** only |
+
+Related (unchanged keys, but behavior context from **3.1.2**):
+
+| Key | Default | Note |
+|-----|:-------:|------|
+| `UseSoilSuccession` | true | **3.1.2 balance:** meadows enrich soil on spread/death; heather & western gorse slightly dry poor soils |
+| `SoilSuccessionStrength` | 1.0 | Scale of all soil succession changes |
+| `EnableEcologyInspect` | true | **3.1.6:** inspect (**I**) shows mat edge / seed % on reeds & lily |
+| `BerryTraitMutationChance` | 0.0 | Optional trait loss on berry spread (**3.1.1**; 0 = off) |
+| `EnableThirdPartyParticipants` | true | JSON `ecologyParticipant` on blocktypes (**3.1.0**) |
+
+Third-party block JSON (not in `ecosystemflora.json`): `ecologySpreadMode` — `"rhizome"`, `"surfacemat"`, or `"independent"` (**3.1.3+**).
 
 #### Quick start — balance presets
 
@@ -132,8 +156,8 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableSymbiosis` | true | Some species boost each other |
 | `UseFloraContext` | true | Forest interior/edge affects spread |
 | `UseNicheContext` | true | Local soil + climate niche scoring |
-| `UseSoilSuccession` | true | Wild plants gradually enrich soil (humus on spread/death). Set **false** for spread-only — no soil block swaps |
-| `SoilSuccessionSkipWhenBuiltAbove` | true | Skip soil swaps when slabs or builds sit on the column (Terrain Slabs compatibility) |
+| `UseSoilSuccession` | true | Wild plants gradually enrich soil on spread/death (**3.1.2:** meadows +; heather/gorse dry). **false** = spread only, no soil block swaps |
+| `SoilSuccessionSkipWhenBuiltAbove` | true | **3.1.2** — skip soil swaps under slabs/builds (Terrain Slabs) |
 | `UseFarmlandNutrientBridge` | true | Wild plants enrich tilled farmland N/P/K |
 | `EnableFallowRestoration` | true | Healthy plants on farmland slowly restore nutrients |
 | `RespectLandClaims` | true | No spread/death inside player claims |
@@ -142,18 +166,25 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `ApplyWorldgenRainForest` | true | Respect worldgen rain/forest values |
 | `UseCalendarScaledSpread` | true | Scale intervals to DaysPerYear |
 | `UseSpeciesSpreadRates` | true | Per-species spread rates from ecology table |
-| `EnableEcologyInspect` | true | Hotkey **I**: in-world ecology report for the plant you aim at |
+| `EnableEcologyInspect` | true | Hotkey **I**: ecology report (spread mode, mat edge, seed % — **3.1.6**) |
 | `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `EnableTrampling` | false | Plants near player paths accumulate stress and die |
 | `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
-| `EnableFlowerDrygrass` | true | Empty hand → plant block; knife/scythe → drygrass |
-| `CloneBerryTraits` | true | Wild berry spread copies **berry traits** from the parent bush (Vintage Story **1.22+**) |
-| `EnableThirdPartyParticipants` | true | Allow other mods to declare ecosystem parents on their blocktypes via JSON attributes |
-| `UseRhizomeSpreadForReeds` | true | Cattail/tule/papyrus: mat edge spread (not independent radius-4) |
-| `UseSurfaceMatSpreadForLilies` | true | Water lily: floating pad mat on open water |
-| `RhizomeSeedDispersalEnabled` | true | Rare seed/fragment jumps for reed and lily mats |
-| `RhizomeSeedDispersalChanceScale` | 1.0 | Multiplier on per-species seed chance |
-| `RhizomeSeedDispersalFitnessScale` | 0.25 | Harder establishment for distant seed sites |
+| `EnableFlowerDrygrass` | true | **3.1.7** — empty hand → plant block; knife/scythe → drygrass |
+| `CloneBerryTraits` | true | Wild berry spread copies parent traits (**1.22+**, **3.0**) |
+| `EnableThirdPartyParticipants` | true | Other mods: JSON `ecologyParticipant` on blocktypes (**3.1.0**) |
+| `UseRhizomeSpreadForReeds` | true | **3.1.3** — cattail/tule/papyrus mat edge spread |
+| `UseSurfaceMatSpreadForLilies` | true | **3.1.5** — water lily floating pad mat |
+| `RhizomeSeedDispersalEnabled` | true | **3.1.4** — rare seed jumps for reed & lily mats |
+| `RhizomeSeedDispersalChanceScale` | 1.0 | **3.1.4** — multiplier on seed jump chance |
+| `RhizomeSeedDispersalFitnessScale` | 0.25 | **3.1.4** — fitness penalty for distant seed sites |
+
+#### Ecology inspect tuning
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `EcologyInspectCooldownSeconds` | 2.0 | Min seconds between inspect requests per player |
+| `EcologyInspectScanRadius` | 16 | Radius (blocks) for nearby-species tally in inspect dialog |
 
 #### Spread tuning (numbers)
 
@@ -175,7 +206,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EmptySpreadFitnessMultiplier` | 2.5 | Empty-cell spread weight when mixed with displacement |
 | `NicheStressThreshold` | 0.45 | Niche score below this = stress |
 | `SoilSuccessionStrength` | 1.0 | Speed of soil tier changes |
-| `BerryTraitMutationChance` | 0.0 | Chance wild berry spread drops one parent trait (0 = off) |
+| `BerryTraitMutationChance` | 0.0 | **3.1.1** — chance berry spread drops one parent trait (0 = off) |
 | `FarmlandNutrientBridgeStrength` | 1.0 | Scale of till nutrient bonus |
 | `FallowRestorationStrength` | 1.0 | Scale of fallow restoration bonus |
 | `FloraOpenInteriorPenalty` | 0.35 | Penalty for open-field species in forest |
@@ -201,6 +232,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `OnlyActivateNearPlayers` | true | Limit activity to player radius |
 | `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
 | `VerboseLogging` | false | Detailed server log output |
+| `ReproduceDebug` | false | Log each spread attempt (pair with `VerboseLogging` for balance tuning) |
 
 All settings work together — presets give a good baseline, toggles let you disable features you don't want, and number fields let you fine-tune the balance.
 
