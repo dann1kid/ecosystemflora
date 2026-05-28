@@ -59,6 +59,7 @@
   "RespectLandClaims": true,
   "UseSeasonalEcology": true,
   "SeasonalStressEnabled": true,
+  "UseRhizomeSpreadForReeds": true,
   "EnableTrampling": false,
   "TramplingRadius": 1,
   "TramplingStressThreshold": 8,

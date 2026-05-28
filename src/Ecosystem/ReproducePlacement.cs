@@ -109,6 +109,17 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool diag = cfg.VerboseLogging && cfg.ReproduceDebug;
+
+            if (requirements.UsesRhizomeSpread
+                && !RhizomeSpread.IsFrontier(
+                    acc,
+                    origin,
+                    requirements.Species,
+                    verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : RhizomeSpread.DefaultVerticalReach))
+            {
+                return scratchCandidates;
+            }
+
             int dNoSurface = 0, dSunlight = 0, dDupe = 0, dClaim = 0;
             int dPreflight = 0, dOccupied = 0, dFitness = 0, dSpacing = 0, dDisplace = 0;
 
@@ -117,6 +128,8 @@ namespace WildFarming.Ecosystem
                 for (int dz = -radius; dz <= radius; dz++)
                 {
                     if (dx == 0 && dz == 0) continue;
+
+                    if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
 
                     bool foundPos;
                     BlockPos plantPos;

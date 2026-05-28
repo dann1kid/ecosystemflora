@@ -19,6 +19,9 @@ namespace WildFarming.Ecosystem
 
         public int ReproduceRadius { get; set; } = 4;
 
+        /// <summary>Reeds/tule/papyrus spread only from mat edge, one orthogonal cell (rhizome front).</summary>
+        public bool UseRhizomeSpreadForReeds { get; set; } = true;
+
         public int ReproduceVerticalSearch { get; set; } = 5;
 
         public float ReproduceChance { get; set; } = 0.5f;

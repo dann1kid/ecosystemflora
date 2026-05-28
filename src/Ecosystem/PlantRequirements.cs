@@ -74,6 +74,13 @@ namespace WildFarming.Ecosystem
         /// <summary>Per-other-species minimum distance overrides.</summary>
         public Dictionary<string, int> SpacingFromSpecies { get; set; }
 
+        public SpreadMode SpreadMode { get; set; } = SpreadMode.Independent;
+
+        /// <summary>When true, never promote reed habitat to <see cref="SpreadMode.RhizomeMat"/>.</summary>
+        public bool SuppressRhizomeSpread { get; set; }
+
+        public bool UsesRhizomeSpread => SpreadMode == SpreadMode.RhizomeMat;
+
         public int GetRequiredSpacingTo(string otherSpecies, EcosystemConfig cfg)
         {
             if (string.IsNullOrEmpty(otherSpecies)) return 0;
@@ -142,6 +149,24 @@ namespace WildFarming.Ecosystem
             int maxGroundFertility = attrs != null ? attrs["ecologyMaxGroundFertility"].AsInt(0) : 0;
             SoilKind allowedSoils = SoilKind.None;
             int minSunlight = attrs != null ? attrs["ecologyMinSunlight"].AsInt(0) : 0;
+            SpreadMode spreadMode = SpreadMode.Independent;
+            bool suppressRhizomeSpread = false;
+
+            if (attrs != null)
+            {
+                string spreadModeAttr = attrs["ecologySpreadMode"].AsString(null);
+                if (!string.IsNullOrEmpty(spreadModeAttr))
+                {
+                    if (string.Equals(spreadModeAttr, "rhizome", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        spreadMode = SpreadMode.RhizomeMat;
+                    }
+                    else if (string.Equals(spreadModeAttr, "independent", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        suppressRhizomeSpread = true;
+                    }
+                }
+            }
 
             if (thirdPartyParticipant && attrs != null)
             {
@@ -163,7 +188,7 @@ namespace WildFarming.Ecosystem
                         if (float.IsNaN(maxTemp)) maxTemp = 23f;
                         if (float.IsNaN(minRain)) minRain = 0.4f;
                         if (float.IsNaN(maxRain)) maxRain = 1f;
-                        if (float.IsNaN(spreadRate)) spreadRate = 2.5f;
+                        if (float.IsNaN(spreadRate)) spreadRate = 1.0f;
                         break;
 
                     case EcologyHabitat.WaterSurface:
@@ -363,11 +388,14 @@ namespace WildFarming.Ecosystem
                 AllowedSoilKinds = allowedSoils,
                 MinSunlight = minSunlight,
                 MinReplaceable = attrs != null ? attrs["minReplaceable"].AsInt(9500) : 9500,
+                SpreadMode = spreadMode,
+                SuppressRhizomeSpread = suppressRhizomeSpread,
             };
 
             WildPlantSoil.ApplyTo(requirements);
             WildSpeciesModifiers.ApplyTo(requirements);
             WildSpeciesNiche.ApplyTo(requirements);
+            RhizomeSpread.ApplyTo(requirements);
             return requirements;
         }
     }
