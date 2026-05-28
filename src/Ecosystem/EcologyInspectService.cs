@@ -81,6 +81,7 @@ namespace WildFarming.Ecosystem
 
             AppendStaticProfile(inspectLines, species);
             AppendLiveState(api, pos, species, block, req, inspectLines);
+            AppendMatSpreadProfile(api, pos, req, inspectLines);
 
             EcologySpacingIndex spacing = EcosystemSystem.Instance?.SpacingIndex;
             int radius = cfg.EcologyInspectScanRadius;
@@ -166,6 +167,8 @@ namespace WildFarming.Ecosystem
                 spreadRate = berry.SpreadRate;
             else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
                 spreadRate = tree.SpreadRate;
+            else if (WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
+                spreadRate = aquatic.SpreadRate;
             else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
                 spreadRate = grass.SpreadRate;
 
@@ -282,6 +285,67 @@ namespace WildFarming.Ecosystem
             else
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-survival-ok");
+            }
+        }
+
+        static void AppendMatSpreadProfile(
+            ICoreAPI api,
+            BlockPos pos,
+            PlantRequirements req,
+            List<InspectLineLite> lines)
+        {
+            if (req == null || api?.World?.BlockAccessor == null) return;
+
+            if (req.UsesRhizomeSpread)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-rhizome");
+            }
+            else if (req.UsesSurfaceMatSpread)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-surfacemat");
+            }
+            else if (req.Habitat == EcologyHabitat.ReedNearWater
+                     || req.Habitat == EcologyHabitat.WaterSurface)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-independent");
+            }
+            else
+            {
+                return;
+            }
+
+            if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread)
+            {
+                IBlockAccessor acc = api.World.BlockAccessor;
+                int verticalReach = req.UsesRhizomeSpread
+                    ? RhizomeSpread.DefaultVerticalReach
+                    : SurfaceMatSpread.DefaultVerticalReach;
+
+                bool frontier = req.UsesRhizomeSpread
+                    ? RhizomeSpread.IsFrontier(acc, pos, req.Species, verticalReach)
+                    : SurfaceMatSpread.IsFrontier(acc, pos, req.Species, verticalReach);
+
+                AddInspectLine(
+                    lines,
+                    frontier
+                        ? "ecosystemflora:inspect-line-mat-frontier-yes"
+                        : "ecosystemflora:inspect-line-mat-frontier-no");
+
+                EcosystemConfig cfg = EcosystemConfig.Loaded;
+                if (cfg != null && cfg.RhizomeSeedDispersalEnabled)
+                {
+                    float seedChance = req.UsesRhizomeSpread
+                        ? RhizomeSpread.EffectiveSeedDispersalChance(req)
+                        : SurfaceMatSpread.EffectiveSeedDispersalChance(req);
+
+                    if (seedChance > 0f)
+                    {
+                        AddInspectLine(
+                            lines,
+                            "ecosystemflora:inspect-line-seed-dispersal-chance",
+                            (seedChance * 100f).ToString("0.#"));
+                    }
+                }
             }
         }
 

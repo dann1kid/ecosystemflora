@@ -77,6 +77,12 @@ Plants never spread onto **mycelium blocks** (mushroom spawning ground) — mush
 
 With **`UseSoilSuccession`** on (default), meadow spread and natural plant death **enrich** soil tiers over time. **Heather** and **western gorse** are exceptions — they slightly dry poor soils while growing. Prefer spread and competition only, with no soil block swaps? Set **`UseSoilSuccession: false`**. **`SoilSuccessionSkipWhenBuiltAbove`** (default on) skips soil changes under slabs and builds — compatible with **Terrain Slabs** and similar mods.
 
+### Aquatic spread (reeds & lily)
+
+**Cattail, bulrush, and papyrus** use **rhizome mat** spread: only plants on the **edge** of a stand step one block along the shore. Rare **seed/fragment** jumps (~6–10% of attempts) can colonize distant bank cells. **Water lily** uses a **floating pad mat** (eight-connected edge on open water) with ~5% seed jumps. Press **I** on any plant for mat edge and seed chance in the inspect report.
+
+Turn off mat logic and restore legacy radius-4 spread for reeds: **`UseRhizomeSpreadForReeds: false`**. Lily mat: **`UseSurfaceMatSpreadForLilies`**.
+
 ### Greenhouse support
 
 Flowers planted inside a fully enclosed glass-roofed room (a greenhouse) are protected from temperature stress — no land claim required. Grow tropical flowers in cold biomes inside your greenhouse.
@@ -127,6 +133,11 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableFlowerDrygrass` | true | Flowers drop drygrass when cut with knife/scythe |
 | `CloneBerryTraits` | true | Wild berry spread copies **berry traits** from the parent bush (Vintage Story **1.22+**) |
 | `EnableThirdPartyParticipants` | true | Allow other mods to declare ecosystem parents on their blocktypes via JSON attributes |
+| `UseRhizomeSpreadForReeds` | true | Cattail/tule/papyrus: mat edge spread (not independent radius-4) |
+| `UseSurfaceMatSpreadForLilies` | true | Water lily: floating pad mat on open water |
+| `RhizomeSeedDispersalEnabled` | true | Rare seed/fragment jumps for reed and lily mats |
+| `RhizomeSeedDispersalChanceScale` | 1.0 | Multiplier on per-species seed chance |
+| `RhizomeSeedDispersalFitnessScale` | 0.25 | Harder establishment for distant seed sites |
 
 #### Spread tuning (numbers)
 

@@ -1,10 +1,10 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v3.1.2` — баланс сукцессии почвы (луг обогащает; вереск/утёсник — depleter), совместимость с Terrain Slabs, приглушённый сезонный spread водных; плюс v3.1 JSON-участники и v3.0 traits ягод.  
-**Версия мода:** `3.1.2` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 76 (xUnit)  
+**Текущая стадия:** `Ecosystem v3.1.6` — ризомный spread reeds (A–B), плавучий ковёр кувшинки (C), handbook/inspect/docs (D); плюс soil succession 3.1.2, JSON-участники 3.1.  
+**Версия мода:** `3.1.6` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** 99 (xUnit)  
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-05-28 (код под modinfo **3.1.2**).
+Последнее обновление документации: 2026-05-28 (код под modinfo **3.1.6**).
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки как участники).
 
@@ -193,6 +193,9 @@
 | `BerryTraitMutationChance` | **v3.1.1:** шанс потери одного trait при spread ягод (default **0**) |
 | `UseSoilSuccession` | Смена tier почвы при spread/death; **false** = только spread без подмены soil |
 | `SoilSuccessionSkipWhenBuiltAbove` | **v3.1.2:** не менять почву под slab/постройкой (default **true**) |
+| `UseRhizomeSpreadForReeds` | **v3.1.3–5:** ризомный spread reeds; **false** = legacy radius |
+| `UseSurfaceMatSpreadForLilies` | **v3.1.5:** ковёр кувшинки на воде |
+| `RhizomeSeedDispersalEnabled` / `RhizomeSeedDispersalChanceScale` / `RhizomeSeedDispersalFitnessScale` | **v3.1.4:** редкий seed/обломок для mat spread |
 | `SoilSuccessionStrength` | Множитель силы сукцессии |
 | `ReproduceDebug` / `VerboseLogging` | Лог spread / Skip; master-switch логирования |
 | `OnlyActivateNearPlayers` | Default **true** — реестр только в радиусе игроков |

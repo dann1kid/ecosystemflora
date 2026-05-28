@@ -23,6 +23,8 @@ Vanilla `game:` plants keep using path-based rules; third-party mode is **additi
 | `ecologyReproduce` | Default `true`; set `false` to opt a block type out while keeping other attrs. |
 | `minTemp`, `maxTemp`, `minRain`, `maxRain`, `minForest`, `maxForest` | Climate (same as vanilla block attrs). |
 | `ecologySpreadRate`, `ecologySpreadRadius` | Per-type tuning. |
+| `ecologySpreadMode` | `rhizome`, `surfacemat`, or `independent` (reed / lily mat vs legacy radius search). |
+| `ecologySeedDispersalChance`, `ecologySeedDispersalRadius` | Rare seed/fragment jump for mat habitats (optional). |
 | `ecologyMinSunlight` | Sunlight gate (terrestrial / tree). |
 | `ecologySameSpeciesSpacing`, `ecologyOtherSpeciesSpacing` | Spacing (blocks). |
 | `ecologyMinGroundFertility`, `ecologyMaxGroundFertility` | Soil fertility window. |
@@ -32,8 +34,9 @@ Vanilla `game:` plants keep using path-based rules; third-party mode is **additi
 
 If you omit climate/spacing, the mod applies **template defaults** per `ecologyHabitat` (then your explicit attrs override). Terrestrial defaults match the generic flower fallback (meadow soil via `WildPlantSoil`).
 
-- **ReedNearWater** — shallow reed–like template (single water layer pattern by default); non–`coopersreed`/`tule`/`papyrus` species do **not** use vanilla land/water variant resolution: your `ecologySpreadBlock` should already be the correct block for the target cell.
-- **WaterSurface / UnderwaterColumn** — lily / crowfoot–like numeric defaults; adjust with `ecology*` depth fields.
+- **ReedNearWater** — shallow reed–like template; with default config uses **rhizome mat** edge spread (`UseRhizomeSpreadForReeds`). Set `ecologySpreadMode: independent` to opt out. Non–`coopersreed`/`tule`/`papyrus` species do **not** use vanilla land/water variant resolution: your `ecologySpreadBlock` should already be the correct block for the target cell.
+- **WaterSurface** — lily-like defaults; with default config uses **floating pad mat** (`UseSurfaceMatSpreadForLilies`). `ecologySpreadMode: surfacemat` or `independent`.
+- **UnderwaterColumn** — crowfoot-like numeric defaults; adjust with `ecology*` depth fields.
 - **TerrestrialTree** — `ecologyMinSunlight` default 11 if unset.
 
 ## Berry traits (v3.0)
