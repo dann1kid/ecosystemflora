@@ -18,6 +18,7 @@
 - v2.1: spread + displacement + stress + symbiosis. БЕЗ DisturbedTracker.
 - v2.2–2.3: niche, soil succession, WildSpeciesSeason.
 - v2.11: Ecology inspect (I) — mat edge, seed %, stress, season (InspectLineLite, i18n на клиенте).
+- v3.1.7: meadow harvest — пустая рука → блок цветка/tallgrass; нож/коса → drygrass (`PlantHandHarvest`, `EnableFlowerDrygrass`).
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
@@ -30,12 +31,13 @@ Habitat:
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant.
 
 Код: src/Ecosystem/, BlockEntity/EcoSystemLife.cs (legacy self-remove).
-Тесты: 99 (xUnit). Версия: 3.1.6.
+Тесты: 106 (xUnit). Версия: 3.1.7.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).
 v3.1.2: soil succession balance, SoilSuccessionSkipWhenBuiltAbove.
 v3.1.3–6: UseRhizomeSpreadForReeds, UseSurfaceMatSpreadForLilies, RhizomeSeedDispersal*.
+v3.1.7: EnableFlowerDrygrass, PlantHandHarvest (DidBreakBlock), scythe patch flower-.
 
 Валидация баланса пользователем: логи (VerboseLogging + ReproduceDebug) + осмотр (I).
 

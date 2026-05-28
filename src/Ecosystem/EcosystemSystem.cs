@@ -409,6 +409,8 @@ namespace WildFarming.Ecosystem
             Block oldBlock = api.World.Blocks[oldBlockId];
             BlockPos pos = blockSel.Position;
 
+            PlantHandHarvest.TryGiveBareHandDrop(api, byPlayer, oldBlock, pos);
+
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {
                 FloraSymbiosis.CascadeOnHostRemoved(api, pos, oldBlock);

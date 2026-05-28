@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-28 (стадия **Ecosystem v3.1.6**, версия **`3.1.6`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-05-28 (стадия **Ecosystem v3.1.7**, версия **`3.1.7`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -205,7 +205,7 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.1.6`, версия `3.1.6`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat spread + inspect. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.1.7`, версия `3.1.7`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.7 meadow hand harvest. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
@@ -216,7 +216,7 @@ docs/
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.6**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.7**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -258,6 +258,7 @@ docs/
 - [x] **v3.0** — spread диких ягодников **копирует traits** родителя (`CloneBerryTraits`, рефлексия `OnGrownFromCutting`) — ✅.
 - [x] **v3.1** — сторонние blocktypes через JSON `ecologyParticipant` — ✅.
 - [x] **v3.1.3–6** — aquatic mat spread (rhizome, seed, lily), inspect mat lines, handbook — ✅.
+- [x] **v3.1.7** — meadow harvest: hand → plant block; knife/scythe → drygrass (`PlantHandHarvest`, scythe `flower-` patch) — ✅.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.

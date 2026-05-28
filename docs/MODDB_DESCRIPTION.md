@@ -20,6 +20,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.6** — Handbook and **inspect (I)** show spread mode, mat edge yes/no, and seed chance. Tune mat spread in config: `UseRhizomeSpreadForReeds`, `UseSurfaceMatSpreadForLilies`, `RhizomeSeedDispersal*`.
 
+**3.1.7** — **Meadow harvest:** empty hotbar slot → flower or tallgrass **block**; **knife** or **scythe** → **drygrass** only. Scythe can mow all meadow flowers (vanilla: horsetail only). Toggle: `EnableFlowerDrygrass`.
+
 Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
@@ -73,9 +75,9 @@ Aim at any wild ecosystem plant and press **I** for a report: succession role, r
 
 *Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
 
-### Bonus: drygrass from flowers
+### Harvest balance (flowers)
 
-Cut any wildflower with a knife or scythe and it drops drygrass along with its usual drops — no need to hunt for plain grass.
+Break wildflowers or tallgrass with an **empty hand** to collect the **plant block**. **Knife** or **scythe** mows **drygrass** (flowers and tallgrass; scythe also mows all meadow flowers via mod patch). Turn off with `EnableFlowerDrygrass: false`.
 
 ### Your world stays safe
 
@@ -144,7 +146,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `EnableTrampling` | false | Plants near player paths accumulate stress and die |
 | `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
-| `EnableFlowerDrygrass` | true | Flowers drop drygrass when cut with knife/scythe |
+| `EnableFlowerDrygrass` | true | Empty hand → plant block; knife/scythe → drygrass |
 | `CloneBerryTraits` | true | Wild berry spread copies **berry traits** from the parent bush (Vintage Story **1.22+**) |
 | `EnableThirdPartyParticipants` | true | Allow other mods to declare ecosystem parents on their blocktypes via JSON attributes |
 | `UseRhizomeSpreadForReeds` | true | Cattail/tule/papyrus: mat edge spread (not independent radius-4) |
