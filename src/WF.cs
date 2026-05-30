@@ -11,7 +11,7 @@ namespace WildFarming
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            api.RegisterBlockEntityClass("EcoSystemLife", typeof(EcoSystemLifeBlockEntity));
+            LegacyBlockEntityMigration.Register(api);
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
 
             if (api.Side == EnumAppSide.Server)

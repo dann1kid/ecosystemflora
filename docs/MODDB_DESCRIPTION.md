@@ -22,6 +22,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.7** — **Meadow harvest:** empty hotbar slot → flower or tallgrass **block**; **knife** or **scythe** → **drygrass** only. Scythe can mow all meadow flowers (vanilla: horsetail only). Toggle: `EnableFlowerDrygrass`.
 
+**3.1.8** — **Legacy saves:** old `EcoSystemLife` / `EcosystemPlant` block entities are stripped when chunks load (mod can be removed after a save). **Inspect (I)** dialog no longer crashes. Handbook tree page: fixed `{{wood}}` placeholder.
+
 Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---

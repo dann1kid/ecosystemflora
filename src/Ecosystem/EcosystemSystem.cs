@@ -347,6 +347,9 @@ namespace WildFarming.Ecosystem
 
         void OnChunkColumnLoaded(Vec2i chunkCoord, IWorldChunk[] chunks)
         {
+            if (api?.World?.BlockAccessor == null) return;
+
+            LegacyBlockEntityMigration.ScheduleStripColumn(api, chunkCoord);
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
             pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord));
         }

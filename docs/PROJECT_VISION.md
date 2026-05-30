@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-28 (стадия **Ecosystem v3.1.7**, версия **`3.1.7`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-05-29 (стадия **Ecosystem v3.1.8**, версия **`3.1.8`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -41,12 +41,12 @@
 | Принцип | Реализация |
 |---------|------------|
 | **Объект в мире** | `game:flower-*`, `tallplant-coopersreed/papyrus`, `waterlily`, `aquatic-watercrowfoot` |
-| **Мод при снятии** | Без патчей `entityClass`; `EcoSystemLife` BE самоудаляется на старых чанках; блоки остаются ванильными |
+| **Мод при снятии** | Без патчей `entityClass`; legacy BE (`EcoSystemLife`, `EcosystemPlant`) удаляются при загрузке через `LegacyBlockEntityMigration`; блоки остаются ванильными |
 | **Дикое размножение** | Тот же ванильный блок (или корректный land/water для тростника) на соседней клетке |
 | **Семена / wildplant** | **Не** часть дикой экосистемы; не в сборке |
 | **Культивация игроком** | Ванильные механики игры |
 
-**Регистрация:** очередь сканирования чанков + `EcoSystemLife` BE. **Размножение:** round-robin по реестру, лимит попыток за тик.
+**Регистрация:** очередь сканирования чанков + `ChunkFlowerScanner` (без BE на новых блоках). **Размножение:** round-robin по реестру, лимит попыток за тик.
 
 ### 2.4. Минимум механик (не тащить из Revival)
 
@@ -150,9 +150,9 @@ src/
   Handbook/
     EcologyHandbookBehavior.cs  # dynamic ecology info on block pages
   BlockEntity/
-    EcoSystemLife.cs            # thin BE: register on load
+    (none — legacy strip in Ecosystem/LegacyBlockEntityMigration.cs)
 tests/
-  WildFarming.Tests.csproj     # xUnit, 72 tests
+  WildFarming.Tests.csproj     # xUnit, 106 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -205,7 +205,7 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.1.7`, версия `3.1.7`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.7 meadow hand harvest. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.1.8`, версия `3.1.8`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.7 meadow hand harvest; v3.1.8 legacy BE migration + inspect fix. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
@@ -216,7 +216,7 @@ docs/
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.7**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.8**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -260,7 +260,8 @@ docs/
 - [x] **v3.1.3–6** — aquatic mat spread (rhizome, seed, lily), inspect mat lines, handbook — ✅.
 - [x] **v3.1.7** — meadow harvest: hand → plant block; knife/scythe → drygrass (`PlantHandHarvest`, scythe `flower-` patch) — ✅.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
-- [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy `EcoSystemLife` самоудаляется — ✅.
+- [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
+- [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).
 - [ ] Зимняя листва на стволах — **отложено** (визуал, не экосистема)

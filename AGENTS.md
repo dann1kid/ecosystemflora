@@ -7,7 +7,7 @@ Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
 - what to reuse from the original Wild Farming idea vs what to ignore;
-- current repo stage: **Ecosystem v3.1.7** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`;
+- current repo stage: **Ecosystem v3.1.8** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`;
 - agent rules and constraints.
 
 Quick constraints:
@@ -17,7 +17,7 @@ Quick constraints:
 - **Wild reproduce** — `CanReproduce` + registry; `MinFitness` only here.
 - **Seasonality** — `WildSpeciesSeason` profiles; `SeasonEcology` multipliers; winter/fall stress.
 - Do **not** expand living trees, vines, mushrooms, or termites unless the user asks.
-- BE: `src/BlockEntity/EcoSystemLife.cs`; new logic under `src/Ecosystem/`.
+- Legacy BE: `src/Ecosystem/LegacyBlockEntityMigration.cs` (EcoSystemLife / EcosystemPlant strip on load); new logic under `src/Ecosystem/`.
 - Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
 - Tests: `tests/WildFarming.Tests.csproj` (xUnit, 106 tests).
 - Do **not** run alongside **wildfarmingrevival**.

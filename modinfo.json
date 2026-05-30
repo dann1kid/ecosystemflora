@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, and trees. Meadow harvest: hand → plant block, knife/scythe → drygrass. Rhizome reeds, lily mats, inspect (I). Seasonal spread, soil succession.",
   "authors": ["-"],
-  "version": "3.1.7",
+  "version": "3.1.8",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

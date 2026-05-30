@@ -35,14 +35,17 @@ namespace WildFarming.Client
         {
             if (report == null) return;
 
-            ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
+            SingleComposer?.Dispose();
 
-            // Title bar ~40px; fixed body height for richtext (required for FitToChildren parent chain).
-            ElementBounds textBounds = ElementBounds.Fixed(0, 40, 440, 340);
+            const double width = 480;
+            const double height = 420;
+
+            ElementBounds dialogBounds = ElementBounds
+                .FixedSize(width, height)
+                .WithAlignment(EnumDialogArea.CenterMiddle);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
-            bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(textBounds);
+            ElementBounds textBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight, 440, 340);
 
             SingleComposer = capi.Gui
                 .CreateCompo("ecosystemflora-inspect", dialogBounds)
