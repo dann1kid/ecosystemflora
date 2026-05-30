@@ -105,7 +105,7 @@ namespace WildFarming.Ecosystem
                     return true;
                 }
 
-                if (block.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable)
+                if (!PlantVacancyRules.IsPassThroughForColumnScan(block))
                 {
                     return false;
                 }

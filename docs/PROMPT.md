@@ -20,6 +20,7 @@
 - v2.11: Ecology inspect (I) — mat edge, seed %, stress, season (InspectLineLite, i18n на клиенте).
 - v3.1.7: meadow harvest — пустая рука → блок цветка/tallgrass; нож/коса → drygrass (`PlantHandHarvest`, `EnableFlowerDrygrass`).
 - v3.1.8: legacy BE migration (`LegacyBlockEntityMigration`); fix ecology inspect dialog (I).
+- v3.1.9: spread targets air only (no torch/loosestone overwrite); `SoilSuccessionGuard` protects `terrainslabs:*` ground.
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
@@ -32,7 +33,7 @@ Habitat:
 Не расширять без явного запроса: living trees, vines, mushrooms, Harmony, legacy wildplant.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs для старых BE).
-Тесты: 106 (xUnit). Версия: 3.1.8.
+Тесты: 112 (xUnit). Версия: 3.1.9.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).

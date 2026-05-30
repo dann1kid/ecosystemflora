@@ -24,6 +24,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.8** — **Legacy saves:** old `EcoSystemLife` / `EcosystemPlant` block entities are stripped when chunks load (mod can be removed after a save). **Inspect (I)** dialog no longer crashes. Handbook tree page: fixed `{{wood}}` placeholder.
 
+**3.1.9** — Wild spread no longer overwrites **torches**, **loose stones**, and similar replaceable debris (spread targets **air only**). **Terrain Slabs:** soil succession no longer turns smoothed slab ground into full blocks when fertility drops to barren.
+
 Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
@@ -113,7 +115,7 @@ Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `a
 
 | Key | Default | Since | What it does |
 |-----|:-------:|:-----:|--------------|
-| `SoilSuccessionSkipWhenBuiltAbove` | true | **3.1.2** | Skip soil tier swaps when a slab or build sits on the column (Terrain Slabs friendly) |
+| `SoilSuccessionSkipWhenBuiltAbove` | true | **3.1.2** / **3.1.9** | Skip soil tier swaps under slabs/builds; **3.1.9** also protects Terrain Slabs ground blocks (`terrainslabs:*`) |
 | `UseRhizomeSpreadForReeds` | true | **3.1.3** | Cattail/tule/papyrus: rhizome **mat edge** spread. **false** = legacy radius-4 |
 | `RhizomeSeedDispersalEnabled` | true | **3.1.4** | Rare virtual seed/fragment jumps for reed and lily mats (no item seeds) |
 | `RhizomeSeedDispersalChanceScale` | 1.0 | **3.1.4** | Multiplier on per-species seed jump chance |

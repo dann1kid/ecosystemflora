@@ -17,5 +17,11 @@ namespace WildFarming.Tests
                 expected,
                 PlantVacancyRules.MeetsMinReplaceable(replaceable, SuitabilityEvaluator.ReproduceMinReplaceable));
         }
+
+        [Fact]
+        public void IsVacantPlantSpace_NullIsNotVacant()
+        {
+            Assert.False(PlantVacancyRules.IsVacantPlantSpace(null));
+        }
     }
 }

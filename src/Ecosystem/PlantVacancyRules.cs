@@ -5,15 +5,26 @@ namespace WildFarming.Ecosystem
 {
     /// <summary>
     /// Shared rules for whether a plant cell is vacant and physically ready for wild spread.
-    /// Keeps SurfacePlacement, SpreadPreflight, and suitability checks aligned (air id=0, replaceable debris, etc.).
+    /// Keeps SurfacePlacement, SpreadPreflight, and suitability checks aligned.
     /// </summary>
     internal static class PlantVacancyRules
     {
+        /// <summary>
+        /// True when wild spread may place into the cell without displacement.
+        /// Only air — high-replaceable blocks (torches, loosestones, lamps) must not be overwritten.
+        /// </summary>
         public static bool IsVacantPlantSpace(Block space)
         {
             if (space == null) return false;
-            if (space.Id == 0) return true;
-            return space.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable;
+            return space.Id == 0;
+        }
+
+        /// <summary>
+        /// Column scan may continue downward through replaceable non-plant debris (not spread placement).</summary>
+        public static bool IsPassThroughForColumnScan(Block block)
+        {
+            if (block == null || block.Id == 0) return true;
+            return block.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable;
         }
 
         /// <summary>Replaceable used in <see cref="IEnvironmentalContext"/> — air must not read as 0.</summary>
