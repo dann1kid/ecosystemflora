@@ -76,6 +76,8 @@
 	"ecosystemflora:inspect-error-ecosystem-off": "Ecosystem is disabled.",
 	"ecosystemflora:inspect-error-claim": "Cannot inspect inside a land claim.",
 	"ecosystemflora:inspect-error-cooldown": "Wait a moment before inspecting again.",
+	"ecosystemflora:inspect-error-dialog": "Could not open ecology inspect window.",
+	"ecosystemflora:inspect-empty": "No inspect data received.",
 
 	"ecosystemflora:inspect-line-dominance": "Succession role: {0}",
 	"ecosystemflora:inspect-line-hold": "Hold strength: {0}",

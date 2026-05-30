@@ -1,8 +1,53 @@
+using Vintagestory.API.Common;
+
 namespace WildFarming.Ecosystem
 {
     public class EcosystemConfig
     {
         public static EcosystemConfig Loaded { get; set; } = new EcosystemConfig();
+
+        /// <summary>Load ModConfig/ecosystemflora.json on server and client (client: read-only for inspect toggles).</summary>
+        public static void TryLoadFromDisk(ICoreAPI api, bool createDefaultIfMissing)
+        {
+            if (api == null) return;
+
+            try
+            {
+                EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("ecosystemflora.json");
+                if (fromDisk != null)
+                {
+                    Loaded = fromDisk;
+                }
+                else if (createDefaultIfMissing)
+                {
+                    EcosystemConfig cfg = Loaded;
+                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
+                    {
+                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+                    }
+
+                    api.StoreModConfig(cfg, "ecosystemflora.json");
+                }
+
+                if (EcosystemBalancePresets.IsKnownPreset(Loaded.BalancePreset))
+                {
+                    EcosystemBalancePresets.Apply(Loaded, Loaded.BalancePreset);
+                }
+            }
+            catch
+            {
+                if (createDefaultIfMissing)
+                {
+                    EcosystemConfig cfg = Loaded;
+                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
+                    {
+                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+                    }
+
+                    api.StoreModConfig(cfg, "ecosystemflora.json");
+                }
+            }
+        }
 
         /// <summary>
         /// Spread tuning bundle: <c>natural</c>, <c>lush</c>, <c>sparse</c>, or <c>custom</c> (manual fields only).

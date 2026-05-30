@@ -39,38 +39,7 @@ namespace WildFarming.Ecosystem
             this.api = api;
             Instance = this;
 
-            try
-            {
-                EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("ecosystemflora.json");
-                if (fromDisk != null)
-                {
-                    EcosystemConfig.Loaded = fromDisk;
-                    if (EcosystemBalancePresets.IsKnownPreset(fromDisk.BalancePreset))
-                    {
-                        EcosystemBalancePresets.Apply(EcosystemConfig.Loaded, fromDisk.BalancePreset);
-                    }
-                }
-                else
-                {
-                    EcosystemConfig cfg = EcosystemConfig.Loaded;
-                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
-                    {
-                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
-                    }
-
-                    api.StoreModConfig(cfg, "ecosystemflora.json");
-                }
-            }
-            catch
-            {
-                EcosystemConfig cfg = EcosystemConfig.Loaded;
-                if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
-                {
-                    EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
-                }
-
-                api.StoreModConfig(cfg, "ecosystemflora.json");
-            }
+            EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: true);
         }
 
         public void Init(ICoreAPI api)

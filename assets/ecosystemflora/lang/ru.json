@@ -76,6 +76,8 @@
 	"ecosystemflora:inspect-error-ecosystem-off": "Экосистема отключена.",
 	"ecosystemflora:inspect-error-claim": "Осмотр внутри land claim недоступен.",
 	"ecosystemflora:inspect-error-cooldown": "Подождите перед повторным осмотром.",
+	"ecosystemflora:inspect-error-dialog": "Не удалось открыть окно осмотра экологии.",
+	"ecosystemflora:inspect-empty": "Данные осмотра не получены.",
 
 	"ecosystemflora:inspect-line-dominance": "Роль в сукцессии: {0}",
 	"ecosystemflora:inspect-line-hold": "Сила удержания: {0}",

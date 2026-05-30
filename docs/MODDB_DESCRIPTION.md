@@ -26,6 +26,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.9** — Wild spread no longer overwrites **torches**, **loose stones**, and similar replaceable debris (spread targets **air only**). **Terrain Slabs:** soil succession no longer turns smoothed slab ground into full blocks when fertility drops to barren.
 
+**3.1.10** — **Meadow harvest:** flowers broken without knife/scythe drop as **blocks in the world** (not into inventory); **tallgrass** breaks with **no drop** (use knife/scythe for drygrass). **`MeadowHarvestRegistry`** + `ecologyMeadowHarvest` for herbalism mods. **Inspect (I):** fixed crash when opening the dialog (including on tallgrass). Client reads `ecosystemflora.json` for inspect toggles.
+
 Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
@@ -81,7 +83,7 @@ Aim at any wild ecosystem plant and press **I** for a report: succession role, r
 
 ### Harvest balance (flowers)
 
-Break wildflowers or tallgrass with an **empty hand** to collect the **plant block**. **Knife** or **scythe** mows **drygrass** (flowers and tallgrass; scythe also mows all meadow flowers via mod patch). Turn off with `EnableFlowerDrygrass: false`.
+Break wildflowers without knife/scythe to collect the **flower block on the ground**. **Tallgrass** breaks with **no drop** unless you use **knife** or **scythe** (drygrass). Turn off with `EnableFlowerDrygrass: false`. Herbalism mods: see `docs/THIRD_PARTY_ECOLOGY.md` (`MeadowHarvestRegistry`).
 
 ### Your world stays safe
 
@@ -121,7 +123,7 @@ Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `a
 | `RhizomeSeedDispersalChanceScale` | 1.0 | **3.1.4** | Multiplier on per-species seed jump chance |
 | `RhizomeSeedDispersalFitnessScale` | 0.25 | **3.1.4** | Harder establishment for distant seed landing sites |
 | `UseSurfaceMatSpreadForLilies` | true | **3.1.5** | Water lily: floating **pad mat** on open water. **false** = legacy radius spread |
-| `EnableFlowerDrygrass` | true | **3.1.7** | Meadow harvest: **empty hotbar** → flower/tallgrass **block**; **knife/scythe** → **drygrass** only |
+| `EnableFlowerDrygrass` | true | **3.1.10** | Meadow harvest: **flowers** → block in world; **tallgrass** → no drop (knife/scythe → drygrass) |
 
 Related (unchanged keys, but behavior context from **3.1.2**):
 

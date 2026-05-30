@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
@@ -16,6 +17,8 @@ namespace WildFarming.Client
 
         public void ShowReport(EcologyInspectReportPacket packet)
         {
+            if (packet == null) return;
+
             report = packet;
             if (IsOpened())
             {
@@ -28,31 +31,52 @@ namespace WildFarming.Client
         public override void OnGuiOpened()
         {
             base.OnGuiOpened();
-            ComposeDialog();
+            if (!TryComposeDialog())
+            {
+                TryClose();
+            }
         }
 
-        void ComposeDialog()
+        bool TryComposeDialog()
         {
-            if (report == null) return;
+            if (report == null) return false;
 
+            // Never assign SingleComposer = null — VS setter NREs on value.OnFocusChanged.
             SingleComposer?.Dispose();
 
             const double width = 480;
             const double height = 420;
+            double pad = GuiStyle.ElementToDialogPadding;
+            double titleH = GuiStyle.TitleBarHeight;
 
             ElementBounds dialogBounds = ElementBounds
                 .FixedSize(width, height)
                 .WithAlignment(EnumDialogArea.CenterMiddle);
 
-            ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
-            ElementBounds textBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight, 440, 340);
+            ElementBounds bgBounds = ElementBounds.Fixed(0, 0, width, height);
+            ElementBounds textBounds = ElementBounds.Fixed(
+                pad,
+                titleH + pad,
+                width - pad * 2,
+                height - titleH - pad * 2);
 
-            SingleComposer = capi.Gui
-                .CreateCompo("ecosystemflora-inspect", dialogBounds)
-                .AddShadedDialogBG(bgBounds, true)
-                .AddDialogTitleBar(BuildTitle(), OnTitleBarClose)
-                .AddRichtext(BuildBody(report), CairoFont.WhiteDetailText(), textBounds, "inspect-body")
-                .Compose();
+            try
+            {
+                SingleComposer = capi.Gui
+                    .CreateCompo("ecosystemflora-inspect", dialogBounds)
+                    .AddShadedDialogBG(bgBounds, true)
+                    .AddDialogTitleBar(BuildTitle(), OnTitleBarClose)
+                    .AddRichtext(BuildBody(report), CairoFont.WhiteDetailText(), textBounds, "inspect-body")
+                    .Compose();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                capi.Logger.Error("[ecosystemflora] Ecology inspect dialog failed: {0}", ex);
+                capi.ShowChatMessage(Lang.Get("ecosystemflora:inspect-error-dialog"));
+                return false;
+            }
         }
 
         string BuildTitle()
@@ -75,6 +99,11 @@ namespace WildFarming.Client
                 {
                     sb.Append(EcologyInspectLineFormat.FormatInspectLine(line)).Append("<br/>");
                 }
+            }
+
+            if (sb.Length == 0)
+            {
+                sb.Append(Lang.Get("ecosystemflora:inspect-empty"));
             }
 
             return sb.ToString();
