@@ -5,7 +5,7 @@ namespace WildFarming.Ecosystem
 {
     /// <summary>
     /// Rewrites flower block drops so that knife/scythe → drygrass only (LastDrop).
-    /// Bare-hand flower pickup → <see cref="PlantHandHarvest"/> on DidBreakBlock.
+    /// Whole-plant pickup for other tools/hands → <see cref="PlantHandHarvest"/> on DidBreakBlock.
     /// </summary>
     internal static class FlowerDrygrassDrops
     {

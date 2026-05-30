@@ -212,7 +212,7 @@ namespace WildFarming.Ecosystem
 
         // --- Flower drygrass drops (v2.5) ---
 
-        /// <summary>Knife/scythe mow drygrass from flowers; empty hand yields the plant block (DidBreakBlock).</summary>
+        /// <summary>Knife/scythe → drygrass; flowers drop in world; tallgrass breaks with no loot.</summary>
         public bool EnableFlowerDrygrass { get; set; } = true;
 
         // --- Ecology inspect UI (client dialog, server snapshot) ---

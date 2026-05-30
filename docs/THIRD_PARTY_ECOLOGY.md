@@ -28,6 +28,7 @@ Vanilla `game:` plants keep using path-based rules; third-party mode is **additi
 | `ecologyMinSunlight` | Sunlight gate (terrestrial / tree). |
 | `ecologySameSpeciesSpacing`, `ecologyOtherSpeciesSpacing` | Spacing (blocks). |
 | `ecologyMinGroundFertility`, `ecologyMaxGroundFertility` | Soil fertility window. |
+| `ecologyMeadowHarvest` | Meadow break harvest: `whole` (default) — knife/scythe → drygrass, anything else → plant block in world; `delegate` — only registered `MeadowHarvestRegistry` handlers; `none` — mod skips break harvest entirely. Partial harvest (inflorescences only) should use **right-click / block behavior**, not break. |
 | `ecologyMaxWaterDepth`, `ecologyMinWaterDepth`, `ecologyVerticalBlocks`, `ecologyExactWaterDepth` | Aquatic / reed column tuning (see habitat defaults below). |
 
 ## Habitat defaults (third-party only)
@@ -64,3 +65,23 @@ If you omit climate/spacing, the mod applies **template defaults** per `ecologyH
 ## Disable
 
 Set **`EnableThirdPartyParticipants`: `false`** to ignore `ecologyParticipant` on all blocks (only vanilla path rules apply).
+
+## Meadow harvest hooks (C#)
+
+When **`EnableFlowerDrygrass`** is on: **knife/scythe** → drygrass; **flowers** broken with anything else drop the flower **block in the world**; **tallgrass** with anything else is **removed with no drop** (use knife/scythe for drygrass).
+
+Other mods can intercept break harvest:
+
+```csharp
+WildFarming.Ecosystem.MeadowHarvestRegistry.Register(args =>
+{
+    if (!args.BrokenBlock.Code.Path.StartsWith("flower-cornflower")) return MeadowHarvestHandleResult.Pass;
+    args.Api.World.SpawnItemEntity(new ItemStack(...), args.Pos);
+    args.Api.World.BlockAccessor.SetBlock(strippedBlockId, args.Pos);
+    return MeadowHarvestHandleResult.Handled;
+});
+```
+
+Set **`ecologyMeadowHarvest`: `"delegate"`** on the block type to disable the default whole-plant drop and rely on handlers only. Use **`"none"`** if your mod fully owns drops and block replacement.
+
+**Partial harvest without breaking** (typical herbalism UX): implement interact / block behavior on **use**, transform the block in place, and set `"none"` or `"delegate"` so break does not fight your logic.

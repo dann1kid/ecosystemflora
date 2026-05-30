@@ -412,7 +412,7 @@ namespace WildFarming.Ecosystem
             Block oldBlock = api.World.Blocks[oldBlockId];
             BlockPos pos = blockSel.Position;
 
-            PlantHandHarvest.TryGiveBareHandDrop(api, byPlayer, oldBlock, pos);
+            PlantHandHarvest.TryDropPlantBlockOnBreak(api, byPlayer, oldBlock, pos);
 
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {

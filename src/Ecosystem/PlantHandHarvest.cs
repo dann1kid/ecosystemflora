@@ -5,13 +5,13 @@ using Vintagestory.API.Server;
 namespace WildFarming.Ecosystem
 {
     /// <summary>
-    /// Hand harvest for meadow plants. Vanilla flower/tallgrass drops are tool-gated only;
-    /// knife/scythe drygrass for flowers is patched in <see cref="FlowerDrygrassDrops"/>.
-    /// Empty-hand pickup is applied in <see cref="EcosystemSystem"/> DidBreakBlock (server).
+    /// Meadow plant break harvest. Knife/scythe → drygrass via <see cref="FlowerDrygrassDrops"/> (vanilla drops).
+    /// Flowers + other hands/tools → flower block in world. Tallgrass → removed with no drop (mow for drygrass).
+    /// Herbalism mods: <see cref="MeadowHarvestRegistry"/> and block attr <c>ecologyMeadowHarvest</c>.
     /// </summary>
     internal static class PlantHandHarvest
     {
-        internal static bool TryGiveBareHandDrop(ICoreAPI api, IServerPlayer byPlayer, Block brokenBlock, BlockPos pos)
+        internal static bool TryDropPlantBlockOnBreak(ICoreAPI api, IServerPlayer byPlayer, Block brokenBlock, BlockPos pos)
         {
             if (api == null || byPlayer == null || brokenBlock?.Code == null || pos == null)
                 return false;
@@ -19,26 +19,60 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EnableFlowerDrygrass)
                 return false;
 
-            if (!IsBareHand(byPlayer))
+            if (!IsMeadowPlant(brokenBlock))
                 return false;
 
-            if (!TryResolveBareHandDrop(brokenBlock, out ItemStack drop))
+            string harvestMode = MeadowHarvestModes.Read(brokenBlock);
+            if (MeadowHarvestModes.SkipsModHarvest(harvestMode))
                 return false;
 
-            if (byPlayer.InventoryManager.TryGiveItemstack(drop))
+            ItemSlot activeSlot = byPlayer.InventoryManager?.ActiveHotbarSlot;
+            bool isMowTool = IsMowTool(activeSlot);
+            if (isMowTool)
+                return false;
+
+            var args = new MeadowHarvestBreakArgs(api, byPlayer, brokenBlock, pos, activeSlot, isMowTool);
+            if (MeadowHarvestRegistry.Invoke(args) == MeadowHarvestHandleResult.Handled)
                 return true;
+
+            if (!MeadowHarvestModes.AllowsDefaultWholeDrop(harvestMode))
+                return false;
+
+            if (!DropsWholePlantBlock(brokenBlock))
+                return true;
+
+            if (!TryResolveFlowerBlockDrop(brokenBlock, out ItemStack drop))
+                return false;
 
             api.World.SpawnItemEntity(drop, pos);
             return true;
         }
 
-        internal static bool IsBareHand(IPlayer player)
+        /// <summary>Flowers drop as blocks; tallgrass is cleared unless knife/scythe (drygrass).</summary>
+        internal static bool DropsWholePlantBlock(Block block)
         {
-            if (player?.InventoryManager == null)
+            if (block?.Code == null || !block.Code.Domain.Equals("game"))
                 return false;
 
-            ItemSlot slot = player.InventoryManager.ActiveHotbarSlot;
-            return slot == null || slot.Empty;
+            string path = block.Code.Path;
+            return path.StartsWith("flower-") && !path.StartsWith("flower-ghostpipe");
+        }
+
+        internal static bool IsMowTool(ItemSlot slot)
+        {
+            if (slot == null || slot.Empty) return false;
+            return IsMowTool(slot.Itemstack?.Collectible as Item);
+        }
+
+        internal static bool IsMowTool(Item item)
+        {
+            if (item == null) return false;
+            return item.Tool == EnumTool.Knife || item.Tool == EnumTool.Scythe;
+        }
+
+        internal static bool ShouldDropPlantBlock(ItemSlot activeSlot)
+        {
+            return !IsMowTool(activeSlot);
         }
 
         internal static bool IsMeadowPlant(Block block)
@@ -56,10 +90,10 @@ namespace WildFarming.Ecosystem
             return path.StartsWith("frostedtallgrass-") && !path.Contains("-eaten-");
         }
 
-        static bool TryResolveBareHandDrop(Block block, out ItemStack drop)
+        static bool TryResolveFlowerBlockDrop(Block block, out ItemStack drop)
         {
             drop = null;
-            if (!IsMeadowPlant(block))
+            if (!DropsWholePlantBlock(block))
                 return false;
 
             drop = new ItemStack(block, 1);
