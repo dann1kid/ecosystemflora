@@ -41,6 +41,7 @@ namespace WildFarming.Ecosystem
         public static bool IsSupportingGround(Block ground)
         {
             if (ground == null || ground.Id == 0) return false;
+            if (WildSoilGroundRules.IsUnplantableGround(ground)) return false;
             if (WildSoilGroundRules.IsFarmland(ground)) return true;
             return ground.SideSolid[BlockFacing.UP.Index];
         }

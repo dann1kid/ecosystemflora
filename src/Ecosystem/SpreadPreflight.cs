@@ -26,6 +26,8 @@ namespace WildFarming.Ecosystem
                     return PassesTerrestrialPhysical(acc, plantPos, in snap, requirements, isEmpty);
 
                 case EcologyHabitat.TerrestrialTree:
+                    return PassesTerrestrialPhysical(acc, plantPos, in snap, requirements, isEmpty);
+
                 case EcologyHabitat.WaterSurface:
                 case EcologyHabitat.ReedNearWater:
                 case EcologyHabitat.UnderwaterColumn:

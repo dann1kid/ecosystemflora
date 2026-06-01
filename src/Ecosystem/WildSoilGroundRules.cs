@@ -1,3 +1,4 @@
+using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -5,6 +6,25 @@ namespace WildFarming.Ecosystem
 {
     internal static class WildSoilGroundRules
     {
+        /// <summary>Lake ice, glacier ice, snow — not valid wild plant footing (solid or fluid layer).</summary>
+        public static bool IsUnplantableGround(Block block)
+        {
+            if (block == null || block.Id == 0) return false;
+            if (BlockFluidHelper.IsFluid(block)) return true;
+
+            string path = block.Code?.Path;
+            if (IsUnplantableGroundPath(path)) return true;
+
+            return block.BlockMaterial == EnumBlockMaterial.Snow;
+        }
+
+        internal static bool IsUnplantableGroundPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            return path.Contains("ice", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("snow", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool IsFarmland(Block ground)
         {
             if (ground?.Code == null || ground.Id == 0) return false;

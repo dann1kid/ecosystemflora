@@ -163,9 +163,9 @@ namespace WildFarming.Ecosystem
             new float[] { 0.08f, 0.12f, 0.3f, 0.6f, 0.95f, 1.15f, 1.15f, 1.05f, 0.8f, 0.4f, 0.18f, 0.08f },
             new float[] { 0.4f, 0.3f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.2f, 0.35f });
 
-        // Trees: broad but slow (Apr-Aug saplings, very hardy)
+        // Trees: Apr-Aug saplings; no winter spread (lake ice / snow footing).
         static readonly Profile TreeSeason = new Profile(
-            new float[] { 0.02f, 0.05f, 0.3f, 0.8f, 1.2f, 1.3f, 1.2f, 1.0f, 0.6f, 0.2f, 0.05f, 0.02f },
+            new float[] { 0f, 0f, 0.3f, 0.8f, 1.2f, 1.3f, 1.2f, 1.0f, 0.6f, 0.2f, 0f, 0f },
             new float[] { 0.5f, 0.35f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.25f, 0.45f });
 
         // Woad (late spring biennial, Jun-Jul peak)

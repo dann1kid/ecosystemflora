@@ -12,6 +12,11 @@ namespace WildFarming.Ecosystem
             string path = ground.Code?.Path ?? "";
             SoilKind kinds = SoilKind.None;
 
+            if (WildSoilGroundRules.IsUnplantableGroundPath(path))
+            {
+                return SoilKind.Barren;
+            }
+
             if (path.StartsWith("farmland"))
             {
                 kinds |= SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert;
