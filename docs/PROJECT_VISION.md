@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-30 (стадия **Ecosystem v3.1.10**, версия **`3.1.10`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-05-30 (стадия **Ecosystem v3.1.11**, версия **`3.1.11`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -152,7 +152,7 @@ src/
   BlockEntity/
     (none — legacy strip in Ecosystem/LegacyBlockEntityMigration.cs)
 tests/
-  WildFarming.Tests.csproj     # xUnit, 122 tests
+  WildFarming.Tests.csproj     # xUnit, 129 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -205,18 +205,18 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.1.10`, версия `3.1.10`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.8 legacy BE; v3.1.9 spread debris + Terrain Slabs guard; v3.1.10 meadow harvest + inspect (I) fix. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.1.11`, версия `3.1.11`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.8 legacy BE; v3.1.9 spread debris + Terrain Slabs guard; v3.1.10 meadow harvest + inspect (I) fix; v3.1.11 tree spread ice/snow + winter spread off. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
 | Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
 | Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **99** |
+| Юнит-тесты (xUnit) | ✅ **129** |
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.10**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.11**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---

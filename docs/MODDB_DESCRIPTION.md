@@ -28,6 +28,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.10** — **Meadow harvest:** flowers broken without knife/scythe drop as **blocks in the world** (not into inventory); **tallgrass** breaks with **no drop** (use knife/scythe for drygrass). **`MeadowHarvestRegistry`** + `ecologyMeadowHarvest` for herbalism mods. **Inspect (I):** fixed crash when opening the dialog (including on tallgrass). Client reads `ecosystemflora.json` for inspect toggles.
 
+**3.1.11** — **Trees:** saplings no longer spread onto **lake ice, glacier ice, or snow**; tree spread uses the same physical gates as flowers (soil, fluid, mycelium). **Winter tree spread disabled** (Nov–Feb multiplier zero). Mature trunks are still not removed by mod stress death — growth remains vanilla treegen.
+
 Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
