@@ -4,50 +4,61 @@ namespace WildFarming.Ecosystem
 {
     public class EcosystemConfig
     {
+        public const string ConfigFileName = "ecosystemflora.json";
+
         public static EcosystemConfig Loaded { get; set; } = new EcosystemConfig();
 
-        /// <summary>Load ModConfig/ecosystemflora.json on server and client (client: read-only for inspect toggles).</summary>
+        /// <summary>
+        /// Load ModConfig/ecosystemflora.json on server and client.
+        /// After load, missing keys get C# defaults and the file is rewritten so new options appear on disk.
+        /// </summary>
         public static void TryLoadFromDisk(ICoreAPI api, bool createDefaultIfMissing)
         {
             if (api == null) return;
 
+            EcosystemConfig fromDisk = null;
             try
             {
-                EcosystemConfig fromDisk = api.LoadModConfig<EcosystemConfig>("ecosystemflora.json");
-                if (fromDisk != null)
-                {
-                    Loaded = fromDisk;
-                }
-                else if (createDefaultIfMissing)
-                {
-                    EcosystemConfig cfg = Loaded;
-                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
-                    {
-                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
-                    }
-
-                    api.StoreModConfig(cfg, "ecosystemflora.json");
-                }
-
-                if (EcosystemBalancePresets.IsKnownPreset(Loaded.BalancePreset))
-                {
-                    EcosystemBalancePresets.Apply(Loaded, Loaded.BalancePreset);
-                }
+                fromDisk = api.LoadModConfig<EcosystemConfig>(ConfigFileName);
             }
             catch
             {
-                if (createDefaultIfMissing)
-                {
-                    EcosystemConfig cfg = Loaded;
-                    if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
-                    {
-                        EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
-                    }
+                if (!createDefaultIfMissing) return;
 
-                    api.StoreModConfig(cfg, "ecosystemflora.json");
-                }
+                Loaded = new EcosystemConfig();
+                ApplyBalancePreset(Loaded);
+                api.StoreModConfig(Loaded, ConfigFileName);
+                return;
+            }
+
+            if (fromDisk != null)
+            {
+                Loaded = fromDisk;
+            }
+            else
+            {
+                Loaded = new EcosystemConfig();
+            }
+
+            ApplyBalancePreset(Loaded);
+
+            if (ShouldPersistConfig(createDefaultIfMissing, fromDisk != null))
+            {
+                api.StoreModConfig(Loaded, ConfigFileName);
             }
         }
+
+        static void ApplyBalancePreset(EcosystemConfig cfg)
+        {
+            if (cfg == null) return;
+            if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
+            {
+                EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+            }
+        }
+
+        internal static bool ShouldPersistConfig(bool createDefaultIfMissing, bool fileExisted) =>
+            fileExisted || createDefaultIfMissing;
 
         /// <summary>
         /// Spread tuning bundle: <c>natural</c>, <c>lush</c>, <c>sparse</c>, or <c>custom</c> (manual fields only).

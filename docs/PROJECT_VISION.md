@@ -135,7 +135,7 @@ src/
     EcosystemParticipant.cs     # IEcosystemParticipant impl
     EcologyHabitat.cs           # habitat enum
     PlantCodeHelper.cs          # species parsing, block code helpers
-    EcosystemConfig.cs          # config loading + presets
+    EcosystemConfig.cs          # config loading + presets; auto-merge new keys to ModConfig on load
     PlayerProximity.cs          # active chunk detection
     GreenhouseHelper.cs         # greenhouse room detection (cached)
     SpreadPreflight.cs          # cheap-first candidate filter
@@ -146,6 +146,10 @@ src/
     MyceliumCoexistence.cs      # meadow mycelium vs meadow flora
     MyceliumNetworkSpread.cs    # slow orthogonal network spread
     MyceliumInspect.cs          # inspect (I) anchor resolution
+    MyceliumChunkRegistrar.cs   # scan chunk BEs after load
+    MyceliumStressEvaluator.cs  # anchor niche stress / death
+    MyceliumTreeCascade.cs      # tree-cut stress for forest anchors
+    MyceliumAnchorSpawner.cs    # clone vanilla BE on network spread
     LandClaimGuard.cs           # land claim respect
   Client/
     EcologyInspectClientSystem.cs
@@ -157,7 +161,7 @@ src/
   BlockEntity/
     (none — legacy strip in Ecosystem/LegacyBlockEntityMigration.cs)
 tests/
-  WildFarming.Tests.csproj     # xUnit, 158 tests
+  WildFarming.Tests.csproj     # xUnit, 163 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -217,7 +221,7 @@ docs/
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
 | Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
 | Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **158** |
+| Юнит-тесты (xUnit) | ✅ **163** |
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
@@ -264,6 +268,8 @@ docs/
 - [x] **v3.1** — сторонние blocktypes через JSON `ecologyParticipant` — ✅.
 - [x] **v3.1.3–6** — aquatic mat spread (rhizome, seed, lily), inspect mat lines, handbook — ✅.
 - [x] **v3.1.7** — meadow harvest: hand → plant block; knife/scythe → drygrass (`PlantHandHarvest`, scythe `flower-` patch) — ✅.
+- [x] **v3.1.11** — tree spread ice/snow gate; winter tree spread off — ✅.
+- [x] **v3.1.12** — mycelium niche + ecology + network spread; meadow coexistence; inspect (I) caps/soil; config auto-merge — ✅.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.

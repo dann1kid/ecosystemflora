@@ -78,5 +78,19 @@
   "CloneBerryTraits": true,
   "BerryTraitMutationChance": 0.0,
 
-  "EnableThirdPartyParticipants": true
+  "EnableThirdPartyParticipants": true,
+
+  "EnableMyceliumNiche": true,
+  "MyceliumZoneRadius": 7,
+  "MyceliumMeadowSpreadPenalty": 0.35,
+  "MyceliumForestSpreadBonus": 1.22,
+  "MyceliumSkipSoilSuccession": true,
+  "EnableMyceliumEcology": true,
+  "MyceliumTreeHostRadius": 4,
+  "MyceliumForestMinForestCover": 0.12,
+  "MyceliumMeadowMaxForestCover": 0.45,
+  "EnableMyceliumNetworkSpread": true,
+  "MyceliumSpreadRate": 0.12,
+  "MyceliumSpreadAttemptsPerYear": 4,
+  "MyceliumSpreadMinFitness": 0.35
 }

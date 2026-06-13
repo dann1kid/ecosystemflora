@@ -6,7 +6,7 @@
 
 ## Short description (one-liner)
 
-Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread naturally, compete for space, and follow seasons — all on vanilla blocks.
+Living wild flora: flowers, grass, ferns, berries, reeds, trees, and **mycelium niches** spread naturally, compete for space, and follow seasons — all on vanilla blocks.
 
 ---
 
@@ -30,7 +30,7 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.11** — **Trees:** saplings no longer spread onto **lake ice, glacier ice, or snow**; tree spread uses the same physical gates as flowers (soil, fluid, mycelium). **Winter tree spread disabled** (Nov–Feb multiplier zero). Mature trunks are still not removed by mod stress death — growth remains vanilla treegen.
 
-**3.1.12** — **Mycelium ecology** around vanilla mushroom anchors (`BlockEntityMycelium`): meadow spread penalty near **forest** mycelium, forest understory bonus, meadow mushrooms **coexist** with flowers/grass. Anchor **stress/death** in wrong niche; slow **network spread** from mat edge; tree-cut cascade for forest types. **Inspect (I)** works on **mushroom caps** and **soil** (`forestfloor`, `soil-*`) — niche, network edge, next spread step.
+**3.1.12** — **Mycelium ecology** around vanilla mushroom anchors (`BlockEntityMycelium`): meadow spread penalty near **forest** mycelium, forest understory bonus, meadow mushrooms **coexist** with flowers/grass (spread onto meadow mycelium; network under existing flowers). Anchor **stress/death** in wrong niche; slow **network spread** from mat edge; tree-cut cascade for forest types. **Inspect (I)** on **mushroom caps** and **soil** (`forestfloor`, `soil-*`, peat, logs). **Config:** missing keys auto-added to `ModConfig/ecosystemflora.json` on startup.
 
 Press **I** on any wild plant, mushroom cap, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
@@ -54,6 +54,7 @@ Install the mod, load your world, and watch it change over the seasons.
 - **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
 - **Water crowfoot** — underwater column plant, 2–8 blocks deep (legacy radius spread; mat logic not applied yet)
+- **Vanilla mushrooms** — no new blocks; **mycelium ecology** (v3.1.12) adds niche competition, anchor stress, slow network spread, and **inspect (I)** on caps and soil
 
 ### Not just spreading — competing
 
@@ -109,13 +110,28 @@ With **`UseSoilSuccession`** on (default), meadow spread and natural plant death
 
 Turn off mat logic and restore legacy radius-4 spread for reeds: **`UseRhizomeSpreadForReeds: false`**. Lily mat: **`UseSurfaceMatSpreadForLilies`**.
 
+### Mycelium ecology (v3.1.12)
+
+Uses vanilla **`BlockEntityMycelium`** only — mushroom caps and regrowth stay vanilla.
+
+- **Forest mycelium** — soft penalty on **meadow** plant spread within ~7 blocks; bonus for **forest** understory (ferns, etc.)
+- **Meadow mycelium** — **coexists** with flowers and tallgrass; does not block meadow spread onto its ground cell
+- **Wrong niche** — meadow anchors stressed in dense forest; forest anchors need a nearby tree host; failed checks remove the BE (not the whole mod)
+- **Network spread** — slow orthogonal steps from the **edge** of a mat; different mushroom species can displace each other
+- **Tree cut** — forest mycelium anchors near a felled trunk accumulate stress (meadow / trunk polypore exempt)
+- **Inspect (I)** — aim at a **mushroom cap** or **forest soil** block for niche, stress, registry, network edge, next spread timing
+
+Toggle in config: **`EnableMyceliumNiche`**, **`EnableMyceliumEcology`**, **`EnableMyceliumNetworkSpread`** (all default **true**).
+
 ### Greenhouse support
 
 Flowers planted inside a fully enclosed glass-roofed room (a greenhouse) are protected from temperature stress — no land claim required. Grow tropical flowers in cold biomes inside your greenhouse.
 
 ### Easy to tune
 
-Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.
+Edit `ModConfig/ecosystemflora.json` (created on first server launch). Full example: `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.
+
+**Upgrading:** after an update, launch once — the mod **rewrites** your config file with any **new keys** at default values. Your existing settings are kept. Server always; client when a config file already exists.
 
 #### Config keys added or changed since 3.1.2
 
@@ -132,6 +148,15 @@ Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `a
 | `EnableMyceliumEcology` | true | **3.1.12** | Register mycelium BE: stress/death, inspect (I) on caps and soil |
 | `EnableMyceliumNetworkSpread` | true | **3.1.12** | Slow orthogonal network spread from mat edge |
 | `MyceliumZoneRadius` | 7 | **3.1.12** | Niche zone radius (matches vanilla growRange) |
+| `MyceliumMeadowSpreadPenalty` | 0.35 | **3.1.12** | Meadow spread fitness at anchor (tapers to 1.0 at zone edge) |
+| `MyceliumForestSpreadBonus` | 1.22 | **3.1.12** | Forest understory spread bonus at anchor |
+| `MyceliumSkipSoilSuccession` | true | **3.1.12** | Skip soil succession / fallow drip on mycelium anchor cells |
+| `MyceliumTreeHostRadius` | 4 | **3.1.12** | Tree-host search for forest mycelium survival |
+| `MyceliumForestMinForestCover` | 0.12 | **3.1.12** | Below this, forest mycelium stressed in open context |
+| `MyceliumMeadowMaxForestCover` | 0.45 | **3.1.12** | Above this, meadow mycelium stressed |
+| `MyceliumSpreadRate` | 0.12 | **3.1.12** | Scales mycelium network spread interval |
+| `MyceliumSpreadAttemptsPerYear` | 4 | **3.1.12** | Network spread attempts per game year at rate 1.0 |
+| `MyceliumSpreadMinFitness` | 0.35 | **3.1.12** | Min fitness to colonize / displace neighbor anchor |
 
 Related (unchanged keys, but behavior context from **3.1.2**):
 
@@ -180,7 +205,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `ApplyWorldgenRainForest` | true | Respect worldgen rain/forest values |
 | `UseCalendarScaledSpread` | true | Scale intervals to DaysPerYear |
 | `UseSpeciesSpreadRates` | true | Per-species spread rates from ecology table |
-| `EnableEcologyInspect` | true | Hotkey **I**: ecology report (spread mode, mat edge, seed % — **3.1.6**) |
+| `EnableEcologyInspect` | true | Hotkey **I**: ecology report (spread mode, mat edge, seed % — **3.1.6**; mycelium niche — **3.1.12**) |
 | `EnableEcologyAreaScan` | true | Include nearby-species mix in the inspect dialog |
 | `EnableTrampling` | false | Plants near player paths accumulate stress and die |
 | `TramplingSoilDegradation` | false | Trampled paths lose soil fertility |
@@ -192,6 +217,24 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `RhizomeSeedDispersalEnabled` | true | **3.1.4** — rare seed jumps for reed & lily mats |
 | `RhizomeSeedDispersalChanceScale` | 1.0 | **3.1.4** — multiplier on seed jump chance |
 | `RhizomeSeedDispersalFitnessScale` | 0.25 | **3.1.4** — fitness penalty for distant seed sites |
+| `EnableMyceliumNiche` | true | **3.1.12** — forest mycelium meadow spread penalty / forest bonus zone |
+| `EnableMyceliumEcology` | true | **3.1.12** — mycelium anchor stress, death, inspect (I) |
+| `EnableMyceliumNetworkSpread` | true | **3.1.12** — slow mycelium network spread from mat edge |
+| `MyceliumSkipSoilSuccession` | true | **3.1.12** — no soil succession on mycelium anchor cells |
+
+#### Mycelium tuning (numbers, **3.1.12**)
+
+| Setting | Default | What it does |
+|---------|:-------:|-------------|
+| `MyceliumZoneRadius` | 7 | Chebyshev radius for niche zone (vanilla growRange) |
+| `MyceliumMeadowSpreadPenalty` | 0.35 | Meadow spread fitness at forest mycelium anchor |
+| `MyceliumForestSpreadBonus` | 1.22 | Forest understory spread bonus at anchor |
+| `MyceliumTreeHostRadius` | 4 | Horizontal tree search for forest anchor survival |
+| `MyceliumForestMinForestCover` | 0.12 | Forest anchor stress below this cover in open |
+| `MyceliumMeadowMaxForestCover` | 0.45 | Meadow anchor stress above this cover |
+| `MyceliumSpreadRate` | 0.12 | Network spread interval scale (lower = slower) |
+| `MyceliumSpreadAttemptsPerYear` | 4 | Network attempts per year at spread rate 1.0 |
+| `MyceliumSpreadMinFitness` | 0.35 | Min fitness to spread to / displace neighbor cell |
 
 #### Ecology inspect tuning
 
