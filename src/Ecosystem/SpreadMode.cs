@@ -11,5 +11,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Water lily: floating pad mat, eight-connected edge on open water.</summary>
         SurfaceMat = 2,
+
+        /// <summary>Vanilla mycelium anchor: mat edge, one orthogonal step on soil.</summary>
+        MyceliumNetwork = 3,
     }
 }

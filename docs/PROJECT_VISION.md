@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-05-30 (стадия **Ecosystem v3.1.11**, версия **`3.1.11`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-06-13 (стадия **Ecosystem v3.1.12**, версия **`3.1.12`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -140,7 +140,12 @@ src/
     GreenhouseHelper.cs         # greenhouse room detection (cached)
     SpreadPreflight.cs          # cheap-first candidate filter
     SpreadVacancy.cs            # aquatic vacancy check
-    WildSoilGroundRules.cs      # farmland + mycelium spread gates
+    WildSoilGroundRules.cs      # farmland + active mycelium BE gates
+    MyceliumEcology.cs          # niche classification per mushroom type
+    MyceliumZone.cs             # meadow penalty / forest bonus near anchors
+    MyceliumCoexistence.cs      # meadow mycelium vs meadow flora
+    MyceliumNetworkSpread.cs    # slow orthogonal network spread
+    MyceliumInspect.cs          # inspect (I) anchor resolution
     LandClaimGuard.cs           # land claim respect
   Client/
     EcologyInspectClientSystem.cs
@@ -152,7 +157,7 @@ src/
   BlockEntity/
     (none — legacy strip in Ecosystem/LegacyBlockEntityMigration.cs)
 tests/
-  WildFarming.Tests.csproj     # xUnit, 129 tests
+  WildFarming.Tests.csproj     # xUnit, 158 tests
   SeasonProfileTests.cs
   SoilClassificationTests.cs
   SuitabilityEvaluatorTests.cs
@@ -205,18 +210,18 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.1.11`, версия `3.1.11`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.8 legacy BE; v3.1.9 spread debris + Terrain Slabs guard; v3.1.10 meadow harvest + inspect (I) fix; v3.1.11 tree spread ice/snow + winter spread off. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.1.12`, версия `3.1.12`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.8 legacy BE; v3.1.9 spread debris + Terrain Slabs guard; v3.1.10 meadow harvest + inspect (I) fix; v3.1.11 tree spread ice/snow + winter spread off; **v3.1.12 mycelium niche + ecology + network spread + inspect**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
 | Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
 | Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **129** |
+| Юнит-тесты (xUnit) | ✅ **158** |
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.11**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.1.12**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -526,7 +531,7 @@ nicheScore = f(soilKind, moistureLevel, lightLevel) × speciesPreference
 
 **Роли** (`PlantSoilRole`) — `WildSpeciesSoilSuccession`: MeadowColonizer, MeadowPerennial, ForestUnderstory, WetlandHerb, GrassMatrix, **NitrogenFixer** (lupine), …
 
-**События:** spread (register) и death (`RemoveEcologyPlant`). **Колонизация пустой пашни** разрешена (farmland как опора; без культуры сверху). **Сукцессия tier почвы** на `farmland-*` не применяется (`IsWildSpreadGround` → false). **Активная грибница** (mycelium BE) — spread запрещён.
+**События:** spread (register) и death (`RemoveEcologyPlant`). **Колонизация пустой пашни** разрешена (farmland как опора; без культуры сверху). **Сукцессия tier почвы** на `farmland-*` не применяется (`IsWildSpreadGround` → false). **Активная грибница** (mycelium BE) — hard block spread на якорной клетке; **v3.1.12** — soft niche в радиусе, stress/death якоря, network spread, осмотр (I).
 
 **Конфиг:** `UseSoilSuccession`, `SoilSuccessionStrength`, `UseFarmlandNutrientBridge`, `FarmlandNutrientBridgeStrength`, `EnableFallowRestoration`, `FallowRestorationStrength`.
 

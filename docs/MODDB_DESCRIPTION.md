@@ -30,7 +30,9 @@ Living wild flora: flowers, grass, ferns, berries, reeds, and trees spread natur
 
 **3.1.11** — **Trees:** saplings no longer spread onto **lake ice, glacier ice, or snow**; tree spread uses the same physical gates as flowers (soil, fluid, mycelium). **Winter tree spread disabled** (Nov–Feb multiplier zero). Mature trunks are still not removed by mod stress death — growth remains vanilla treegen.
 
-Press **I** on any wild plant to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
+**3.1.12** — **Mycelium ecology** around vanilla mushroom anchors (`BlockEntityMycelium`): meadow spread penalty near **forest** mycelium, forest understory bonus, meadow mushrooms **coexist** with flowers/grass. Anchor **stress/death** in wrong niche; slow **network spread** from mat edge; tree-cut cascade for forest types. **Inspect (I)** works on **mushroom caps** and **soil** (`forestfloor`, `soil-*`) — niche, network edge, next spread step.
+
+Press **I** on any wild plant, mushroom cap, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
 
@@ -79,7 +81,7 @@ Players trample nearby plants over time. Walk the same route often enough and fl
 
 ### Ecology inspect (hotkey **I**)
 
-Aim at any wild ecosystem plant and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), and dominant species nearby.
+Aim at any wild ecosystem plant, **mushroom cap**, or **mycelium soil block** and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), **mycelium niche / network edge** (mushrooms), and dominant species nearby.
 
 *Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
 
@@ -95,7 +97,7 @@ The mod does not replace vanilla worldgen blocks. Vanilla parents stay vanilla w
 
 Wild spread, displacement, and stress death are blocked inside **land claims**. Your gardens and farms are safe.
 
-Plants never spread onto **mycelium blocks** (mushroom spawning ground) — mushrooms continue to regrow naturally. Unclaimed empty **farmland** can be colonized by wild plants over time, and those plants slowly restore soil nutrients (fallow restoration).
+Plants never spread onto cells with an **active mycelium block entity** — mushrooms continue to regrow naturally. **3.1.12:** forest mycelium softens meadow spread nearby; meadow mushrooms do not repel flowers. Unclaimed empty **farmland** can be colonized by wild plants over time, and those plants slowly restore soil nutrients (fallow restoration).
 
 ### Soil succession (optional)
 
@@ -126,6 +128,10 @@ Edit `ModConfig/ecosystemflora.json` (created on first launch). Full example: `a
 | `RhizomeSeedDispersalFitnessScale` | 0.25 | **3.1.4** | Harder establishment for distant seed landing sites |
 | `UseSurfaceMatSpreadForLilies` | true | **3.1.5** | Water lily: floating **pad mat** on open water. **false** = legacy radius spread |
 | `EnableFlowerDrygrass` | true | **3.1.10** | Meadow harvest: **flowers** → block in world; **tallgrass** → no drop (knife/scythe → drygrass) |
+| `EnableMyceliumNiche` | true | **3.1.12** | Meadow spread penalty / forest bonus near vanilla mycelium anchors |
+| `EnableMyceliumEcology` | true | **3.1.12** | Register mycelium BE: stress/death, inspect (I) on caps and soil |
+| `EnableMyceliumNetworkSpread` | true | **3.1.12** | Slow orthogonal network spread from mat edge |
+| `MyceliumZoneRadius` | 7 | **3.1.12** | Niche zone radius (matches vanilla growRange) |
 
 Related (unchanged keys, but behavior context from **3.1.2**):
 

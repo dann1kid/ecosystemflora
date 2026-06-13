@@ -60,7 +60,8 @@ namespace WildFarming.Ecosystem
             }
 
             BlockPos groundPos = plantPos.DownCopy();
-            if (WildSoilGroundRules.HasActiveMycelium(acc, groundPos))
+            if (WildSoilGroundRules.HasActiveMycelium(acc, groundPos)
+                && !MyceliumCoexistence.AllowsMeadowFloraOverMycelium(acc, groundPos, requirements))
             {
                 return false;
             }

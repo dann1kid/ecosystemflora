@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.1.11**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **3.1.12**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -14,6 +14,7 @@
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
 | **Деревья** | `log-grown` → sapling; **3.1.11** — не на лёд/снег, зимний spread off | Нет living trunk; рост и смерть — **vanilla treegen**; **stress death не применяется** (`TerrestrialTree` ≠ stress loop) |
+| **Грибница** | Soft niche + stress + network spread вокруг vanilla BE (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — только playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 
 **Вывод:** ядро — **конкуренция клеток и ниша**, а не ботаническая модель. Это осознанный компромисс VS API, но «экосистема» для игрока = паттерны на карте, не жизненный цикл.

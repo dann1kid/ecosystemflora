@@ -34,6 +34,7 @@ namespace WildFarming.Ecosystem
             float fitness = SuitabilityEvaluator.ReproduceFitness(challenger, ctx);
             fitness = EcologySpreadFitness.ApplyContext(api, challenger, targetPos, fitness);
             fitness = EcologySpreadFitness.ApplyNiche(api, challenger, targetPos, fitness);
+            fitness = MyceliumZone.ApplySpreadFitness(api, challenger, targetPos, fitness);
             fitness *= SeasonEcology.SpreadActivityMultiplier(api, targetPos, challenger);
             if (challenger.SpreadRate > 0f)
             {

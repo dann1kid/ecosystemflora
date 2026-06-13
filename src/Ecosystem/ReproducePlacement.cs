@@ -181,7 +181,7 @@ namespace WildFarming.Ecosystem
                     else
                     {
                         foundPos = SurfacePlacement.TryFindPlantPos(
-                            acc, origin, dx, dz, verticalSearch, out plantPos, out _);
+                            acc, origin, dx, dz, verticalSearch, out plantPos, out _, requirements);
                     }
 
                     if (!foundPos) { dNoSurface++; continue; }

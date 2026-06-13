@@ -180,6 +180,8 @@ namespace WildFarming.Ecosystem
         public bool TryGetReproducer(BlockPos pos, out ReproducerEntry entry) =>
             registry.TryGetEntry(pos, out entry);
 
+        internal ICoreAPI ServerApi => api;
+
         public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason,
             SoilSuccessionEvent soilEvent = SoilSuccessionEvent.Death)
         {
@@ -314,6 +316,96 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        public void RegisterMyceliumAnchor(
+            BlockPos groundPos,
+            AssetLocation mushroomCode,
+            PlantRequirements requirements)
+        {
+            if (api == null || api.Side != EnumAppSide.Server) return;
+            if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
+            if (!EcosystemConfig.Loaded.EnableMyceliumEcology) return;
+            if (groundPos == null || mushroomCode == null || requirements == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (cfg.OnlyActivateNearPlayers
+                && !PlayerProximity.IsNearAnyPlayer(api, groundPos, cfg.PlayerActivationRadiusBlocks))
+            {
+                return;
+            }
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            if (!WildSoilGroundRules.HasActiveMycelium(acc, groundPos)) return;
+
+            try
+            {
+                requirements.SpreadMode = SpreadMode.MyceliumNetwork;
+                requirements.SpreadRate = cfg.MyceliumSpreadRate > 0f ? cfg.MyceliumSpreadRate : 0.12f;
+
+                double now = api.World.Calendar.TotalHours;
+                double stressDelay = cfg.StressRecheckHours > 0 ? cfg.StressRecheckHours : 18;
+                if (cfg.StaggerReproduceAttempts)
+                {
+                    stressDelay = api.World.Rand.NextDouble() * stressDelay;
+                }
+
+                double nextAttempt = now;
+                if (cfg.StaggerReproduceAttempts)
+                {
+                    double interval = MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, requirements);
+                    nextAttempt = now + api.World.Rand.NextDouble() * interval;
+                }
+
+                var entry = new ReproducerEntry(
+                    groundPos.Copy(),
+                    mushroomCode.Clone(),
+                    mushroomCode.Clone(),
+                    requirements,
+                    nextAttemptHours: nextAttempt)
+                {
+                    EstablishedAtHours = now,
+                    NextStressCheckAt = now + stressDelay,
+                };
+
+                registry.Add(entry);
+
+                if (cfg.VerboseLogging && cfg.ReproduceDebug)
+                {
+                    api.Logger.Notification(
+                        "[ecosystemflora] Registered mycelium {0} at {1} (registry {2})",
+                        mushroomCode,
+                        groundPos,
+                        registry.Count);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                api.Logger.Error("[ecosystemflora] RegisterMyceliumAnchor failed at {0}: {1}", groundPos, ex);
+            }
+        }
+
+        public void RemoveMyceliumAnchor(BlockPos groundPos, string reason)
+        {
+            if (api == null || groundPos == null) return;
+            if (!LandClaimGuard.AllowsEcologyChange(api, groundPos)) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            if (WildSoilGroundRules.HasActiveMycelium(acc, groundPos))
+            {
+                acc.RemoveBlockEntity(groundPos);
+            }
+
+            registry.Remove(groundPos);
+            InvalidateEnvironmentAround(groundPos);
+
+            if (EcosystemConfig.Loaded.VerboseLogging && EcosystemConfig.Loaded.ReproduceDebug)
+            {
+                api.Logger.Notification(
+                    "[ecosystemflora] Mycelium anchor removed at {0} ({1})",
+                    groundPos,
+                    reason ?? "removed");
+            }
+        }
+
         void OnChunkColumnLoaded(Vec2i chunkCoord, IWorldChunk[] chunks)
         {
             if (api?.World?.BlockAccessor == null) return;
@@ -321,6 +413,7 @@ namespace WildFarming.Ecosystem
             LegacyBlockEntityMigration.ScheduleStripColumn(api, chunkCoord);
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
             pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord));
+            MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
         }
 
         void OnChunkColumnUnloaded(Vec3i chunkCoord)
@@ -386,6 +479,19 @@ namespace WildFarming.Ecosystem
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {
                 FloraSymbiosis.CascadeOnHostRemoved(api, pos, oldBlock);
+            }
+
+            if (PlantCodeHelper.IsTreeLogGrownBlock(oldBlock))
+            {
+                MyceliumTreeCascade.OnTreeRemoved(api, pos, oldBlock);
+            }
+
+            if (WildSoilGroundRules.HasActiveMycelium(api.World.BlockAccessor, pos))
+            {
+                registry.Remove(pos);
+                SpacingIndex?.Remove(pos);
+                InvalidateEnvironmentAround(pos);
+                return;
             }
 
             if (FloraContextSampler.IsForestNeighborBlock(oldBlock)
@@ -469,9 +575,10 @@ namespace WildFarming.Ecosystem
 
         void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks, long budgetTicks = 0)
         {
-            if (maxChecks <= 0 || api == null || !EcosystemConfig.Loaded.EnableStressDeath) return;
+            if (maxChecks <= 0 || api == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableStressDeath && !cfg.EnableMyceliumEcology) return;
             IBlockAccessor acc = api.World.BlockAccessor;
             trampledScratch.Clear();
 
@@ -488,6 +595,36 @@ namespace WildFarming.Ecosystem
 
                     PlantRequirements req = entry.Requirements;
                     if (req == null) return false;
+
+                    if (req.Habitat == EcologyHabitat.MyceliumAnchor)
+                    {
+                        if (!cfg.EnableMyceliumEcology
+                            || !WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
+                        {
+                            return true;
+                        }
+
+                        if (!MyceliumStressEvaluator.MeetsSurvival(api, entry))
+                        {
+                            entry.FailedSurvivalChecks++;
+                        }
+                        else
+                        {
+                            entry.FailedSurvivalChecks = 0;
+                            entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                            return false;
+                        }
+
+                        if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks)
+                        {
+                            entry.NextStressCheckAt = now + cfg.StressRecheckHours;
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    if (!cfg.EnableStressDeath) return false;
 
                     if (req.Habitat != EcologyHabitat.Terrestrial) return false;
 
@@ -548,6 +685,13 @@ namespace WildFarming.Ecosystem
                 },
                 pos =>
                 {
+                    if (TryGetReproducer(pos, out ReproducerEntry entry)
+                        && entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+                    {
+                        RemoveMyceliumAnchor(pos, trampledScratch.Remove(pos) ? "trampled" : "mycelium-stress");
+                        return;
+                    }
+
                     bool trampled = trampledScratch.Remove(pos);
                     RemoveEcologyPlant(pos, cascadeSymbiosis: true,
                         reason: trampled ? "trampled" : "stress",
@@ -576,7 +720,7 @@ namespace WildFarming.Ecosystem
             ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
             if (activeChunks != null && activeChunks.Count == 0) return;
 
-            if (cfg.EnableStressDeath)
+            if (cfg.EnableStressDeath || cfg.EnableMyceliumEcology)
             {
                 int stressBudgetMs = cfg.StressBudgetMs > 0 ? cfg.StressBudgetMs : cfg.TickBudgetMs;
                 long budgetTicks = stressBudgetMs > 0
@@ -622,7 +766,9 @@ namespace WildFarming.Ecosystem
             registry.ProcessDue(
                 now,
                 cfg.MaxReproduceAttemptsPerTick,
-                entry => SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
+                    ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
+                    : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
                 entry =>
                 {
                     if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
@@ -631,6 +777,24 @@ namespace WildFarming.Ecosystem
                     }
 
                     Block block = acc.GetBlock(entry.Origin);
+                    if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+                    {
+                        if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
+                        {
+                            return false;
+                        }
+
+                        if (cfg.EnableMyceliumNetworkSpread)
+                        {
+                            MyceliumNetworkSpread.TrySpread(
+                                this,
+                                entry,
+                                cfg.VerboseLogging && cfg.ReproduceDebug);
+                        }
+
+                        return true;
+                    }
+
                     if (block.Id == 0 || !entry.IsMatureBlock(block))
                     {
                         return false;

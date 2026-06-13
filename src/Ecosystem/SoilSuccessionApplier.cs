@@ -25,18 +25,21 @@ namespace WildFarming.Ecosystem
 
             if (!WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role)) return;
 
-            if (evt == SoilSuccessionEvent.Spread && cfg.EnableFallowRestoration)
-            {
-                FallowRestoration.TryApplySpreadDrip(api, plantPos, role);
-            }
-
-            if (!cfg.UseSoilSuccession) return;
-
             if (!WildSpeciesSoilSuccession.TryGetImpact(species, evt, out SoilImpact impact)) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos groundPos = plantPos.DownCopy();
             if (!LandClaimGuard.AllowsEcologyChange(api, groundPos)) return;
+
+            bool myceliumGround = cfg.MyceliumSkipSoilSuccession
+                && WildSoilGroundRules.HasActiveMycelium(acc, groundPos);
+
+            if (evt == SoilSuccessionEvent.Spread && cfg.EnableFallowRestoration && !myceliumGround)
+            {
+                FallowRestoration.TryApplySpreadDrip(api, plantPos, role);
+            }
+
+            if (!cfg.UseSoilSuccession || myceliumGround) return;
 
             Block ground = acc.GetBlock(groundPos);
             if (!WildSoilBlockMapper.IsSuccessionTarget(ground)) return;

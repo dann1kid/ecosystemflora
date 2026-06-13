@@ -83,6 +83,8 @@ namespace WildFarming.Ecosystem
 
         public bool UsesSurfaceMatSpread => SpreadMode == SpreadMode.SurfaceMat;
 
+        public bool UsesMyceliumNetworkSpread => SpreadMode == SpreadMode.MyceliumNetwork;
+
         /// <summary>When true, never promote water-surface habitat to <see cref="SpreadMode.SurfaceMat"/>.</summary>
         public bool SuppressSurfaceMatSpread { get; set; }
 

@@ -7,7 +7,7 @@ Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
 - what to reuse from the original Wild Farming idea vs what to ignore;
-- current repo stage: **Ecosystem v3.1.11** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`;
+- current repo stage: **Ecosystem v3.1.12** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`;
 - agent rules and constraints.
 
 Quick constraints:
@@ -16,10 +16,10 @@ Quick constraints:
 - **Survival** — `MeetsSurvivalRequirements` on `SuitabilityEvaluator`; stress death after failed checks, not blocked planting.
 - **Wild reproduce** — `CanReproduce` + registry; `MinFitness` only here.
 - **Seasonality** — `WildSpeciesSeason` profiles; `SeasonEcology` multipliers; winter/fall stress.
-- Do **not** expand living trees, vines, mushrooms, or termites unless the user asks.
+- Do **not** expand living trees, vines, or termites unless the user asks. **Mycelium (v3.1.12):** soft niche around vanilla `BlockEntityMycelium` only — no custom mushroom blocks.
 - Legacy BE: `src/Ecosystem/LegacyBlockEntityMigration.cs` (EcoSystemLife / EcosystemPlant strip on load); new logic under `src/Ecosystem/`.
 - Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
-- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 129 tests).
+- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 158 tests).
 - Do **not** run alongside **wildfarmingrevival**.
 
 Entry: `src/WF.cs`, `src/Ecosystem/EcosystemSystem.cs`. Docs: `docs/PROJECT_VISION.md`, `docs/PROMPT.md`, `docs/THIRD_PARTY_ECOLOGY.md`, `docs/GAPS.md`, `docs/VISUAL_STUDIO.md`.

@@ -15,7 +15,8 @@ namespace WildFarming.Ecosystem
             int dz,
             int verticalSearch,
             out BlockPos plantPos,
-            out string failureReason)
+            out string failureReason,
+            PlantRequirements requirements = null)
         {
             plantPos = null;
             failureReason = null;
@@ -29,7 +30,7 @@ namespace WildFarming.Ecosystem
             {
                 int y = origin.Y + dy;
                 scanPos.Set(x, y, z);
-                if (!TryValidatePlantSite(acc, scanPos, out _)) continue;
+                if (!TryValidatePlantSite(acc, scanPos, requirements, out _)) continue;
 
                 int dist = System.Math.Abs(dy);
                 if (dist < bestDist)
@@ -42,7 +43,7 @@ namespace WildFarming.Ecosystem
             if (best == null)
             {
                 scanPos.Set(x, origin.Y, z);
-                TryValidatePlantSite(acc, scanPos, out string atSameY);
+                TryValidatePlantSite(acc, scanPos, requirements, out string atSameY);
                 failureReason =
                     $"No valid surface in column [{x},{z}] dy=±{verticalSearch}; dy=0: {atSameY}";
                 return false;
@@ -53,11 +54,15 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>True when a terrestrial plant cell is physically valid (cheap block gates).</summary>
-        public static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos) =>
-            TryValidatePlantSite(acc, pos, out _);
+        public static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos, PlantRequirements requirements = null) =>
+            TryValidatePlantSite(acc, pos, requirements, out _);
 
         /// <summary>Returns false with a concise reason suitable for diagnostics (VerboseLogging).</summary>
-        static bool TryValidatePlantSite(IBlockAccessor acc, BlockPos pos, out string rejectReason)
+        static bool TryValidatePlantSite(
+            IBlockAccessor acc,
+            BlockPos pos,
+            PlantRequirements requirements,
+            out string rejectReason)
         {
             rejectReason = null;
             Block space = acc.GetBlock(pos);
@@ -86,7 +91,8 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (WildSoilGroundRules.HasActiveMycelium(acc, groundScratch))
+            if (WildSoilGroundRules.HasActiveMycelium(acc, groundScratch)
+                && !MyceliumCoexistence.AllowsMeadowFloraOverMycelium(acc, groundScratch, requirements))
             {
                 rejectReason = $"active mycelium BE under cell ({ground.Code?.Path})";
                 return false;
@@ -133,7 +139,7 @@ namespace WildFarming.Ecosystem
             {
                 int y = origin.Y + dy;
                 scanPos.Set(x, y, z);
-                bool ok = TryValidatePlantSite(acc, scanPos, out string reason);
+                bool ok = TryValidatePlantSite(acc, scanPos, null, out string reason);
                 Block space = acc.GetBlock(scanPos);
                 groundScratch.Set(x, y - 1, z);
                 Block ground = acc.GetBlock(groundScratch);

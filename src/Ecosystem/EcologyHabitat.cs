@@ -11,5 +11,7 @@ namespace WildFarming.Ecosystem
         UnderwaterColumn = 3,
         /// <summary>Mature log-grown trunk spreads vanilla saplings; growth is vanilla treegen.</summary>
         TerrestrialTree = 4,
+        /// <summary>Vanilla <c>BlockEntityMycelium</c> anchor on soil or log (network spread — later phase).</summary>
+        MyceliumAnchor = 5,
     }
 }

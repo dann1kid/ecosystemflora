@@ -40,6 +40,11 @@ namespace WildFarming.Ecosystem
 
         public bool IsMatureBlock(Block block)
         {
+            if (Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+            {
+                return false;
+            }
+
             if (block?.Code == null) return false;
             string path = block.Code.Path;
             if (path != null && path.Contains("-harvested-")) return false;

@@ -59,6 +59,37 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (cfg.EnableMyceliumEcology
+                && MyceliumInspect.IsMushroomBlock(block)
+                && TryBuildMyceliumReport(api, pos, block, cfg, out report))
+            {
+                if (cfg.RespectLandClaims && report != null
+                    && !LandClaimGuard.AllowsEcologyChange(api, new BlockPos(report.X, report.Y, report.Z)))
+                {
+                    errorLangKey = "ecosystemflora:inspect-error-claim";
+                    report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
+                    return false;
+                }
+
+                MarkCooldown(player);
+                return true;
+            }
+
+            if (cfg.EnableMyceliumEcology
+                && MyceliumInspect.TryGetAnchorContext(acc, pos, out BlockPos soilAnchorPos, out _, out PlantRequirements soilReq)
+                && TryBuildMyceliumReportFromAnchor(api, soilAnchorPos, soilReq, cfg, out report))
+            {
+                if (cfg.RespectLandClaims && !LandClaimGuard.AllowsEcologyChange(api, soilAnchorPos))
+                {
+                    errorLangKey = "ecosystemflora:inspect-error-claim";
+                    report = new EcologyInspectReportPacket { ErrorLangKey = errorLangKey };
+                    return false;
+                }
+
+                MarkCooldown(player);
+                return true;
+            }
+
             string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (string.IsNullOrEmpty(species))
             {
@@ -268,6 +299,11 @@ namespace WildFarming.Ecosystem
                         : "ecosystemflora:inspect-line-symbiosis-missing");
             }
 
+            if (cfg.EnableMyceliumNiche && req.Habitat == EcologyHabitat.Terrestrial)
+            {
+                AppendMyceliumInspect(api, pos, req, lines);
+            }
+
             EnvironmentalContext ctx = EnvironmentalContext.SampleForSurvival(api, pos, req);
 
             if (!ctx.HasClimate)
@@ -347,6 +383,201 @@ namespace WildFarming.Ecosystem
                     }
                 }
             }
+        }
+
+        static bool TryBuildMyceliumReport(
+            ICoreAPI api,
+            BlockPos pos,
+            Block capBlock,
+            EcosystemConfig cfg,
+            out EcologyInspectReportPacket report)
+        {
+            report = null;
+            if (api?.World?.BlockAccessor == null || capBlock?.Code == null) return false;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            BlockPos ground = pos.DownCopy();
+
+            if (MyceliumInspect.TryGetAnchorContext(acc, pos, out BlockPos anchorPos, out _, out PlantRequirements anchorReq))
+            {
+                return TryBuildMyceliumReportFromAnchor(api, anchorPos, anchorReq, cfg, out report);
+            }
+
+            if (!MyceliumEcology.TryBuildRequirements(capBlock.Code, acc.GetBlock(ground), out PlantRequirements capReq))
+            {
+                return false;
+            }
+
+            var lines = new List<InspectLineLite>();
+            AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-no-be");
+            AppendMyceliumCapState(api, ground, capReq, lines, hasAnchorBe: false);
+
+            report = new EcologyInspectReportPacket
+            {
+                X = ground.X,
+                Y = ground.Y,
+                Z = ground.Z,
+                Species = capReq.Species,
+                InRegistry = false,
+                InspectLines = lines.ToArray(),
+                ScanRadius = cfg.EcologyInspectScanRadius,
+            };
+            return true;
+        }
+
+        static bool TryBuildMyceliumReportFromAnchor(
+            ICoreAPI api,
+            BlockPos anchorPos,
+            PlantRequirements anchorReq,
+            EcosystemConfig cfg,
+            out EcologyInspectReportPacket report)
+        {
+            report = null;
+            if (api == null || anchorPos == null || anchorReq == null) return false;
+
+            var lines = new List<InspectLineLite>();
+            AppendMyceliumCapState(api, anchorPos, anchorReq, lines, hasAnchorBe: true);
+
+            report = new EcologyInspectReportPacket
+            {
+                X = anchorPos.X,
+                Y = anchorPos.Y,
+                Z = anchorPos.Z,
+                Species = anchorReq.Species,
+                InRegistry = EcosystemSystem.Instance?.RegistryContains(anchorPos) ?? false,
+                InspectLines = lines.ToArray(),
+                ScanRadius = cfg.EcologyInspectScanRadius,
+            };
+            return true;
+        }
+
+        static void AppendMyceliumCapState(
+            ICoreAPI api,
+            BlockPos anchorPos,
+            PlantRequirements req,
+            List<InspectLineLite> lines,
+            bool hasAnchorBe)
+        {
+            AppendMyceliumAnchorState(api, anchorPos, req, lines);
+
+            if (!hasAnchorBe) return;
+
+            if (WildSoilGroundRules.HasActiveMycelium(api.World.BlockAccessor, anchorPos))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-anchor");
+            }
+        }
+
+        static void AppendMyceliumAnchorState(
+            ICoreAPI api,
+            BlockPos anchorPos,
+            PlantRequirements req,
+            List<InspectLineLite> lines)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            Block anchorBlock = api.World.BlockAccessor.GetBlock(anchorPos);
+            MyceliumNiche niche = MyceliumEcology.GetNicheForRequirements(req, anchorBlock);
+
+            AddInspectLine(lines, MyceliumEcology.NicheLangKey(niche));
+
+            ReproducerEntry entry = null;
+            if (EcosystemSystem.Instance != null
+                && EcosystemSystem.Instance.TryGetReproducer(anchorPos, out entry))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-registered");
+
+                if (entry.FailedSurvivalChecks > 0)
+                {
+                    AddInspectLine(
+                        lines,
+                        "ecosystemflora:inspect-line-stress",
+                        entry.FailedSurvivalChecks.ToString(),
+                        cfg.MaxFailedSurvivalChecks.ToString());
+                }
+                else
+                {
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-stress-ok");
+                }
+            }
+            else
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-unregistered");
+            }
+
+            if (MyceliumStressEvaluator.MeetsSurvival(api, anchorPos, req))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-survival-ok");
+            }
+            else
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-survival-bad");
+            }
+
+            if (cfg.EnableMyceliumNetworkSpread
+                && MyceliumEcology.GetNicheForRequirements(req, anchorBlock) != MyceliumNiche.TrunkPolypore)
+            {
+                IBlockAccessor acc = api.World.BlockAccessor;
+                bool frontier = MyceliumNetworkSpread.IsNetworkFrontier(
+                    api, acc, anchorPos, niche);
+                AddInspectLine(
+                    lines,
+                    frontier
+                        ? "ecosystemflora:inspect-line-mycelium-frontier-yes"
+                        : "ecosystemflora:inspect-line-mycelium-frontier-no");
+
+                if (entry != null && api.World?.Calendar != null)
+                {
+                    double hoursLeft = entry.NextAttemptHours - api.World.Calendar.TotalHours;
+                    if (hoursLeft < 0) hoursLeft = 0;
+                    double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-next-spread", daysLeft.ToString("0.#"));
+                }
+            }
+        }
+
+        static void AppendMyceliumInspect(
+            ICoreAPI api,
+            BlockPos pos,
+            PlantRequirements req,
+            List<InspectLineLite> lines)
+        {
+            if (api?.World?.BlockAccessor == null || req == null || pos == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            int radius = cfg.MyceliumZoneRadius > 0 ? cfg.MyceliumZoneRadius : MyceliumZone.VanillaGrowRange;
+            BlockPos groundPos = pos.DownCopy();
+
+            if (WildSoilGroundRules.HasActiveMycelium(api.World.BlockAccessor, groundPos))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-anchor");
+                return;
+            }
+
+            if (!MyceliumZone.TryGetNearestAnchorNiche(
+                api.World.BlockAccessor, groundPos, radius, out int distance, out MyceliumNiche nearestNiche))
+            {
+                return;
+            }
+
+            if (!WildSpeciesSoilSuccession.TryGetRole(req.Species, out PlantSoilRole role)) return;
+
+            float mult = MyceliumZone.SpreadMultiplierForRole(
+                role,
+                distance,
+                radius,
+                nearestNiche,
+                cfg.MyceliumMeadowSpreadPenalty,
+                cfg.MyceliumForestSpreadBonus);
+
+            if (System.Math.Abs(mult - 1f) < 0.02f) return;
+
+            AddInspectLine(
+                lines,
+                mult < 1f
+                    ? "ecosystemflora:inspect-line-mycelium-meadow-penalty"
+                    : "ecosystemflora:inspect-line-mycelium-forest-bonus",
+                distance.ToString(),
+                mult.ToString("0.##"));
         }
 
         static void AppendAreaScan(

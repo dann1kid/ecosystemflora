@@ -233,6 +233,50 @@ namespace WildFarming.Ecosystem
         /// <summary>Do not spread, displace, stress-remove, or change soil inside land claims.</summary>
         public bool RespectLandClaims { get; set; } = true;
 
+        // --- Mycelium niche (v3.1.12) ---
+
+        /// <summary>
+        /// Meadow spread penalty and forest understory bonus near active vanilla mycelium anchors
+        /// (aligned with <c>BlockEntityMycelium</c> growRange).
+        /// </summary>
+        public bool EnableMyceliumNiche { get; set; } = true;
+
+        /// <summary>Horizontal Chebyshev scan radius; vanilla growRange is 7.</summary>
+        public int MyceliumZoneRadius { get; set; } = 7;
+
+        /// <summary>Meadow-role spread fitness at the mycelium anchor cell (linear taper to 1.0 at radius).</summary>
+        public float MyceliumMeadowSpreadPenalty { get; set; } = 0.35f;
+
+        /// <summary>Forest-role spread fitness at the anchor (linear taper to 1.0 at radius).</summary>
+        public float MyceliumForestSpreadBonus { get; set; } = 1.22f;
+
+        /// <summary>Skip soil succession and fallow drip on blocks with active mycelium BE.</summary>
+        public bool MyceliumSkipSoilSuccession { get; set; } = true;
+
+        /// <summary>Register vanilla BlockEntityMycelium anchors for stress ecology (network spread — later).</summary>
+        public bool EnableMyceliumEcology { get; set; } = true;
+
+        /// <summary>Horizontal tree-host search radius for forest mycelium survival.</summary>
+        public int MyceliumTreeHostRadius { get; set; } = 4;
+
+        /// <summary>Below this local forest cover, forest mycelium accumulates stress in open context.</summary>
+        public float MyceliumForestMinForestCover { get; set; } = 0.12f;
+
+        /// <summary>Above this cover, meadow mycelium accumulates stress.</summary>
+        public float MyceliumMeadowMaxForestCover { get; set; } = 0.45f;
+
+        /// <summary>Slow orthogonal spread of vanilla mycelium anchors (phase 3).</summary>
+        public bool EnableMyceliumNetworkSpread { get; set; } = true;
+
+        /// <summary>Scales mycelium spread interval (lower = slower).</summary>
+        public float MyceliumSpreadRate { get; set; } = 0.12f;
+
+        /// <summary>Network spread attempts per in-game year at <see cref="MyceliumSpreadRate"/> = 1.</summary>
+        public double MyceliumSpreadAttemptsPerYear { get; set; } = 4;
+
+        /// <summary>Minimum fitness to colonize or displace a neighbor anchor cell.</summary>
+        public float MyceliumSpreadMinFitness { get; set; } = 0.35f;
+
         // --- Seasonal ecology (v2.3) ---
 
         /// <summary>Spread chance and interval follow <see cref="WildSpeciesSeason"/> by game season.</summary>
