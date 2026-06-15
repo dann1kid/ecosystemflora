@@ -1,6 +1,6 @@
-# Wild tree aging (v3.6)
+# Wild tree maturation (v3.6)
 
-Registered wild trees (`log-grown` trunk base in the ecology registry) **mature once per game year** near active players: taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
+Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** near active players: taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
 
 Updated: 2026-06-14.
 
@@ -10,13 +10,28 @@ Updated: 2026-06-14.
 
 | When | What |
 |------|------|
-| **Registration** | Age estimated from trunk + **connected** crown (not nearby trees); worldgen-sized trees read as ~25–45 y, not max age |
-| **Each game year** | `TreeAgeYears++`, then 0–2 block placements toward species target |
+| **Registration** | No stored age — structure measured live from blocks |
+| **Each game year** | 0–2 block placements toward species max trunk / crown |
 | **Young trees** | Mostly upward `log-grown` extension |
-| **Mid age** | Mix of height + outward `leavesbranchy` |
-| **Old age** | Mostly crown spread + occasional `leaves-grown`; very old trees grow rarely |
+| **Mid maturation** | Mix of height + outward `leavesbranchy` |
+| **Near max size** | Mostly crown spread + occasional `leaves-grown`; growth slows |
 
 No custom blocks, no save BE — only vanilla **grown** codes. Sapling spread and vanilla treegen on plant are unchanged.
+
+---
+
+## Maturation index
+
+Progress is **block-based**, not calendar years:
+
+```
+maturity = 55% × (trunk blocks / species max trunk)
+         + 45% × (crown radius / species max crown)
+```
+
+Inspect shows: `Maturation: 41% (trunk 14/34 blocks, crown radius 5/8)`.
+
+Growth runs while structure is below profile max (× `TreeGrowthActivityScale`). Chopping the crown lowers the index; the tree can grow again on later ticks.
 
 ---
 
@@ -34,8 +49,8 @@ CanopyBlockHelper block resolve + land claims
 
 | Component | File |
 |-----------|------|
-| Species max size / age | `WildTreeGrowthProfiles.cs` |
-| Target height & radius vs age | `TreeGrowthTargets.cs` |
+| Species max size | `WildTreeGrowthProfiles.cs` |
+| Maturity fraction + targets | `TreeGrowthTargets.cs` |
 | Measure trunk / crown | `TreeStructureProbe.cs` |
 | Block placement | `TreeGrowthApplier.cs` |
 | Tick scheduling | `TreeGrowthScheduler.cs` |
@@ -44,16 +59,16 @@ CanopyBlockHelper block resolve + land claims
 
 ## Species targets (defaults)
 
-| Wood | Max age | Max trunk (blocks) | Max crown radius |
-|------|---------|-------------------|------------------|
-| Oak | 120 | 34 | 8 |
-| Birch | 90 | 26 | 6 |
-| Maple | 100 | 28 | 7 |
-| Redwood | 140 | 48 | 6 |
-| Kapok | 110 | 40 | 9 |
-| Others | 80–110 | 22–38 | 4–7 |
+| Wood | Max trunk (blocks) | Max crown radius |
+|------|-------------------|------------------|
+| Oak | 34 | 8 |
+| Birch | 26 | 6 |
+| Maple | 28 | 7 |
+| Redwood | 48 | 6 |
+| Kapok | 40 | 9 |
+| Others | 22–38 | 4–9 |
 
-A **100-year oak** in a long-lived world approaches full profile height and a wide branchy crown instead of staying worldgen-small.
+Ancient oaks in long-lived worlds approach full profile height and a wide branchy crown instead of staying worldgen-small.
 
 ---
 
@@ -63,17 +78,17 @@ A **100-year oak** in a long-lived world approaches full profile height and a wi
 |-----|---------|-------------|
 | `EnableTreeAging` | `true` | Master toggle |
 | `MaxTreeGrowthAttemptsPerTick` | `6` | Trees advanced per reproduce tick (2 s) |
-| `TreeGrowthActivityScale` | `1` | Scales target height/radius |
+| `TreeGrowthActivityScale` | `1` | Scales max trunk height / crown radius |
 
 Requires `EcosystemEnabled`, `OnlyActivateNearPlayers` radius (same as spread), and a registered trunk.
 
-**Inspect (I)** on a registered trunk shows `Tree age: X / Y years` and current vs target trunk/crown size.
+**Inspect (I)** on a registered trunk shows maturation % and trunk/crown vs species max.
 
 ---
 
 ## Limits (v1)
 
 - Single-trunk column height from registry origin; wide multi-trunk oaks grow from crown anchors in a 14-block scan.
-- No shrink on damage — age only adds blocks while below target.
-- Age is re-estimated on re-registration after restart (from structure, stable if growth persisted in world).
-- Conifers and deciduous both age; bambo / aged logs excluded from registry.
+- Crown radius uses flood-fill from trunk — not neighbouring trees of same wood.
+- No tree death / senescence yet — 100% maturation = max profile size, not end of life.
+- Conifers and deciduous both mature; bambo / aged logs excluded from registry.

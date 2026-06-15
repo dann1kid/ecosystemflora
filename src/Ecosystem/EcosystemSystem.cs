@@ -483,16 +483,7 @@ namespace WildFarming.Ecosystem
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
                 {
-                    string wood = PlantCodeHelper.GetTreeWood(matureBlock);
-                    if (!string.IsNullOrEmpty(wood))
-                    {
-                        entry.TreeAgeYears = TreeStructureProbe.EstimateAgeYears(
-                            api.World.BlockAccessor,
-                            origin,
-                            wood);
-                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
-                    }
-
+                    entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
                     foliageCells.OnBlockAdded(origin);
                 }
 

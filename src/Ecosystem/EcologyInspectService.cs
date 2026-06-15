@@ -557,38 +557,21 @@ namespace WildFarming.Ecosystem
                 entry.Origin,
                 wood);
 
-            int ageYears = entry.TreeAgeYears;
-            int structureAge = TreeGrowthTargets.EstimateAgeYears(
+            int maxTrunk = TreeGrowthTargets.MaxTargetTrunkHeight(profile, cfg.TreeGrowthActivityScale);
+            int maxCrown = TreeGrowthTargets.MaxTargetCrownRadius(profile, cfg.TreeGrowthActivityScale);
+            int maturityPct = TreeGrowthTargets.MaturityPercent(
                 metrics.TrunkHeight,
                 metrics.CrownRadius,
                 profile);
-            if (ageYears >= profile.MaxAgeYears - 1 && structureAge < ageYears - 15)
-            {
-                ageYears = structureAge;
-            }
-
-            int targetHeight = TreeGrowthTargets.TargetTrunkHeight(
-                ageYears,
-                profile,
-                cfg.TreeGrowthActivityScale);
-            int targetRadius = TreeGrowthTargets.TargetCrownRadius(
-                ageYears,
-                profile,
-                cfg.TreeGrowthActivityScale);
 
             AddInspectLine(
                 lines,
-                "ecosystemflora:inspect-line-tree-age",
-                ageYears.ToString(),
-                profile.MaxAgeYears.ToString());
-
-            AddInspectLine(
-                lines,
-                "ecosystemflora:inspect-line-tree-size",
+                "ecosystemflora:inspect-line-tree-maturity",
+                maturityPct.ToString(),
                 metrics.TrunkHeight.ToString(),
+                maxTrunk.ToString(),
                 metrics.CrownRadius.ToString(),
-                targetHeight.ToString(),
-                targetRadius.ToString());
+                maxCrown.ToString());
         }
 
         static void AppendMyceliumInspect(

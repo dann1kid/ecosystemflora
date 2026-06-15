@@ -16,7 +16,6 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc,
             BlockPos trunkBase,
             string wood,
-            int ageYears,
             int gameYear,
             float activityScale)
         {
@@ -26,19 +25,30 @@ namespace WildFarming.Ecosystem
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
             TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
 
-            int targetHeight = TreeGrowthTargets.TargetTrunkHeight(ageYears, profile, activityScale);
-            int targetRadius = TreeGrowthTargets.TargetCrownRadius(ageYears, profile, activityScale);
+            int targetHeight = TreeGrowthTargets.MaxTargetTrunkHeight(profile, activityScale);
+            int targetRadius = TreeGrowthTargets.MaxTargetCrownRadius(profile, activityScale);
 
-            int ops = OpsForAge(ageYears, profile, trunkBase, wood, gameYear);
+            if (metrics.TrunkHeight >= targetHeight && metrics.CrownRadius >= targetRadius)
+            {
+                return 0;
+            }
+
+            float maturity = TreeGrowthTargets.MaturityFraction(
+                metrics.TrunkHeight,
+                metrics.CrownRadius,
+                profile);
+            int ops = OpsForMaturity(maturity, trunkBase, wood, gameYear);
             if (ops <= 0) return 0;
 
             int placed = 0;
             bool needHeight = metrics.TrunkHeight < targetHeight;
             bool needSpread = metrics.CrownRadius < targetRadius;
+            float trunkFraction = TreeGrowthTargets.TrunkFraction(metrics.TrunkHeight, profile);
 
             for (int i = 0; i < ops; i++)
             {
-                bool preferHeight = needHeight && (!needSpread || PreferHeightPass(i, ageYears, profile, trunkBase, wood, gameYear));
+                bool preferHeight = needHeight
+                    && (!needSpread || PreferHeightPass(i, trunkFraction, trunkBase, wood, gameYear));
                 if (preferHeight)
                 {
                     if (TryExtendTrunk(api, acc, metrics.TrunkTop, wood))
@@ -46,6 +56,7 @@ namespace WildFarming.Ecosystem
                         placed++;
                         metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
                         needHeight = metrics.TrunkHeight < targetHeight;
+                        trunkFraction = TreeGrowthTargets.TrunkFraction(metrics.TrunkHeight, profile);
                         continue;
                     }
                 }
@@ -67,34 +78,31 @@ namespace WildFarming.Ecosystem
             return placed;
         }
 
-        static int OpsForAge(
-            int ageYears,
-            WildTreeGrowthProfiles.Profile profile,
+        static int OpsForMaturity(
+            float maturity,
             BlockPos trunkBase,
             string wood,
             int gameYear)
         {
-            float mature = TreeGrowthTargets.GrowthFraction(ageYears, profile.MaxAgeYears);
-            if (mature >= 0.98f)
+            if (maturity >= 0.98f)
             {
                 float gate = CanopyBlockHelper.DeterministicNoise(trunkBase, wood, gameYear + 900);
                 return gate < 0.25f ? 1 : 0;
             }
 
-            if (ageYears < profile.MaxAgeYears * 0.35f) return 2;
-            if (mature < 0.75f) return 2;
+            if (maturity < 0.35f) return 2;
+            if (maturity < 0.75f) return 2;
             return 1;
         }
 
         static bool PreferHeightPass(
             int opIndex,
-            int ageYears,
-            WildTreeGrowthProfiles.Profile profile,
+            float trunkFraction,
             BlockPos trunkBase,
             string wood,
             int gameYear)
         {
-            if (ageYears > profile.MaxAgeYears * 0.45f) return false;
+            if (trunkFraction > 0.45f) return false;
             float gate = CanopyBlockHelper.DeterministicNoise(trunkBase, wood, gameYear + 700 + opIndex);
             return gate < 0.62f;
         }

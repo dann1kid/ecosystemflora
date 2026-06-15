@@ -38,16 +38,6 @@ namespace WildFarming.Ecosystem
             return new TreeStructureMetrics(trunkHeight, crownRadius, trunkTop);
         }
 
-        public static int EstimateAgeYears(IBlockAccessor acc, BlockPos trunkBase, string wood)
-        {
-            TreeStructureMetrics metrics = Measure(acc, trunkBase, wood);
-            WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-            return TreeGrowthTargets.EstimateAgeYears(
-                metrics.TrunkHeight,
-                metrics.CrownRadius,
-                profile);
-        }
-
         static BlockPos FindTrunkTop(IBlockAccessor acc, BlockPos trunkBase, string wood)
         {
             var top = trunkBase.Copy();

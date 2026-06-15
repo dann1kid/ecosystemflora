@@ -77,29 +77,11 @@ namespace WildFarming.Ecosystem
                 string wood = PlantCodeHelper.GetTreeWood(block);
                 if (string.IsNullOrEmpty(wood) || !WildTreeEcology.TryGet(wood, out _)) continue;
 
-                WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-
-                int structureAge = TreeStructureProbe.EstimateAgeYears(acc, entry.Origin, wood);
-                if (entry.TreeAgeYears >= profile.MaxAgeYears - 1
-                    && structureAge < profile.MaxAgeYears * 2 / 3)
-                {
-                    entry.TreeAgeYears = structureAge;
-                }
-
-                entry.TreeAgeYears++;
-                if (entry.TreeAgeYears < 1) entry.TreeAgeYears = 1;
-
-                if (entry.TreeAgeYears > profile.MaxAgeYears)
-                {
-                    entry.TreeAgeYears = profile.MaxAgeYears;
-                }
-
                 int placed = TreeGrowthApplier.TryGrowYear(
                     api,
                     acc,
                     entry.Origin,
                     wood,
-                    entry.TreeAgeYears,
                     gameYear,
                     scale);
 
@@ -107,9 +89,16 @@ namespace WildFarming.Ecosystem
 
                 if (placed > 0 && cfg.ReproduceDebug)
                 {
+                    WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+                    TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
+                    int pct = TreeGrowthTargets.MaturityPercent(
+                        metrics.TrunkHeight,
+                        metrics.CrownRadius,
+                        profile);
+
                     api.Logger.Notification(
-                        "[ecosystemflora] Tree aged {0}y ({1}): +{2} block(s) at {3}",
-                        entry.TreeAgeYears,
+                        "[ecosystemflora] Tree maturation {0}% ({1}): +{2} block(s) at {3}",
+                        pct,
                         wood,
                         placed,
                         entry.Origin);

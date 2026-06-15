@@ -1,67 +1,61 @@
-using WildFarming.Ecosystem;
-using Xunit;
-
-namespace WildFarming.Tests
-{
-    public class TreeGrowthTargetsTests
-    {
-        [Fact]
-        public void Oak_AtMaxAge_ReachesProfileHeight()
-        {
-            var profile = WildTreeGrowthProfiles.Resolve("oak");
-            int height = TreeGrowthTargets.TargetTrunkHeight(profile.MaxAgeYears, profile, 1f);
-            int radius = TreeGrowthTargets.TargetCrownRadius(profile.MaxAgeYears, profile, 1f);
-
-            Assert.Equal(profile.MaxTrunkHeight, height);
-            Assert.Equal(profile.MaxCrownRadius, radius);
-        }
-
-        [Fact]
-        public void Oak_YoungTree_IsShort()
-        {
-            var profile = WildTreeGrowthProfiles.Resolve("oak");
-            int height = TreeGrowthTargets.TargetTrunkHeight(5, profile, 1f);
-            Assert.True(height < profile.MaxTrunkHeight / 2);
-        }
-
-        [Fact]
-        public void EstimateAge_WorldgenSizedTree_IsYoungMature()
-        {
-            var profile = WildTreeGrowthProfiles.Resolve("oak");
-            int age = TreeGrowthTargets.EstimateAgeYears(14, 5, profile);
-
-            Assert.InRange(age, 20, 45);
-        }
-
-        [Fact]
-        public void EstimateAge_FullSizeTree_IsNearMaxAge()
-        {
-            var profile = WildTreeGrowthProfiles.Resolve("oak");
-            int age = TreeGrowthTargets.EstimateAgeYears(
-                profile.MaxTrunkHeight,
-                profile.MaxCrownRadius,
-                profile);
-
-            Assert.InRange(age, profile.MaxAgeYears - 5, profile.MaxAgeYears);
-        }
-
-        [Fact]
-        public void EstimateAge_SmallSapling_IsVeryYoung()
-        {
-            var profile = WildTreeGrowthProfiles.Resolve("oak");
-            int age = TreeGrowthTargets.EstimateAgeYears(3, 1, profile);
-
-            Assert.InRange(age, 1, 12);
-        }
-
-        [Theory]
-        [InlineData(0f, 0f)]
-        [InlineData(60f, 0.5f)]
-        [InlineData(120f, 1f)]
-        public void GrowthFraction_IsMonotonic(int age, float expectedMin)
-        {
-            float t = TreeGrowthTargets.GrowthFraction(age, 120);
-            Assert.True(t >= expectedMin - 0.01f);
-        }
-    }
-}
+using WildFarming.Ecosystem;
+using Xunit;
+
+namespace WildFarming.Tests
+{
+    public class TreeGrowthTargetsTests
+    {
+        [Fact]
+        public void Oak_MaxTargets_MatchProfile()
+        {
+            var profile = WildTreeGrowthProfiles.Resolve("oak");
+            int height = TreeGrowthTargets.MaxTargetTrunkHeight(profile, 1f);
+            int radius = TreeGrowthTargets.MaxTargetCrownRadius(profile, 1f);
+
+            Assert.Equal(profile.MaxTrunkHeight, height);
+            Assert.Equal(profile.MaxCrownRadius, radius);
+        }
+
+        [Fact]
+        public void Oak_WorldgenSizedTree_IsPartiallyMature()
+        {
+            var profile = WildTreeGrowthProfiles.Resolve("oak");
+            int pct = TreeGrowthTargets.MaturityPercent(14, 5, profile);
+
+            Assert.InRange(pct, 35, 65);
+        }
+
+        [Fact]
+        public void Oak_FullSizeTree_IsFullyMature()
+        {
+            var profile = WildTreeGrowthProfiles.Resolve("oak");
+            int pct = TreeGrowthTargets.MaturityPercent(
+                profile.MaxTrunkHeight,
+                profile.MaxCrownRadius,
+                profile);
+
+            Assert.Equal(100, pct);
+        }
+
+        [Fact]
+        public void Oak_SmallSapling_IsLowMaturity()
+        {
+            var profile = WildTreeGrowthProfiles.Resolve("oak");
+            int pct = TreeGrowthTargets.MaturityPercent(3, 1, profile);
+
+            Assert.InRange(pct, 5, 25);
+        }
+
+        [Theory]
+        [InlineData(10, 3, 0.35f)]
+        [InlineData(34, 8, 1f)]
+        public void MaturityFraction_ScalesWithStructure(int trunk, int crown, float expectedMin)
+        {
+            var profile = WildTreeGrowthProfiles.Resolve("oak");
+            float fraction = TreeGrowthTargets.MaturityFraction(trunk, crown, profile);
+
+            Assert.InRange(fraction, expectedMin - 0.05f, 1f);
+        }
+    }
+}
+
