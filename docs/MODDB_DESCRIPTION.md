@@ -36,7 +36,7 @@ Living wild flora: flowers, grass, ferns, berries, reeds, trees, and **mycelium 
 
 **3.5.0** — **Canopy ambience:** subtle leaf particles and flutter near tree crowns (client-side; respects view distance and particle settings). Autumn crown sync fix for mixed foliage states.
 
-**3.6.0** — **Wild tree maturation:** registered trunks grow taller/wider once per game year (`EnableTreeAging`, all loaded chunks). **Senescence:** at species calendar horizon (`EnableTreeSenescence`), the whole tree is removed (trunk + crown). Calendar age **persists across saves and server restarts** (inspect after chunk re-scan). **Inspect (I)** on any trunk log shows age, size, senescence status.
+**3.6.0** — **Wild tree maturation:** registered trunks grow taller/wider once per game year (`EnableTreeAging`, all loaded chunks). **Senescence:** at species calendar horizon (`EnableTreeSenescence`), the whole tree is removed (trunk + crown). Calendar age **persists across saves and server restarts** (inspect after chunk re-scan). **Inspect (I)** on any trunk log shows age, size, senescence status. In-game handbook: *Trees*, *Ecology Inspect*, *Seasonal Canopy*.
 
 Press **I** on any wild plant, mushroom cap, tree trunk, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
@@ -89,7 +89,7 @@ Players trample nearby plants over time. Walk the same route often enough and fl
 
 ### Ecology inspect (hotkey **I**)
 
-Aim at any wild ecosystem plant, **mushroom cap**, **tree trunk**, or **mycelium soil block** and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), **mycelium niche / network edge** (mushrooms), **tree calendar age / structure size** (trunks), and dominant species nearby.
+Press **I** on any wild plant, **tree trunk**, **mushroom cap**, or **mycelium soil block** for spread timing, stress, seasons, tree age/size, mat status, and mycelium niche. See in-game handbook pages *Ecology Inspect*, *Trees*, and *Seasonal Canopy*.
 
 *Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
 

@@ -4,6 +4,8 @@ Registered wild trees (`log-grown` trunk base in the ecology registry) **grow on
 
 Updated: 2026-06-14.
 
+In-game handbook (en/ru): **Overview**, **Trees**, **Seasonal Canopy**, **Ecology Inspect (I)**, **Configuration Guide**.
+
 ---
 
 ## Two axes (size vs age)

@@ -81,8 +81,8 @@
 
 | OK | Недоработано |
 |----|--------------|
-| Handbook en/ru (aquatic mat, tuning) | **de.json** — старые тексты |
-| Inspect I — mat frontier | ModDB changelog 3.1.x не собран одним блоком для игроков |
+| Handbook en/ru (aquatic mat, tuning, trees, canopy, inspect) | **de.json** — старые тексты |
+| Inspect I — mat frontier | ModDB changelog 3.1.x–3.6 собран в MODDB_DESCRIPTION |
 | `ecosystemflora.example.json` | ~40 ключей — порог для новичка |
 | PROGRESS / VISION | Были отстающие от 3.1.6 (синхронизация — этот проход) |
 
