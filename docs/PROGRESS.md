@@ -1,13 +1,13 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v3.2.0` — seasonal canopy phenology (deciduous); prior **3.1.12** mycelium + tree spread.  
-**Версия мода:** `3.2.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit  
+**Текущая стадия:** `Ecosystem v3.5.0` — canopy ambience + **v3.6** wild tree maturation (см. [`TREE_AGING.md`](TREE_AGING.md)); prior **3.2.0** seasonal canopy phenology; **3.1.12** mycelium + tree spread.  
+**Версия мода:** `3.5.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit  
 
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-06-14 (код **3.2.0**, canopy phenology).
+Последнее обновление документации: 2026-06-14 (код **3.5.0**, tree maturation v3.6, inspect trunk fix).
 
-См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки), [GAPS.md](GAPS.md) (пробелы идеи), [CANOPY_PHENOLOGY.md](CANOPY_PHENOLOGY.md) (сезонная листва).
+См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки), [GAPS.md](GAPS.md) (пробелы идеи), [CANOPY_PHENOLOGY.md](CANOPY_PHENOLOGY.md) (сезонная листва), [CANOPY_AMBIENCE.md](CANOPY_AMBIENCE.md) (частицы кроны), [TREE_AGING.md](TREE_AGING.md) (зрелость диких деревьев).
 
 ---
 
@@ -44,7 +44,7 @@
 | **Тростник** | `tallplant-coopersreed-*` (рогоз), `tallplant-tule-*` (камыш), `tallplant-papyrus-*` (папирус) |
 | **Поверхностная вода** | `waterlily` (кувшинка) |
 | **Подводный** | `aquatic-watercrowfoot-*` (водяной лютик: section / tip / top) |
-| **Деревья** | `log-grown-{wood}-*` → spread `sapling-{wood}-free` (14 пород; бамбук/aged — нет) |
+| **Деревья** | `log-grown-{wood}-*` → spread `sapling-{wood}-free` (14 пород); **v3.6** годовое укрупнение (`EnableTreeAging`), inspect возраст/размер — [`TREE_AGING.md`](TREE_AGING.md) |
 | **Ягоды** | `fruitingbush-wild-*` (10 видов) → тот же блок; почва + `LocalForestCover` |
 | **Папоротники** | `fern-*` (4) + `tallfern` — лес/влажность, свет ≥7 под кроной |
 | **Грибница** | Vanilla `BlockEntityMycelium` под `soil-*` / `forestfloor` / ствол — ниша, стресс, медленный network spread (**3.1.12**) |

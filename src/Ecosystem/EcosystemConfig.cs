@@ -198,7 +198,7 @@ namespace WildFarming.Ecosystem
         /// <summary>Wild trees processed per reproduce tick (round-robin near players).</summary>
         public int MaxTreeGrowthAttemptsPerTick { get; set; } = 6;
 
-        /// <summary>Multiplier on species max height / crown radius targets.</summary>
+        /// <summary>Multiplier on growth pace vs reference size (higher = faster maturation).</summary>
         public float TreeGrowthActivityScale { get; set; } = 1f;
 
         // --- Flora context (v2) ---

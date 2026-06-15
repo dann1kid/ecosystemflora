@@ -2,39 +2,46 @@ using System.Collections.Generic;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Species size targets for wild tree maturation (grown blocks only).</summary>
+    /// <summary>Species reference size (typical worldgen mature) and calendar senescence horizon.</summary>
     internal static class WildTreeGrowthProfiles
     {
         public readonly struct Profile
         {
-            public Profile(int maxTrunkHeight, int maxCrownRadius)
+            public Profile(int referenceTrunkHeight, int referenceCrownRadius, int senescenceAgeYears)
             {
-                MaxTrunkHeight = maxTrunkHeight;
-                MaxCrownRadius = maxCrownRadius;
+                ReferenceTrunkHeight = referenceTrunkHeight;
+                ReferenceCrownRadius = referenceCrownRadius;
+                SenescenceAgeYears = senescenceAgeYears;
             }
 
-            public int MaxTrunkHeight { get; }
-            public int MaxCrownRadius { get; }
+            /// <summary>Typical mature worldgen trunk height — display / growth pacing only, not a cap.</summary>
+            public int ReferenceTrunkHeight { get; }
+
+            /// <summary>Typical mature worldgen crown radius — display / growth pacing only, not a cap.</summary>
+            public int ReferenceCrownRadius { get; }
+
+            /// <summary>Calendar years at registration when senescence may begin (future death).</summary>
+            public int SenescenceAgeYears { get; }
         }
 
-        static readonly Profile Default = new Profile(22, 5);
+        static readonly Profile Default = new Profile(12, 4, 80);
 
         static readonly Dictionary<string, Profile> ByWood = new Dictionary<string, Profile>
         {
-            ["oak"] = new Profile(34, 8),
-            ["birch"] = new Profile(26, 6),
-            ["maple"] = new Profile(28, 7),
-            ["crimsonkingmaple"] = new Profile(24, 7),
-            ["pine"] = new Profile(38, 5),
-            ["larch"] = new Profile(32, 5),
-            ["redwood"] = new Profile(48, 6),
-            ["baldcypress"] = new Profile(36, 6),
-            ["greenspirecypress"] = new Profile(30, 4),
-            ["acacia"] = new Profile(22, 7),
-            ["kapok"] = new Profile(40, 9),
-            ["ebony"] = new Profile(28, 7),
-            ["purpleheart"] = new Profile(30, 7),
-            ["walnut"] = new Profile(30, 7),
+            ["oak"] = new Profile(14, 5, 120),
+            ["birch"] = new Profile(12, 4, 90),
+            ["maple"] = new Profile(13, 5, 100),
+            ["crimsonkingmaple"] = new Profile(12, 5, 90),
+            ["pine"] = new Profile(16, 3, 110),
+            ["larch"] = new Profile(14, 3, 100),
+            ["redwood"] = new Profile(20, 4, 140),
+            ["baldcypress"] = new Profile(15, 4, 110),
+            ["greenspirecypress"] = new Profile(14, 3, 90),
+            ["acacia"] = new Profile(10, 4, 80),
+            ["kapok"] = new Profile(16, 6, 110),
+            ["ebony"] = new Profile(13, 4, 100),
+            ["purpleheart"] = new Profile(14, 4, 100),
+            ["walnut"] = new Profile(14, 5, 110),
         };
 
         public static Profile Resolve(string wood)

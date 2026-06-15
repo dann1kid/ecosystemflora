@@ -22,7 +22,12 @@ namespace WildFarming.Ecosystem
     internal static class TreeStructureProbe
     {
         const int MaxScanUp = 48;
-        const int MaxScanRadius = 14;
+
+        /// <summary>Hard cap for crown BFS (growth applier).</summary>
+        internal const int MaxCrownScanRadius = 14;
+
+        /// <summary>Tighter cap for inspect / size index — vanilla crowns rarely exceed this.</summary>
+        const int MaxCrownMeasureRadius = 9;
 
         public static TreeStructureMetrics Measure(IBlockAccessor acc, BlockPos trunkBase, string wood)
         {
@@ -61,11 +66,12 @@ namespace WildFarming.Ecosystem
         static int MeasureCrownRadius(IBlockAccessor acc, BlockPos trunkBase, string wood, int trunkTopY)
         {
             int crownStartY = trunkBase.Y + System.Math.Max(2, (trunkTopY - trunkBase.Y) / 3);
-            int maxY = System.Math.Min(trunkTopY + 6, acc.MapSizeY - 1);
+            int maxY = System.Math.Min(trunkTopY + 4, acc.MapSizeY - 1);
             int trunkX = trunkBase.X;
             int trunkZ = trunkBase.Z;
+            int maxHorizSqLimit = MaxCrownMeasureRadius * MaxCrownMeasureRadius;
 
-            var visited = new HashSet<long>();
+            var visited = new HashSet<BlockPos>();
             var queue = new Queue<BlockPos>();
             var scratch = new BlockPos(0);
 
@@ -75,11 +81,9 @@ namespace WildFarming.Ecosystem
                 if (!acc.IsValidPos(scratch)) continue;
 
                 Block block = acc.GetBlock(scratch);
-                if (!CanopyBlockHelper.IsSkeletonBlock(block, wood)) continue;
+                if (!IsCrownConduitBlock(block, wood)) continue;
 
-                long key = PackPos(scratch);
-                if (!visited.Add(key)) continue;
-                queue.Enqueue(scratch.Copy());
+                EnqueueCrownCell(scratch, visited, queue);
             }
 
             while (queue.Count > 0)
@@ -92,7 +96,7 @@ namespace WildFarming.Ecosystem
 
                     int dx = scratch.X - trunkX;
                     int dz = scratch.Z - trunkZ;
-                    if (dx * dx + dz * dz > MaxScanRadius * MaxScanRadius) continue;
+                    if (dx * dx + dz * dz > maxHorizSqLimit) continue;
 
                     if (scratch.Y < crownStartY
                         && (scratch.X != trunkX || scratch.Z != trunkZ))
@@ -101,26 +105,27 @@ namespace WildFarming.Ecosystem
                     }
 
                     if (scratch.Y > maxY) continue;
-
-                    long key = PackPos(scratch);
-                    if (visited.Contains(key)) continue;
+                    if (visited.Contains(scratch)) continue;
 
                     Block block = acc.GetBlock(scratch);
-                    if (!CanopyBlockHelper.IsSkeletonBlock(block, wood)) continue;
+                    if (!IsCrownConduitBlock(block, wood)) continue;
 
-                    visited.Add(key);
-                    queue.Enqueue(scratch.Copy());
+                    EnqueueCrownCell(scratch, visited, queue);
                 }
             }
 
             int maxHorizSq = 0;
-            foreach (long packed in visited)
+            foreach (BlockPos pos in visited)
             {
-                UnpackPos(packed, scratch);
-                if (scratch.Y < crownStartY) continue;
+                if (pos.Y < crownStartY) continue;
 
-                int dx = scratch.X - trunkX;
-                int dz = scratch.Z - trunkZ;
+                int dx = pos.X - trunkX;
+                int dz = pos.Z - trunkZ;
+                if (dx == 0 && dz == 0) continue;
+
+                Block block = acc.GetBlock(pos);
+                if (!CountsForCrownRadius(block, wood)) continue;
+
                 int horizSq = dx * dx + dz * dz;
                 if (horizSq > maxHorizSq) maxHorizSq = horizSq;
             }
@@ -128,18 +133,44 @@ namespace WildFarming.Ecosystem
             return maxHorizSq <= 0 ? 0 : (int)GameMath.Sqrt(maxHorizSq);
         }
 
+        /// <summary>Trunk logs + branchy skeleton — not ephemeral regular leaves.</summary>
+        static bool IsCrownConduitBlock(Block block, string wood)
+        {
+            if (block?.Code == null || string.IsNullOrEmpty(wood)) return false;
+            if (PlantCodeHelper.IsTreeLogGrownBlock(block))
+            {
+                return PlantCodeHelper.GetTreeWood(block) == wood;
+            }
+
+            return CanopyBlockHelper.IsBranchyLeaf(block)
+                && CanopyBlockHelper.GetWoodFromFoliageBlock(block) == wood;
+        }
+
+        static bool CountsForCrownRadius(Block block, string wood)
+        {
+            if (block?.Code == null || string.IsNullOrEmpty(wood)) return false;
+            if (CanopyBlockHelper.IsBranchyLeaf(block))
+            {
+                return CanopyBlockHelper.GetWoodFromFoliageBlock(block) == wood;
+            }
+
+            if (PlantCodeHelper.IsTreeLogGrownBlock(block))
+            {
+                return PlantCodeHelper.GetTreeWood(block) == wood;
+            }
+
+            return false;
+        }
+
+        static void EnqueueCrownCell(BlockPos scratch, HashSet<BlockPos> visited, Queue<BlockPos> queue)
+        {
+            BlockPos copy = scratch.Copy();
+            if (!visited.Add(copy)) return;
+            queue.Enqueue(copy);
+        }
+
         static readonly int[] NeighborDx = { 1, -1, 0, 0, 0, 0 };
         static readonly int[] NeighborDy = { 0, 0, 1, -1, 0, 0 };
         static readonly int[] NeighborDz = { 0, 0, 0, 0, 1, -1 };
-
-        static long PackPos(BlockPos pos) =>
-            ((long)pos.X << 24) | ((long)(pos.Y & 0xFFF) << 12) | (long)(pos.Z & 0xFFF);
-
-        static void UnpackPos(long packed, BlockPos into)
-        {
-            into.X = (int)(packed >> 24);
-            into.Y = (int)((packed >> 12) & 0xFFF);
-            into.Z = (int)(packed & 0xFFF);
-        }
     }
 }

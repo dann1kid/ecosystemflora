@@ -5,7 +5,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Once per game year, maturate registered wild trees near active players.</summary>
+    /// <summary>Once per game year, advance calendar tree age and maturate near active players.</summary>
     internal sealed class TreeGrowthScheduler
     {
         int lastProcessedYear = int.MinValue;
@@ -77,6 +77,9 @@ namespace WildFarming.Ecosystem
                 string wood = PlantCodeHelper.GetTreeWood(block);
                 if (string.IsNullOrEmpty(wood) || !WildTreeEcology.TryGet(wood, out _)) continue;
 
+                entry.TreeAgeYears++;
+                if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
+
                 int placed = TreeGrowthApplier.TryGrowYear(
                     api,
                     acc,
@@ -91,15 +94,16 @@ namespace WildFarming.Ecosystem
                 {
                     WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
                     TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
-                    int pct = TreeGrowthTargets.MaturityPercent(
+                    int sizePct = TreeGrowthTargets.SizeIndexPercent(
                         metrics.TrunkHeight,
                         metrics.CrownRadius,
                         profile);
 
                     api.Logger.Notification(
-                        "[ecosystemflora] Tree maturation {0}% ({1}): +{2} block(s) at {3}",
-                        pct,
+                        "[ecosystemflora] Tree {0}y ({1}) size {2}%: +{3} block(s) at {4}",
+                        entry.TreeAgeYears,
                         wood,
+                        sizePct,
                         placed,
                         entry.Origin);
                 }

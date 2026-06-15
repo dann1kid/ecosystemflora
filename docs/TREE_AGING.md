@@ -6,32 +6,68 @@ Updated: 2026-06-14.
 
 ---
 
+## Two axes (size vs age)
+
+| Axis | Meaning | Used for |
+|------|---------|----------|
+| **Structure** | Trunk blocks + crown radius (live measure) | Growth pacing, inspect size index |
+| **Calendar age** | Years since ecology registration (`TreeAgeYears`) | Future senescence / death — **not** inferred from size |
+
+Worldgen trees register at **age 0** even when already tall. They will **not** senesce just because they look mature. Future death uses calendar age (+ vitality), not structure index.
+
+---
+
 ## Behaviour
 
 | When | What |
 |------|------|
-| **Registration** | No stored age — structure measured live from blocks |
-| **Each game year** | 0–2 block placements toward species max trunk / crown |
-| **Young trees** | Mostly upward `log-grown` extension |
-| **Mid maturation** | Mix of height + outward `leavesbranchy` |
-| **Near max size** | Mostly crown spread + occasional `leaves-grown`; growth slows |
+| **Registration** | `TreeAgeYears = 0`; structure measured live |
+| **Each game year** | `TreeAgeYears++`, then 0–2 block placements (no hard size cap) |
+| **Young / below reference** | Faster growth, mostly upward |
+| **Above typical mature** | Growth slows but continues (rare ops above ~125% size index) |
+| **Physical limits** | Map height, crown scan radius 14, vacancy / claims |
 
-No custom blocks, no save BE — only vanilla **grown** codes. Sapling spread and vanilla treegen on plant are unchanged.
+No custom blocks, no save BE — only vanilla **grown** codes.
 
 ---
 
-## Maturation index
+## Size index (inspect only)
 
-Progress is **block-based**, not calendar years:
+Compared to **typical worldgen mature** per species (reference, not a cap):
 
 ```
-maturity = 55% × (trunk blocks / species max trunk)
-         + 45% × (crown radius / species max crown)
+size index = 55% × (trunk / ref trunk) + 45% × (crown / ref crown)
 ```
 
-Inspect shows: `Maturation: 41% (trunk 14/34 blocks, crown radius 5/8)`.
+Example oak reference ~14 trunk / 5 crown — a worldgen oak near that reads **~100%**; an ancient taller tree can read **150%+**.
 
-Growth runs while structure is below profile max (× `TreeGrowthActivityScale`). Chopping the crown lowers the index; the tree can grow again on later ticks.
+Inspect:
+
+- `Tree age: 3 / 120 years (since ecology registration)`
+- `Structure: trunk 14 blocks, crown radius 5 (100% of typical mature ~14/5)`
+
+`SenescenceAgeYears` (120 oak) is the **future** calendar horizon for old-age decline, not current size.
+
+---
+
+## Spread (saplings)
+
+| Topic | Behaviour |
+|-------|-----------|
+| **Registry origin** | Lowest `log-grown` in the column (`GetTreeTrunkBase`) — one entry per tree |
+| **Spread source** | Horizontal search from **trunk base** only; upper trunk blocks are not separate parents |
+| **Inspect registry** | Any `log-grown` on the tree resolves to the same base entry (`TryGetReproducer`) |
+
+---
+
+## Inspect (I) on trees
+
+| Topic | Behaviour |
+|-------|-----------|
+| **Target** | Any trunk `log-grown` block shows the same tree profile |
+| **Live registry** | Resolved via trunk base (registered, age, spread timer, maturation lines) |
+| **Climate / soil / niche** | Sampled at **trunk base** (ground under roots), not the log block directly below the clicked voxel — avoids false “bad soil on log” mid-trunk |
+| **Crown radius** | Branchy skeleton only (not `leaves-grown`); BFS from trunk; measure cap 9 blocks horizontal |
 
 ---
 
@@ -39,36 +75,22 @@ Growth runs while structure is below profile max (× `TreeGrowthActivityScale`).
 
 ```
 ReproducerEntry (TerrestrialTree)
+  TreeAgeYears — calendar, from 0 at register
         ↓
 TreeGrowthScheduler — once/year, round-robin near players
         ↓
-TreeGrowthApplier — log up / branchy out / leaf fill
+TreeGrowthApplier — log up / branchy out / leaf fill (no hard cap)
         ↓
 CanopyBlockHelper block resolve + land claims
 ```
 
 | Component | File |
 |-----------|------|
-| Species max size | `WildTreeGrowthProfiles.cs` |
-| Maturity fraction + targets | `TreeGrowthTargets.cs` |
+| Reference size + senescence horizon | `WildTreeGrowthProfiles.cs` |
+| Size index math | `TreeGrowthTargets.cs` |
 | Measure trunk / crown | `TreeStructureProbe.cs` |
 | Block placement | `TreeGrowthApplier.cs` |
 | Tick scheduling | `TreeGrowthScheduler.cs` |
-
----
-
-## Species targets (defaults)
-
-| Wood | Max trunk (blocks) | Max crown radius |
-|------|-------------------|------------------|
-| Oak | 34 | 8 |
-| Birch | 26 | 6 |
-| Maple | 28 | 7 |
-| Redwood | 48 | 6 |
-| Kapok | 40 | 9 |
-| Others | 22–38 | 4–9 |
-
-Ancient oaks in long-lived worlds approach full profile height and a wide branchy crown instead of staying worldgen-small.
 
 ---
 
@@ -78,17 +100,12 @@ Ancient oaks in long-lived worlds approach full profile height and a wide branch
 |-----|---------|-------------|
 | `EnableTreeAging` | `true` | Master toggle |
 | `MaxTreeGrowthAttemptsPerTick` | `6` | Trees advanced per reproduce tick (2 s) |
-| `TreeGrowthActivityScale` | `1` | Scales max trunk height / crown radius |
-
-Requires `EcosystemEnabled`, `OnlyActivateNearPlayers` radius (same as spread), and a registered trunk.
-
-**Inspect (I)** on a registered trunk shows maturation % and trunk/crown vs species max.
+| `TreeGrowthActivityScale` | `1` | Growth pace (>1 = faster relative to reference) |
 
 ---
 
 ## Limits (v1)
 
-- Single-trunk column height from registry origin; wide multi-trunk oaks grow from crown anchors in a 14-block scan.
-- Crown radius uses flood-fill from trunk — not neighbouring trees of same wood.
-- No tree death / senescence yet — 100% maturation = max profile size, not end of life.
-- Conifers and deciduous both mature; bambo / aged logs excluded from registry.
+- No tree death yet — senescence age is metadata for inspect / future vitality.
+- Calendar age is in-memory; re-registers after restart reset to 0 (same as spread registry).
+- Crown radius for inspect: branchy skeleton only (not `leaves-grown` fluff); measure cap 9 blocks; BFS uses `HashSet<BlockPos>` (fixed coord packing).

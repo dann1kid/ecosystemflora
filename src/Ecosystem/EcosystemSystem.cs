@@ -483,6 +483,7 @@ namespace WildFarming.Ecosystem
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
                 {
+                    entry.TreeAgeYears = 0;
                     entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
                     foliageCells.OnBlockAdded(origin);
                 }

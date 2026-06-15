@@ -20,7 +20,10 @@ namespace WildFarming.Ecosystem
         /// <summary>Cumulative ticks spent near a player; resets when no player is close.</summary>
         public int TramplingExposure { get; set; }
 
-        /// <summary>Last in-game year when annual maturation ran for this trunk.</summary>
+        /// <summary>Calendar years since ecology registration (senescence axis; independent of structure).</summary>
+        public int TreeAgeYears { get; set; }
+
+        /// <summary>Last in-game year when calendar age advanced and maturation ran.</summary>
         public int LastTreeGrowthYear { get; set; } = int.MinValue;
 
         internal int EntriesIndex { get; set; } = -1;

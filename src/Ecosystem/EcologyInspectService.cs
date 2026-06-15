@@ -216,6 +216,18 @@ namespace WildFarming.Ecosystem
             return "ecosystemflora:dominance-stable";
         }
 
+        static BlockPos ResolveInspectContextPos(IBlockAccessor acc, BlockPos pos, Block block, PlantRequirements req)
+        {
+            if (acc == null || pos == null) return pos;
+            if (req?.Habitat == EcologyHabitat.TerrestrialTree
+                && PlantCodeHelper.IsTreeLogGrownBlock(block))
+            {
+                return PlantCodeHelper.GetTreeTrunkBase(acc, pos);
+            }
+
+            return pos;
+        }
+
         static void AppendLiveState(
             ICoreAPI api,
             BlockPos pos,
@@ -226,6 +238,8 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool harsh = cfg.HarshWildPlants;
+            IBlockAccessor acc = api.World.BlockAccessor;
+            BlockPos contextPos = ResolveInspectContextPos(acc, pos, block, req);
 
             if (EcosystemSystem.Instance != null
                 && EcosystemSystem.Instance.TryGetReproducer(pos, out ReproducerEntry entry))
@@ -271,7 +285,7 @@ namespace WildFarming.Ecosystem
 
             if (cfg.UseSeasonalEcology && api.World?.Calendar != null)
             {
-                float seasonMult = SeasonEcology.SpreadActivityMultiplier(api, pos, req);
+                float seasonMult = SeasonEcology.SpreadActivityMultiplier(api, contextPos, req);
                 AddInspectLine(lines, "ecosystemflora:inspect-line-season-now", seasonMult.ToString("0.##"));
             }
 
@@ -280,7 +294,7 @@ namespace WildFarming.Ecosystem
                 NicheSampler nicheSampler = EcosystemSystem.Instance?.Niche;
                 if (nicheSampler != null && cfg.UseNicheContext)
                 {
-                    LocalNiche local = nicheSampler.GetNiche(api, pos);
+                    LocalNiche local = nicheSampler.GetNiche(api, contextPos);
                     float nicheMult = EcologySpreadFitness.NicheMultiplierFor(req, local);
                     AddInspectLine(
                         lines,
@@ -306,7 +320,7 @@ namespace WildFarming.Ecosystem
                 AppendMyceliumInspect(api, pos, req, lines);
             }
 
-            EnvironmentalContext ctx = EnvironmentalContext.SampleForSurvival(api, pos, req);
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForSurvival(api, contextPos, req);
 
             if (!ctx.HasClimate)
             {
@@ -557,21 +571,25 @@ namespace WildFarming.Ecosystem
                 entry.Origin,
                 wood);
 
-            int maxTrunk = TreeGrowthTargets.MaxTargetTrunkHeight(profile, cfg.TreeGrowthActivityScale);
-            int maxCrown = TreeGrowthTargets.MaxTargetCrownRadius(profile, cfg.TreeGrowthActivityScale);
-            int maturityPct = TreeGrowthTargets.MaturityPercent(
+            int sizePct = TreeGrowthTargets.SizeIndexPercent(
                 metrics.TrunkHeight,
                 metrics.CrownRadius,
                 profile);
 
             AddInspectLine(
                 lines,
-                "ecosystemflora:inspect-line-tree-maturity",
-                maturityPct.ToString(),
+                "ecosystemflora:inspect-line-tree-age",
+                entry.TreeAgeYears.ToString(),
+                profile.SenescenceAgeYears.ToString());
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-tree-size",
                 metrics.TrunkHeight.ToString(),
-                maxTrunk.ToString(),
                 metrics.CrownRadius.ToString(),
-                maxCrown.ToString());
+                sizePct.ToString(),
+                profile.ReferenceTrunkHeight.ToString(),
+                profile.ReferenceCrownRadius.ToString());
         }
 
         static void AppendMyceliumInspect(
