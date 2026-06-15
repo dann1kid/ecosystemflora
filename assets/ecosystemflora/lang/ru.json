@@ -87,6 +87,8 @@
 	"ecosystemflora:inspect-line-stress-ok": "Стресс: в норме.",
 	"ecosystemflora:inspect-line-trample": "Протаптывание: {0} / {1}.",
 	"ecosystemflora:inspect-line-tree-age": "Возраст: {0} / {1} лет (с регистрации в экологии).",
+	"ecosystemflora:inspect-line-tree-senescent": "Старость — естественный срок жизни пройден; гибель на следующем годовом тике (если не мешает land claim).",
+	"ecosystemflora:inspect-line-tree-senescence-soon": "Скоро старость — естественная гибель в следующем игровом году (если aging включён).",
 	"ecosystemflora:inspect-line-tree-size": "Размер: ствол {0} блок., радиус кроны {1} ({2}% от типичного зрелого ~{3}/{4}).",
 	"ecosystemflora:inspect-line-next-spread": "Следующая попытка распространения ~через {0} дн.",
 	"ecosystemflora:inspect-line-season-now": "Сезонная активность распространения сейчас: ×{0}.",

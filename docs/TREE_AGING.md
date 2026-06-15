@@ -1,6 +1,6 @@
 # Wild tree maturation (v3.6)
 
-Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** near active players: taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
+Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** in the main reproduce tick (round-robin over the registry, same scope as spread/stress): taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
 
 Updated: 2026-06-14.
 
@@ -11,7 +11,7 @@ Updated: 2026-06-14.
 | Axis | Meaning | Used for |
 |------|---------|----------|
 | **Structure** | Trunk blocks + crown radius (live measure) | Growth pacing, inspect size index |
-| **Calendar age** | Years since ecology registration (`TreeAgeYears`) | Future senescence / death — **not** inferred from size |
+| **Calendar age** | Years since ecology registration (`TreeAgeYears`) | Senescence death — **not** inferred from size |
 
 Worldgen trees register at **age 0** even when already tall. They will **not** senesce just because they look mature. Future death uses calendar age (+ vitality), not structure index.
 
@@ -22,7 +22,7 @@ Worldgen trees register at **age 0** even when already tall. They will **not** s
 | When | What |
 |------|------|
 | **Registration** | `TreeAgeYears = 0`; structure measured live |
-| **Each game year** | `TreeAgeYears++`, then 0–2 block placements (no hard size cap) |
+| **Each game year** | `TreeAgeYears++`, then growth **or** senescence death if age ≥ horizon |
 | **Young / below reference** | Faster growth, mostly upward |
 | **Above typical mature** | Growth slows but continues (rare ops above ~125% size index) |
 | **Physical limits** | Map height, crown scan radius 14, vacancy / claims |
@@ -46,7 +46,7 @@ Inspect:
 - `Tree age: 3 / 120 years (since ecology registration)`
 - `Structure: trunk 14 blocks, crown radius 5 (100% of typical mature ~14/5)`
 
-`SenescenceAgeYears` (120 oak) is the **future** calendar horizon for old-age decline, not current size.
+`SenescenceAgeYears` (120 oak) is the calendar horizon for **full tree removal** on the next yearly tick after age reaches this value.
 
 ---
 
@@ -77,7 +77,7 @@ Inspect:
 ReproducerEntry (TerrestrialTree)
   TreeAgeYears — calendar, from 0 at register
         ↓
-TreeGrowthScheduler — once/year, round-robin near players
+TreeGrowthScheduler — once/year, round-robin over registry (world-wide)
         ↓
 TreeGrowthApplier — log up / branchy out / leaf fill (no hard cap)
         ↓
@@ -91,6 +91,8 @@ CanopyBlockHelper block resolve + land claims
 | Measure trunk / crown | `TreeStructureProbe.cs` |
 | Block placement | `TreeGrowthApplier.cs` |
 | Tick scheduling | `TreeGrowthScheduler.cs` |
+| Calendar age save/load | `TreeCalendarAgeStore.cs` |
+| Senescence death | `TreeSenescence.cs` — whole skeleton removed (trunk + branchy + leaves) |
 
 ---
 
@@ -99,13 +101,34 @@ CanopyBlockHelper block resolve + land claims
 | Key | Default | Description |
 |-----|---------|-------------|
 | `EnableTreeAging` | `true` | Master toggle |
+| `EnableTreeSenescence` | `true` | Full tree removal when calendar age ≥ `SenescenceAgeYears` |
 | `MaxTreeGrowthAttemptsPerTick` | `6` | Trees advanced per reproduce tick (2 s) |
 | `TreeGrowthActivityScale` | `1` | Growth pace (>1 = faster relative to reference) |
+
+**Scope:** tree aging uses the same loaded-chunk registry as spread. `OnlyActivateNearPlayers` defaults to **false** (all registered plants in loaded chunks). Set **true** only for local playtest / perf (limits spread, stress, trees, and chunk scans to `PlayerActivationRadiusBlocks`).
+
+---
+
+## Persistence & server restart
+
+Calendar age is **not** stored on blocks — only in savegame moddata (`TreeCalendarAgeStore`, key `ecosystemflora-tree-calendar-age-v1`).
+
+| Event | What happens |
+|-------|----------------|
+| **Each game year tick** | `Capture` writes `TreeAgeYears` + `LastTreeGrowthYear` to in-memory store |
+| **World save** | `SyncFromRegistry` then `StoreData` — all live registry trees flushed to disk |
+| **Server restart / load save** | `SaveGameLoaded` → store loaded; **registry empty** until chunks scan |
+| **Chunk loads, trunk registers** | `TryRestore(trunk base, wood)` → age and last year applied |
+| **Wood mismatch at same coords** | Restore skipped → age **0** (new tree) |
+| **Tree cut or senescence death** | Record removed from store |
+| **Crash without save** | Age reverts to last saved snapshot |
+
+Between restart and chunk re-scan, inspect **(I)** shows no live tree entry — age sits in store until registration. `LastTreeGrowthYear` prevents double-aging in the same game year after reload.
 
 ---
 
 ## Limits (v1)
 
-- No tree death yet — senescence age is metadata for inspect / future vitality.
-- Calendar age is in-memory; re-registers after restart reset to 0 (same as spread registry).
-- Crown radius for inspect: branchy skeleton only (not `leaves-grown` fluff); measure cap 9 blocks; BFS uses `HashSet<BlockPos>` (fixed coord packing).
+- **Senescence death** — when `TreeAgeYears >= SenescenceAgeYears` on the yearly tick, the mod removes the full tree (no item drops). Toggle: `EnableTreeSenescence`. Blocked inside land claims.
+- Calendar age **persists in savegame moddata** (`TreeCalendarAgeStore`).
+- Crown radius for inspect: branchy skeleton only; measure cap 9 blocks.

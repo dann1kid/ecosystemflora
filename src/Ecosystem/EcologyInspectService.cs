@@ -582,6 +582,16 @@ namespace WildFarming.Ecosystem
                 entry.TreeAgeYears.ToString(),
                 profile.SenescenceAgeYears.ToString());
 
+            if (TreeSenescence.IsSenescent(entry.TreeAgeYears, profile, EcosystemConfig.Loaded))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescent");
+            }
+            else if (entry.TreeAgeYears + 1 >= profile.SenescenceAgeYears
+                && EcosystemConfig.Loaded.EnableTreeSenescence)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescence-soon");
+            }
+
             AddInspectLine(
                 lines,
                 "ecosystemflora:inspect-line-tree-size",

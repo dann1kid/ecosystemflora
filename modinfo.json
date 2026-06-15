@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, trees, and mycelium niches. Meadow harvest, rhizome reeds, lily mats, inspect (I). Seasonal spread, soil succession.",
+  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, trees, and mycelium niches. Seasonal canopy, tree maturation, meadow harvest, inspect (I).",
   "authors": ["-"],
-  "version": "3.5.0",
+  "version": "3.6.0",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

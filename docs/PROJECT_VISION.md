@@ -480,7 +480,7 @@ ChunkScan         → очередь, лимитирован
 1. **Быстрые wins:** spatial tick, static climate cache, split sample, stress skip, no greenhouse on spread — ✅.
 2. **Средний refactor:** O(1) registry remove, cheap-first candidates, spacing hash — ✅.
 3. **Perf audit:** `CellBlockSnapshot`, scratch `BlockPos`, reflection cache, scratch collections, `HashSet<long>` player chunks, `FloraSymbiosis` FIFO cache, `VerboseLogging` toggle — ✅.
-4. **Tick starvation fix (v2.7):** heightmap chunk scan, per-tick time-budget (`Stopwatch`), lower defaults, NowValues temperature cache, `OnlyActivateNearPlayers` default true — ✅.
+4. **Tick starvation fix (v2.7):** heightmap chunk scan, per-tick time-budget (`Stopwatch`), lower defaults, NowValues temperature cache; `OnlyActivateNearPlayers` was default true for perf — **v3.6+ default false** (all loaded chunks); set true for playtest only — ✅.
 
 Многопоточность — **не планируется** (`BlockAccessor` не thread-safe).
 
@@ -488,7 +488,7 @@ ChunkScan         → очередь, лимитирован
 
 ### 12.6. Конфиг-throttle
 
-`OnlyActivateNearPlayers` (default true), `TickBudgetMs` (default 5), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
+`OnlyActivateNearPlayers` (default **false** since v3.6; true = playtest radius only), `TickBudgetMs` (default 5), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
 
 ---
 

@@ -32,7 +32,13 @@ Living wild flora: flowers, grass, ferns, berries, reeds, trees, and **mycelium 
 
 **3.1.12** — **Mycelium ecology** around vanilla mushroom anchors (`BlockEntityMycelium`): meadow spread penalty near **forest** mycelium, forest understory bonus, meadow mushrooms **coexist** with flowers/grass (spread onto meadow mycelium; network under existing flowers). Anchor **stress/death** in wrong niche; slow **network spread** from mat edge; tree-cut cascade for forest types. **Inspect (I)** on **mushroom caps** and **soil** (`forestfloor`, `soil-*`, peat, logs). **Config:** missing keys auto-added to `ModConfig/ecosystemflora.json` on startup.
 
-Press **I** on any wild plant, mushroom cap, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
+**3.2.0** — **Seasonal canopy phenology:** deciduous trees partially drop branchy leaves in autumn and bud again in spring (in-memory cellular automaton on log-grown skeleton; no custom blocks). Toggle: `EnableSeasonalFoliage`.
+
+**3.5.0** — **Canopy ambience:** subtle leaf particles and flutter near tree crowns (client-side; respects view distance and particle settings). Autumn crown sync fix for mixed foliage states.
+
+**3.6.0** — **Wild tree maturation:** registered trunks grow taller/wider once per game year (`EnableTreeAging`, all loaded chunks). **Senescence:** at species calendar horizon (`EnableTreeSenescence`), the whole tree is removed (trunk + crown). Calendar age **persists across saves and server restarts** (inspect after chunk re-scan). **Inspect (I)** on any trunk log shows age, size, senescence status.
+
+Press **I** on any wild plant, mushroom cap, tree trunk, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
 ---
 
@@ -50,11 +56,12 @@ Install the mod, load your world, and watch it change over the seasons.
 - **Tallgrass** — fills in as a grass matrix under flowers
 - **5 fern species** — forest understory that needs shade and moisture
 - **10 wild berry bushes** — blueberry, cranberry, strawberry… (in **1.22+**, wild berry spread can **clone parent traits** when `CloneBerryTraits` is on — see config)
-- **14 tree species** — mature trunks spread free saplings; growth is vanilla
+- **14 tree species** — mature trunks spread free saplings; **v3.6** adds slow wild maturation and inspect age/size (growth remains vanilla blocks)
 - **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
 - **Water crowfoot** — underwater column plant, 2–8 blocks deep (legacy radius spread; mat logic not applied yet)
 - **Vanilla mushrooms** — no new blocks; **mycelium ecology** (v3.1.12) adds niche competition, anchor stress, slow network spread, and **inspect (I)** on caps and soil
+- **Seasonal tree canopy** (v3.2+) — deciduous partial autumn defoliation and spring bud on existing log-grown trees; optional ambience particles (v3.5)
 
 ### Not just spreading — competing
 
@@ -82,7 +89,7 @@ Players trample nearby plants over time. Walk the same route often enough and fl
 
 ### Ecology inspect (hotkey **I**)
 
-Aim at any wild ecosystem plant, **mushroom cap**, or **mycelium soil block** and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), **mycelium niche / network edge** (mushrooms), and dominant species nearby.
+Aim at any wild ecosystem plant, **mushroom cap**, **tree trunk**, or **mycelium soil block** and press **I** for a report: succession role, registry status, stress, next spread timing, seasonal activity, niche fit, symbiosis, climate survival, **spread mode / mat edge / seed chance** (reeds & lily), **mycelium niche / network edge** (mushrooms), **tree calendar age / structure size** (trunks), and dominant species nearby.
 
 *Tunable in `ModConfig/ecosystemflora.json`*: `EnableEcologyInspect`, `EcologyInspectCooldownSeconds`, `EcologyInspectScanRadius`, `EnableEcologyAreaScan`.
 
@@ -286,7 +293,7 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `MaxStressChecksPerTick` | 16 | Stress checks per tick |
 | `MaxChunkColumnsScannedPerTick` | 6 | Chunk registration pacing (unfinished chunks stay queued) |
 | `MaxRegistrationsPerTick` | 512 | Max new plant registrations per server tick |
-| `OnlyActivateNearPlayers` | true | Limit activity to player radius |
+| `OnlyActivateNearPlayers` | false | **Playtest shortcut** — when true, limit spread/stress/trees/scans to player radius; normal play leaves false (all loaded chunks) |
 | `PlayerActivationRadiusBlocks` | 192 | Radius if above is true |
 | `VerboseLogging` | false | Detailed server log output |
 | `ReproduceDebug` | false | Log each spread attempt (pair with `VerboseLogging` for balance tuning) |

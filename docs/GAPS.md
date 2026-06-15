@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.2.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **3.6.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -13,7 +13,7 @@
 | **Луг / цветы** | Independent spread + displacement | Нет стадий жизни (seedling → mature); spread = телепорт блока, не рост |
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
-| **Деревья** | `log-grown` → sapling; **3.1.11** — не на лёд/снег, зимой spread off; **3.6** — годовое укрупнение grown-блоков (календарный возраст с 0, без потолка размера), inspect на любом бревне | **3.2.0** — phenology кроны; нет living trunk / stress death / senescence на стволе |
+| **Деревья** | `log-grown` → sapling; **3.6** — maturation + **senescence death** (полное снятие ствола/кроны), persist возраста | living trunk stress; частичное увядание до смерти |
 | **Грибница** | Soft niche + stress + network spread вокруг vanilla BE; inspect (I) на шляпке и почве; meadow coexistence (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 
@@ -106,7 +106,7 @@
 
 Реализовано: spatial tick, budgets, player radius, chunk scan resume.
 
-**Не задокументировано числами:** поведение при 20k+ reproducers, несколько игроков на разных краях карты. Ожидание: `OnlyActivateNearPlayers` спасает; edge case — «замороженный» мир далеко от игроков (OK by design).
+**Не задокументировано числами:** поведение при 20k+ reproducers, несколько игроков на разных краях карты. `OnlyActivateNearPlayers: true` — playtest-режим (урезанный радиус); при default **false** экосистема живёт во всех loaded chunks.
 
 ---
 

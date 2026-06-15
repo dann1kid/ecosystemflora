@@ -27,7 +27,7 @@ The result: meadows fill in naturally, forest edges develop a distinct flora bel
 | **Tallgrass** | All vanilla tallgrass variants | Grass matrix under flowers |
 | **Ferns** | Eagle fern, cinnamon fern, deer fern, hart's tongue, tall fern | Forest understory; need shade and moisture |
 | **Berry bushes** | Blueberry, cranberry, strawberry, and 7 more | 10 wild species; soil + forest edge preference |
-| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings nearby; growth is vanilla |
+| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings; **v3.6** slow wild maturation + inspect age/size |
 | **Reeds** | Cooper's reed, papyrus | Shore or shallow water over gravel bed |
 | **Water lily** | Waterlily | Open water surface |
 | **Water crowfoot** | Underwater column plant | 2–8 block depth, multi-section column |
@@ -78,7 +78,7 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 ## For developers
 
 **Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (72 xUnit tests)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (253 xUnit tests)
 
 Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 

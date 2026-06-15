@@ -28,6 +28,7 @@ namespace WildFarming.Ecosystem
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
+        readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         bool calendarDebugLogged;
         bool deferredTreeBootstrapDone;
@@ -96,6 +97,8 @@ namespace WildFarming.Ecosystem
 
                 playerJoinHandler = OnPlayerJoin;
                 sapi.Event.PlayerJoin += playerJoinHandler;
+
+                treeCalendarAgeStore.Bind(sapi, registry);
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
@@ -247,6 +250,9 @@ namespace WildFarming.Ecosystem
         {
             if (api is ICoreServerAPI sapi)
             {
+                treeCalendarAgeStore.Unbind(sapi);
+                treeCalendarAgeStore.Clear();
+
                 if (chunkLoadedHandler != null) sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
                 if (chunkUnloadedHandler != null) sapi.Event.ChunkColumnUnloaded -= chunkUnloadedHandler;
                 if (didBreakBlockHandler != null) sapi.Event.DidBreakBlock -= didBreakBlockHandler;
@@ -349,6 +355,34 @@ namespace WildFarming.Ecosystem
         }
 
         internal ICoreAPI ServerApi => api;
+
+        internal void CompleteTreeSenescenceRemoval(TreeSenescence.PendingRemoval removal)
+        {
+            if (api == null || removal.TrunkBase == null) return;
+
+            BlockPos trunkBase = removal.TrunkBase;
+            registry.Remove(trunkBase);
+            SpacingIndex?.Remove(trunkBase);
+            treeCalendarAgeStore.Remove(trunkBase);
+            FloraContext?.InvalidateAround(trunkBase, 4);
+            InvalidateEnvironmentAround(trunkBase);
+
+            if (EcosystemConfig.Loaded.UseSoilSuccession && !string.IsNullOrEmpty(removal.Wood))
+            {
+                SoilSuccessionApplier.Apply(api, trunkBase, removal.Wood, SoilSuccessionEvent.Death);
+            }
+
+            if (EcosystemConfig.Loaded.VerboseLogging
+                && EcosystemConfig.Loaded.ReproduceDebug
+                && removal.BlocksRemoved > 0)
+            {
+                api.Logger.Notification(
+                    "[ecosystemflora] Senescence registry cleared for {0} at {1} ({2} blocks)",
+                    removal.Wood,
+                    trunkBase,
+                    removal.BlocksRemoved);
+            }
+        }
 
         public void RemoveEcologyPlant(BlockPos pos, bool cascadeSymbiosis, string reason,
             SoilSuccessionEvent soilEvent = SoilSuccessionEvent.Death)
@@ -483,8 +517,14 @@ namespace WildFarming.Ecosystem
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
                 {
-                    entry.TreeAgeYears = 0;
-                    entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                    string wood = PlantCodeHelper.GetTreeWood(matureBlock);
+                    if (!treeCalendarAgeStore.TryRestore(entry, origin, wood))
+                    {
+                        entry.TreeAgeYears = 0;
+                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                    }
+
+                    treeCalendarAgeStore.Capture(entry, wood);
                     foliageCells.OnBlockAdded(origin);
                 }
 
@@ -716,6 +756,8 @@ namespace WildFarming.Ecosystem
             if (PlantCodeHelper.IsTreeLogGrownBlock(oldBlock))
             {
                 MyceliumTreeCascade.OnTreeRemoved(api, pos, oldBlock);
+                string wood = PlantCodeHelper.GetTreeWood(oldBlock);
+                treeCalendarAgeStore.TryRemoveIfTreeGone(api.World.BlockAccessor, pos, wood);
             }
 
             if (CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock))
@@ -1139,7 +1181,13 @@ namespace WildFarming.Ecosystem
 
             foliageCells.ProcessRandomTick(api, canopyActiveChunks, foliageBudgetTicks, tickBudgetWatch);
 
-            treeGrowthScheduler.Tick(api, cfg, registry, spreadActiveChunks);
+            treeGrowthScheduler.Tick(
+                api,
+                cfg,
+                registry,
+                spreadActiveChunks,
+                treeCalendarAgeStore,
+                CompleteTreeSenescenceRemoval);
 
             IBlockAccessor acc = api.World.BlockAccessor;
 

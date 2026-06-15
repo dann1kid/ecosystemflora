@@ -158,8 +158,11 @@ namespace WildFarming.Ecosystem
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;
 
-        /// <summary>If true, only register/tick plants within PlayerActivationRadiusBlocks of a player.</summary>
-        public bool OnlyActivateNearPlayers { get; set; } = true;
+        /// <summary>
+        /// Playtest / perf shortcut: when true, spread, stress, tree aging, and chunk scans only run near players.
+        /// Default false — normal play processes all plants in loaded chunks (registry scope).
+        /// </summary>
+        public bool OnlyActivateNearPlayers { get; set; } = false;
 
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
 
@@ -200,6 +203,9 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Multiplier on growth pace vs reference size (higher = faster maturation).</summary>
         public float TreeGrowthActivityScale { get; set; } = 1f;
+
+        /// <summary>When calendar age reaches species senescence horizon, remove the whole tree.</summary>
+        public bool EnableTreeSenescence { get; set; } = true;
 
         // --- Flora context (v2) ---
 

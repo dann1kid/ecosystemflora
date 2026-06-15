@@ -28,7 +28,7 @@
   "StaggerReproduceAttempts": true,
   "StressRecheckHours": 18,
   "MaxStressChecksPerTick": 16,
-  "OnlyActivateNearPlayers": true,
+  "OnlyActivateNearPlayers": false,
   "PlayerActivationRadiusBlocks": 192,
   "PlantSpacingEnabled": true,
   "ApplyCrossHabitatSpacing": false,
@@ -40,6 +40,7 @@
   "MaxTreeRescanColumnsPerTick": 16,
 
   "EnableTreeAging": true,
+  "EnableTreeSenescence": true,
   "MaxTreeGrowthAttemptsPerTick": 6,
   "TreeGrowthActivityScale": 1.0,
 

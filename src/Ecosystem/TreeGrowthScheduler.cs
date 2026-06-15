@@ -5,18 +5,22 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Once per game year, advance calendar tree age and maturate near active players.</summary>
+    /// <summary>Once per game year, advance calendar tree age and maturate registered trunks (same scope as spread).</summary>
     internal sealed class TreeGrowthScheduler
     {
         int lastProcessedYear = int.MinValue;
         int roundRobinIndex;
+        readonly List<TreeSenescence.PendingRemoval> pendingSenescence = new List<TreeSenescence.PendingRemoval>();
 
         public void Tick(
             ICoreAPI api,
             EcosystemConfig cfg,
             ReproducerRegistry registry,
-            ICollection<Vec2i> activeChunks)
+            ICollection<Vec2i> activeChunks,
+            TreeCalendarAgeStore calendarAgeStore = null,
+            System.Action<TreeSenescence.PendingRemoval> onSenescenceRemoved = null)
         {
+            pendingSenescence.Clear();
             if (!cfg.EnableTreeAging || api?.World?.BlockAccessor == null || registry == null) return;
 
             IGameCalendar cal = api.World.Calendar;
@@ -49,26 +53,10 @@ namespace WildFarming.Ecosystem
                 if (entry == null) continue;
                 if (entry.Requirements?.Habitat != EcologyHabitat.TerrestrialTree) continue;
                 if (entry.LastTreeGrowthYear >= gameYear) continue;
-
-                if (cfg.OnlyActivateNearPlayers)
+                if (cfg.OnlyActivateNearPlayers
+                    && !ReproducerRegistry.IsInActiveChunks(entry.Origin, activeChunks))
                 {
-                    if (activeChunks == null || activeChunks.Count == 0) continue;
-
-                    int cs = GlobalConstants.ChunkSize;
-                    var chunk = new Vec2i(
-                        entry.Origin.X / cs,
-                        entry.Origin.Z / cs);
-                    bool nearPlayer = false;
-                    foreach (Vec2i active in activeChunks)
-                    {
-                        if (active.X == chunk.X && active.Y == chunk.Y)
-                        {
-                            nearPlayer = true;
-                            break;
-                        }
-                    }
-
-                    if (!nearPlayer) continue;
+                    continue;
                 }
 
                 Block block = acc.GetBlock(entry.Origin);
@@ -80,6 +68,36 @@ namespace WildFarming.Ecosystem
                 entry.TreeAgeYears++;
                 if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
 
+                WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+                if (TreeSenescence.IsSenescent(entry.TreeAgeYears, profile, cfg))
+                {
+                    int removed = TreeSenescence.RemoveWholeTree(api, acc, entry.Origin, wood);
+                    if (removed > 0)
+                    {
+                        pendingSenescence.Add(new TreeSenescence.PendingRemoval(
+                            entry.Origin.Copy(),
+                            wood,
+                            removed));
+
+                        if (cfg.ReproduceDebug)
+                        {
+                            api.Logger.Notification(
+                                "[ecosystemflora] Tree senescence death {0}y ({1}): removed {2} block(s) at {3}",
+                                entry.TreeAgeYears,
+                                wood,
+                                removed,
+                                entry.Origin);
+                        }
+                    }
+                    else
+                    {
+                        entry.LastTreeGrowthYear = gameYear;
+                        calendarAgeStore?.Capture(entry, wood);
+                    }
+
+                    continue;
+                }
+
                 int placed = TreeGrowthApplier.TryGrowYear(
                     api,
                     acc,
@@ -89,10 +107,10 @@ namespace WildFarming.Ecosystem
                     scale);
 
                 entry.LastTreeGrowthYear = gameYear;
+                calendarAgeStore?.Capture(entry, wood);
 
                 if (placed > 0 && cfg.ReproduceDebug)
                 {
-                    WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
                     TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
                     int sizePct = TreeGrowthTargets.SizeIndexPercent(
                         metrics.TrunkHeight,
@@ -108,12 +126,21 @@ namespace WildFarming.Ecosystem
                         entry.Origin);
                 }
             }
+
+            if (onSenescenceRemoved != null)
+            {
+                for (int i = 0; i < pendingSenescence.Count; i++)
+                {
+                    onSenescenceRemoved(pendingSenescence[i]);
+                }
+            }
         }
 
         public void Clear()
         {
             lastProcessedYear = int.MinValue;
             roundRobinIndex = 0;
+            pendingSenescence.Clear();
         }
     }
 }

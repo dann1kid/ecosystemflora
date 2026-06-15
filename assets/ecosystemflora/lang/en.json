@@ -87,6 +87,8 @@
 	"ecosystemflora:inspect-line-stress-ok": "Stress: healthy.",
 	"ecosystemflora:inspect-line-trample": "Trampling exposure: {0} / {1}.",
 	"ecosystemflora:inspect-line-tree-age": "Tree age: {0} / {1} years (since ecology registration).",
+	"ecosystemflora:inspect-line-tree-senescent": "Senescent — past natural lifespan; will die on next ecology year tick (unless land claim blocks removal).",
+	"ecosystemflora:inspect-line-tree-senescence-soon": "Approaching senescence — natural death next game year if aging is active.",
 	"ecosystemflora:inspect-line-tree-size": "Structure: trunk {0} blocks, crown radius {1} ({2}% of typical mature ~{3}/{4}).",
 	"ecosystemflora:inspect-line-next-spread": "Next spread attempt in ~{0} days.",
 	"ecosystemflora:inspect-line-season-now": "Seasonal spread activity now: ×{0}.",

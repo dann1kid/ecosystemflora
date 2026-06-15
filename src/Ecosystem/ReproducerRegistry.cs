@@ -414,5 +414,19 @@ namespace WildFarming.Ecosystem
             int cs = GlobalConstants.ChunkSize;
             return new Vec2i(pos.X / cs, pos.Z / cs);
         }
+
+        /// <summary>When <paramref name="activeChunks"/> is null, all origins are in scope (normal play).</summary>
+        public static bool IsInActiveChunks(BlockPos origin, ICollection<Vec2i> activeChunks)
+        {
+            if (activeChunks == null || origin == null) return true;
+
+            Vec2i chunk = ToChunkCoord(origin);
+            foreach (Vec2i active in activeChunks)
+            {
+                if (active.X == chunk.X && active.Y == chunk.Y) return true;
+            }
+
+            return false;
+        }
     }
 }
