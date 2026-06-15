@@ -89,6 +89,7 @@ Random/hybrid modes also maintain `FoliageCellIndex` for per-tick picks.
 | `CanopyActivityScale` | `1` | monthly curve multiplier |
 | `CanopyBudMinTemperature` | `5` | °C at cell for spring bud |
 | `FoliagePeakAutumnBranchyStripActivity` | `0` | 0 = keep branchy skeleton in autumn |
+| `FoliageRestoreBareSkeleton` | `true` | Winter crown repair only (not lower trunk; not autumn) |
 
 Legacy keys `MaxCanopyUpdateOpsPerTick` / `CanopyBudgetMs` still map to foliage fields.
 

@@ -86,6 +86,8 @@
 	"ecosystemflora:inspect-line-stress": "Stress: {0} / {1} failed checks.",
 	"ecosystemflora:inspect-line-stress-ok": "Stress: healthy.",
 	"ecosystemflora:inspect-line-trample": "Trampling exposure: {0} / {1}.",
+	"ecosystemflora:inspect-line-tree-age": "Tree age: {0} / {1} years (ecological estimate).",
+	"ecosystemflora:inspect-line-tree-size": "Structure: trunk {0} blocks, crown radius {1} (age targets: {2} / {3}).",
 	"ecosystemflora:inspect-line-next-spread": "Next spread attempt in ~{0} days.",
 	"ecosystemflora:inspect-line-season-now": "Seasonal spread activity now: ×{0}.",
 	"ecosystemflora:inspect-line-niche-ok": "Local niche fit: ×{0}.",

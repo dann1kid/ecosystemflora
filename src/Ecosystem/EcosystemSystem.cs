@@ -27,6 +27,7 @@ namespace WildFarming.Ecosystem
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
+        readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         bool calendarDebugLogged;
         bool deferredTreeBootstrapDone;
@@ -482,6 +483,16 @@ namespace WildFarming.Ecosystem
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
                 {
+                    string wood = PlantCodeHelper.GetTreeWood(matureBlock);
+                    if (!string.IsNullOrEmpty(wood))
+                    {
+                        entry.TreeAgeYears = TreeStructureProbe.EstimateAgeYears(
+                            api.World.BlockAccessor,
+                            origin,
+                            wood);
+                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                    }
+
                     foliageCells.OnBlockAdded(origin);
                 }
 
@@ -1135,6 +1146,8 @@ namespace WildFarming.Ecosystem
                 : 0;
 
             foliageCells.ProcessRandomTick(api, canopyActiveChunks, foliageBudgetTicks, tickBudgetWatch);
+
+            treeGrowthScheduler.Tick(api, cfg, registry, spreadActiveChunks);
 
             IBlockAccessor acc = api.World.BlockAccessor;
 

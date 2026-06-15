@@ -37,37 +37,38 @@ namespace WildFarming.Ecosystem
 
         public static int ResolveMoteColor(int month, Random rand)
         {
-            int jitter = rand.Next(-12, 13);
+            int jitter = rand.Next(-5, 6);
             if (month <= 3)
             {
-                return ColorArgb(90, 100 + jitter, 150 + jitter, 70 + jitter);
+                return ColorArgb(160, 95 + jitter, 145 + jitter, 55 + jitter);
             }
 
-            return ColorArgb(80, 80 + jitter, 140 + jitter, 60 + jitter);
+            return ColorArgb(140, 70 + jitter, 130 + jitter, 45 + jitter);
         }
 
         public static int ResolveDriftColor(string wood, Random rand)
         {
-            int jitter = rand.Next(-15, 16);
+            int jitter = rand.Next(-6, 7);
             if (string.IsNullOrEmpty(wood))
             {
-                return ColorArgb(200, 170 + jitter, 110 + jitter, 45 + jitter);
+                return ColorArgb(210, 168 + jitter, 98 + jitter, 32 + jitter);
             }
 
             switch (wood)
             {
                 case "birch":
                 case "maple":
+                    return ColorArgb(220, 215 + jitter, 175 + jitter, 45 + jitter);
                 case "crimsonkingmaple":
-                    return ColorArgb(210, 220 + jitter, 180 + jitter, 60 + jitter);
+                    return ColorArgb(220, 195 + jitter, 75 + jitter, 35 + jitter);
                 case "oak":
                 case "walnut":
-                    return ColorArgb(210, 180 + jitter, 100 + jitter, 40 + jitter);
+                    return ColorArgb(220, 172 + jitter, 92 + jitter, 28 + jitter);
                 case "acacia":
                 case "kapok":
-                    return ColorArgb(210, 200 + jitter, 120 + jitter, 50 + jitter);
+                    return ColorArgb(210, 188 + jitter, 118 + jitter, 38 + jitter);
                 default:
-                    return ColorArgb(200, 170 + jitter, 110 + jitter, 45 + jitter);
+                    return ColorArgb(210, 168 + jitter, 98 + jitter, 32 + jitter);
             }
         }
 

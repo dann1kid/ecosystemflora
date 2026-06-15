@@ -254,6 +254,8 @@ namespace WildFarming.Ecosystem
                         cfg.TramplingStressThreshold.ToString());
                 }
 
+                AppendTreeAgingInspect(api, entry, lines);
+
                 if (api.World?.Calendar != null)
                 {
                     double hoursLeft = entry.NextAttemptHours - api.World.Calendar.TotalHours;
@@ -533,6 +535,60 @@ namespace WildFarming.Ecosystem
                     AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-next-spread", daysLeft.ToString("0.#"));
                 }
             }
+        }
+
+        static void AppendTreeAgingInspect(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            List<InspectLineLite> lines)
+        {
+            if (entry?.Requirements?.Habitat != EcologyHabitat.TerrestrialTree) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableTreeAging || api?.World?.BlockAccessor == null) return;
+
+            Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
+            string wood = PlantCodeHelper.GetTreeWood(block);
+            if (string.IsNullOrEmpty(wood)) return;
+
+            WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+            TreeStructureMetrics metrics = TreeStructureProbe.Measure(
+                api.World.BlockAccessor,
+                entry.Origin,
+                wood);
+
+            int ageYears = entry.TreeAgeYears;
+            int structureAge = TreeGrowthTargets.EstimateAgeYears(
+                metrics.TrunkHeight,
+                metrics.CrownRadius,
+                profile);
+            if (ageYears >= profile.MaxAgeYears - 1 && structureAge < ageYears - 15)
+            {
+                ageYears = structureAge;
+            }
+
+            int targetHeight = TreeGrowthTargets.TargetTrunkHeight(
+                ageYears,
+                profile,
+                cfg.TreeGrowthActivityScale);
+            int targetRadius = TreeGrowthTargets.TargetCrownRadius(
+                ageYears,
+                profile,
+                cfg.TreeGrowthActivityScale);
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-tree-age",
+                ageYears.ToString(),
+                profile.MaxAgeYears.ToString());
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-tree-size",
+                metrics.TrunkHeight.ToString(),
+                metrics.CrownRadius.ToString(),
+                targetHeight.ToString(),
+                targetRadius.ToString());
         }
 
         static void AppendMyceliumInspect(

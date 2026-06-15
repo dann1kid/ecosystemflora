@@ -17,8 +17,6 @@ namespace WildFarming.Client
         double nextSampleAt;
         double nextMoteAt;
         double nextDriftAt;
-        int recentSpawns;
-        double recentSpawnWindowStart;
         readonly Random rand = new Random();
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Client;
@@ -46,6 +44,10 @@ namespace WildFarming.Client
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EnableSeasonalFoliage || !cfg.EnableCanopyAmbience) return;
             if (capi?.World?.BlockAccessor == null || capi.World.Player?.Entity == null) return;
+            if (!capi.World.AmbientParticles) return;
+
+            int particleLevel = capi.Settings.Int["particleLevel"];
+            if (particleLevel <= 0) return;
 
             double now = capi.World.Calendar.ElapsedSeconds;
             if (now >= nextSampleAt)
@@ -71,19 +73,26 @@ namespace WildFarming.Client
                 climate?.Rainfall ?? 0f,
                 cfg.CanopyAmbienceSuppressInRain);
 
-            moteSeason *= weather * cfg.CanopyAmbienceMoteRate * lastSample.Density;
-            driftSeason *= weather * cfg.CanopyAmbienceLeafDriftRate * lastSample.Density;
+            float particleScale = particleLevel / 100f;
+            moteSeason *= weather * cfg.CanopyAmbienceMoteRate * lastSample.Density * particleScale;
+            driftSeason *= weather * cfg.CanopyAmbienceLeafDriftRate * lastSample.Density * particleScale;
+
+            // Autumn leaf drift dominates; keep green motes subtle so colours stay readable.
+            if (driftSeason > 0.4f)
+            {
+                moteSeason *= 0.2f;
+            }
 
             if (moteSeason > 0f && now >= nextMoteAt)
             {
                 nextMoteAt = now + JitterInterval(4.0, 8.0, moteSeason);
-                SpawnMotes(lastSample, month);
+                SpawnMotes(lastSample, month, CanopyAmbienceWind.Sample());
             }
 
             if (driftSeason > 0f && now >= nextDriftAt)
             {
                 nextDriftAt = now + JitterInterval(1.5, 3.0, driftSeason);
-                SpawnDrift(lastSample);
+                SpawnDriftBurst(lastSample, CanopyAmbienceWind.Sample());
             }
         }
 
@@ -108,97 +117,76 @@ namespace WildFarming.Client
             return baseInterval / rateScale;
         }
 
-        bool CanSpawnMore(EcosystemConfig cfg)
+        void SpawnMotes(CanopyAmbienceSample sample, int month, CanopyAmbienceWind wind)
         {
-            double now = capi.World.Calendar.ElapsedSeconds;
-            if (now - recentSpawnWindowStart > 2.0)
-            {
-                recentSpawnWindowStart = now;
-                recentSpawns = 0;
-            }
-
-            if (recentSpawns >= cfg.CanopyAmbienceMaxParticles) return false;
-
-            recentSpawns++;
-            return true;
-        }
-
-        void SpawnMotes(CanopyAmbienceSample sample, int month)
-        {
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!CanSpawnMore(cfg)) return;
-
             int count = 1 + rand.Next(0, 2);
             for (int i = 0; i < count; i++)
             {
-                if (!CanSpawnMore(cfg)) break;
-                SpawnMoteParticle(sample, month);
+                SpawnMoteParticle(sample, month, wind);
             }
         }
 
-        void SpawnDrift(CanopyAmbienceSample sample)
+        void SpawnDriftBurst(CanopyAmbienceSample sample, CanopyAmbienceWind wind)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!CanSpawnMore(cfg)) return;
+            EntityPlayer player = capi.World.Player.Entity;
+            BlockPos feet = player.Pos.AsBlockPos;
+            int burstCount = 2 + rand.Next(0, 3);
+            int viewDistance = capi.Settings.Int["viewDistance"];
 
-            int count = 1 + rand.Next(0, 2);
-            for (int i = 0; i < count; i++)
+            if (!CanopyAmbienceFoliageSpawn.TryPickSpawnPoints(
+                    capi.World.BlockAccessor,
+                    feet.X,
+                    feet.Y,
+                    feet.Z,
+                    viewDistance,
+                    cfg.CanopyAmbienceMinHeightBlocks,
+                    burstCount,
+                    rand,
+                    out FoliageSpawnPoint[] points))
             {
-                if (!CanSpawnMore(cfg)) break;
-                SpawnDriftParticle(sample);
+                return;
+            }
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                SpawnDriftParticle(points[i], wind);
             }
         }
 
-        void SpawnMoteParticle(CanopyAmbienceSample sample, int month)
+        void SpawnMoteParticle(CanopyAmbienceSample sample, int month, CanopyAmbienceWind wind)
         {
-            Vec3d pos = RandomSpawnPos(sample);
+            Vec3d pos = RandomMoteSpawnPos(sample);
             int color = CanopyAmbienceSeasonCurves.ResolveMoteColor(month, rand);
-
-            var props = new SimpleParticleProperties(
-                1, 1, color,
-                pos, pos.Add(0.6, 0.4, 0.6),
-                new Vec3f(-0.03f, -0.06f, -0.03f),
-                new Vec3f(0.03f, -0.02f, 0.03f),
-                lifeLength: 2.2f,
-                gravityEffect: 0.04f,
-                minSize: 0.06f,
-                maxSize: 0.11f,
-                model: EnumParticleModel.Quad);
-
-            props.Async = true;
-            props.WindAffectednes = 0.25f;
-            capi.World.SpawnParticles(props);
+            capi.World.SpawnParticles(CanopyAmbienceParticles.CreateMote(pos, color, wind));
         }
 
-        void SpawnDriftParticle(CanopyAmbienceSample sample)
+        void SpawnDriftParticle(FoliageSpawnPoint spawn, CanopyAmbienceWind wind)
         {
-            Vec3d pos = RandomSpawnPos(sample);
-            int color = CanopyAmbienceSeasonCurves.ResolveDriftColor(sample.DominantWood, rand);
+            if (CanopyAmbienceParticles.TrySpawnLeafDrift(
+                    capi,
+                    spawn,
+                    wind,
+                    rand,
+                    out IParticlePropertiesProvider props))
+            {
+                capi.World.SpawnParticles(props);
+                return;
+            }
 
-            var props = new SimpleParticleProperties(
-                1, 1, color,
-                pos, pos.Add(0.8, 0.5, 0.8),
-                new Vec3f(-0.04f, -0.12f, -0.04f),
-                new Vec3f(0.04f, -0.06f, 0.04f),
-                lifeLength: 3.8f,
-                gravityEffect: 0.14f,
-                minSize: 0.10f,
-                maxSize: 0.18f,
-                model: EnumParticleModel.Quad);
-
-            props.Async = true;
-            props.WindAffectednes = 0.45f;
-            capi.World.SpawnParticles(props);
+            int color = CanopyAmbienceSeasonCurves.ResolveDriftColor(spawn.Wood, rand);
+            capi.World.SpawnParticles(CanopyAmbienceParticles.CreateDriftFallback(spawn.Pos, color, wind, rand));
         }
 
-        Vec3d RandomSpawnPos(CanopyAmbienceSample sample)
+        Vec3d RandomMoteSpawnPos(CanopyAmbienceSample sample)
         {
             EntityPlayer player = capi.World.Player.Entity;
             double px = player.Pos.X;
-            double py = sample.CanopyY - 0.2 - rand.NextDouble() * 1.2;
+            double py = sample.CanopyY - 1.2 - rand.NextDouble() * 0.8;
             double pz = player.Pos.Z;
 
-            double spread = 2.0 + rand.NextDouble() * 2.0;
+            int viewDistance = capi.Settings.Int["viewDistance"];
+            double spread = rand.NextDouble() * viewDistance;
             double angle = rand.NextDouble() * Math.PI * 2.0;
             px += Math.Cos(angle) * spread;
             pz += Math.Sin(angle) * spread;

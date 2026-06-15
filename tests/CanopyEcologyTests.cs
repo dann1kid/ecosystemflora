@@ -198,6 +198,23 @@ namespace WildFarming.Tests
             Assert.False(CanopyFoliageRules.TryCatchUpStripOnScan(null, null, new BlockPos(0), block));
         }
 
+        [Theory]
+        [InlineData(0.05f, true)]   // Jan dormant
+        [InlineData(0.15f, false)]  // Mar — bud rising
+        public void IsBareCrownSeasonForProgress_WinterIdleOnly(float yearProgress, bool expected)
+        {
+            Assert.Equal(
+                expected,
+                CanopyFoliageRules.IsBareCrownSeasonForProgress(yearProgress, CanopySeasonPhase.Idle, 1f));
+        }
+
+        [Fact]
+        public void IsBareCrownSeasonForProgress_NotDuringAutumnOrSpring()
+        {
+            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(0.05f, CanopySeasonPhase.Autumn, 1f));
+            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(0.2f, CanopySeasonPhase.Spring, 1f));
+        }
+
         [Fact]
         public void ShouldCatchUpBud_ReturnsFalseWithoutApi()
         {

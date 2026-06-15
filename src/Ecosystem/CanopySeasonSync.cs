@@ -69,6 +69,7 @@ namespace WildFarming.Ecosystem
             {
                 if (EcosystemConfig.Loaded.FoliageRestoreBareSkeleton
                     && CanopyFoliageRules.IsBareCrownSeason(api, pos, wood)
+                    && CanopyFoliageRules.IsLogInCrownZone(acc, pos, wood)
                     && !CanopyFoliageRules.HasAdjacentBranchyLeaf(acc, pos, wood))
                 {
                     CanopyEcology.ResolvePhase(api, pos, wood, out float bareActivity);

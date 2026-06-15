@@ -190,6 +190,17 @@ namespace WildFarming.Ecosystem
         /// <summary>Chunk columns scanned per tick for cyclic tree discovery (TreeTrunkDiscovery only).</summary>
         public int MaxTreeRescanColumnsPerTick { get; set; } = 16;
 
+        // --- Wild tree aging (v3.6) — see docs/TREE_AGING.md ---
+
+        /// <summary>Once per game year, extend trunk height and crown spread with grown blocks.</summary>
+        public bool EnableTreeAging { get; set; } = true;
+
+        /// <summary>Wild trees processed per reproduce tick (round-robin near players).</summary>
+        public int MaxTreeGrowthAttemptsPerTick { get; set; } = 6;
+
+        /// <summary>Multiplier on species max height / crown radius targets.</summary>
+        public float TreeGrowthActivityScale { get; set; } = 1f;
+
         // --- Flora context (v2) ---
 
         public bool UseFloraContext { get; set; } = true;
@@ -376,9 +387,6 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Multiplier on autumn leaf drift spawn rate.</summary>
         public float CanopyAmbienceLeafDriftRate { get; set; } = 1f;
-
-        /// <summary>Soft cap on particle bursts per 2-second window.</summary>
-        public int CanopyAmbienceMaxParticles { get; set; } = 48;
 
         /// <summary>Seconds between canopy density re-samples.</summary>
         public double CanopyAmbienceSampleIntervalSeconds { get; set; } = 2.0;

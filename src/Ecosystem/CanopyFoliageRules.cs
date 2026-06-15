@@ -120,9 +120,9 @@ namespace WildFarming.Ecosystem
 
             CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out float activity);
 
+            IBlockAccessor acc = api.World?.BlockAccessor;
             if (kind == FoliageCellKind.LogGrown
-                && EcosystemConfig.Loaded.FoliageRestoreBareSkeleton
-                && IsBareCrownSeason(api, pos, wood))
+                && ShouldRestoreBareSkeletonOnLog(api, acc, pos, wood))
             {
                 return true;
             }
@@ -140,8 +140,7 @@ namespace WildFarming.Ecosystem
                     || (phase == CanopySeasonPhase.Autumn && ShouldStripBranchyInAutumn(activity)),
 
                 FoliageCellKind.LogGrown => phase == CanopySeasonPhase.Spring
-
-                    || (EcosystemConfig.Loaded.FoliageRestoreBareSkeleton && IsBareCrownSeason(api, pos, wood)),
+                    || ShouldRestoreBareSkeletonOnLog(api, acc, pos, wood),
 
                 _ => false,
 
@@ -454,15 +453,73 @@ namespace WildFarming.Ecosystem
 
 
         internal static bool IsBareCrownSeason(ICoreAPI api, BlockPos pos, string wood)
-
         {
+            CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out _);
+            if (phase == CanopySeasonPhase.Autumn || phase == CanopySeasonPhase.Spring) return false;
+            if (phase != CanopySeasonPhase.Idle || api?.World?.Calendar == null) return false;
 
-            CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out float activity);
+            IGameCalendar cal = api.World.Calendar;
+            float yearProgress = cal.DayOfYearf / cal.DaysPerYear;
+            return IsBareCrownSeasonForProgress(yearProgress, phase, EcosystemConfig.Loaded.CanopyActivityScale);
+        }
 
-            if (phase == CanopySeasonPhase.Autumn && activity >= 0.25f) return true;
+        /// <summary>Winter dormant window — not active autumn defoliation.</summary>
+        internal static bool IsBareCrownSeasonForProgress(float yearProgress, CanopySeasonPhase phase, float activityScale)
+        {
+            if (phase == CanopySeasonPhase.Autumn || phase == CanopySeasonPhase.Spring) return false;
+            if (phase != CanopySeasonPhase.Idle) return false;
 
-            return ShouldCatchUpStripRegularLeaf(api, pos, wood, out _);
+            WildCanopySeason.Profile profile = WildCanopySeason.Resolve("oak");
+            float defol = profile.DefoliateInterpolated(yearProgress) * activityScale;
+            float bud = profile.BudInterpolated(yearProgress) * activityScale;
+            return bud < 0.1f && defol < 0.1f;
+        }
 
+        internal static bool ShouldRestoreBareSkeletonOnLog(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos logPos,
+            string wood)
+        {
+            if (!EcosystemConfig.Loaded.FoliageRestoreBareSkeleton) return false;
+            if (api == null || acc == null || logPos == null || string.IsNullOrEmpty(wood)) return false;
+            if (!IsBareCrownSeason(api, logPos, wood)) return false;
+            return IsLogInCrownZone(acc, logPos, wood);
+        }
+
+        /// <summary>Skip lower trunk — branchy repair only in the crown column.</summary>
+        internal static bool IsLogInCrownZone(IBlockAccessor acc, BlockPos logPos, string wood)
+        {
+            if (acc == null || logPos == null || string.IsNullOrEmpty(wood)) return false;
+
+            BlockPos basePos = PlantCodeHelper.GetTreeTrunkBase(acc, logPos);
+            int heightAboveBase = logPos.Y - basePos.Y;
+            if (heightAboveBase < 2) return false;
+
+            int trunkTop = GetColumnTrunkTopY(acc, logPos.X, logPos.Z, wood, basePos.Y);
+            int trunkHeight = trunkTop - basePos.Y;
+            if (trunkHeight <= 0) return true;
+
+            return heightAboveBase >= trunkHeight / 3;
+        }
+
+        static int GetColumnTrunkTopY(IBlockAccessor acc, int x, int z, string wood, int baseY)
+        {
+            int top = baseY;
+            var scratch = new BlockPos(x, baseY, z);
+            for (int y = baseY + 1; y < acc.MapSizeY; y++)
+            {
+                scratch.Set(x, y, z);
+                if (!acc.IsValidPos(scratch)) break;
+
+                Block block = acc.GetBlock(scratch);
+                if (!PlantCodeHelper.IsTreeLogGrownBlock(block)) break;
+                if (PlantCodeHelper.GetTreeWood(block) != wood) break;
+
+                top = y;
+            }
+
+            return top;
         }
 
 
@@ -563,8 +620,7 @@ namespace WildFarming.Ecosystem
             int gameYear = CanopyEcology.GameYear(api.World.Calendar);
 
             if (kind == FoliageCellKind.LogGrown
-                && EcosystemConfig.Loaded.FoliageRestoreBareSkeleton
-                && IsBareCrownSeason(api, pos, wood))
+                && ShouldRestoreBareSkeletonOnLog(api, acc, pos, wood))
             {
                 if (activity <= 0f)
                 {

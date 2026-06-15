@@ -52,7 +52,7 @@ Every `CanopyAmbienceSampleIntervalSeconds` (default 2 s):
 3. `Density` = fraction of columns with foliage within 2 blocks of lowest canopy layer.
 4. Ambience runs only when `Density ≥ 0.2`.
 
-Particles spawn **under** the canopy (`CanopyY − 0.2…1.4`) in a 2–4 block XZ disc around the player.
+Particles spawn **inside** random `leavesbranchy` / `leaves-grown` voxels within the client **view distance** (`Settings → viewDistance`). Density follows the vanilla **Particles** slider (`particleLevel`); off when `AmbientParticles` is disabled.
 
 ---
 
@@ -64,7 +64,6 @@ Particles spawn **under** the canopy (`CanopyY − 0.2…1.4`) in a 2–4 block 
 | `CanopyAmbienceMinHeightBlocks` | `2` | Min foliage height above feet |
 | `CanopyAmbienceMoteRate` | `1` | Green mote rate multiplier |
 | `CanopyAmbienceLeafDriftRate` | `1` | Autumn leaf drift multiplier |
-| `CanopyAmbienceMaxParticles` | `48` | Soft burst cap per 2 s window |
 | `CanopyAmbienceSampleIntervalSeconds` | `2` | Canopy re-sample interval |
 | `CanopyAmbienceSuppressInRain` | `true` | Off during live precipitation |
 
@@ -74,7 +73,11 @@ Particles spawn **under** the canopy (`CanopyY − 0.2…1.4`) in a 2–4 block 
 
 - One sampler pass per player every 2 s (not per frame).
 - Spawn intervals scale inversely with season rate (4–8 s motes, 1.5–3 s drift at peak).
+- Respects client `particleLevel` and `AmbientParticles`; no mod-side burst cap.
 - `Async = true` on particles; `WindAffectednes` for natural drift.
+- Leaf drift: **`CanopyLeafVoxelParticleProps`** — textured **Cube** from vanilla `leaves-grown-{wood}`; **`CanopyAmbienceWind`** reads `GlobalConstants.CurrentWindSpeedClient`.
+- **Calm** (`Strength &lt; 0.12`): gravity ~0.66, SINUS flutter on X/Z (distinct frequencies), CLAMPEDPOSITIVESINUS on Y for glide stalls, no wind carry.
+- **Windy**: lower gravity, gust along wind vector, same flutter axes (no COSIN pair), `ParentVelocityWeight` for drift.
 - No per-tree emitters — single player-local system.
 
 ---
