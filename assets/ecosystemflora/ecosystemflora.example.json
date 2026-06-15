@@ -111,5 +111,13 @@
   "FoliageRestoreBareSkeleton": true,
   "CanopyActivityScale": 1.0,
   "CanopyBudMinTemperature": 5,
-  "CanopyLatitudeInfluence": 0.35
+  "CanopyLatitudeInfluence": 0.35,
+
+  "EnableCanopyAmbience": true,
+  "CanopyAmbienceMinHeightBlocks": 2,
+  "CanopyAmbienceMoteRate": 1.0,
+  "CanopyAmbienceLeafDriftRate": 1.0,
+  "CanopyAmbienceMaxParticles": 48,
+  "CanopyAmbienceSampleIntervalSeconds": 2.0,
+  "CanopyAmbienceSuppressInRain": true
 }

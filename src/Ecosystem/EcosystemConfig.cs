@@ -363,6 +363,29 @@ namespace WildFarming.Ecosystem
         /// <summary>0 disables latitude modifier; higher = stronger polar slowdown.</summary>
         public float CanopyLatitudeInfluence { get; set; } = 0.35f;
 
+        // --- Canopy ambience particles (v3.5, client-only) — see docs/CANOPY_AMBIENCE.md ---
+
+        /// <summary>Green motes and autumn leaf drift under tall deciduous canopy (client only).</summary>
+        public bool EnableCanopyAmbience { get; set; } = true;
+
+        /// <summary>Minimum foliage height above player feet before ambience activates.</summary>
+        public int CanopyAmbienceMinHeightBlocks { get; set; } = 2;
+
+        /// <summary>Multiplier on green mote spawn rate.</summary>
+        public float CanopyAmbienceMoteRate { get; set; } = 1f;
+
+        /// <summary>Multiplier on autumn leaf drift spawn rate.</summary>
+        public float CanopyAmbienceLeafDriftRate { get; set; } = 1f;
+
+        /// <summary>Soft cap on particle bursts per 2-second window.</summary>
+        public int CanopyAmbienceMaxParticles { get; set; } = 48;
+
+        /// <summary>Seconds between canopy density re-samples.</summary>
+        public double CanopyAmbienceSampleIntervalSeconds { get; set; } = 2.0;
+
+        /// <summary>Suppress motes and drift while live precipitation is high.</summary>
+        public bool CanopyAmbienceSuppressInRain { get; set; } = true;
+
         /// <summary>Legacy alias — use <see cref="FoliageBudgetMs"/>.</summary>
         public int CanopyBudgetMs
         {
