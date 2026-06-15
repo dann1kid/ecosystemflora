@@ -130,6 +130,28 @@ namespace WildFarming.Tests
         }
     }
 
+    public class CanopySeasonSyncTests
+    {
+        [Theory]
+        [InlineData(9, true)]
+        [InlineData(10, true)]
+        [InlineData(11, false)]
+        [InlineData(0, false)]
+        [InlineData(1, false)]
+        public void ShouldUsePatchyRegularLeafStrip_AutumnPhase_ByMonth(int month, bool expectPatchy)
+        {
+            Assert.Equal(
+                expectPatchy,
+                CanopySeasonSync.ShouldUsePatchyRegularLeafStripForMonth(CanopySeasonPhase.Autumn, month));
+        }
+
+        [Fact]
+        public void ShouldUsePatchyRegularLeafStrip_IdlePhase_NeverPatchy()
+        {
+            Assert.False(CanopySeasonSync.ShouldUsePatchyRegularLeafStripForMonth(CanopySeasonPhase.Idle, 5));
+        }
+    }
+
     public class CanopyFoliageRulesTests
     {
         [Theory]

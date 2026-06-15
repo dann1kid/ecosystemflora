@@ -1,4 +1,4 @@
-# Canopy foliage — сезонная листва (v3.3)
+# Canopy foliage — сезонная листва (v3.4)
 
 Per-cell seasonal foliage on **deciduous** `log-grown` / `leavesbranchy` / `leaves-grown` blocks. No trunk anchor BFS, no `GrowTree`, no disk persistence.
 
@@ -9,49 +9,70 @@ Updated: 2026-06-14.
 ## Architecture
 
 ```
-FoliageCellIndex — per-chunk list of cell positions (chunk scan + place/break)
+Chunk load / month change / block place-break
         ↓
-FoliageCellScheduler — random N cells/tick near players
+PendingChunkScan queue → ChunkEcologyColumnPass (unified column descent)
         ↓
-CanopyFoliageRules.TickCell — local 6-neighbor strip/bud
+CanopySeasonSync.TrySyncCell — deterministic strip/bud per foliage block
         ↓
-WildCanopySeason + CanopyEcology (phase, activity, rolls)
+WildCanopySeason + CanopyEcology (phase, activity, gates)
 ```
 
 | Component | File |
 |-----------|------|
 | Per-cell rules | `CanopyFoliageRules.cs` |
-| Random-tick scheduler | `FoliageCellScheduler.cs` |
-| Chunk index | `FoliageCellIndex.cs` |
-| Chunk scan on load | `FoliageColumnScanner.cs` |
+| Chunk season sync | `CanopySeasonSync.cs` |
+| Unified column pass | `ChunkEcologyColumnPass.cs`, `ChunkColumnWalker.cs` |
+| Scheduler / chunk state | `FoliageCellScheduler.cs`, `FoliageChunkState.cs` |
+| Season key | `FoliageSeasonKey.cs` |
 | Season curves | `WildCanopySeason.cs`, `CanopyEcology.cs` |
 | Block codes | `CanopyBlockHelper.cs` |
 
+**Sync modes** (`FoliageSyncMode`):
+
+| Mode | Behaviour |
+|------|-----------|
+| `chunk` (default) | One column pass per chunk per game month; no random tick |
+| `hybrid` | Chunk sync + random tick (`MaxFoliageCellsTickedPerTick` > 0) |
+| `random` | Legacy v3.3 random cell tick only |
+
 ---
 
-## Local rules (per tick, per cell)
+## Local rules (per cell)
 
 | Block | Autumn | Spring |
 |-------|--------|--------|
-| `leaves-grown` | roll → `air` | — |
-| `leavesbranchy` | stays | roll → adjacent air → `leaves-grown` |
-| `log-grown` | stays | roll → adjacent air → `leavesbranchy` |
+| `leaves-grown` | strip → `air` | — |
+| `leavesbranchy` | stays (optional peak strip) | bud → adjacent air → `leaves-grown` |
+| `log-grown` | stays | bud → adjacent air → `leavesbranchy` |
 
-- Only **orthogonal** neighbors of the ticking cell are candidates.
-- Same `wood`, vacant air, land claims respected.
-- Activity + deterministic noise + random roll (patchy crown).
+- Only **orthogonal** neighbors; same `wood`, vacant air, land claims respected.
+- Activity + deterministic noise (patchy crown).
 
-**Conifers** — no behavior attached. **Not** `log-placed` / `leaves-placed`.
+**Conifers** — no behaviour. **Not** `log-placed` / `leaves-placed`.
+
+---
+
+## Strip policy (`CanopySeasonSync`)
+
+| Period | `leaves-grown` strip |
+|--------|----------------------|
+| Oct–Nov (active autumn) | Patchy (~30–55% per pass via deterministic gate) |
+| Dec–Feb + winter idle | **Force strip all** regular leaves |
+| Mar–Sep | No autumn strip |
+
+Ensures bare skeleton by winter even when chunk sync marks the month complete after a partial autumn pass.
 
 ---
 
 ## Index lifecycle
 
-1. **Chunk load** — column scan adds all foliage cells (`FoliageColumnScanner`).
-2. **Place/break** — `EcosystemSystem` updates the index.
-3. **Chunk unload** — index for chunk cleared.
+1. **Chunk column pass** — scans foliage during rain-heightmap descent (chunk/hybrid modes).
+2. **Place/break** — invalidates chunk sync state; re-queues scan.
+3. **Month change** — `FoliageSeasonKey` invalidates all tracked chunks.
+4. **Chunk unload** — chunk state cleared.
 
-No spread-registry requirement.
+Random/hybrid modes also maintain `FoliageCellIndex` for per-tick picks.
 
 ---
 
@@ -60,15 +81,33 @@ No spread-registry requirement.
 | Key | Default | Description |
 |-----|---------|-------------|
 | `EnableSeasonalFoliage` | `true` | master toggle |
-| `MaxFoliageCellsTickedPerTick` | `64` | random cells per reproduce tick |
-| `FoliageBudgetMs` | `10` | wall-time cap (0 = off) |
+| `FoliageSyncMode` | `chunk` | `chunk` / `hybrid` / `random` |
+| `FoliageChunkSyncBudgetMs` | `12` | wall-time per column pass slice |
+| `FoliageChunkWorkPerTick` | `4` | chunk columns resumed per tick |
+| `MaxFoliageCellsTickedPerTick` | `0` | random cells/tick (hybrid/random; 0 = off) |
+| `FoliageBudgetMs` | `10` | random-tick wall cap |
 | `CanopyActivityScale` | `1` | monthly curve multiplier |
 | `CanopyBudMinTemperature` | `5` | °C at cell for spring bud |
+| `FoliagePeakAutumnBranchyStripActivity` | `0` | 0 = keep branchy skeleton in autumn |
 
-Legacy JSON keys `MaxCanopyUpdateOpsPerTick` / `CanopyBudgetMs` still map to the new fields.
+Legacy keys `MaxCanopyUpdateOpsPerTick` / `CanopyBudgetMs` still map to foliage fields.
 
 ---
 
-## v3.2 → v3.3
+## Client ambience (v3.5)
 
-Removed: `CanopyPhenology`, `CanopySkeletonScanner`, trunk-anchor queues, spread-registry coupling.
+Optional **client-only** particles under tall canopy — no server cost. See [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
+
+Toggle: `EnableCanopyAmbience` (requires `EnableSeasonalFoliage`).
+
+---
+
+## History
+
+| Version | Change |
+|---------|--------|
+| v3.2 | Per-cell random tick phenology |
+| v3.3 | `FoliageCellIndex`, removed trunk-anchor BFS |
+| v3.4 | Chunk-sync + unified `ChunkEcologyColumnPass` |
+| v3.4.1 | Winter force-strip all `leaves-grown` (Dec–Feb) |
+| v3.5 | Client canopy ambience particles |
