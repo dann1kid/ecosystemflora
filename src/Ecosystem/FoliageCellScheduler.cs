@@ -1,18 +1,16 @@
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Chunk-sync foliage scheduler (v3.4) with optional legacy random tick.</summary>
+    /// <summary>Chunk-sync foliage state; column work runs in unified ChunkEcologyColumnPass.</summary>
     internal sealed class FoliageCellScheduler
     {
         internal readonly FoliageCellIndex Index = new FoliageCellIndex();
         readonly Dictionary<long, FoliageChunkState> chunkStates = new Dictionary<long, FoliageChunkState>();
-        readonly Queue<Vec2i> syncQueue = new Queue<Vec2i>();
-        readonly HashSet<long> syncQueued = new HashSet<long>();
         readonly HashSet<long> activeChunkKeysScratch = new HashSet<long>();
 
         int lastSeasonKey = int.MinValue;
@@ -20,15 +18,28 @@ namespace WildFarming.Ecosystem
         int totalSyncedCells;
         double lastAutumnProgressLogHours = -1000;
 
-        public int PendingSyncChunks => syncQueue.Count;
+        internal Action<Vec2i> RequestEcologyScan;
+
+        public int PendingSyncChunks
+        {
+            get
+            {
+                int n = 0;
+                foreach (KeyValuePair<long, FoliageChunkState> kv in chunkStates)
+                {
+                    if (!kv.Value.Completed) n++;
+                }
+
+                return n;
+            }
+        }
+
         public int TrackedChunkCount => chunkStates.Count;
 
         public void Clear()
         {
             Index.Clear();
             chunkStates.Clear();
-            syncQueue.Clear();
-            syncQueued.Clear();
             autumnStripTotal = 0;
             totalSyncedCells = 0;
             lastSeasonKey = int.MinValue;
@@ -39,15 +50,13 @@ namespace WildFarming.Ecosystem
             long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
             Index.RemoveChunk(chunkCoord);
             chunkStates.Remove(key);
-            syncQueued.Remove(key);
         }
 
         public void OnBlockAdded(BlockPos pos)
         {
             if (pos == null) return;
 
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (FoliageSyncModeHelper.UsesRandomTick(cfg))
+            if (FoliageSyncModeHelper.UsesRandomTick(EcosystemConfig.Loaded))
             {
                 Index.Add(pos);
             }
@@ -78,7 +87,7 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            EnqueueChunkSync(chunkCoord, force: true);
+            MarkChunkNeedsSync(chunkCoord);
         }
 
         public void ScanChunkImmediate(ICoreAPI api, Vec2i chunkCoord) => ScheduleChunkSync(api, chunkCoord);
@@ -101,139 +110,73 @@ namespace WildFarming.Ecosystem
                 maxCatchUpOps: catchUpCap);
         }
 
-        public int ProcessChunkSyncWork(
-            ICoreAPI api,
-            ICollection<Vec2i> activeChunks,
-            Stopwatch budgetWatch,
-            long budgetTicks)
+        public bool TickSeasonChanged(ICoreAPI api)
         {
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (!cfg.EnableSeasonalFoliage || api == null) return 0;
-            if (!FoliageSyncModeHelper.UsesChunkSync(cfg)) return 0;
+            if (api == null || !EcosystemConfig.Loaded.EnableSeasonalFoliage) return false;
+            if (!FoliageSyncModeHelper.UsesChunkSync(EcosystemConfig.Loaded)) return false;
 
             int seasonKey = FoliageSeasonKey.Current(api);
-            if (seasonKey != lastSeasonKey)
+            if (seasonKey == lastSeasonKey) return false;
+
+            lastSeasonKey = seasonKey;
+            InvalidateAllTrackedChunks();
+            return true;
+        }
+
+        public bool NeedsChunkSync(Vec2i chunkCoord, int seasonKey)
+        {
+            if (!EcosystemConfig.Loaded.EnableSeasonalFoliage) return false;
+            if (!FoliageSyncModeHelper.UsesChunkSync(EcosystemConfig.Loaded)) return false;
+
+            long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
+            if (!chunkStates.TryGetValue(key, out FoliageChunkState state)) return true;
+
+            return !state.Completed || state.SyncedSeasonKey != seasonKey;
+        }
+
+        public void ApplyEcologyPassResult(Vec2i chunkCoord, ChunkEcologyColumnPass.Result result, int seasonKey)
+        {
+            if (!EcosystemConfig.Loaded.EnableSeasonalFoliage) return;
+            if (!FoliageSyncModeHelper.UsesChunkSync(EcosystemConfig.Loaded)) return;
+
+            long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
+            totalSyncedCells += result.FoliageIndexed;
+
+            if (result.FoliageChanged > 0)
             {
-                lastSeasonKey = seasonKey;
-                InvalidateAllTrackedChunks();
-                EnqueueActiveChunksForSync(api, activeChunks);
+                autumnStripTotal += result.FoliageChanged;
             }
 
-            if (syncQueue.Count == 0 && activeChunks != null)
+            if (result.Completed)
             {
-                EnqueueStaleActiveChunks(activeChunks, seasonKey);
+                chunkStates[key] = new FoliageChunkState
+                {
+                    SyncedSeasonKey = seasonKey,
+                    Completed = true,
+                    LastIndexed = result.FoliageIndexed,
+                    LastChanged = result.FoliageChanged,
+                };
             }
-
-            IBlockAccessor acc = api.World.BlockAccessor;
-            int changed = 0;
-            int chunksLeft = cfg.FoliageChunkWorkPerTick <= 0 ? int.MaxValue : cfg.FoliageChunkWorkPerTick;
-            long deadline = long.MaxValue;
-            if (cfg.FoliageChunkSyncBudgetMs > 0)
+            else
             {
-                deadline = Stopwatch.GetTimestamp()
-                    + cfg.FoliageChunkSyncBudgetMs * Stopwatch.Frequency / 1000;
+                chunkStates[key] = new FoliageChunkState
+                {
+                    SyncedSeasonKey = -1,
+                    ResumeLx = result.ResumeLx,
+                    ResumeLz = result.ResumeLz,
+                    ResumeY = result.ResumeY,
+                    Completed = false,
+                    LastIndexed = result.FoliageIndexed,
+                    LastChanged = result.FoliageChanged,
+                };
             }
-
-            FoliageCellIndex index = FoliageSyncModeHelper.UsesRandomTick(cfg) ? Index : null;
-            FillActiveChunkKeys(activeChunks, activeChunkKeysScratch);
-            bool filterActive = cfg.OnlyActivateNearPlayers && activeChunkKeysScratch.Count > 0;
-
-            while (chunksLeft > 0 && syncQueue.Count > 0)
-            {
-                if (Stopwatch.GetTimestamp() >= deadline) break;
-
-                Vec2i coord = syncQueue.Dequeue();
-                long chunkKey = FoliageCellIndex.ChunkKey(coord.X, coord.Y);
-                syncQueued.Remove(chunkKey);
-
-                if (filterActive && !activeChunkKeysScratch.Contains(chunkKey))
-                {
-                    syncQueue.Enqueue(coord);
-                    syncQueued.Add(chunkKey);
-                    continue;
-                }
-
-                if (acc.GetMapChunk(coord.X, coord.Y) == null) continue;
-
-                if (!chunkStates.TryGetValue(chunkKey, out FoliageChunkState state))
-                {
-                    state = new FoliageChunkState { SyncedSeasonKey = -1, Completed = false };
-                }
-
-                if (state.Completed && state.SyncedSeasonKey == seasonKey) continue;
-
-                int startLx = 0;
-                int startLz = 0;
-                int startY = acc.MapSizeY - 1;
-                if (!state.Completed && state.ResumeY >= 0)
-                {
-                    startLx = state.ResumeLx;
-                    startLz = state.ResumeLz;
-                    startY = state.ResumeY;
-                }
-
-                FoliageChunkSyncPass.Result result = FoliageChunkSyncPass.Run(
-                    api,
-                    acc,
-                    coord,
-                    index,
-                    startLx,
-                    startLz,
-                    startY,
-                    deadline);
-
-                if (result.Changed > 0)
-                {
-                    changed += result.Changed;
-                    autumnStripTotal += result.Changed;
-                    BlockPos invalidateAt = new BlockPos(
-                        coord.X * GlobalConstants.ChunkSize + 8,
-                        64,
-                        coord.Y * GlobalConstants.ChunkSize + 8);
-                    EcosystemSystem.Instance?.FloraContext?.InvalidateAround(invalidateAt, 3);
-                    EcosystemSystem.Instance?.InvalidateEnvironmentAround(invalidateAt);
-                }
-
-                totalSyncedCells += result.Indexed;
-
-                if (result.Completed)
-                {
-                    chunkStates[chunkKey] = new FoliageChunkState
-                    {
-                        SyncedSeasonKey = seasonKey,
-                        Completed = true,
-                        LastIndexed = result.Indexed,
-                        LastChanged = result.Changed,
-                    };
-                }
-                else
-                {
-                    chunkStates[chunkKey] = new FoliageChunkState
-                    {
-                        SyncedSeasonKey = -1,
-                        ResumeLx = result.ResumeLx,
-                        ResumeLz = result.ResumeLz,
-                        ResumeY = result.ResumeY,
-                        Completed = false,
-                        LastIndexed = result.Indexed,
-                        LastChanged = result.Changed,
-                    };
-                    syncQueue.Enqueue(coord);
-                    syncQueued.Add(chunkKey);
-                }
-
-                chunksLeft--;
-            }
-
-            MaybeLogProgress(api, cfg, changed);
-            return changed;
         }
 
         public int ProcessRandomTick(
             ICoreAPI api,
             ICollection<Vec2i> activeChunks,
             long budgetTicks,
-            Stopwatch budgetWatch)
+            System.Diagnostics.Stopwatch budgetWatch)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EnableSeasonalFoliage || api == null) return 0;
@@ -300,79 +243,54 @@ namespace WildFarming.Ecosystem
             return changed;
         }
 
-        void EnqueueChunkSync(Vec2i chunkCoord, bool force)
+        void MarkChunkNeedsSync(Vec2i chunkCoord)
         {
             long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
-            if (!force && syncQueued.Contains(key)) return;
-
             if (!chunkStates.TryGetValue(key, out FoliageChunkState state))
             {
                 state = new FoliageChunkState { SyncedSeasonKey = -1, Completed = false, ResumeY = -1 };
-                chunkStates[key] = state;
             }
-            else if (state.Completed)
+            else
             {
                 state.Completed = false;
                 state.SyncedSeasonKey = -1;
                 state.ResumeY = -1;
                 state.ResumeLx = 0;
                 state.ResumeLz = 0;
-                chunkStates[key] = state;
             }
 
-            if (syncQueued.Add(key))
-            {
-                syncQueue.Enqueue(chunkCoord);
-            }
+            chunkStates[key] = state;
+            RequestEcologyScan?.Invoke(chunkCoord);
         }
 
         void InvalidateChunkAt(BlockPos pos)
         {
             if (pos == null) return;
             int cs = GlobalConstants.ChunkSize;
-            EnqueueChunkSync(new Vec2i(pos.X / cs, pos.Z / cs), force: false);
+            MarkChunkNeedsSync(new Vec2i(pos.X / cs, pos.Z / cs));
         }
 
         void InvalidateAllTrackedChunks()
         {
+            var coords = new List<Vec2i>();
             foreach (long key in chunkStates.Keys)
             {
                 FoliageChunkState state = chunkStates[key];
                 state.Completed = false;
                 state.SyncedSeasonKey = -1;
+                state.ResumeY = -1;
+                state.ResumeLx = 0;
+                state.ResumeLz = 0;
                 chunkStates[key] = state;
 
                 int cx = (int)(key >> 32);
                 int cz = (int)(key & 0xFFFFFFFF);
-                EnqueueChunkSync(new Vec2i(cx, cz), force: false);
+                coords.Add(new Vec2i(cx, cz));
             }
-        }
 
-        void EnqueueActiveChunksForSync(ICoreAPI api, ICollection<Vec2i> activeChunks)
-        {
-            if (activeChunks == null || api?.World?.BlockAccessor == null) return;
-            IBlockAccessor acc = api.World.BlockAccessor;
-            foreach (Vec2i coord in activeChunks)
+            for (int i = 0; i < coords.Count; i++)
             {
-                if (acc.GetMapChunk(coord.X, coord.Y) == null) continue;
-                EnqueueChunkSync(coord, force: false);
-            }
-        }
-
-        void EnqueueStaleActiveChunks(ICollection<Vec2i> activeChunks, int seasonKey)
-        {
-            if (activeChunks == null) return;
-            foreach (Vec2i coord in activeChunks)
-            {
-                long key = FoliageCellIndex.ChunkKey(coord.X, coord.Y);
-                if (chunkStates.TryGetValue(key, out FoliageChunkState state)
-                    && state.Completed
-                    && state.SyncedSeasonKey == seasonKey)
-                {
-                    continue;
-                }
-
-                EnqueueChunkSync(coord, force: false);
+                RequestEcologyScan?.Invoke(coords[i]);
             }
         }
 
@@ -383,9 +301,9 @@ namespace WildFarming.Ecosystem
             if (cfg.ReproduceDebug)
             {
                 api.Logger.Notification(
-                    "[ecosystemflora] Foliage: {0} cell(s) updated, {1} sync pending, mode={2}",
+                    "[ecosystemflora] Foliage: {0} cell(s) updated, {1} chunk(s) pending sync, mode={2}",
                     changedThisTick,
-                    syncQueue.Count,
+                    PendingSyncChunks,
                     cfg.FoliageSyncMode ?? "chunk");
                 return;
             }
@@ -398,9 +316,9 @@ namespace WildFarming.Ecosystem
 
             lastAutumnProgressLogHours = now;
             api.Logger.Notification(
-                "[ecosystemflora] Foliage sync: {0} block(s) this pass, {1} chunk(s) queued",
+                "[ecosystemflora] Foliage sync: {0} block(s) this pass, {1} chunk(s) pending",
                 changedThisTick,
-                syncQueue.Count);
+                PendingSyncChunks);
         }
 
         static void FillActiveChunkKeys(ICollection<Vec2i> activeChunks, HashSet<long> keys)

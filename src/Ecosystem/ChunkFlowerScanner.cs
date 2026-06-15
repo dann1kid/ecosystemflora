@@ -148,12 +148,14 @@ namespace WildFarming.Ecosystem
         public Vec2i ChunkCoord { get; }
         public int NextLx { get; }
         public int NextLz { get; }
+        public int NextY { get; }
 
-        public PendingChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0)
+        public PendingChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0, int nextY = -1)
         {
             ChunkCoord = chunkCoord;
             NextLx = nextLx;
             NextLz = nextLz;
+            NextY = nextY;
         }
     }
 }

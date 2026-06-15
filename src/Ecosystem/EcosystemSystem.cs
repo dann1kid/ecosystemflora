@@ -75,6 +75,8 @@ namespace WildFarming.Ecosystem
             stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 2000);
 
+            foliageCells.RequestEcologyScan = coord => EnqueueChunkScan(coord);
+
             if (api is ICoreServerAPI sapi)
             {
                 chunkLoadedHandler = OnChunkColumnLoaded;
@@ -608,12 +610,12 @@ namespace WildFarming.Ecosystem
             MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
         }
 
-        void EnqueueChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0)
+        void EnqueueChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0, int nextY = -1)
         {
             long key = ChunkScanKey(chunkCoord.X, chunkCoord.Y);
-            if (nextLx == 0 && nextLz == 0 && !pendingChunkScanQueued.Add(key)) return;
+            if (nextLx == 0 && nextLz == 0 && nextY < 0 && !pendingChunkScanQueued.Add(key)) return;
 
-            pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord, nextLx, nextLz));
+            pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord, nextLx, nextLz, nextY));
         }
 
         static long ChunkScanKey(int cx, int cz) => ((long)cx << 32) | (uint)cz;
@@ -758,13 +760,46 @@ namespace WildFarming.Ecosystem
 
             tickBudgetWatch.Restart();
 
+            int seasonKey = FoliageSeasonKey.Current(api);
+            if (foliageCells.TickSeasonChanged(api))
+            {
+                if (activePlayerChunks != null)
+                {
+                    foreach (long key in activePlayerChunks)
+                    {
+                        int cx = (int)(key >> 32);
+                        int cz = (int)(key & 0xFFFFFFFF);
+                        if (acc.GetMapChunk(cx, cz) != null)
+                        {
+                            EnqueueChunkScan(new Vec2i(cx, cz));
+                        }
+                    }
+                }
+            }
+
             int queuePasses = pendingChunkScans.Count;
             if (queuePasses > MaxChunkScanDequeAttemptsPerTick)
             {
                 queuePasses = MaxChunkScanDequeAttemptsPerTick;
             }
 
-            while (columnsLeft > 0 && queuePasses > 0 && registrationsLeft > 0)
+            bool syncFoliage = cfg.EnableSeasonalFoliage && FoliageSyncModeHelper.UsesChunkSync(cfg);
+            int passBudgetMs = cfg.ResolveRegistrationBudgetMs();
+            if (cfg.FoliageChunkSyncBudgetMs > passBudgetMs)
+            {
+                passBudgetMs = cfg.FoliageChunkSyncBudgetMs;
+            }
+
+            long passDeadline = passBudgetMs > 0
+                ? System.Diagnostics.Stopwatch.GetTimestamp()
+                    + passBudgetMs * System.Diagnostics.Stopwatch.Frequency / 1000
+                : long.MaxValue;
+
+            FoliageCellIndex foliageIndex = FoliageSyncModeHelper.UsesRandomTick(cfg)
+                ? foliageCells.Index
+                : null;
+
+            while (queuePasses > 0 && columnsLeft > 0)
             {
                 if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) break;
 
@@ -777,48 +812,75 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
+                if (registrationsLeft <= 0 && !(syncFoliage && foliageCells.NeedsChunkSync(job.ChunkCoord, seasonKey)))
+                {
+                    pendingChunkScans.Enqueue(job);
+                    continue;
+                }
+
                 columnsLeft--;
                 long chunkKey = ChunkScanKey(job.ChunkCoord.X, job.ChunkCoord.Y);
 
-                ChunkScanResult scan = ChunkFlowerScanner.ScanChunk(
-                    job.ChunkCoord,
+                ChunkEcologyColumnPass.Result pass = ChunkEcologyColumnPass.Run(
+                    api,
                     acc,
-                    registrationsLeft,
+                    job.ChunkCoord,
+                    new ChunkEcologyColumnPass.Request
+                    {
+                        MaxFlowerHits = registrationsLeft,
+                        MaxTreeHits = registrationsLeft,
+                        SyncFoliage = syncFoliage,
+                        FoliageIndex = foliageIndex,
+                    },
                     job.NextLx,
-                    job.NextLz);
+                    job.NextLz,
+                    job.NextY,
+                    (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref registrationsLeft),
+                    passDeadline);
 
-                foreach (ChunkFlowerHit hit in scan.Hits)
+                if (pass.FlowerHits != null)
                 {
-                    Block block = acc.GetBlock(hit.Pos);
+                    for (int i = 0; i < pass.FlowerHits.Count; i++)
+                    {
+                        ChunkFlowerHit hit = pass.FlowerHits[i];
+                        Block block = acc.GetBlock(hit.Pos);
 
-                    if (registry.Contains(hit.Pos)) continue;
+                        if (registry.Contains(hit.Pos)) continue;
 
-                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
+                        if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
 
-                    BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, hit.Pos, hit.BlockCode);
-                    if (registry.Contains(anchor)) continue;
+                        BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, hit.Pos, hit.BlockCode);
+                        if (registry.Contains(anchor)) continue;
 
-                    RegisterReproducer(anchor, participant, spawnBurst: false);
-                    registrationsLeft--;
-                    if (registrationsLeft <= 0) break;
+                        RegisterReproducer(anchor, participant, spawnBurst: false);
+                        registrationsLeft--;
+                        if (registrationsLeft <= 0) break;
+                    }
                 }
 
-                if (!scan.Completed)
+                if (syncFoliage)
                 {
-                    EnqueueChunkScan(job.ChunkCoord, scan.ResumeLx, scan.ResumeLz);
+                    foliageCells.ApplyEcologyPassResult(job.ChunkCoord, pass, seasonKey);
+
+                    if (pass.FoliageChanged > 0)
+                    {
+                        int cs = GlobalConstants.ChunkSize;
+                        var invalidateAt = new BlockPos(
+                            job.ChunkCoord.X * cs + 8,
+                            64,
+                            job.ChunkCoord.Y * cs + 8);
+                        FloraContext?.InvalidateAround(invalidateAt, 3);
+                        InvalidateEnvironmentAround(invalidateAt);
+                    }
+                }
+
+                if (!pass.Completed)
+                {
+                    EnqueueChunkScan(job.ChunkCoord, pass.ResumeLx, pass.ResumeLz, pass.ResumeY);
                 }
                 else
                 {
                     pendingChunkScanQueued.Remove(chunkKey);
-                }
-
-                if (registrationsLeft > 0)
-                {
-                    TreeTrunkDiscovery.ScanChunk(
-                        acc,
-                        job.ChunkCoord,
-                        (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref registrationsLeft),
-                        registrationsLeft);
                 }
             }
 
@@ -842,14 +904,6 @@ namespace WildFarming.Ecosystem
             }
 
             tickBudgetWatch.Stop();
-
-            if (cfg.EnableSeasonalFoliage && FoliageSyncModeHelper.UsesChunkSync(cfg))
-            {
-                ICollection<Vec2i> foliageActive = BuildActivePlayerChunks(cfg);
-                tickBudgetWatch.Restart();
-                foliageCells.ProcessChunkSyncWork(api, foliageActive, tickBudgetWatch, budgetTicks);
-                tickBudgetWatch.Stop();
-            }
         }
 
         bool TryRegisterDiscoveredTree(IBlockAccessor acc, BlockPos basePos, ref int registrationsLeft)
