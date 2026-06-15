@@ -123,6 +123,11 @@ src/
     WildSpeciesNiche.cs         # niche preferences per species
     WildSpeciesSeason.cs        # seasonal profiles per species
     SeasonEcology.cs            # season multipliers for spread/stress
+    WildCanopySeason.cs         # defol/bud curves per deciduous wood
+    CanopyPhenology.cs          # autumn scan+strip, spring scan+bud
+    CanopyEcology.cs            # activity, temp, latitude, noise
+    CanopyBlockHelper.cs        # foliage codes, skeleton tests
+    CanopySkeletonScanner.cs    # BFS skeleton + work queues
     WildFlowerClimate.cs        # flower climate profiles
     WildAquaticEcology.cs       # aquatic ecology profiles
     WildFlowerSpacing.cs        # per-species spacing
@@ -270,12 +275,13 @@ docs/
 - [x] **v3.1.7** — meadow harvest: hand → plant block; knife/scythe → drygrass (`PlantHandHarvest`, scythe `flower-` patch) — ✅.
 - [x] **v3.1.11** — tree spread ice/snow gate; winter tree spread off — ✅.
 - [x] **v3.1.12** — mycelium niche + ecology + network spread; meadow coexistence; inspect (I) caps/soil; config auto-merge — ✅.
+- [x] **v3.2.0** — **Canopy phenology** — deciduous partial defol + spring bud (`CanopyPhenology`, [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) — ✅.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.
 - [ ] **Dominant species UX** — подсказка «кто доминирует» в зоне — backlog.
 - [ ] **Выпас / `tallgrass-eaten`** — husbandry — backlog (не spread).
-- [ ] Зимняя листва на стволах — **отложено** (визуал, не экосистема)
+- [x] **Сезонная листва (deciduous)** — v3.2 `CanopyPhenology` — partial defol / spring bud на skeleton; не `GrowTree`
 
 ---
 

@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
@@ -13,6 +15,10 @@ namespace WildFarming.Ecosystem
         ICoreAPI api;
         readonly ReproducerRegistry registry = new ReproducerRegistry();
         readonly Queue<PendingChunkScan> pendingChunkScans = new Queue<PendingChunkScan>();
+        readonly HashSet<long> pendingChunkScanQueued = new HashSet<long>();
+
+        /// <summary>Cap inactive-chunk rotations per tick (avoids O(queue) spin when queue is huge).</summary>
+        const int MaxChunkScanDequeAttemptsPerTick = 128;
 
         long reproduceListenerId;
         long stressListenerId;
@@ -20,7 +26,13 @@ namespace WildFarming.Ecosystem
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
+        readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
+        readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         bool calendarDebugLogged;
+        bool deferredTreeBootstrapDone;
+        int foliageBootstrapPasses;
+        bool foliageStartupLogged;
+        internal FoliageCellScheduler FoliageCells => foliageCells;
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
@@ -31,6 +43,7 @@ namespace WildFarming.Ecosystem
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
         BlockUsedDelegate didUseBlockHandler;
+        PlayerDelegate playerJoinHandler;
 
         public void InitPre(ICoreAPI api)
         {
@@ -77,6 +90,9 @@ namespace WildFarming.Ecosystem
 
                 didUseBlockHandler = OnDidUseBlock;
                 sapi.Event.DidUseBlock += didUseBlockHandler;
+
+                playerJoinHandler = OnPlayerJoin;
+                sapi.Event.PlayerJoin += playerJoinHandler;
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
@@ -84,6 +100,120 @@ namespace WildFarming.Ecosystem
             WildBerryEcology.LogMissingTypes(api);
             WildFernEcology.LogMissingSpecies(api);
             WildTallgrassEcology.LogMissingSpecies(api);
+        }
+
+        void OnPlayerJoin(IPlayer player)
+        {
+            deferredTreeBootstrapDone = false;
+            foliageBootstrapPasses = 0;
+            foliageStartupLogged = false;
+            FoliageDiagnostics.ResetOnPlayerJoin();
+        }
+
+        void TryDeferredTreeBootstrap()
+        {
+            if (deferredTreeBootstrapDone || api == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            HashSet<long> chunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+            if (chunks.Count == 0) return;
+
+            deferredTreeBootstrapDone = true;
+            BootstrapTreeSpreadForLoadedChunks();
+            BootstrapFoliageIndexForLoadedChunks();
+            EnqueueLoadedChunksNearPlayersForScan(chunks);
+        }
+
+        void TryDeferredFoliageBootstrap()
+        {
+            if (api == null || !EcosystemConfig.Loaded.EnableSeasonalFoliage) return;
+            if (foliageStartupLogged && foliageCells.PendingSyncChunks == 0
+                && foliageCells.TrackedChunkCount > 0) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            HashSet<long> chunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+            if (chunks.Count == 0) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            if (foliageCells.Index.TotalCells == 0
+                && foliageCells.PendingSyncChunks == 0
+                && foliageBootstrapPasses < 20)
+            {
+                foliageBootstrapPasses++;
+                foreach (long key in chunks)
+                {
+                    int cx = (int)(key >> 32);
+                    int cz = (int)(key & 0xFFFFFFFF);
+                    if (acc.GetMapChunk(cx, cz) == null) continue;
+                    foliageCells.ScanChunkImmediate(api, new Vec2i(cx, cz));
+                }
+            }
+
+            if (!foliageStartupLogged && (foliageCells.GetDiagnosticsIndexedCount() > 0
+                || foliageCells.PendingSyncChunks > 0
+                || foliageBootstrapPasses >= 3))
+            {
+                FoliageDiagnostics.LogStartupSummary(api, foliageCells);
+                foliageStartupLogged = true;
+            }
+        }
+
+        void EnqueueLoadedChunksNearPlayersForScan(HashSet<long> chunkKeys)
+        {
+            if (api?.World?.BlockAccessor == null || chunkKeys == null) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            foreach (long key in chunkKeys)
+            {
+                int cx = (int)(key >> 32);
+                int cz = (int)(key & 0xFFFFFFFF);
+                if (acc.GetMapChunk(cx, cz) == null) continue;
+
+                var coord = new Vec2i(cx, cz);
+                EnqueueChunkScan(coord);
+                foliageCells.ScheduleChunkSync(api, coord);
+            }
+        }
+
+        void BootstrapTreeSpreadForLoadedChunks()
+        {
+            if (api == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            HashSet<long> chunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+            IBlockAccessor acc = api.World.BlockAccessor;
+            int left = cfg.MaxRegistrationsPerTick * 4;
+            foreach (long key in chunks)
+            {
+                if (left <= 0) break;
+                int cx = (int)(key >> 32);
+                int cz = (int)(key & 0xFFFFFFFF);
+                if (acc.GetMapChunk(cx, cz) == null) continue;
+
+                TreeTrunkDiscovery.ScanChunk(
+                    acc,
+                    new Vec2i(cx, cz),
+                    (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref left),
+                    left);
+            }
+        }
+
+        void BootstrapFoliageIndexForLoadedChunks()
+        {
+            if (api == null || !EcosystemConfig.Loaded.EnableSeasonalFoliage) return;
+
+            HashSet<long> chunks = PlayerProximity.BuildActivePlayerChunks(
+                api, EcosystemConfig.Loaded.PlayerActivationRadiusBlocks);
+            IBlockAccessor acc = api.World.BlockAccessor;
+            foreach (long key in chunks)
+            {
+                int cx = (int)(key >> 32);
+                int cz = (int)(key & 0xFFFFFFFF);
+                if (acc.GetMapChunk(cx, cz) != null)
+                {
+                    foliageCells.ScheduleChunkSync(api, new Vec2i(cx, cz));
+                }
+            }
         }
 
         void TryLogCalendarDebugOnce()
@@ -119,6 +249,7 @@ namespace WildFarming.Ecosystem
                 if (didBreakBlockHandler != null) sapi.Event.DidBreakBlock -= didBreakBlockHandler;
                 if (didPlaceBlockHandler != null) sapi.Event.DidPlaceBlock -= didPlaceBlockHandler;
                 if (didUseBlockHandler != null) sapi.Event.DidUseBlock -= didUseBlockHandler;
+                if (playerJoinHandler != null) sapi.Event.PlayerJoin -= playerJoinHandler;
             }
 
             if (api != null)
@@ -129,6 +260,7 @@ namespace WildFarming.Ecosystem
             }
 
             pendingChunkScans.Clear();
+            pendingChunkScanQueued.Clear();
             reproduceListenerId = 0;
             stressListenerId = 0;
             chunkScanListenerId = 0;
@@ -138,6 +270,8 @@ namespace WildFarming.Ecosystem
             didPlaceBlockHandler = null;
             didUseBlockHandler = null;
             calendarDebugLogged = false;
+            deferredTreeBootstrapDone = false;
+            playerJoinHandler = null;
             FloraContext?.Clear();
             FloraContext = null;
             Niche?.Clear();
@@ -147,6 +281,8 @@ namespace WildFarming.Ecosystem
             ColumnCache?.Clear();
             ColumnCache = null;
             activeChunkScratch.Clear();
+            foliageCells.Clear();
+            cyclicTreeScanner.Clear();
             Instance = null;
             api = null;
         }
@@ -175,10 +311,39 @@ namespace WildFarming.Ecosystem
                 requirements, Sample(plantPos), EcosystemConfig.Loaded.HarshWildPlants);
         }
 
-        public bool RegistryContains(BlockPos pos) => registry.Contains(pos);
+        public bool RegistryContains(BlockPos pos)
+        {
+            if (pos == null) return false;
+            if (registry.Contains(pos)) return true;
+            return TryResolveTreeRegistryPos(pos, out BlockPos basePos) && registry.Contains(basePos);
+        }
 
-        public bool TryGetReproducer(BlockPos pos, out ReproducerEntry entry) =>
-            registry.TryGetEntry(pos, out entry);
+        public bool TryGetReproducer(BlockPos pos, out ReproducerEntry entry)
+        {
+            entry = null;
+            if (pos == null) return false;
+
+            BlockPos lookup = pos;
+            if (TryResolveTreeRegistryPos(pos, out BlockPos basePos))
+            {
+                lookup = basePos;
+            }
+
+            return registry.TryGetEntry(lookup, out entry);
+        }
+
+        bool TryResolveTreeRegistryPos(BlockPos pos, out BlockPos basePos)
+        {
+            basePos = pos;
+            if (api?.World?.BlockAccessor == null) return false;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            Block block = acc.GetBlock(pos);
+            if (!PlantCodeHelper.IsTreeLogGrownBlock(block)) return false;
+
+            basePos = PlantCodeHelper.GetTreeTrunkBase(acc, pos);
+            return true;
+        }
 
         internal ICoreAPI ServerApi => api;
 
@@ -257,10 +422,30 @@ namespace WildFarming.Ecosystem
             try
             {
                 Block matureBlock = api.World.BlockAccessor.GetBlock(origin);
-                if (matureBlock == null || !EcosystemParticipant.TryFromBlock(matureBlock, out _)) return;
+                if (matureBlock == null || !EcosystemParticipant.TryFromBlock(matureBlock, out _))
+                {
+                    if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                    {
+                        api.Logger.Warning(
+                            "[ecosystemflora] Tree not registrable at {0}: block={1}",
+                            origin,
+                            matureBlock?.Code);
+                    }
+                    return;
+                }
 
                 Block spreadBlock = api.World.GetBlock(spreadBlockCode);
-                if (spreadBlock == null) return;
+                if (spreadBlock == null)
+                {
+                    if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                    {
+                        api.Logger.Warning(
+                            "[ecosystemflora] Tree spread block missing: {0} (origin {1})",
+                            spreadBlockCode,
+                            origin);
+                    }
+                    return;
+                }
 
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
@@ -291,6 +476,12 @@ namespace WildFarming.Ecosystem
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
                 if (!playerPlaced)
                     SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
+
+                if (requirements.Habitat == EcologyHabitat.TerrestrialTree
+                    && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
+                {
+                    foliageCells.OnBlockAdded(origin);
+                }
 
 
                 if (cfg.VerboseLogging && cfg.ReproduceDebug)
@@ -412,35 +603,67 @@ namespace WildFarming.Ecosystem
 
             LegacyBlockEntityMigration.ScheduleStripColumn(api, chunkCoord);
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord));
+            EnqueueChunkScan(chunkCoord);
+            foliageCells.ScheduleChunkSync(api, chunkCoord);
             MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
         }
+
+        void EnqueueChunkScan(Vec2i chunkCoord, int nextLx = 0, int nextLz = 0)
+        {
+            long key = ChunkScanKey(chunkCoord.X, chunkCoord.Y);
+            if (nextLx == 0 && nextLz == 0 && !pendingChunkScanQueued.Add(key)) return;
+
+            pendingChunkScans.Enqueue(new PendingChunkScan(chunkCoord, nextLx, nextLz));
+        }
+
+        static long ChunkScanKey(int cx, int cz) => ((long)cx << 32) | (uint)cz;
 
         void OnChunkColumnUnloaded(Vec3i chunkCoord)
         {
             var cc = new Vec2i(chunkCoord.X, chunkCoord.Z);
             registry.RemoveChunk(cc);
             SpacingIndex?.RemoveChunk(cc);
+            foliageCells.RemoveChunk(cc);
         }
 
         void OnDidPlaceBlock(IServerPlayer byPlayer, int oldBlockId, BlockSelection blockSel, ItemStack withItemStack)
         {
             if (blockSel?.Position == null || api == null) return;
             Block oldGround = oldBlockId > 0 ? api.World.Blocks[oldBlockId] : null;
-            ScheduleFarmlandBridgeCheck(blockSel.Position, oldGround);
-            TryRegisterPlacedBlock(blockSel.Position);
+            BlockPos placed = blockSel.Position.Copy();
+            ScheduleFarmlandBridgeCheck(placed, oldGround);
+            api.Event.RegisterCallback(_ => TryRegisterPlacedBlock(placed), 0);
         }
 
         void TryRegisterPlacedBlock(BlockPos pos)
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            if (registry.Contains(pos)) return;
 
             Block block = api.World.BlockAccessor.GetBlock(pos);
             if (block == null || block.Id == 0) return;
+
+            if (CanopyFoliageRules.IsSeasonalFoliageBlock(block))
+            {
+                foliageCells.OnBlockAdded(pos);
+            }
+
+            if (PlantCodeHelper.IsTreeSaplingBlock(block))
+            {
+                string wood = PlantCodeHelper.GetTreeWood(block);
+                if (!string.IsNullOrEmpty(wood))
+                {
+                    pendingTreeSaplings.Add(pos, wood, api.World.Calendar.TotalHours);
+                }
+
+                return;
+            }
+
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return;
 
-            RegisterReproducer(pos, participant, playerPlaced: true);
+            BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(api.World.BlockAccessor, pos, block.Code);
+            if (registry.Contains(anchor)) return;
+
+            RegisterReproducer(anchor, participant, playerPlaced: true);
         }
 
         void OnDidUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
@@ -454,7 +677,6 @@ namespace WildFarming.Ecosystem
         {
             if (!EcosystemConfig.Loaded.UseFarmlandNutrientBridge) return;
 
-            PlantSoilRole role = WildSoilAgroSampler.SampleDominantRole(api, pos);
             SoilFertilityTier tier = SoilFertilityTier.Medium;
             if (groundBeforeTill != null && WildSoilBlockMapper.IsSuccessionTarget(groundBeforeTill))
             {
@@ -462,8 +684,13 @@ namespace WildFarming.Ecosystem
             }
 
             BlockPos copy = pos.Copy();
+            SoilFertilityTier tierCopy = tier;
             api.Event.RegisterCallback(
-                _ => FarmlandTillBridge.TryApplyAfterTill(api, copy, role, tier),
+                _ =>
+                {
+                    PlantSoilRole role = WildSoilAgroSampler.SampleDominantRole(api, copy);
+                    FarmlandTillBridge.TryApplyAfterTill(api, copy, role, tierCopy);
+                },
                 50);
         }
 
@@ -484,6 +711,11 @@ namespace WildFarming.Ecosystem
             if (PlantCodeHelper.IsTreeLogGrownBlock(oldBlock))
             {
                 MyceliumTreeCascade.OnTreeRemoved(api, pos, oldBlock);
+            }
+
+            if (CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock))
+            {
+                foliageCells.OnBlockRemoved(pos);
             }
 
             if (WildSoilGroundRules.HasActiveMycelium(api.World.BlockAccessor, pos))
@@ -513,8 +745,9 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             int columnsLeft = cfg.MaxChunkColumnsScannedPerTick;
             int registrationsLeft = cfg.MaxRegistrationsPerTick;
-            long budgetTicks = cfg.TickBudgetMs > 0
-                ? cfg.TickBudgetMs * Stopwatch.Frequency / 1000
+            int registrationBudgetMs = cfg.ResolveRegistrationBudgetMs();
+            long budgetTicks = registrationBudgetMs > 0
+                ? registrationBudgetMs * Stopwatch.Frequency / 1000
                 : 0;
 
             HashSet<long> activePlayerChunks = null;
@@ -526,6 +759,11 @@ namespace WildFarming.Ecosystem
             tickBudgetWatch.Restart();
 
             int queuePasses = pendingChunkScans.Count;
+            if (queuePasses > MaxChunkScanDequeAttemptsPerTick)
+            {
+                queuePasses = MaxChunkScanDequeAttemptsPerTick;
+            }
+
             while (columnsLeft > 0 && queuePasses > 0 && registrationsLeft > 0)
             {
                 if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks) break;
@@ -540,6 +778,7 @@ namespace WildFarming.Ecosystem
                 }
 
                 columnsLeft--;
+                long chunkKey = ChunkScanKey(job.ChunkCoord.X, job.ChunkCoord.Y);
 
                 ChunkScanResult scan = ChunkFlowerScanner.ScanChunk(
                     job.ChunkCoord,
@@ -550,12 +789,15 @@ namespace WildFarming.Ecosystem
 
                 foreach (ChunkFlowerHit hit in scan.Hits)
                 {
+                    Block block = acc.GetBlock(hit.Pos);
+
                     if (registry.Contains(hit.Pos)) continue;
 
-                    Block block = api.World.GetBlock(hit.BlockCode);
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
 
                     BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, hit.Pos, hit.BlockCode);
+                    if (registry.Contains(anchor)) continue;
+
                     RegisterReproducer(anchor, participant, spawnBurst: false);
                     registrationsLeft--;
                     if (registrationsLeft <= 0) break;
@@ -563,11 +805,64 @@ namespace WildFarming.Ecosystem
 
                 if (!scan.Completed)
                 {
-                    pendingChunkScans.Enqueue(new PendingChunkScan(job.ChunkCoord, scan.ResumeLx, scan.ResumeLz));
+                    EnqueueChunkScan(job.ChunkCoord, scan.ResumeLx, scan.ResumeLz);
+                }
+                else
+                {
+                    pendingChunkScanQueued.Remove(chunkKey);
+                }
+
+                if (registrationsLeft > 0)
+                {
+                    TreeTrunkDiscovery.ScanChunk(
+                        acc,
+                        job.ChunkCoord,
+                        (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref registrationsLeft),
+                        registrationsLeft);
                 }
             }
 
+            if (registrationsLeft > 0)
+            {
+                HashSet<long> treeScanChunks = activePlayerChunks;
+                if (treeScanChunks == null || treeScanChunks.Count == 0)
+                {
+                    treeScanChunks = PlayerProximity.BuildActivePlayerChunks(
+                        api, cfg.PlayerActivationRadiusBlocks);
+                }
+
+                cyclicTreeScanner.ProcessTick(
+                    acc,
+                    cfg,
+                    treeScanChunks,
+                    (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref registrationsLeft),
+                    ref registrationsLeft,
+                    budgetTicks,
+                    tickBudgetWatch);
+            }
+
             tickBudgetWatch.Stop();
+
+            if (cfg.EnableSeasonalFoliage && FoliageSyncModeHelper.UsesChunkSync(cfg))
+            {
+                ICollection<Vec2i> foliageActive = BuildActivePlayerChunks(cfg);
+                tickBudgetWatch.Restart();
+                foliageCells.ProcessChunkSyncWork(api, foliageActive, tickBudgetWatch, budgetTicks);
+                tickBudgetWatch.Stop();
+            }
+        }
+
+        bool TryRegisterDiscoveredTree(IBlockAccessor acc, BlockPos basePos, ref int registrationsLeft)
+        {
+            if (registrationsLeft <= 0 || basePos == null) return false;
+            if (registry.Contains(basePos)) return false;
+
+            Block block = acc.GetBlock(basePos);
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
+
+            RegisterReproducer(basePos, participant, spawnBurst: false);
+            registrationsLeft--;
+            return true;
         }
 
         readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
@@ -702,12 +997,28 @@ namespace WildFarming.Ecosystem
                 activeChunks);
         }
 
-        ICollection<Vec2i> BuildActiveChunks(EcosystemConfig cfg)
+        ICollection<Vec2i> BuildActiveRegistryChunks(EcosystemConfig cfg)
         {
             if (!cfg.OnlyActivateNearPlayers) return null;
 
             activeChunkScratch.Clear();
             activeChunkScratch.AddRange(registry.CollectChunksNearPlayers(api, cfg.PlayerActivationRadiusBlocks));
+            return activeChunkScratch;
+        }
+
+        ICollection<Vec2i> BuildActivePlayerChunks(EcosystemConfig cfg)
+        {
+            if (!cfg.OnlyActivateNearPlayers) return null;
+
+            activeChunkScratch.Clear();
+            HashSet<long> keys = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+            foreach (long key in keys)
+            {
+                int cx = (int)(key >> 32);
+                int cz = (int)(key & 0xFFFFFFFF);
+                activeChunkScratch.Add(new Vec2i(cx, cz));
+            }
+
             return activeChunkScratch;
         }
 
@@ -717,7 +1028,7 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
-            ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
+            ICollection<Vec2i> activeChunks = BuildActiveRegistryChunks(cfg);
             if (activeChunks != null && activeChunks.Count == 0) return;
 
             if (cfg.EnableStressDeath || cfg.EnableMyceliumEcology)
@@ -738,72 +1049,84 @@ namespace WildFarming.Ecosystem
         {
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null) return;
 
+            TryDeferredTreeBootstrap();
+            TryDeferredFoliageBootstrap();
             TryLogCalendarDebugOnce();
             ColumnCache?.AdvanceGeneration();
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
-            ICollection<Vec2i> activeChunks = BuildActiveChunks(cfg);
+            ICollection<Vec2i> spreadActiveChunks = BuildActiveRegistryChunks(cfg);
+            ICollection<Vec2i> canopyActiveChunks = BuildActivePlayerChunks(cfg);
 
-            if (activeChunks != null && activeChunks.Count == 0) return;
+            if (cfg.OnlyActivateNearPlayers
+                && canopyActiveChunks != null
+                && canopyActiveChunks.Count == 0)
+            {
+                return;
+            }
 
-            long budgetTicks = cfg.TickBudgetMs > 0
-                ? cfg.TickBudgetMs * Stopwatch.Frequency / 1000
+            long spreadBudgetTicks = cfg.ResolveSpreadBudgetMs() > 0
+                ? cfg.ResolveSpreadBudgetMs() * Stopwatch.Frequency / 1000
                 : 0;
 
             tickBudgetWatch.Restart();
 
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
 
-            if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
-            {
-                tickBudgetWatch.Stop();
-                return;
-            }
+            tickBudgetWatch.Restart();
+
+            long foliageBudgetTicks = cfg.FoliageBudgetMs > 0
+                ? cfg.FoliageBudgetMs * Stopwatch.Frequency / 1000
+                : 0;
+
+            foliageCells.ProcessRandomTick(api, canopyActiveChunks, foliageBudgetTicks, tickBudgetWatch);
 
             IBlockAccessor acc = api.World.BlockAccessor;
 
-            registry.ProcessDue(
-                now,
-                cfg.MaxReproduceAttemptsPerTick,
-                entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                    ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                    : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
-                entry =>
-                {
-                    if (budgetTicks > 0 && tickBudgetWatch.ElapsedTicks >= budgetTicks)
-                    {
-                        return true;
-                    }
+            if (spreadActiveChunks == null || spreadActiveChunks.Count > 0)
+            {
+                tickBudgetWatch.Restart();
 
-                    Block block = acc.GetBlock(entry.Origin);
-                    if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+                registry.ProcessDue(
+                    now,
+                    cfg.MaxReproduceAttemptsPerTick,
+                    entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
+                        ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
+                        : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                    entry =>
                     {
-                        if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
+                        Block block = acc.GetBlock(entry.Origin);
+                        if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+                        {
+                            if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
+                            {
+                                return false;
+                            }
+
+                            if (cfg.EnableMyceliumNetworkSpread)
+                            {
+                                MyceliumNetworkSpread.TrySpread(
+                                    this,
+                                    entry,
+                                    cfg.VerboseLogging && cfg.ReproduceDebug);
+                            }
+
+                            return true;
+                        }
+
+                        if (block.Id == 0 || !entry.IsMatureBlock(block))
                         {
                             return false;
                         }
 
-                        if (cfg.EnableMyceliumNetworkSpread)
-                        {
-                            MyceliumNetworkSpread.TrySpread(
-                                this,
-                                entry,
-                                cfg.VerboseLogging && cfg.ReproduceDebug);
-                        }
-
+                        TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
                         return true;
-                    }
-
-                    if (block.Id == 0 || !entry.IsMatureBlock(block))
-                    {
-                        return false;
-                    }
-
-                    TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
-                    return true;
-                },
-                activeChunks);
+                    },
+                    spreadActiveChunks,
+                    spreadBudgetTicks,
+                    tickBudgetWatch);
+            }
 
             tickBudgetWatch.Stop();
         }

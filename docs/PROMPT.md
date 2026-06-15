@@ -24,6 +24,7 @@
 - v3.1.10: meadow harvest (flowers → world drop, tallgrass clear); fix inspect (I) dialog; client config load.
 - v3.1.11: tree spread — ice/snow footing rejected; TerrestrialTree uses terrestrial preflight; winter spread mult = 0.
 - v3.1.12: mycelium — soft niche (`MyceliumZone`), stress/death on vanilla BE, network spread, inspect (I) on cap + soil; meadow coexistence; config auto-merge (`StoreModConfig` after load).
+- v3.2.0: **Canopy phenology** — deciduous partial autumn defol + spring bud on log-grown skeleton; in-RAM CA; `EnableSeasonalFoliage`; docs [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:

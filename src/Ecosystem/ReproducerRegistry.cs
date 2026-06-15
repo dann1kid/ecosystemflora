@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -11,16 +12,17 @@ namespace WildFarming.Ecosystem
         readonly Dictionary<Vec2i, List<ReproducerEntry>> byChunk = new Dictionary<Vec2i, List<ReproducerEntry>>();
         readonly List<ReproducerEntry> entries = new List<ReproducerEntry>();
 
-        int dueGlobalRoundRobinIndex;
         int stressGlobalRoundRobinIndex;
-        int dueSpatialChunkCursor;
         int stressSpatialChunkCursor;
-        readonly Dictionary<Vec2i, int> dueChunkEntryIndex = new Dictionary<Vec2i, int>();
         readonly Dictionary<Vec2i, int> stressChunkEntryIndex = new Dictionary<Vec2i, int>();
         readonly List<Vec2i> spatialChunkScratch = new List<Vec2i>();
         readonly List<BlockPos> removeQueueScratch = new List<BlockPos>();
+        readonly List<ReproducerEntry> dueQueueScratch = new List<ReproducerEntry>();
+        int spreadFairCursor;
 
         public int Count => entries.Count;
+
+        public int LastDueQueueSize { get; private set; }
 
         public ReproducerEntry GetEntry(int index)
         {
@@ -87,7 +89,6 @@ namespace WildFarming.Ecosystem
                 RemoveEntry(snapshot[i]);
             }
 
-            dueChunkEntryIndex.Remove(chunkCoord);
             stressChunkEntryIndex.Remove(chunkCoord);
         }
 
@@ -117,21 +118,83 @@ namespace WildFarming.Ecosystem
             entry.EntriesIndex = -1;
         }
 
+        /// <summary>
+        /// Enqueue all due entries in scope, then process up to maxAttempts with optional time budget.
+        /// Fair cursor rotates so the same subset does not monopolize attempts every tick.
+        /// </summary>
         public int ProcessDue(
             double now,
             int maxAttempts,
             System.Func<ReproducerEntry, double> intervalHoursForEntry,
             System.Func<ReproducerEntry, bool> tryProcess,
-            ICollection<Vec2i> activeChunks = null)
+            ICollection<Vec2i> activeChunks = null,
+            long budgetTicks = 0,
+            Stopwatch budgetWatch = null)
         {
             if (entries.Count == 0 || maxAttempts <= 0) return 0;
 
-            if (activeChunks != null)
+            dueQueueScratch.Clear();
+            CollectDueEntries(now, activeChunks, dueQueueScratch);
+            LastDueQueueSize = dueQueueScratch.Count;
+            if (dueQueueScratch.Count == 0) return 0;
+
+            int processed = 0;
+            int queueSize = dueQueueScratch.Count;
+            removeQueueScratch.Clear();
+
+            if (spreadFairCursor >= queueSize) spreadFairCursor = 0;
+
+            for (int i = 0; i < queueSize && processed < maxAttempts; i++)
             {
-                return ProcessDueSpatial(now, maxAttempts, activeChunks, intervalHoursForEntry, tryProcess);
+                if (budgetTicks > 0 && budgetWatch != null && budgetWatch.ElapsedTicks >= budgetTicks) break;
+
+                ReproducerEntry entry = dueQueueScratch[(spreadFairCursor + i) % queueSize];
+                if (!byPos.TryGetValue(entry.Origin, out ReproducerEntry current) || !ReferenceEquals(current, entry))
+                {
+                    continue;
+                }
+
+                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueueScratch))
+                {
+                    continue;
+                }
+
+                processed++;
             }
 
-            return ProcessDueGlobal(now, maxAttempts, intervalHoursForEntry, tryProcess);
+            spreadFairCursor = queueSize > 0 ? (spreadFairCursor + processed) % queueSize : 0;
+            FlushRemoves(removeQueueScratch);
+            return processed;
+        }
+
+        internal void CollectDueEntries(double now, ICollection<Vec2i> activeChunks, List<ReproducerEntry> output)
+        {
+            output.Clear();
+            if (entries.Count == 0) return;
+
+            if (activeChunks == null)
+            {
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    ReproducerEntry entry = entries[i];
+                    if (now >= entry.NextAttemptHours) output.Add(entry);
+                }
+
+                return;
+            }
+
+            BuildSpatialChunkList(activeChunks, spatialChunkScratch);
+            for (int c = 0; c < spatialChunkScratch.Count; c++)
+            {
+                Vec2i chunk = spatialChunkScratch[c];
+                if (!byChunk.TryGetValue(chunk, out List<ReproducerEntry> list)) continue;
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    ReproducerEntry entry = list[i];
+                    if (now >= entry.NextAttemptHours) output.Add(entry);
+                }
+            }
         }
 
         public int ProcessStress(
@@ -148,87 +211,6 @@ namespace WildFarming.Ecosystem
             }
 
             return ProcessStressGlobal(maxChecks, tryExpire, onExpired);
-        }
-
-        int ProcessDueGlobal(
-            double now,
-            int maxAttempts,
-            System.Func<ReproducerEntry, double> intervalHoursForEntry,
-            System.Func<ReproducerEntry, bool> tryProcess)
-        {
-            int processed = 0;
-            int scanned = 0;
-            int scanBudget = entries.Count;
-            removeQueueScratch.Clear();
-
-            while (processed < maxAttempts && scanned < scanBudget)
-            {
-                int count = entries.Count;
-                if (count == 0) break;
-                if (dueGlobalRoundRobinIndex >= count) dueGlobalRoundRobinIndex = 0;
-                ReproducerEntry entry = entries[dueGlobalRoundRobinIndex++];
-                scanned++;
-
-                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueueScratch))
-                {
-                    continue;
-                }
-
-                processed++;
-            }
-
-            FlushRemoves(removeQueueScratch);
-            return processed;
-        }
-
-        int ProcessDueSpatial(
-            double now,
-            int maxAttempts,
-            ICollection<Vec2i> activeChunks,
-            System.Func<ReproducerEntry, double> intervalHoursForEntry,
-            System.Func<ReproducerEntry, bool> tryProcess)
-        {
-            BuildSpatialChunkList(activeChunks, spatialChunkScratch);
-            if (spatialChunkScratch.Count == 0) return 0;
-
-            int processed = 0;
-            int scanned = 0;
-            int scanBudget = CountEntriesInChunks(spatialChunkScratch);
-            removeQueueScratch.Clear();
-
-            while (processed < maxAttempts && scanned < scanBudget)
-            {
-                if (dueSpatialChunkCursor >= spatialChunkScratch.Count) dueSpatialChunkCursor = 0;
-                Vec2i chunk = spatialChunkScratch[dueSpatialChunkCursor++];
-
-                if (!byChunk.TryGetValue(chunk, out List<ReproducerEntry> list) || list.Count == 0)
-                {
-                    scanned++;
-                    continue;
-                }
-
-                if (!dueChunkEntryIndex.TryGetValue(chunk, out int entryIndex)) entryIndex = 0;
-                if (entryIndex >= list.Count) entryIndex = 0;
-
-                ReproducerEntry entry = list[entryIndex];
-                dueChunkEntryIndex[chunk] = entryIndex + 1;
-                scanned++;
-
-                if (!byPos.TryGetValue(entry.Origin, out ReproducerEntry current) || !ReferenceEquals(current, entry))
-                {
-                    continue;
-                }
-
-                if (!TryProcessDueEntry(entry, now, intervalHoursForEntry, tryProcess, removeQueueScratch))
-                {
-                    continue;
-                }
-
-                processed++;
-            }
-
-            FlushRemoves(removeQueueScratch);
-            return processed;
         }
 
         int ProcessStressGlobal(
@@ -423,7 +405,6 @@ namespace WildFarming.Ecosystem
             if (list.Count == 0)
             {
                 byChunk.Remove(cc);
-                dueChunkEntryIndex.Remove(cc);
                 stressChunkEntryIndex.Remove(cc);
             }
         }

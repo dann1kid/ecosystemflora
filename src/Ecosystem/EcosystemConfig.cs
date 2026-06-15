@@ -139,8 +139,18 @@ namespace WildFarming.Ecosystem
         /// <summary>Max milliseconds per game tick for spread processing. 0 = no limit.</summary>
         public int TickBudgetMs { get; set; } = 30;
 
+        /// <summary>Spread attempt budget ms/tick. 0 = use <see cref="TickBudgetMs"/>.</summary>
+        public int SpreadBudgetMs { get; set; } = 30;
+
+        /// <summary>Chunk registration scan budget ms/tick. 0 = use <see cref="TickBudgetMs"/>.</summary>
+        public int RegistrationBudgetMs { get; set; } = 25;
+
         /// <summary>Max milliseconds per stress tick. Defaults to <see cref="TickBudgetMs"/> when 0.</summary>
         public int StressBudgetMs { get; set; } = 0;
+
+        public int ResolveSpreadBudgetMs() => SpreadBudgetMs > 0 ? SpreadBudgetMs : TickBudgetMs;
+
+        public int ResolveRegistrationBudgetMs() => RegistrationBudgetMs > 0 ? RegistrationBudgetMs : TickBudgetMs;
 
         /// <summary>Interval (ms) between stress-check ticks. Higher = less CPU for stress, slower die-off.</summary>
         public int StressTickIntervalMs { get; set; } = 6000;
@@ -173,6 +183,12 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Checks per tick for mod-placed saplings that matured into log-grown.</summary>
         public int MaxPendingTreeChecksPerTick { get; set; } = 12;
+
+        /// <summary>Round-robin column scan for log-grown trunks that appeared after chunk load.</summary>
+        public bool EnableCyclicTreeDiscovery { get; set; } = true;
+
+        /// <summary>Chunk columns scanned per tick for cyclic tree discovery (TreeTrunkDiscovery only).</summary>
+        public int MaxTreeRescanColumnsPerTick { get; set; } = 16;
 
         // --- Flora context (v2) ---
 
@@ -295,6 +311,64 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Winter die-off and fall die-off via stress checks (terrestrial).</summary>
         public bool SeasonalStressEnabled { get; set; } = true;
+
+        // --- Canopy foliage v3.3 — see docs/CANOPY_PHENOLOGY.md ---
+
+        /// <summary>Per-cell seasonal foliage on deciduous log-grown / branchy / leaves-grown.</summary>
+        public bool EnableSeasonalFoliage { get; set; } = true;
+
+        /// <summary>Random foliage cells ticked per reproduce pass (hybrid/random modes; 0 = off).</summary>
+        public int MaxFoliageCellsTickedPerTick { get; set; } = 0;
+
+        /// <summary>Wall-time cap for foliage random-tick per reproduce pass (0 = no extra cap).</summary>
+        public int FoliageBudgetMs { get; set; } = 10;
+
+        /// <summary>chunk = column sync on load (v3.4); hybrid = chunk + random tick; random = legacy v3.3.</summary>
+        public string FoliageSyncMode { get; set; } = "chunk";
+
+        /// <summary>Wall-time budget per chunk-sync drain pass (ms).</summary>
+        public int FoliageChunkSyncBudgetMs { get; set; } = 12;
+
+        /// <summary>Max chunks resumed per chunk-scan tick.</summary>
+        public int FoliageChunkWorkPerTick { get; set; } = 4;
+
+        /// <summary>On chunk scan, catch up foliage to current season (autumn strip + spring bud).</summary>
+        public bool FoliageCatchUpOnChunkLoad { get; set; } = true;
+
+        /// <summary>Max catch-up ops (strip + bud) per chunk per scan pass (0 = unlimited).</summary>
+        public int MaxFoliageCatchUpPerChunk { get; set; } = 2048;
+
+        /// <summary>Column scan depth above rain heightmap (0 = full world height).</summary>
+        public int FoliageColumnScanHeightAboveSurface { get; set; } = 0;
+
+        /// <summary>Peak autumn activity before optional branchy strip (0 = keep branchy skeleton).</summary>
+        public float FoliagePeakAutumnBranchyStripActivity { get; set; } = 0f;
+
+        /// <summary>Place branchy leaves on log-grown when crown was stripped bare (pillar repair).</summary>
+        public bool FoliageRestoreBareSkeleton { get; set; } = true;
+
+        /// <summary>Legacy alias — use <see cref="MaxFoliageCellsTickedPerTick"/>.</summary>
+        public int MaxCanopyUpdateOpsPerTick
+        {
+            get => MaxFoliageCellsTickedPerTick;
+            set => MaxFoliageCellsTickedPerTick = value;
+        }
+
+        /// <summary>Multiplier on per-wood defol/bud monthly curves.</summary>
+        public float CanopyActivityScale { get; set; } = 1f;
+
+        /// <summary>Minimum °C at trunk base before spring bud attempts (vanilla sapling gate).</summary>
+        public float CanopyBudMinTemperature { get; set; } = 5f;
+
+        /// <summary>0 disables latitude modifier; higher = stronger polar slowdown.</summary>
+        public float CanopyLatitudeInfluence { get; set; } = 0.35f;
+
+        /// <summary>Legacy alias — use <see cref="FoliageBudgetMs"/>.</summary>
+        public int CanopyBudgetMs
+        {
+            get => FoliageBudgetMs;
+            set => FoliageBudgetMs = value;
+        }
 
         // --- Trampling (v2.6) ---
 

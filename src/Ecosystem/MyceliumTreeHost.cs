@@ -33,6 +33,9 @@ namespace WildFarming.Ecosystem
             return set;
         }
 
+        public static bool IsDeciduousWood(string wood) =>
+            !string.IsNullOrEmpty(wood) && DeciduousWoods.Contains(wood);
+
         public static bool HasHostInRange(
             IBlockAccessor acc,
             BlockPos anchorPos,
