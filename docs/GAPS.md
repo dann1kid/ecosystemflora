@@ -13,7 +13,7 @@
 | **Луг / цветы** | Independent spread + displacement | Нет стадий жизни (seedling → mature); spread = телепорт блока, не рост |
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
-| **Деревья** | `log-grown` → sapling; **3.6** — maturation + **senescence death** (полное снятие ствола/кроны), persist возраста | living trunk stress; частичное увядание до смерти |
+| **Деревья** | `log-grown` → sapling; **3.6** — maturation + **phased senescence** (листва → остов → snag → снятие), persist возраста | living trunk stress; decay piles / sapling burst on death |
 | **Грибница** | Soft niche + stress + network spread вокруг vanilla BE; inspect (I) на шляпке и почве; meadow coexistence (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 
@@ -64,7 +64,7 @@
 
 **В scope, но «тонко»:**
 
-- **14 деревьев** — только sapling spread; нет экологии ствола (порода, возраст, тень от кроны как отдельная сущность).
+- **14 деревьев** — sapling spread + **v3.6** calendar age, structure growth, senescence; нет отдельной тени кроны как сущности.
 - **10 ягод** — traits; third-party berry **не** поддержан.
 - **Tallgrass** — matrix, без отдельной «съеденности» (выпас — backlog / Fauna mod).
 - **Third-party** — JSON контракт ✅; нет каталога совместимых модов, нет версионирования контракта.
@@ -81,12 +81,9 @@
 
 | OK | Недоработано |
 |----|--------------|
-| Handbook en/ru (aquatic mat, tuning, trees, canopy, inspect) | **de.json** — старые тексты |
-| Inspect I — mat frontier | ModDB changelog 3.1.x–3.6 собран в MODDB_DESCRIPTION |
-| `ecosystemflora.example.json` | ~40 ключей — порог для новичка |
-| PROGRESS / VISION | Были отстающие от 3.1.6 (синхронизация — этот проход) |
-
-**Рекомендация:** один блок «What changed in 3.1.x» на ModDB; в handbook overview — одна строка «press I to debug spread».
+| Handbook en/ru — 9 страниц (overview, species, trees, canopy, inspect, tuning) | **de.json** — старые тексты |
+| [`CHANGELOG.md`](CHANGELOG.md) + ModDB 3.6 release block | ~40 ключей в example JSON — порог для новичка |
+| Inspect I — mat frontier, tree age on trunk | |
 
 ---
 
@@ -113,7 +110,7 @@
 ## 9. Приоритеты (если продолжать v3.x)
 
 1. **Crowfoot** — mat или rate ↓ (согласованность aquatic).
-2. **ModDB + de handbook** — паритет с en/ru для 3.1.x.
+2. **de handbook** — паритет с en/ru.
 3. **Inspect/log** — optional last channel (`rhizome` / `seed` / fail reason) для вашего workflow.
 4. **Dominant species hint** — лёгкий UX без карты (tooltip / chat при входе в biome-scale zone).
 5. **Third-party berry traits** — только если появится реальный контент-мод.

@@ -26,7 +26,7 @@
 - v3.1.12: mycelium — soft niche (`MyceliumZone`), stress/death on vanilla BE, network spread, inspect (I) on cap + soil; meadow coexistence; config auto-merge (`StoreModConfig` after load).
 - v3.2.0: **Canopy phenology** — deciduous partial autumn defol + spring bud on log-grown skeleton; in-RAM CA; `EnableSeasonalFoliage`; docs [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
 - v3.5.0: **Canopy ambience** — client crown particles / flutter; docs [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
-- v3.6: **Wild tree maturation** — calendar age (persisted across saves/restart), grown-block growth, **senescence = full tree removal** (`EnableTreeSenescence`); inspect (I) on trunk; `OnlyActivateNearPlayers` default **false** (all loaded chunks); docs [`TREE_AGING.md`](TREE_AGING.md).
+- v3.6: **Wild tree maturation** — calendar age (persisted), grown-block growth, **phased senescence** (leaves → skeleton → snag → removal); inspect (I); `TreeSenescenceSnagBlocks`; docs [`TREE_AGING.md`](TREE_AGING.md).
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
@@ -39,7 +39,7 @@ Habitat:
 Не расширять без явного запроса: living trees, vines, Harmony, legacy wildplant. Mycelium — только vanilla BE (v3.1.12), без своих блоков грибов.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs для старых BE; Mycelium*.cs для грибницы).
-Тесты: 242 (xUnit). Версия: 3.5.0.
+Тесты: 257 (xUnit). Версия: 3.6.0.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).

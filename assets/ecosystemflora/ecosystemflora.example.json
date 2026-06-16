@@ -41,6 +41,7 @@
 
   "EnableTreeAging": true,
   "EnableTreeSenescence": true,
+  "TreeSenescenceSnagBlocks": 3,
   "MaxTreeGrowthAttemptsPerTick": 6,
   "TreeGrowthActivityScale": 1.0,
 

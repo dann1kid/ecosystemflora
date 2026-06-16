@@ -24,7 +24,7 @@ Worldgen trees register at **age 0** even when already tall. They will **not** s
 | When | What |
 |------|------|
 | **Registration** | `TreeAgeYears = 0`; structure measured live |
-| **Each game year** | `TreeAgeYears++`, then growth **or** senescence death if age ≥ horizon |
+| **Each game year** | `TreeAgeYears++`, then growth **or** next senescence stage if age ≥ horizon |
 | **Young / below reference** | Faster growth, mostly upward |
 | **Above typical mature** | Growth slows but continues (rare ops above ~125% size index) |
 | **Physical limits** | Map height, crown scan radius 14, vacancy / claims |
@@ -48,7 +48,18 @@ Inspect:
 - `Tree age: 3 / 120 years (since ecology registration)`
 - `Structure: trunk 14 blocks, crown radius 5 (100% of typical mature ~14/5)`
 
-`SenescenceAgeYears` (120 oak) is the calendar horizon for **full tree removal** on the next yearly tick after age reaches this value.
+### Senescence (phased death)
+
+After calendar age reaches `SenescenceAgeYears`, one stage advances each game year (while the trunk remains registered):
+
+| Year after lifespan | Phase | World effect |
+|---------------------|-------|--------------|
+| 1 | Declining | All `leaves-grown` removed; sapling spread and structure growth stop; seasonal bud blocked |
+| 2 | Dead crown | All `leavesbranchy` removed — bare branchy skeleton gone |
+| 3 | Snag | Branches and upper trunk cleared; `TreeSenescenceSnagBlocks` (default 3) of `log-grown` remain |
+| 4 | Removed | Remaining trunk cleared; registry entry dropped; symbiosis/mycelium/soil succession as on tree removal |
+
+Blocked inside land claims (phase retries next year).
 
 ---
 
@@ -94,7 +105,7 @@ CanopyBlockHelper block resolve + land claims
 | Block placement | `TreeGrowthApplier.cs` |
 | Tick scheduling | `TreeGrowthScheduler.cs` |
 | Calendar age save/load | `TreeCalendarAgeStore.cs` |
-| Senescence death | `TreeSenescence.cs` — whole skeleton removed (trunk + branchy + leaves) |
+| Senescence death | `TreeSenescence.cs` — phased decline after lifespan (see below) |
 
 ---
 
@@ -103,7 +114,8 @@ CanopyBlockHelper block resolve + land claims
 | Key | Default | Description |
 |-----|---------|-------------|
 | `EnableTreeAging` | `true` | Master toggle |
-| `EnableTreeSenescence` | `true` | Full tree removal when calendar age ≥ `SenescenceAgeYears` |
+| `EnableTreeSenescence` | `true` | Phased natural death when calendar age ≥ lifespan |
+| `TreeSenescenceSnagBlocks` | `3` | Trunk blocks left during snag phase (final year removes them) |
 | `MaxTreeGrowthAttemptsPerTick` | `6` | Trees advanced per reproduce tick (2 s) |
 | `TreeGrowthActivityScale` | `1` | Growth pace (>1 = faster relative to reference) |
 
@@ -131,6 +143,6 @@ Between restart and chunk re-scan, inspect **(I)** shows no live tree entry — 
 
 ## Limits (v1)
 
-- **Senescence death** — when `TreeAgeYears >= SenescenceAgeYears` on the yearly tick, the mod removes the full tree (no item drops). Toggle: `EnableTreeSenescence`. Blocked inside land claims.
+- **Senescence death** — when `TreeAgeYears >= SenescenceAgeYears`, one stage per game year: (1) strip `leaves-grown`, stop spread/growth; (2) strip `leavesbranchy`; (3) reduce to snag (`TreeSenescenceSnagBlocks`); (4) remove remaining trunk. No item drops. Blocked inside land claims. Seasonal spring bud is blocked while senescing.
 - Calendar age **persists in savegame moddata** (`TreeCalendarAgeStore`).
 - Crown radius for inspect: branchy skeleton only; measure cap 9 blocks.

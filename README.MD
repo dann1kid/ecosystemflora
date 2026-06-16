@@ -17,6 +17,8 @@ Plants don't just spread — they **compete**. A stronger species can displace a
 
 The result: meadows fill in naturally, forest edges develop a distinct flora belt, clearings get reclaimed by fast colonizers first and then by perennials, and shorelines grow reeds and water lilies on their own.
 
+**v3.6** adds wild **tree aging** (calendar years, slow growth, **phased senescence** over four game years), **inspect (I)** on trunk logs, and a rewritten in-game **handbook** (en/ru, nine pages). Release notes: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+
 **Removing the mod leaves your world intact** — vanilla parents stay vanilla. Other mods may register their own blocks as spread parents via optional JSON attributes (see **`docs/THIRD_PARTY_ECOLOGY.md`**); disable with `EnableThirdPartyParticipants: false` if you want only hardcoded vanilla paths.
 
 ## What spreads
@@ -27,7 +29,7 @@ The result: meadows fill in naturally, forest edges develop a distinct flora bel
 | **Tallgrass** | All vanilla tallgrass variants | Grass matrix under flowers |
 | **Ferns** | Eagle fern, cinnamon fern, deer fern, hart's tongue, tall fern | Forest understory; need shade and moisture |
 | **Berry bushes** | Blueberry, cranberry, strawberry, and 7 more | 10 wild species; soil + forest edge preference |
-| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings; **v3.6** slow wild maturation + inspect age/size |
+| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings; **v3.6** calendar age, slow growth, phased senescence, inspect **I** |
 | **Reeds** | Cooper's reed, papyrus | Shore or shallow water over gravel bed |
 | **Water lily** | Waterlily | Open water surface |
 | **Water crowfoot** | Underwater column plant | 2–8 block depth, multi-section column |
@@ -65,6 +67,12 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 | `VerboseLogging` | false | Detailed logs for diagnostics (keep off in play) |
 | `CloneBerryTraits` | true | Wild berry spread copies parent **traits** (VS 1.22+) |
 | `EnableThirdPartyParticipants` | true | Other mods can register blocktypes with `ecologyParticipant` |
+| `EnableTreeAging` | true | Wild trunks gain calendar age and grow slowly each game year |
+| `EnableTreeSenescence` | true | Phased natural death after species lifespan (4 game years) |
+| `TreeSenescenceSnagBlocks` | 3 | Standing trunk blocks during snag year |
+| `OnlyActivateNearPlayers` | false | Ecology in all **loaded chunks**; set true only for local perf testing |
+| `EnableSeasonalFoliage` | true | Deciduous autumn leaf drop and spring bud |
+| `EnableCanopyAmbience` | true | Client leaf particles near tall crowns |
 
 ## Installation
 
@@ -78,8 +86,8 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 ## For developers
 
 **Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (253 xUnit tests)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (257 xUnit tests)
 
-Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
+Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 
 Originally inspired by JakeCool19's Wild Farming (v1.2.0). Fully rewritten.

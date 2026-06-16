@@ -4,7 +4,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Calendar senescence — full removal of wild tree skeleton when age exceeds species horizon.</summary>
+    /// <summary>Phased calendar senescence after species lifespan.</summary>
     internal static class TreeSenescence
     {
         internal readonly struct PendingRemoval
@@ -21,34 +21,211 @@ namespace WildFarming.Ecosystem
             public int BlocksRemoved { get; }
         }
 
+        internal readonly struct YearAdvanceResult
+        {
+            public YearAdvanceResult(
+                int blocksRemoved,
+                TreeSenescencePhase newPhase,
+                bool completed,
+                PendingRemoval removal)
+            {
+                BlocksRemoved = blocksRemoved;
+                NewPhase = newPhase;
+                Completed = completed;
+                Removal = removal;
+            }
+
+            public int BlocksRemoved { get; }
+            public TreeSenescencePhase NewPhase { get; }
+            public bool Completed { get; }
+            public PendingRemoval Removal { get; }
+        }
+
         static readonly int[] NeighborDx = { 1, -1, 0, 0, 0, 0 };
         static readonly int[] NeighborDy = { 0, 0, 1, -1, 0, 0 };
         static readonly int[] NeighborDz = { 0, 0, 0, 0, 1, -1 };
 
-        public static bool IsSenescent(int ageYears, WildTreeGrowthProfiles.Profile profile, EcosystemConfig cfg)
+        public static bool IsPastHorizon(
+            int ageYears,
+            WildTreeGrowthProfiles.Profile profile,
+            EcosystemConfig cfg)
         {
             if (cfg == null || !cfg.EnableTreeAging || !cfg.EnableTreeSenescence) return false;
             if (profile.SenescenceAgeYears <= 0) return false;
             return ageYears >= profile.SenescenceAgeYears;
         }
 
-        /// <summary>Removes trunk, branchy, and regular foliage blocks. Returns count cleared (0 if blocked).</summary>
-        public static int RemoveWholeTree(ICoreAPI api, IBlockAccessor acc, BlockPos trunkBase, string wood)
+        /// <summary>Legacy name — age at or past species lifespan.</summary>
+        public static bool IsSenescent(
+            int ageYears,
+            WildTreeGrowthProfiles.Profile profile,
+            EcosystemConfig cfg) =>
+            IsPastHorizon(ageYears, profile, cfg);
+
+        public static bool SuppressesSpread(ReproducerEntry entry, EcosystemConfig cfg)
         {
-            if (api == null || acc == null || trunkBase == null || string.IsNullOrEmpty(wood)) return 0;
-            if (!LandClaimGuard.AllowsEcologyChange(api, trunkBase)) return 0;
+            if (entry == null || cfg == null || !cfg.EnableTreeSenescence) return false;
+            if (entry.TreeSenescencePhase != TreeSenescencePhase.None) return true;
+
+            string wood = entry.Requirements?.Species;
+            if (string.IsNullOrEmpty(wood)) return false;
+
+            WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+            return IsPastHorizon(entry.TreeAgeYears, profile, cfg);
+        }
+
+        public static bool BlocksSeasonalCanopy(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos pos,
+            string wood)
+        {
+            if (api == null || acc == null || pos == null || string.IsNullOrEmpty(wood)) return false;
+            if (!EcosystemConfig.Loaded.EnableTreeSenescence) return false;
+
+            if (!TryResolveTrunkBaseForTreeBlock(acc, pos, wood, out BlockPos trunkBase)) return false;
+            if (EcosystemSystem.Instance?.TryGetReproducer(trunkBase, out ReproducerEntry entry) != true) return false;
+
+            if (entry.TreeSenescencePhase != TreeSenescencePhase.None) return true;
+
+            WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+            return IsPastHorizon(entry.TreeAgeYears, profile, EcosystemConfig.Loaded);
+        }
+
+        /// <summary>One senescence stage per game year after lifespan.</summary>
+        public static YearAdvanceResult AdvanceSenescenceYear(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            ReproducerEntry entry,
+            BlockPos trunkBase,
+            string wood,
+            EcosystemConfig cfg)
+        {
+            if (api == null || acc == null || entry == null || trunkBase == null
+                || string.IsNullOrEmpty(wood) || cfg == null || !cfg.EnableTreeSenescence)
+            {
+                return default;
+            }
+
+            if (!LandClaimGuard.AllowsEcologyChange(api, trunkBase))
+            {
+                return new YearAdvanceResult(0, entry.TreeSenescencePhase, false, default);
+            }
 
             Block trunkBlock = acc.GetBlock(trunkBase);
-            if (!PlantCodeHelper.IsTreeLogGrownBlock(trunkBlock)) return 0;
+            if (!PlantCodeHelper.IsTreeLogGrownBlock(trunkBlock)) return default;
+
+            TreeSenescencePhase phase = entry.TreeSenescencePhase;
+            int removed;
+
+            switch (phase)
+            {
+                case TreeSenescencePhase.None:
+                    removed = StripFoliageKind(api, acc, trunkBase, wood, regularLeaves: true, branchy: false);
+                    return new YearAdvanceResult(removed, TreeSenescencePhase.Declining, false, default);
+
+                case TreeSenescencePhase.Declining:
+                    removed = StripFoliageKind(api, acc, trunkBase, wood, regularLeaves: false, branchy: true);
+                    return new YearAdvanceResult(removed, TreeSenescencePhase.DeadCrown, false, default);
+
+                case TreeSenescencePhase.DeadCrown:
+                    removed = ReduceToSnag(api, acc, trunkBase, wood, cfg.TreeSenescenceSnagBlocks);
+                    return new YearAdvanceResult(removed, TreeSenescencePhase.Snag, false, default);
+
+                case TreeSenescencePhase.Snag:
+                    removed = RemoveRemainingTrunk(api, acc, trunkBase, wood);
+                    if (removed <= 0)
+                    {
+                        return new YearAdvanceResult(0, TreeSenescencePhase.Snag, false, default);
+                    }
+
+                    var pending = new PendingRemoval(trunkBase.Copy(), wood, removed);
+                    return new YearAdvanceResult(removed, TreeSenescencePhase.None, true, pending);
+
+                default:
+                    return default;
+            }
+        }
+
+        public static int StripFoliageKind(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos trunkBase,
+            string wood,
+            bool regularLeaves,
+            bool branchy)
+        {
+            var blocks = new List<BlockPos>(128);
+            CollectTreeBlocks(acc, trunkBase, wood, blocks);
+            if (blocks.Count == 0) return 0;
+
+            blocks.Sort((a, b) => b.Y.CompareTo(a.Y));
+            return RemoveMatchingBlocks(api, acc, blocks, wood, regularLeaves, branchy, trunk: false);
+        }
+
+        public static int ReduceToSnag(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos trunkBase,
+            string wood,
+            int snagBlocks)
+        {
+            if (snagBlocks < 1) snagBlocks = 1;
 
             var blocks = new List<BlockPos>(128);
             CollectTreeBlocks(acc, trunkBase, wood, blocks);
             if (blocks.Count == 0) return 0;
 
-            MyceliumTreeCascade.OnTreeRemoved(api, trunkBase, trunkBlock);
+            int trunkX = trunkBase.X;
+            int trunkZ = trunkBase.Z;
+            int keepMaxY = trunkBase.Y + snagBlocks - 1;
 
             blocks.Sort((a, b) => b.Y.CompareTo(a.Y));
+            int removed = 0;
 
+            foreach (BlockPos pos in blocks)
+            {
+                if (!LandClaimGuard.AllowsEcologyChange(api, pos)) continue;
+
+                Block block = acc.GetBlock(pos);
+                if (block == null || block.Id == 0) continue;
+
+                bool isTrunkColumn = pos.X == trunkX && pos.Z == trunkZ
+                    && PlantCodeHelper.IsTreeLogGrownBlock(block);
+
+                if (isTrunkColumn && pos.Y <= keepMaxY) continue;
+
+                if (RemoveTreeBlock(api, acc, pos, block)) removed++;
+            }
+
+            return removed;
+        }
+
+        public static int RemoveRemainingTrunk(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos trunkBase,
+            string wood)
+        {
+            var blocks = new List<BlockPos>(32);
+            CollectTreeBlocks(acc, trunkBase, wood, blocks);
+            if (blocks.Count == 0) return 0;
+
+            MyceliumTreeCascade.OnTreeRemoved(api, trunkBase, acc.GetBlock(trunkBase));
+
+            blocks.Sort((a, b) => b.Y.CompareTo(a.Y));
+            return RemoveMatchingBlocks(api, acc, blocks, wood, regularLeaves: true, branchy: true, trunk: true);
+        }
+
+        static int RemoveMatchingBlocks(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            List<BlockPos> blocks,
+            string wood,
+            bool regularLeaves,
+            bool branchy,
+            bool trunk)
+        {
             int removed = 0;
             FoliageCellScheduler foliage = EcosystemSystem.Instance?.FoliageCells;
 
@@ -58,18 +235,59 @@ namespace WildFarming.Ecosystem
 
                 Block block = acc.GetBlock(pos);
                 if (block == null || block.Id == 0) continue;
+                if (!ShouldRemoveBlock(block, wood, regularLeaves, branchy, trunk)) continue;
 
-                if (foliage != null && CanopyFoliageRules.IsSeasonalFoliageBlock(block))
-                {
-                    foliage.OnBlockRemoved(pos);
-                }
-
-                acc.SetBlock(0, pos);
-                acc.MarkBlockDirty(pos);
-                removed++;
+                if (RemoveTreeBlock(api, acc, pos, block, foliage)) removed++;
             }
 
             return removed;
+        }
+
+        static bool ShouldRemoveBlock(
+            Block block,
+            string wood,
+            bool regularLeaves,
+            bool branchy,
+            bool trunk)
+        {
+            if (regularLeaves && CanopyBlockHelper.IsRegularLeaf(block)
+                && CanopyBlockHelper.GetWoodFromFoliageBlock(block) == wood)
+            {
+                return true;
+            }
+
+            if (branchy && CanopyBlockHelper.IsBranchyLeaf(block)
+                && CanopyBlockHelper.GetWoodFromFoliageBlock(block) == wood)
+            {
+                return true;
+            }
+
+            if (trunk && PlantCodeHelper.IsTreeLogGrownBlock(block)
+                && PlantCodeHelper.GetTreeWood(block) == wood)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool RemoveTreeBlock(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos pos,
+            Block block,
+            FoliageCellScheduler foliage = null)
+        {
+            foliage ??= EcosystemSystem.Instance?.FoliageCells;
+
+            if (foliage != null && CanopyFoliageRules.IsSeasonalFoliageBlock(block))
+            {
+                foliage.OnBlockRemoved(pos);
+            }
+
+            acc.SetBlock(0, pos);
+            acc.MarkBlockDirty(pos);
+            return true;
         }
 
         public static void CollectTreeBlocks(
@@ -120,6 +338,40 @@ namespace WildFarming.Ecosystem
                     EnqueueTreeBlock(scratch, visited, queue, output);
                 }
             }
+        }
+
+        internal static bool TryResolveTrunkBaseForTreeBlock(
+            IBlockAccessor acc,
+            BlockPos pos,
+            string wood,
+            out BlockPos trunkBase)
+        {
+            trunkBase = null;
+            if (acc == null || pos == null || string.IsNullOrEmpty(wood)) return false;
+
+            Block block = acc.GetBlock(pos);
+            if (PlantCodeHelper.IsTreeLogGrownBlock(block)
+                && PlantCodeHelper.GetTreeWood(block) == wood)
+            {
+                trunkBase = PlantCodeHelper.GetTreeTrunkBase(acc, pos);
+                return true;
+            }
+
+            var scratch = new BlockPos(pos.dimension);
+            for (int i = 0; i < 6; i++)
+            {
+                scratch.Set(pos.X + NeighborDx[i], pos.Y + NeighborDy[i], pos.Z + NeighborDz[i]);
+                if (!acc.IsValidPos(scratch)) continue;
+
+                Block neighbor = acc.GetBlock(scratch);
+                if (!PlantCodeHelper.IsTreeLogGrownBlock(neighbor)) continue;
+                if (PlantCodeHelper.GetTreeWood(neighbor) != wood) continue;
+
+                trunkBase = PlantCodeHelper.GetTreeTrunkBase(acc, scratch);
+                return true;
+            }
+
+            return false;
         }
 
         static bool IsConnectedTreeBlock(Block block, string wood)

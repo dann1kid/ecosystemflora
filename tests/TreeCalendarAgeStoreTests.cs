@@ -39,6 +39,27 @@ namespace WildFarming.Tests
             Assert.Equal(17, rec.AgeYears);
             Assert.Equal(42, rec.LastGrowthYear);
             Assert.Equal("oak", rec.Wood);
+            Assert.Equal(0, rec.SenescencePhase);
+        }
+
+        [Fact]
+        public void SerializeRoundTrip_PreservesSenescencePhase()
+        {
+            var store = new TreeCalendarAgeStore();
+            var pos = new BlockPos(100, 64, -200, 0);
+            var entry = MakeTreeEntry(pos, 120, 9);
+            entry.TreeSenescencePhase = TreeSenescencePhase.Snag;
+
+            store.Capture(entry, "oak");
+            byte[] bytes = store.SerializeForTests();
+
+            var loaded = new TreeCalendarAgeStore();
+            loaded.LoadFromBytes(bytes);
+
+            var restored = MakeTreeEntry(pos, 0, 0);
+            Assert.True(loaded.TryRestore(restored, pos, "oak"));
+            Assert.Equal(120, restored.TreeAgeYears);
+            Assert.Equal(TreeSenescencePhase.Snag, restored.TreeSenescencePhase);
         }
 
         [Fact]

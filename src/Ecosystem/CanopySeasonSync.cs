@@ -29,6 +29,8 @@ namespace WildFarming.Ecosystem
                 : CanopyBlockHelper.GetWoodFromFoliageBlock(block);
             if (string.IsNullOrEmpty(wood)) return false;
 
+            if (TreeSenescence.BlocksSeasonalCanopy(api, acc, pos, wood)) return false;
+
             WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
 
             if (kind == FoliageCellKind.RegularLeaf)

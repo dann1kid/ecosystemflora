@@ -69,32 +69,44 @@ namespace WildFarming.Ecosystem
                 if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
 
                 WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-                if (TreeSenescence.IsSenescent(entry.TreeAgeYears, profile, cfg))
+                if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, cfg))
                 {
-                    int removed = TreeSenescence.RemoveWholeTree(api, acc, entry.Origin, wood);
-                    if (removed > 0)
+                    if (cfg.EnableTreeSenescence)
                     {
-                        pendingSenescence.Add(new TreeSenescence.PendingRemoval(
-                            entry.Origin.Copy(),
+                        TreeSenescence.YearAdvanceResult result = TreeSenescence.AdvanceSenescenceYear(
+                            api,
+                            acc,
+                            entry,
+                            entry.Origin,
                             wood,
-                            removed));
+                            cfg);
 
-                        if (cfg.ReproduceDebug)
+                        if (result.NewPhase != entry.TreeSenescencePhase
+                            || result.BlocksRemoved > 0
+                            || result.Completed)
                         {
-                            api.Logger.Notification(
-                                "[ecosystemflora] Tree senescence death {0}y ({1}): removed {2} block(s) at {3}",
-                                entry.TreeAgeYears,
-                                wood,
-                                removed,
-                                entry.Origin);
+                            entry.TreeSenescencePhase = result.NewPhase;
+
+                            if (result.Completed)
+                            {
+                                pendingSenescence.Add(result.Removal);
+                            }
+
+                            if (cfg.ReproduceDebug && result.BlocksRemoved > 0)
+                            {
+                                api.Logger.Notification(
+                                    "[ecosystemflora] Tree senescence {0}y ({1}) phase {2}: removed {3} block(s) at {4}",
+                                    entry.TreeAgeYears,
+                                    wood,
+                                    entry.TreeSenescencePhase,
+                                    result.BlocksRemoved,
+                                    entry.Origin);
+                            }
                         }
                     }
-                    else
-                    {
-                        entry.LastTreeGrowthYear = gameYear;
-                        calendarAgeStore?.Capture(entry, wood);
-                    }
 
+                    entry.LastTreeGrowthYear = gameYear;
+                    calendarAgeStore?.Capture(entry, wood);
                     continue;
                 }
 

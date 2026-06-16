@@ -204,8 +204,11 @@ namespace WildFarming.Ecosystem
         /// <summary>Multiplier on growth pace vs reference size (higher = faster maturation).</summary>
         public float TreeGrowthActivityScale { get; set; } = 1f;
 
-        /// <summary>When calendar age reaches species senescence horizon, remove the whole tree.</summary>
+        /// <summary>When calendar age reaches species senescence horizon, phased natural death begins.</summary>
         public bool EnableTreeSenescence { get; set; } = true;
+
+        /// <summary>Log-grown blocks left standing during snag phase (final year removes them).</summary>
+        public int TreeSenescenceSnagBlocks { get; set; } = 3;
 
         // --- Flora context (v2) ---
 

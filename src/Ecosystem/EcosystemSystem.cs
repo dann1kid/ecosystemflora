@@ -1242,6 +1242,8 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
 
+            if (TreeSenescence.SuppressesSpread(entry, cfg)) return;
+
             BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
 

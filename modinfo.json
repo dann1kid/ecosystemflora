@@ -2,7 +2,7 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flowers, tallgrass, ferns, berries, aquatic plants, trees, and mycelium niches. Seasonal canopy, tree maturation, meadow harvest, inspect (I).",
+  "description": "Wild ecology for vanilla flora on vanilla blocks. Seasonal canopy, tree aging with phased senescence, meadow harvest, inspect (I). Handbook (en/ru).",
   "authors": ["-"],
   "version": "3.6.0",
   "side": "Universal",

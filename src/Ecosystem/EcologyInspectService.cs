@@ -582,9 +582,23 @@ namespace WildFarming.Ecosystem
                 entry.TreeAgeYears.ToString(),
                 profile.SenescenceAgeYears.ToString());
 
-            if (TreeSenescence.IsSenescent(entry.TreeAgeYears, profile, EcosystemConfig.Loaded))
+            if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, EcosystemConfig.Loaded))
             {
-                AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescent");
+                switch (entry.TreeSenescencePhase)
+                {
+                    case TreeSenescencePhase.Declining:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescence-declining");
+                        break;
+                    case TreeSenescencePhase.DeadCrown:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescence-dead-crown");
+                        break;
+                    case TreeSenescencePhase.Snag:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescence-snag");
+                        break;
+                    default:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescent");
+                        break;
+                }
             }
             else if (entry.TreeAgeYears + 1 >= profile.SenescenceAgeYears
                 && EcosystemConfig.Loaded.EnableTreeSenescence)

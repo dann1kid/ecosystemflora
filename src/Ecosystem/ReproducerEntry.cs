@@ -26,6 +26,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Last in-game year when calendar age advanced and maturation ran.</summary>
         public int LastTreeGrowthYear { get; set; } = int.MinValue;
 
+        /// <summary>Phased senescence after calendar lifespan (one stage per game year).</summary>
+        public TreeSenescencePhase TreeSenescencePhase { get; set; }
+
         internal int EntriesIndex { get; set; } = -1;
 
         internal int ChunkListIndex { get; set; } = -1;

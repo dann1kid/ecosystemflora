@@ -614,6 +614,8 @@ namespace WildFarming.Ecosystem
 
             if (string.IsNullOrEmpty(wood)) return false;
 
+            if (TreeSenescence.BlocksSeasonalCanopy(api, acc, pos, wood)) return false;
+
 
 
             CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out float activity);
@@ -812,10 +814,9 @@ namespace WildFarming.Ecosystem
             bool forcePlace = false)
 
         {
-
             if (!LandClaimGuard.AllowsEcologyChange(api, sourcePos)) return false;
 
-
+            if (TreeSenescence.BlocksSeasonalCanopy(api, acc, sourcePos, wood)) return false;
 
             var scratch = new BlockPos(0);
 
