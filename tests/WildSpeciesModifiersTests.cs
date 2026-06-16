@@ -16,6 +16,14 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void GrassColonizer_StrongerHoldThan_TallgrassMatrix()
+        {
+            Assert.True(TryHold(EcologyGrassColonizerSpecies.Redtopgrass, out float colonizer));
+            Assert.True(TryHold("tallgrass", out float grass));
+            Assert.True(colonizer > grass);
+        }
+
+        [Fact]
         public void Tallgrass_WeakerHoldThan_MeadowFlowers()
         {
             Assert.True(TryHold("tallgrass", out float grass));

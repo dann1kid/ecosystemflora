@@ -57,6 +57,13 @@ namespace WildFarming.Ecosystem
                 ["hartstongue"] = new Profile(MoistureLevel.Mesic, LightLevel.Shade, 1.2f),
                 ["tallfern"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.15f),
                 [WildFerntreeEcology.Species] = new Profile(MoistureLevel.Wet, LightLevel.Partial, 1.2f),
+
+                ["croton"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.2f),
+                ["rafflesiabrown"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.0f),
+                ["rafflesiared"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.0f),
+                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.1f),
+                [EcologyDesertSpecies.Barrelcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.0f),
+                [EcologyDesertSpecies.Silvertorchcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.05f),
             };
         }
 

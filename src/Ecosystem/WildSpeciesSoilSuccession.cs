@@ -60,6 +60,18 @@ namespace WildFarming.Ecosystem
                         FertilityTierDelta = 0.05f,
                     }),
 
+                [PlantSoilRole.GrassColonizer] = new RoleProfile(
+                    spread: new SoilImpact
+                    {
+                        MoistureDelta = -3f,
+                        FertilityTierDelta = 0.10f,
+                    },
+                    death: new SoilImpact
+                    {
+                        MoistureDelta = -3f,
+                        FertilityTierDelta = 0.08f,
+                    }),
+
                 [PlantSoilRole.ForestEdge] = new RoleProfile(
                     spread: new SoilImpact
                     {
@@ -151,6 +163,13 @@ namespace WildFarming.Ecosystem
                 ["hartstongue"] = PlantSoilRole.ForestUnderstory,
                 ["tallfern"] = PlantSoilRole.ForestEdge,
                 ["tallgrass"] = PlantSoilRole.GrassMatrix,
+                [EcologyGrassColonizerSpecies.Redtopgrass] = PlantSoilRole.GrassColonizer,
+                [EcologyShoreSedgeSpecies.Brownsedge] = PlantSoilRole.WetlandHerb,
+                [EcologyDesertSpecies.Barrelcactus] = PlantSoilRole.SoilDepleter,
+                [EcologyDesertSpecies.Silvertorchcactus] = PlantSoilRole.SoilDepleter,
+                ["croton"] = PlantSoilRole.ForestEdge,
+                ["rafflesiabrown"] = PlantSoilRole.MeadowPerennial,
+                ["rafflesiared"] = PlantSoilRole.MeadowPerennial,
             };
         }
 

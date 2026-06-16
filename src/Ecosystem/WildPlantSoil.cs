@@ -36,7 +36,6 @@ namespace WildFarming.Ecosystem
             ["horsetail"] = new Profile(SoilKindSets.Poor | SoilKind.MediumFert | SoilKind.Gravel, 80, 220),
             ["heather"] = new Profile(SoilKindSets.Poor | SoilKind.LowFert | SoilKind.Gravel, 80, 200),
             ["westerngorse"] = new Profile(SoilKindSets.Poor | SoilKind.LowFert, 80, 200),
-            ["redtopgrass"] = new Profile(SoilKindSets.Meadow, 100, 0),
             ["mugwort"] = new Profile(SoilKindSets.Meadow, 100, 0),
             ["daffodil"] = new Profile(SoilKindSets.Meadow, 100, 0),
             ["ghostpipewhite"] = new Profile(SoilKindSets.ForestUnderstory, 100, 220),
@@ -45,6 +44,9 @@ namespace WildFarming.Ecosystem
             ["orangemallow"] = new Profile(SoilKind.LowFert | SoilKind.Sand | SoilKind.MediumFert, 80, 150),
             ["edelweiss"] = new Profile(SoilKind.LowFert | SoilKind.Gravel | SoilKind.MediumFert | SoilKind.ForestFloor, 80, 200),
             ["goldenpoppy"] = new Profile(SoilKind.LowFert | SoilKind.Sand | SoilKind.MediumFert, 80, 180),
+            ["croton"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.MediumFert | SoilKind.HighFert, 80, 0),
+            ["rafflesiabrown"] = new Profile(SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor, 80, 200),
+            ["rafflesiared"] = new Profile(SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor, 80, 200),
             ["tallgrass"] = new Profile(SoilKindSets.Meadow | SoilKind.LowFert | SoilKind.ForestFloor, 80, 0),
 
             // Trees — forest soils, not clay/sand/barren

@@ -8,6 +8,8 @@ namespace WildFarming.Ecosystem
         ForestEdge,
         WetlandHerb,
         GrassMatrix,
+        /// <summary>Fast grass on flower blocks that invades tallgrass turf (e.g. redtopgrass).</summary>
+        GrassColonizer,
         /// <summary>Legume-style wild plants (e.g. lupine) — strong N bonus when soil is tilled.</summary>
         NitrogenFixer,
         /// <summary>Heath/dry colonizers that lean on poor soil (slight depletion while living).</summary>

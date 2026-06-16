@@ -39,7 +39,6 @@ namespace WildFarming.Ecosystem
                 ["horsetail"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.58f),
                 ["heather"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
                 ["westerngorse"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
-                ["redtopgrass"] = new Profile(FloraContextAffinity.Open, 1.05f, 0.35f, 0.55f),
                 ["mugwort"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.62f),
                 ["cowparsley"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.68f),
                 ["catmint"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.72f),
@@ -54,6 +53,16 @@ namespace WildFarming.Ecosystem
                 // Slow / localized — strong hold once established
                 ["daffodil"] = Open(1f, hold: 1.2f),
                 ["goldenpoppy"] = Open(1f, 0.45f, 1.22f),
+                ["croton"] = Edge(1.3f, hold: 1.05f),
+                ["rafflesiabrown"] = Open(1f, 0.4f, 1.2f),
+                ["rafflesiared"] = Open(1f, 0.4f, 1.2f),
+
+                // Shore sedges — wetland turf invaders
+                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.80f),
+
+                // Desert cacti — slow spread, strong hold
+                [EcologyDesertSpecies.Barrelcactus] = Open(1f, 0.25f, 1.18f),
+                [EcologyDesertSpecies.Silvertorchcactus] = Open(1f, 0.22f, 1.15f),
                 ["edelweiss"] = Edge(1.3f, hold: 1.18f),
 
                 // Forest understory climax
@@ -71,8 +80,11 @@ namespace WildFarming.Ecosystem
                 ["hartstongue"] = Edge(1.8f, hold: 1.08f),
                 ["tallfern"] = Edge(2f, hold: 1.12f),
 
-                // Grass matrix — weak hold so flowers can replace turf
+                // Grass matrix — weak hold so flowers and colonizers can replace turf
                 ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.72f),
+
+                // Grass colonizers — faster spread than matrix, stronger hold once established
+                [EcologyGrassColonizerSpecies.Redtopgrass] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.82f),
 
                 // Shore / aquatic
                 ["coopersreed"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.65f),

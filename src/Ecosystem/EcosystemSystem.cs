@@ -107,6 +107,9 @@ namespace WildFarming.Ecosystem
             WildBerryEcology.LogMissingTypes(api);
             WildFernEcology.LogMissingSpecies(api);
             WildTallgrassEcology.LogMissingSpecies(api);
+            WildGrassColonizerEcology.LogMissingSpecies(api);
+            WildShoreSedgeEcology.LogMissingSpecies(api);
+            WildDesertEcology.LogMissingSpecies(api);
         }
 
         void OnPlayerJoin(IPlayer player)

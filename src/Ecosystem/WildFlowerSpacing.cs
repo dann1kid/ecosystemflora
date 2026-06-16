@@ -31,7 +31,6 @@ namespace WildFarming.Ecosystem
                 ["horsetail"] = new Profile(0, 1),
                 ["heather"] = new Profile(0, 1),
                 ["westerngorse"] = new Profile(0, 1),
-                ["redtopgrass"] = new Profile(0, 1),
                 ["mugwort"] = new Profile(1, 1),
                 ["cowparsley"] = new Profile(1, 1),
                 ["catmint"] = new Profile(1, 1),
@@ -66,6 +65,9 @@ namespace WildFarming.Ecosystem
                     ["heather"] = 3,
                     ["orangemallow"] = 2,
                 }),
+                ["croton"] = new Profile(1, 2),
+                ["rafflesiabrown"] = new Profile(4, 2),
+                ["rafflesiared"] = new Profile(4, 2),
             };
 
             return map;

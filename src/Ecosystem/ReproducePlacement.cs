@@ -69,7 +69,8 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
-            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells)
+            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells
+                && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
             {
                 ApplyEmptySpreadPreference(candidates, EcosystemConfig.Loaded.EmptySpreadFitnessMultiplier);
             }

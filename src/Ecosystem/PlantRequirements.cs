@@ -295,6 +295,57 @@ namespace WildFarming.Ecosystem
                 minGroundFertility = fern.Soil.MinBlockFertility;
                 maxGroundFertility = fern.Soil.MaxBlockFertility;
             }
+            else if (!string.IsNullOrEmpty(species) && WildShoreSedgeEcology.TryGet(species, out WildShoreSedgeEcology.EcologyEntry shoreSedge))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = shoreSedge.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = shoreSedge.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = shoreSedge.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = shoreSedge.MaxRain;
+                if (float.IsNaN(minForest)) minForest = shoreSedge.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = shoreSedge.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = shoreSedge.SpreadRate;
+                sameSpacing = shoreSedge.SameSpeciesSpacing;
+                otherSpacing = shoreSedge.OtherSpeciesSpacing;
+                minSunlight = shoreSedge.MinSunlight;
+                allowedSoils = shoreSedge.Soil.Allowed;
+                minGroundFertility = shoreSedge.Soil.MinBlockFertility;
+                maxGroundFertility = shoreSedge.Soil.MaxBlockFertility;
+            }
+            else if (!string.IsNullOrEmpty(species) && WildDesertEcology.TryGet(species, out WildDesertEcology.EcologyEntry desert))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = desert.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = desert.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = desert.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = desert.MaxRain;
+                if (float.IsNaN(minForest)) minForest = desert.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = desert.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = desert.SpreadRate;
+                sameSpacing = desert.SameSpeciesSpacing;
+                otherSpacing = desert.OtherSpeciesSpacing;
+                minSunlight = desert.MinSunlight;
+                allowedSoils = desert.Soil.Allowed;
+                minGroundFertility = desert.Soil.MinBlockFertility;
+                maxGroundFertility = desert.Soil.MaxBlockFertility;
+            }
+            else if (!string.IsNullOrEmpty(species) && WildGrassColonizerEcology.TryGet(species, out WildGrassColonizerEcology.EcologyEntry colonizer))
+            {
+                habitat = EcologyHabitat.Terrestrial;
+                if (float.IsNaN(minTemp)) minTemp = colonizer.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = colonizer.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = colonizer.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = colonizer.MaxRain;
+                if (float.IsNaN(minForest)) minForest = colonizer.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = colonizer.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = colonizer.SpreadRate;
+                sameSpacing = colonizer.SameSpeciesSpacing;
+                otherSpacing = colonizer.OtherSpeciesSpacing;
+                minSunlight = colonizer.MinSunlight;
+                allowedSoils = colonizer.Soil.Allowed;
+                minGroundFertility = colonizer.Soil.MinBlockFertility;
+                maxGroundFertility = colonizer.Soil.MaxBlockFertility;
+            }
             else if (!string.IsNullOrEmpty(species) && WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
             {
                 habitat = EcologyHabitat.Terrestrial;

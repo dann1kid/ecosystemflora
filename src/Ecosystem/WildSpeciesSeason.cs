@@ -190,6 +190,9 @@ namespace WildFarming.Ecosystem
                 ["cornflower"] = MeadowSummer,
                 ["goldenpoppy"] = MeadowSummer,
                 ["orangemallow"] = MeadowSummer,
+                ["croton"] = FernSeason,
+                ["rafflesiabrown"] = MeadowSummer,
+                ["rafflesiared"] = MeadowSummer,
 
                 // Late summer
                 ["heather"] = LateSummer,
@@ -199,6 +202,7 @@ namespace WildFarming.Ecosystem
                 ["mugwort"] = Colonizer,
                 ["horsetail"] = Colonizer,
                 ["redtopgrass"] = Colonizer,
+                [EcologyShoreSedgeSpecies.Brownsedge] = Colonizer,
 
                 // Perennials
                 ["cowparsley"] = MeadowPerennial,
@@ -232,6 +236,10 @@ namespace WildFarming.Ecosystem
                 ["papyrus"] = AquaticSeason,
                 ["waterlily"] = AquaticSeason,
                 ["watercrowfoot"] = AquaticSeason,
+
+                // Desert
+                [EcologyDesertSpecies.Barrelcactus] = EdgeSummer,
+                [EcologyDesertSpecies.Silvertorchcactus] = EdgeSummer,
 
                 // Berries (meadow summer pattern)
                 ["strawberry"] = MeadowSummer,

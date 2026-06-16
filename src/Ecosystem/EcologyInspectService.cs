@@ -202,8 +202,16 @@ namespace WildFarming.Ecosystem
                 spreadRate = aquatic.SpreadRate;
             else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
                 spreadRate = grass.SpreadRate;
+            else if (WildGrassColonizerEcology.TryGet(species, out WildGrassColonizerEcology.EcologyEntry colonizer))
+                spreadRate = colonizer.SpreadRate;
+            else if (WildShoreSedgeEcology.TryGet(species, out WildShoreSedgeEcology.EcologyEntry shoreSedge))
+                spreadRate = shoreSedge.SpreadRate;
+            else if (WildDesertEcology.TryGet(species, out WildDesertEcology.EcologyEntry desert))
+                spreadRate = desert.SpreadRate;
 
             if (species == "tallgrass") return "ecosystemflora:dominance-matrix";
+            if (WildGrassColonizerEcology.IsSpecies(species) || WildShoreSedgeEcology.IsSpecies(species))
+                return "ecosystemflora:dominance-grass-colonizer";
 
             if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
             {

@@ -39,7 +39,6 @@ namespace WildFarming.Ecosystem
             ["horsetail"] = new EcologyEntry(1, 15, 0.4f, 1f, 0f, 1f, 2.8f),
             ["heather"] = new EcologyEntry(2, 15, 0.4f, 1f, 0f, 0.35f, 2.6f),
             ["westerngorse"] = new EcologyEntry(2, 15, 0.4f, 1f, 0f, 0.35f, 2.6f),
-            ["redtopgrass"] = new EcologyEntry(0, 20, 0.42f, 1f, 0f, 0.2f, 2.2f),
             ["mugwort"] = new EcologyEntry(11, 28, 0.5f, 1f, 0f, 0.3f, 2.0f),
             ["cowparsley"] = new EcologyEntry(2, 20, 0.4f, 1f, 0f, 0.35f, 1.7f),
             ["catmint"] = new EcologyEntry(5, 19, 0.39f, 0.86f, 0.1f, 0.5f, 1.5f),
@@ -59,6 +58,9 @@ namespace WildFarming.Ecosystem
             ["orangemallow"] = new EcologyEntry(20, 37, 0.1f, 0.35f, 0f, 1f, 0.55f),
             ["edelweiss"] = new EcologyEntry(-1, 12, 0.3f, 0.8f, 0f, 0.7f, 0.4f),
             ["goldenpoppy"] = new EcologyEntry(22, 25, 0.5f, 1f, 0f, 1f, 0.35f),
+            ["croton"] = new EcologyEntry(22, 50, 0.5f, 1f, 0.4f, 1f, 0.9f),
+            ["rafflesiabrown"] = new EcologyEntry(30, 40, 0.75f, 1f, 0f, 0.55f, 0.35f),
+            ["rafflesiared"] = new EcologyEntry(30, 40, 0.75f, 1f, 0f, 0.55f, 0.35f),
         };
 
         public static bool TryGet(string species, out EcologyEntry entry)

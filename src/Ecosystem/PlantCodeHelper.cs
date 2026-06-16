@@ -101,8 +101,16 @@ namespace WildFarming.Ecosystem
                 if (rest.EndsWith("-free")) rest = rest.Substring(0, rest.Length - "-free".Length);
                 else if (rest.EndsWith("-snow")) rest = rest.Substring(0, rest.Length - "-snow".Length);
                 if (rest.StartsWith("lupine")) return "lupine";
+                if (rest.StartsWith("croton")) return "croton";
+                if (rest.StartsWith("rafflesia-red")) return "rafflesiared";
+                if (rest.StartsWith("rafflesia-brown")) return "rafflesiabrown";
                 return rest;
             }
+
+            if (path.StartsWith("tallplant-brownsedge")) return EcologyShoreSedgeSpecies.Brownsedge;
+
+            if (path.StartsWith("barrelcactus")) return EcologyDesertSpecies.Barrelcactus;
+            if (path == "silvertorchcactus") return EcologyDesertSpecies.Silvertorchcactus;
 
             if (path.StartsWith("tallplant-coopersreed")) return "coopersreed";
             if (path.StartsWith("tallplant-tule")) return "tule";
@@ -121,6 +129,12 @@ namespace WildFarming.Ecosystem
             if (path.StartsWith("tallgrass-"))
             {
                 if (path.StartsWith("tallgrass-eaten")) return null;
+                return "tallgrass";
+            }
+
+            if (path.StartsWith("frostedtallgrass-"))
+            {
+                if (path.Contains("-eaten-")) return null;
                 return "tallgrass";
             }
 

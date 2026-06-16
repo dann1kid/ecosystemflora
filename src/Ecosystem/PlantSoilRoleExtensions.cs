@@ -7,6 +7,7 @@ namespace WildFarming.Ecosystem
             return role == PlantSoilRole.MeadowColonizer
                 || role == PlantSoilRole.MeadowPerennial
                 || role == PlantSoilRole.GrassMatrix
+                || role == PlantSoilRole.GrassColonizer
                 || role == PlantSoilRole.NitrogenFixer;
         }
 
@@ -22,6 +23,7 @@ namespace WildFarming.Ecosystem
             return role == PlantSoilRole.MeadowColonizer
                 || role == PlantSoilRole.MeadowPerennial
                 || role == PlantSoilRole.GrassMatrix
+                || role == PlantSoilRole.GrassColonizer
                 || role == PlantSoilRole.NitrogenFixer;
         }
     }

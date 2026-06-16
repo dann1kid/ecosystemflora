@@ -9,9 +9,10 @@ namespace WildFarming.Ecosystem
         {
             "catmint", "cornflower", "forgetmenot", "edelweiss", "heather", "horsetail",
             "orangemallow", "wilddaisy", "westerngorse", "cowparsley", "goldenpoppy",
-            "lilyofthevalley", "woad", "redtopgrass", "bluebell",
+            "lilyofthevalley", "woad", "bluebell",
             "ghostpipewhite", "ghostpipepink", "ghostpipered",
             "daffodil", "mugwort", "lupine",
+            "croton", "rafflesiabrown", "rafflesiared",
         };
 
         public static bool IsKnownFlower(string species)

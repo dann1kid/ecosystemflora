@@ -64,6 +64,9 @@ namespace WildFarming.Ecosystem
                 case PlantSoilRole.GrassMatrix:
                     n = 8f; p = 4f; k = 10f;
                     break;
+                case PlantSoilRole.GrassColonizer:
+                    n = 7f; p = 3f; k = 9f;
+                    break;
                 case PlantSoilRole.ForestUnderstory:
                 case PlantSoilRole.ForestEdge:
                     n = 6f; p = 10f; k = 4f;
