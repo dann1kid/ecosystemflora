@@ -4,6 +4,22 @@
 
 ---
 
+## 3.7.0 — ModDB update (short paste)
+
+```
+3.7.0 — since 3.6.0
+
+• Tree fern — vanilla ferntree-normal columns join the ecosystem: yearly aging, spread of young columns, phased senescence (~80 y). Counts as a tree host for symbiotic ferns. Toggle: EnableFerntreeEcology.
+
+• Canopy — autumn partially strips branchy crown leaves; loose sticks may fall to the ground. In spring, older wild trees bud more branchy foliage from calendar age at the trunk base.
+
+• Wild vines — wildvine tips grow downward and spread onto nearby vertical faces (trunks, walls). Toggle: EnableWildVineEcology.
+
+Press I on ferntrees and trunk logs. Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
+---
+
 ## 3.7.0 — release notes (paste for update)
 
 **Since 3.6.0**
