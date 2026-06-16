@@ -5,6 +5,13 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
+    internal enum SpreadCollectPhase
+    {
+        All,
+        EmptyOnly,
+        DisplacementOnly,
+    }
+
     internal static class ReproducePlacement
     {
         static readonly List<SpreadCandidate> scratchCandidates = new List<SpreadCandidate>();
@@ -42,25 +49,9 @@ namespace WildFarming.Ecosystem
             failureReason = null;
             if (maxSpawns <= 0) return 0;
 
-            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable;
-            int searchRadius = radius;
+            int searchRadius = ResolveSpreadSearchRadius(requirements, radius, rand, out MatSpreadCollectMode matMode);
 
-            if (requirements != null && requirements.UsesRhizomeSpread)
-            {
-                matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
-                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
-            }
-            else if (requirements != null && requirements.UsesSurfaceMatSpread)
-            {
-                matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
-                searchRadius = SurfaceMatSpread.ResolveSearchRadius(requirements, matMode, radius);
-            }
-            else if (requirements != null && requirements.SpreadRadius > 0)
-            {
-                searchRadius = requirements.SpreadRadius;
-            }
-
-            List<SpreadCandidate> candidates = CollectSpreadCandidates(
+            List<SpreadCandidate> candidates = CollectSpreadCandidatesForSpread(
                 api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, matMode);
 
             if (candidates.Count == 0)
@@ -69,7 +60,8 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
-            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells
+            if (!UsedEmptyFirstSpreadCollect(requirements, matMode)
+                && EcosystemConfig.Loaded.PreferSpreadToEmptyCells
                 && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
             {
                 ApplyEmptySpreadPreference(candidates, EcosystemConfig.Loaded.EmptySpreadFitnessMultiplier);
@@ -128,25 +120,9 @@ namespace WildFarming.Ecosystem
             failureReason = null;
             if (maxSpawns <= 0 || queue == null) return 0;
 
-            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable;
-            int searchRadius = radius;
+            int searchRadius = ResolveSpreadSearchRadius(requirements, radius, rand, out MatSpreadCollectMode matMode);
 
-            if (requirements != null && requirements.UsesRhizomeSpread)
-            {
-                matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
-                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
-            }
-            else if (requirements != null && requirements.UsesSurfaceMatSpread)
-            {
-                matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
-                searchRadius = SurfaceMatSpread.ResolveSearchRadius(requirements, matMode, radius);
-            }
-            else if (requirements != null && requirements.SpreadRadius > 0)
-            {
-                searchRadius = requirements.SpreadRadius;
-            }
-
-            List<SpreadCandidate> candidates = CollectSpreadCandidates(
+            List<SpreadCandidate> candidates = CollectSpreadCandidatesForSpread(
                 api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, matMode);
 
             if (candidates.Count == 0)
@@ -155,7 +131,8 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
-            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells
+            if (!UsedEmptyFirstSpreadCollect(requirements, matMode)
+                && EcosystemConfig.Loaded.PreferSpreadToEmptyCells
                 && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
             {
                 ApplyEmptySpreadPreference(candidates, EcosystemConfig.Loaded.EmptySpreadFitnessMultiplier);
@@ -241,6 +218,74 @@ namespace WildFarming.Ecosystem
             return placed;
         }
 
+        static int ResolveSpreadSearchRadius(
+            PlantRequirements requirements,
+            int radius,
+            System.Random rand,
+            out MatSpreadCollectMode matMode)
+        {
+            matMode = MatSpreadCollectMode.NotApplicable;
+            int searchRadius = radius;
+
+            if (requirements != null && requirements.UsesRhizomeSpread)
+            {
+                matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.UsesSurfaceMatSpread)
+            {
+                matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = SurfaceMatSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.SpreadRadius > 0)
+            {
+                searchRadius = requirements.SpreadRadius;
+            }
+
+            return searchRadius;
+        }
+
+        static bool UsedEmptyFirstSpreadCollect(PlantRequirements requirements, MatSpreadCollectMode matMode)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            return cfg.EnableEmptyFirstSpreadCollect
+                && requirements?.Habitat == EcologyHabitat.Terrestrial
+                && cfg.UseCellDisplacement
+                && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species)
+                && matMode == MatSpreadCollectMode.NotApplicable;
+        }
+
+        static List<SpreadCandidate> CollectSpreadCandidatesForSpread(
+            ICoreAPI api,
+            BlockPos origin,
+            int radius,
+            int verticalSearch,
+            PlantRequirements requirements,
+            float minFitness,
+            bool harshClimate,
+            MatSpreadCollectMode matMode)
+        {
+            if (!UsedEmptyFirstSpreadCollect(requirements, matMode))
+            {
+                return CollectSpreadCandidates(
+                    api, origin, radius, verticalSearch, requirements, minFitness, harshClimate, matMode,
+                    SpreadCollectPhase.All);
+            }
+
+            List<SpreadCandidate> emptyCandidates = CollectSpreadCandidates(
+                api, origin, radius, verticalSearch, requirements, minFitness, harshClimate, matMode,
+                SpreadCollectPhase.EmptyOnly);
+
+            if (emptyCandidates.Count > 0)
+            {
+                return emptyCandidates;
+            }
+
+            return CollectSpreadCandidates(
+                api, origin, radius, verticalSearch, requirements, minFitness, harshClimate, matMode,
+                SpreadCollectPhase.DisplacementOnly);
+        }
+
         static List<SpreadCandidate> CollectSpreadCandidates(
             ICoreAPI api,
             BlockPos origin,
@@ -249,13 +294,20 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             float minFitness,
             bool harshClimate,
-            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable)
+            MatSpreadCollectMode matMode,
+            SpreadCollectPhase phase)
         {
             scratchCandidates.Clear();
             scratchSeen.Clear();
             IBlockAccessor acc = api.World.BlockAccessor;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool diag = cfg.VerboseLogging && cfg.ReproduceDebug;
+            EcologyColumnOccupancy occupancy = cfg.EnableSpreadColumnOccupancyHint
+                ? EcosystemSystem.Instance?.SpacingIndex?.ColumnOccupancy
+                : null;
+            bool useOccupancyHint = occupancy != null
+                && requirements?.Habitat == EcologyHabitat.Terrestrial
+                && phase != SpreadCollectPhase.All;
 
             if (matMode == MatSpreadCollectMode.MatEdge)
             {
@@ -284,7 +336,7 @@ namespace WildFarming.Ecosystem
             if (seedFitnessScale <= 0f) seedFitnessScale = 0.01f;
 
             int dNoSurface = 0, dSunlight = 0, dDupe = 0, dClaim = 0;
-            int dPreflight = 0, dOccupied = 0, dFitness = 0, dSpacing = 0, dDisplace = 0;
+            int dPreflight = 0, dOccupied = 0, dFitness = 0, dSpacing = 0, dDisplace = 0, dHint = 0;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
@@ -296,6 +348,24 @@ namespace WildFarming.Ecosystem
                     {
                         if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
                         if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
+                    }
+
+                    int worldX = origin.X + dx;
+                    int worldZ = origin.Z + dz;
+                    if (useOccupancyHint)
+                    {
+                        bool columnOccupied = occupancy.IsOccupied(worldX, worldZ);
+                        if (phase == SpreadCollectPhase.EmptyOnly && columnOccupied)
+                        {
+                            dHint++;
+                            continue;
+                        }
+
+                        if (phase == SpreadCollectPhase.DisplacementOnly && !columnOccupied)
+                        {
+                            dHint++;
+                            continue;
+                        }
                     }
 
                     bool foundPos;
@@ -355,8 +425,40 @@ namespace WildFarming.Ecosystem
                     bool canOccupy = isEmpty
                         || SpreadVacancy.CanOccupy(acc, plantPos, requirements, snap.Space, isEmpty);
 
-                    if (canOccupy)
+                    if (phase == SpreadCollectPhase.DisplacementOnly)
                     {
+                        if (isEmpty)
+                        {
+                            dOccupied++;
+                            continue;
+                        }
+
+                        if (requirements.Habitat != EcologyHabitat.Terrestrial || !cfg.UseCellDisplacement)
+                        {
+                            dOccupied++;
+                            continue;
+                        }
+
+                        if (!CellCompetition.CanDisplace(
+                                api, requirements, snap.Space, plantPos, harshClimate, in snap,
+                                out float challengerScore, out _))
+                        {
+                            dDisplace++;
+                            continue;
+                        }
+
+                        fitness = challengerScore;
+                        displacing = true;
+                        if (fitness < minFitness) { dFitness++; continue; }
+                    }
+                    else if (canOccupy)
+                    {
+                        if (phase == SpreadCollectPhase.EmptyOnly && !isEmpty)
+                        {
+                            dOccupied++;
+                            continue;
+                        }
+
                         EnvironmentalContext ctx = haveColumnSnap
                             ? EnvironmentalContext.SampleForSpread(api, plantPos, in columnSnap, requirements)
                             : EnvironmentalContext.SampleForSpread(
@@ -369,6 +471,12 @@ namespace WildFarming.Ecosystem
                     }
                     else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
                     {
+                        if (phase == SpreadCollectPhase.EmptyOnly)
+                        {
+                            dOccupied++;
+                            continue;
+                        }
+
                         if (!CellCompetition.CanDisplace(
                             api, requirements, snap.Space, plantPos, harshClimate, in snap,
                             out float challengerScore, out float incumbentScore))
@@ -394,11 +502,12 @@ namespace WildFarming.Ecosystem
             if (diag && scratchCandidates.Count == 0)
             {
                 api.Logger.Notification(
-                    "[ecosystemflora] spread reject {0} at {1}: noSurf={2} sun={3} dup={4} claim={5} preflight={6} occup={7} fit={8} space={9} displ={10}",
+                    "[ecosystemflora] spread reject {0} at {1} phase={2}: noSurf={3} sun={4} dup={5} claim={6} preflight={7} occup={8} fit={9} space={10} displ={11} hint={12}",
                     requirements.Species ?? "?",
                     origin,
+                    phase,
                     dNoSurface, dSunlight, dDupe, dClaim,
-                    dPreflight, dOccupied, dFitness, dSpacing, dDisplace);
+                    dPreflight, dOccupied, dFitness, dSpacing, dDisplace, dHint);
 
                 if (requirements.Habitat == EcologyHabitat.Terrestrial && dNoSurface > 0)
                 {

@@ -131,10 +131,37 @@ namespace WildFarming.Ecosystem
         public int MaxReproduceAttemptsPerTick { get; set; } = 64;
 
         /// <summary>Chunk columns to scan per tick after load (deferred registration).</summary>
-        public int MaxChunkColumnsScannedPerTick { get; set; } = 6;
+        public int MaxChunkColumnsScannedPerTick { get; set; } = 16;
 
         /// <summary>Cap flower registrations per tick while draining the chunk queue.</summary>
-        public int MaxRegistrationsPerTick { get; set; } = 512;
+        public int MaxRegistrationsPerTick { get; set; } = 2048;
+
+        /// <summary>Drain player-vicinity chunk scans before the background registration queue.</summary>
+        public bool EnablePlayerPriorityRegistration { get; set; } = true;
+
+        /// <summary>Complete nearby chunk registration in one load callback (burst ms budget).</summary>
+        public bool EnableBurstRegistrationNearPlayers { get; set; } = true;
+
+        /// <summary>Block radius for priority/burst registration (defaults above spread activation).</summary>
+        public int PlayerRegistrationPriorityRadiusBlocks { get; set; } = 384;
+
+        /// <summary>Extra chunk scan passes per tick for the priority registration queue.</summary>
+        public int MaxPriorityChunkScansPerTick { get; set; } = 48;
+
+        /// <summary>Registration cap per tick for the priority queue (separate from background).</summary>
+        public int MaxPriorityRegistrationsPerTick { get; set; } = 8192;
+
+        /// <summary>Per-pass ms budget for priority registration scans.</summary>
+        public int PriorityRegistrationBudgetMs { get; set; } = 80;
+
+        /// <summary>Total ms budget to finish one chunk on load near a player.</summary>
+        public int BurstRegistrationBudgetMs { get; set; } = 250;
+
+        /// <summary>Max registrations while completing one burst chunk near a player.</summary>
+        public int MaxBurstRegistrationsPerChunk { get; set; } = 4096;
+
+        public int ResolvePriorityRegistrationBudgetMs() =>
+            PriorityRegistrationBudgetMs > 0 ? PriorityRegistrationBudgetMs : ResolveRegistrationBudgetMs();
 
         /// <summary>Max milliseconds per game tick for spread processing. 0 = no limit.</summary>
         public int TickBudgetMs { get; set; } = 30;
@@ -302,6 +329,12 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Challenger spreadScore must exceed incumbent holdScore × this (lower = more turnover).</summary>
         public float DisplacementHoldMargin { get; set; } = 1.18f;
+
+        /// <summary>When empty cells exist in spread radius, pick only among them (displacement still runs if none).</summary>
+        public bool EnableEmptyFirstSpreadCollect { get; set; } = true;
+
+        /// <summary>Skip spread columns known to hold ecology plants (from spacing index) on empty-first pass.</summary>
+        public bool EnableSpreadColumnOccupancyHint { get; set; } = true;
 
         /// <summary>When <see cref="PreferSpreadToEmptyCells"/> is on, multiply empty-cell fitness by this (displacement still possible).</summary>
         public float EmptySpreadFitnessMultiplier { get; set; } = 2.5f;

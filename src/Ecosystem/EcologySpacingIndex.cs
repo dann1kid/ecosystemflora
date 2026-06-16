@@ -10,6 +10,9 @@ namespace WildFarming.Ecosystem
     {
         readonly Dictionary<BlockPos, SpacingRecord> byPos = new Dictionary<BlockPos, SpacingRecord>();
         readonly Dictionary<Vec2i, List<SpacingRecord>> byChunk = new Dictionary<Vec2i, List<SpacingRecord>>();
+        readonly EcologyColumnOccupancy columnOccupancy = new EcologyColumnOccupancy();
+
+        public EcologyColumnOccupancy ColumnOccupancy => columnOccupancy;
 
         struct SpacingRecord
         {
@@ -24,6 +27,7 @@ namespace WildFarming.Ecosystem
         {
             byPos.Clear();
             byChunk.Clear();
+            columnOccupancy.Clear();
         }
 
         public void AddOrUpdate(IBlockAccessor acc, BlockPos pos)
@@ -56,6 +60,7 @@ namespace WildFarming.Ecosystem
             record.ChunkListIndex = list.Count;
             list.Add(record);
             byPos[pos] = record;
+            columnOccupancy.OnPlantAdded(pos);
         }
 
         public void Remove(BlockPos pos)
@@ -87,6 +92,22 @@ namespace WildFarming.Ecosystem
             }
 
             byPos.Remove(pos);
+
+            Vec2i chunkCoord = ReproducerRegistry.ToChunkCoord(pos);
+            if (byChunk.TryGetValue(chunkCoord, out List<SpacingRecord> remainingList))
+            {
+                var remainingPositions = new List<BlockPos>(remainingList.Count);
+                for (int i = 0; i < remainingList.Count; i++)
+                {
+                    remainingPositions.Add(remainingList[i].Pos);
+                }
+
+                columnOccupancy.OnPlantRemoved(pos, remainingPositions);
+            }
+            else
+            {
+                columnOccupancy.OnPlantRemoved(pos, null);
+            }
         }
 
         public void RemoveChunk(Vec2i chunkCoord)
@@ -99,6 +120,7 @@ namespace WildFarming.Ecosystem
             }
 
             byChunk.Remove(chunkCoord);
+            columnOccupancy.RemoveChunk(chunkCoord);
         }
 
         public bool MeetsSpacing(
