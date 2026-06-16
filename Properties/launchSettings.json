@@ -4,11 +4,6 @@
       "commandName": "Executable",
       "executablePath": "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory\\Vintagestory.exe",
       "workingDirectory": "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory"
-    },
-    "Профиль 1": {
-      "commandName": "Executable",
-      "executablePath": "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory\\Vintagestory.exe",
-      "workingDirectory": "C:\\Users\\admin\\AppData\\Roaming\\Vintagestory"
     }
   }
 }
