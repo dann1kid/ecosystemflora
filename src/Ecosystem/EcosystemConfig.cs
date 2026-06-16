@@ -207,8 +207,14 @@ namespace WildFarming.Ecosystem
         /// <summary>When calendar age reaches species senescence horizon, phased natural death begins.</summary>
         public bool EnableTreeSenescence { get; set; } = true;
 
-        /// <summary>Log-grown blocks left standing during snag phase (final year removes them).</summary>
+        /// <summary>Log-grown blocks left standing during snag phase (final year collapses to remains or air).</summary>
         public int TreeSenescenceSnagBlocks { get; set; } = 3;
+
+        /// <summary>Leave vanilla stump + fallen logs when snag collapses (not log-grown).</summary>
+        public bool EnableTreeSenescenceRemains { get; set; } = true;
+
+        /// <summary>Horizontal debarked logs scattered near stump on final senescence year (0 = stump only).</summary>
+        public int TreeSenescenceFallenLogCount { get; set; } = 3;
 
         // --- Flora context (v2) ---
 

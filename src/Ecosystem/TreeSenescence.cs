@@ -133,7 +133,9 @@ namespace WildFarming.Ecosystem
                     return new YearAdvanceResult(removed, TreeSenescencePhase.Snag, false, default);
 
                 case TreeSenescencePhase.Snag:
-                    removed = RemoveRemainingTrunk(api, acc, trunkBase, wood);
+                    removed = cfg.EnableTreeSenescenceRemains
+                        ? TreeDecayRemains.CollapseSnagToRemains(api, acc, trunkBase, wood, cfg)
+                        : RemoveRemainingTrunk(api, acc, trunkBase, wood);
                     if (removed <= 0)
                     {
                         return new YearAdvanceResult(0, TreeSenescencePhase.Snag, false, default);

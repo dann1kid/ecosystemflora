@@ -25,7 +25,15 @@ Press **I** on wild plants, mushroom caps, mycelium soil, or trunk logs. Enable 
 
 ## 3.6.0 — Wild tree maturation
 
-Registered wild trees (`log-grown` trunk base in the ecology registry) now have a **life cycle** beyond sapling spread.
+Registered wild trees (`log-grown` trunk base in the ecology registry) now have a **life cycle** beyond sapling spread. See [`TREE_AGING.md`](TREE_AGING.md) for the full end-to-end table.
+
+### Full lifecycle
+
+1. Mature trunk **spreads** a free sapling (winter off; not on ice/snow).
+2. **Vanilla treegen** grows it; ecology **registers** the trunk base at calendar age **0**.
+3. Each game year: **age +1**, optional structure growth, **sapling spread** (trunks never stress-die).
+4. After species lifespan: **four senescence years** → stump + fallen debarked logs (or air if remains off).
+5. **Neighbouring trees** refill the gap — no sapling burst on death.
 
 ### Calendar age and growth
 
@@ -35,9 +43,9 @@ Registered wild trees (`log-grown` trunk base in the ecology registry) now have 
 
 ### Senescence (phased death of old age)
 
-- After lifespan, **four game years**: strip crown leaves → strip branchy skeleton → short dry trunk (snag, default 3 blocks) → remove trunk.
+- After lifespan, **four game years**: strip crown leaves → strip branchy skeleton → short dry trunk (snag, default 3 blocks) → **stump + fallen logs** (vanilla `log-*`, choppable; not re-registered as wild trees).
 - Sapling spread and growth stop once senescence begins; spring canopy bud is blocked.
-- Toggle: `EnableTreeSenescence` (default **on**). Snag height: `TreeSenescenceSnagBlocks`. Blocked inside land claims.
+- Toggle: `EnableTreeSenescence` (default **on**). Snag height: `TreeSenescenceSnagBlocks`. Remains: `EnableTreeSenescenceRemains` (default **on**), `TreeSenescenceFallenLogCount` (default **3**, 0 = stump only). Set remains off for bare air removal. Blocked inside land claims.
 - Master toggle: `EnableTreeAging` (default **on**). Turn off both to keep pre-3.6 tree behaviour (sapling spread only).
 
 ### Persistence
@@ -58,6 +66,8 @@ Registered wild trees (`log-grown` trunk base in the ecology registry) now have 
 | `EnableTreeAging` | true | Yearly age + structure growth |
 | `EnableTreeSenescence` | true | Phased death after lifespan |
 | `TreeSenescenceSnagBlocks` | 3 | Trunk blocks during snag year |
+| `EnableTreeSenescenceRemains` | true | Stump + fallen logs on final year |
+| `TreeSenescenceFallenLogCount` | 3 | Ground logs near stump (0 = stump only) |
 | `MaxTreeGrowthAttemptsPerTick` | 6 | Server tick budget for growth |
 | `TreeGrowthActivityScale` | 1.0 | Pacing multiplier |
 
@@ -133,7 +143,7 @@ Still in the mod from earlier releases — no need to re-read if you already pla
 
 - Зарегистрированные дикие стволы получают **календарный возраст** раз в игровой год и могут медленно наращивать ствол и крону (ванильные блоки).
 - **Размер и возраст разделены:** высокое дерево из генерации мира может быть «молодым» по календарю.
-- В конце жизни вида — **четыре игровых года**: листва кроны → ветвистый остов → короткий сухой ствол (snag) → снятие блоков, без дропа. Spread саженцев останавливается; весенний bud кроны заблокирован.
+- В конце жизни вида — **четыре игровых года**: листва кроны → ветвистый остов → короткий сухой ствол (snag) → **пень и брёвна** (ванильные `log-*`, можно рубить; экология их не регистрирует). Spread саженцев останавливается; весенний bud кроны заблокирован. Ключи: `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`.
 - Возраст и **фаза senescence** сохраняются в мире и восстанавливаются после перезапуска сервера.
 - **Осмотр (I)** на любом бревне ствола: возраст, размер, текущая фаза упадка.
 - Ключи: `EnableTreeAging`, `EnableTreeSenescence`, `TreeSenescenceSnagBlocks`, `MaxTreeGrowthAttemptsPerTick`, `TreeGrowthActivityScale`.
@@ -170,7 +180,7 @@ Still in the mod from earlier releases — no need to re-read if you already pla
 Since 3.1.12 → 3.6.0
 
 WILD TREE AGING (3.6)
-Registered trunks gain calendar years once per game year and may grow taller/wider (vanilla log-grown / leaves). At species lifespan: phased death over four game years (leaves, skeleton, snag, removal). Age persists in saves. EnableTreeAging / EnableTreeSenescence / TreeSenescenceSnagBlocks.
+Registered trunks gain calendar years once per game year and may grow taller/wider (vanilla log-grown / leaves). At species lifespan: phased death over four game years (leaves, skeleton, snag, stump + fallen logs). Age persists in saves. EnableTreeAging / EnableTreeSenescence / EnableTreeSenescenceRemains / TreeSenescenceFallenLogCount.
 
 SEASONAL CANOPY (3.2)
 Deciduous trees partially drop leaves in autumn and bud again in spring on existing log-grown skeletons — no custom blocks. EnableSeasonalFoliage (default on).

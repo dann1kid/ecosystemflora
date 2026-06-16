@@ -8,7 +8,7 @@
 
 **Since last public release 3.1.12**
 
-**Wild tree aging (3.6)** — calendar age + slow yearly growth; **phased senescence** over four game years (crown leaves → branchy skeleton → dry snag → removal). Age persists in saves. Inspect (I) on trunk logs shows phase.
+**Wild tree aging (3.6)** — calendar age + slow yearly growth; **phased senescence** over four game years (crown leaves → branchy skeleton → dry snag → **stump + fallen logs**). Age persists in saves. Inspect (I) on trunk logs shows phase.
 
 **Seasonal canopy (3.2)** — deciduous autumn defoliation and spring bud on log-grown trees. `EnableSeasonalFoliage`.
 
@@ -54,7 +54,7 @@ Living wild flora: flowers, grass, ferns, berries, reeds, trees, and **mycelium 
 
 **3.5.0** — **Canopy ambience:** subtle leaf particles and flutter near tree crowns (client-side; respects view distance and particle settings). Autumn crown sync fix for mixed foliage states.
 
-**3.6.0** — **Wild tree maturation:** calendar age + slow structure growth once per game year (`EnableTreeAging`, loaded chunks). **Senescence:** phased death at species horizon — four yearly stages: strip crown leaves (spread stops), strip branchy skeleton, short standing trunk (`TreeSenescenceSnagBlocks`, default 3), then remove trunk (`EnableTreeSenescence`). Age **persists in saves** including senescence phase. **Inspect (I)** on trunk logs. **Handbook (en/ru):** nine pages — overview, species groups, trees, canopy, inspect, config. **`OnlyActivateNearPlayers`** default **false** (ecology in all loaded chunks).
+**3.6.0** — **Wild tree maturation:** calendar age + slow structure growth once per game year (`EnableTreeAging`, loaded chunks). **Senescence:** phased death at species horizon — four yearly stages: strip crown leaves (spread stops), strip branchy skeleton, short standing trunk (`TreeSenescenceSnagBlocks`, default 3), then **stump + fallen logs** (`EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`). Age **persists in saves** including senescence phase. **Inspect (I)** on trunk logs. **Handbook (en/ru):** nine pages — overview, species groups, trees, canopy, inspect, config. **`OnlyActivateNearPlayers`** default **false** (ecology in all loaded chunks).
 
 Press **I** on any wild plant, mushroom cap, tree trunk, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
@@ -74,7 +74,17 @@ Install the mod, load your world, and watch it change over the seasons.
 - **Tallgrass** — fills in as a grass matrix under flowers
 - **5 fern species** — forest understory that needs shade and moisture
 - **10 wild berry bushes** — blueberry, cranberry, strawberry… (in **1.22+**, wild berry spread can **clone parent traits** when `CloneBerryTraits` is on — see config)
-- **14 tree species** — mature trunks spread free saplings; **v3.6** adds calendar aging, phased senescence, and inspect age/size/phase
+- **14 tree species** — mature trunks spread free saplings; **v3.6** calendar aging, phased senescence, stump + fallen logs on death, inspect age/size/phase — full cycle in [`docs/TREE_AGING.md`](TREE_AGING.md)
+
+### Wild tree lifecycle (v3.6)
+
+1. **Spread** — mature `log-grown` seeds `sapling-*-free` (winter off; no ice/snow).
+2. **Maturation** — vanilla treegen; ecology registers trunk base at **calendar age 0**.
+3. **Life** — each game year: age +1, slow structure growth, sapling spread (no stress death on trunks).
+4. **Senescence** — after species lifespan, **four game years**: crown leaves → branchy skeleton → dry snag → **stump + fallen debarked logs**.
+5. **Aftermath** — remains are vanilla choppable blocks (not `log-grown`); neighbours refill gaps via normal spread.
+
+Press **I** on any trunk log for age, size index, and senescence phase. Config: `EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`.
 - **Reeds, tule, and papyrus** — shore and shallow water over gravel beds
 - **Water lily** — spreads across open water surfaces
 - **Water crowfoot** — underwater column plant, 2–8 blocks deep (legacy radius spread; mat logic not applied yet)
@@ -184,7 +194,9 @@ Edit `ModConfig/ecosystemflora.json` (created on first server launch). Full exam
 | `MyceliumSpreadMinFitness` | 0.35 | **3.1.12** | Min fitness to colonize / displace neighbor anchor |
 | `EnableTreeAging` | true | **3.6.0** | Yearly calendar age + structure growth for registered log-grown trunks |
 | `EnableTreeSenescence` | true | **3.6.0** | Phased natural death after species lifespan |
-| `TreeSenescenceSnagBlocks` | 3 | **3.6.0** | Trunk blocks left during snag year (final year removes them) |
+| `TreeSenescenceSnagBlocks` | 3 | **3.6.0** | Trunk blocks left during snag year |
+| `EnableTreeSenescenceRemains` | true | **3.6.0** | Final year: vanilla stump + fallen logs (not log-grown) |
+| `TreeSenescenceFallenLogCount` | 3 | **3.6.0** | Horizontal logs scattered near stump (0 = stump only) |
 | `MaxTreeGrowthAttemptsPerTick` | 6 | **3.6.0** | Cap structure growth work per server tick |
 | `TreeGrowthActivityScale` | 1.0 | **3.6.0** | Scale tree growth pacing |
 | `EnableSeasonalFoliage` | true | **3.2.0** | Deciduous autumn defol / spring bud on log-grown crowns |
@@ -253,8 +265,10 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `EnableMyceliumEcology` | true | **3.1.12** — mycelium anchor stress, death, inspect (I) |
 | `EnableMyceliumNetworkSpread` | true | **3.1.12** — slow mycelium network spread from mat edge |
 | `EnableTreeAging` | true | **3.6.0** — wild trunk calendar age + structure growth |
-| `EnableTreeSenescence` | true | **3.6.0** — phased senescence (leaves → skeleton → snag → removal) |
+| `EnableTreeSenescence` | true | **3.6.0** — phased senescence (leaves → skeleton → snag → stump/logs) |
 | `TreeSenescenceSnagBlocks` | 3 | **3.6.0** — standing trunk height during snag year |
+| `EnableTreeSenescenceRemains` | true | **3.6.0** — leave choppable stump + fallen logs on final year |
+| `TreeSenescenceFallenLogCount` | 3 | **3.6.0** — ground logs near stump (0 = stump only) |
 | `EnableSeasonalFoliage` | true | **3.2.0** — deciduous seasonal crown phenology |
 | `EnableCanopyAmbience` | true | **3.5.0** — client crown leaf ambience |
 | `MyceliumSkipSoilSuccession` | true | **3.1.12** — no soil succession on mycelium anchor cells |

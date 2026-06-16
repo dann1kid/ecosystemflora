@@ -17,7 +17,19 @@ Plants don't just spread — they **compete**. A stronger species can displace a
 
 The result: meadows fill in naturally, forest edges develop a distinct flora belt, clearings get reclaimed by fast colonizers first and then by perennials, and shorelines grow reeds and water lilies on their own.
 
-**v3.6** adds wild **tree aging** (calendar years, slow growth, **phased senescence** over four game years), **inspect (I)** on trunk logs, and a rewritten in-game **handbook** (en/ru, nine pages). Release notes: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+**v3.6** adds wild **tree aging** (calendar years, slow growth, **phased senescence** over four game years, **stump + fallen logs** on death), **inspect (I)** on trunk logs, and a rewritten in-game **handbook** (en/ru, nine pages). Full tree lifecycle: [`docs/TREE_AGING.md`](docs/TREE_AGING.md). Release notes: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+
+## Wild tree lifecycle
+
+| Stage | Behaviour |
+|-------|-----------|
+| **Seed** | Mature trunk spreads `sapling-*-free` (no spread Nov–Feb; not on ice/snow) |
+| **Grow** | Vanilla treegen to adult; mod registers trunk at **age 0** |
+| **Life** | Each game year: calendar age +1, optional growth, sapling spread — trunks ignore stress death |
+| **Senescence** | After species lifespan: 4 years — crown leaves → skeleton → snag → **stump + fallen logs** |
+| **Gap fill** | Remains are choppable vanilla blocks; nearby trees seed the empty cell naturally |
+
+Config: `EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains` (default on), `TreeSenescenceFallenLogCount` (default 3).
 
 **Removing the mod leaves your world intact** — vanilla parents stay vanilla. Other mods may register their own blocks as spread parents via optional JSON attributes (see **`docs/THIRD_PARTY_ECOLOGY.md`**); disable with `EnableThirdPartyParticipants: false` if you want only hardcoded vanilla paths.
 
@@ -70,6 +82,8 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 | `EnableTreeAging` | true | Wild trunks gain calendar age and grow slowly each game year |
 | `EnableTreeSenescence` | true | Phased natural death after species lifespan (4 game years) |
 | `TreeSenescenceSnagBlocks` | 3 | Standing trunk blocks during snag year |
+| `EnableTreeSenescenceRemains` | true | Final year leaves choppable stump + fallen logs |
+| `TreeSenescenceFallenLogCount` | 3 | Ground logs near stump (0 = stump only) |
 | `OnlyActivateNearPlayers` | false | Ecology in all **loaded chunks**; set true only for local perf testing |
 | `EnableSeasonalFoliage` | true | Deciduous autumn leaf drop and spring bud |
 | `EnableCanopyAmbience` | true | Client leaf particles near tall crowns |
@@ -86,7 +100,7 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 ## For developers
 
 **Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (257 xUnit tests)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (260 xUnit tests)
 
 Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 

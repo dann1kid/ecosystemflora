@@ -2,9 +2,37 @@
 
 Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** in the main reproduce tick (round-robin over the registry, same scope as spread/stress): taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
 
-Updated: 2026-06-14.
+Updated: 2026-06-14 (lifecycle + senescence remains).
 
 In-game handbook (en/ru): **Overview**, **Trees**, **Seasonal Canopy**, **Ecology Inspect (I)**, **Configuration Guide**.
+
+---
+
+## Lifecycle (end-to-end)
+
+Full path for a wild tree under default config (`EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains`):
+
+```
+sapling (spread) → vanilla treegen → log-grown registered (age 0)
+  → each game year: age++, growth, sapling spread
+  → calendar age ≥ species lifespan: senescence (4 years)
+  → stump + fallen logs (not log-grown) → gap refilled by nearby living trees
+```
+
+| Stage | What happens |
+|-------|----------------|
+| **1. Seed** | Mature `log-grown` trunk places `sapling-{wood}-free` on open soil (climate, light, spacing). Nov–Feb spread off; no ice/snow placement. |
+| **2. Grow up** | **Vanilla treegen** from sapling to adult — mod only planted the sapling. |
+| **3. Register** | Lowest `log-grown` in the column enters the ecology registry at **`TreeAgeYears = 0`** (even worldgen giants). |
+| **4. Active life** | Each **game year** in loaded chunks: age +1; may add trunk/crown blocks; continues **sapling spread** from trunk base. Trees do **not** die from niche stress. |
+| **5. Seasonal dress** | *(Parallel, optional)* Deciduous crowns follow autumn/winter/spring (`EnableSeasonalFoliage`) — separate from aging/senescence. |
+| **6. Senescence** | When age ≥ species lifespan (oak ~120 y, birch ~90, redwood ~140 — see `WildTreeGrowthProfiles.cs`), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
+| **7. Remains** | Final year: snag removed; **stump** `log-{wood}-ud` at base + up to **`TreeSenescenceFallenLogCount`** horizontal `debarkedlog-*` nearby. Vanilla choppable blocks — **not** re-registered; ecology record cleared. Mycelium/soil cascade as on player tree cut. |
+| **8. Succession** | No sapling burst on death — **neighbouring mature trees** fill the gap through normal spread. |
+
+**Other exits:** player fells trunk (registry + saved age removed); senescence/growth/spread blocked inside land claims (phase retries next year). Calendar age persists in savegame moddata, not on blocks — see [Persistence](#persistence--server-restart).
+
+Toggle **`EnableTreeSenescenceRemains`** off to skip stump/logs (bare air on final year). Details per phase: [Senescence](#senescence-phased-death).
 
 ---
 
@@ -57,7 +85,7 @@ After calendar age reaches `SenescenceAgeYears`, one stage advances each game ye
 | 1 | Declining | All `leaves-grown` removed; sapling spread and structure growth stop; seasonal bud blocked |
 | 2 | Dead crown | All `leavesbranchy` removed — bare branchy skeleton gone |
 | 3 | Snag | Branches and upper trunk cleared; `TreeSenescenceSnagBlocks` (default 3) of `log-grown` remain |
-| 4 | Removed | Remaining trunk cleared; registry entry dropped; symbiosis/mycelium/soil succession as on tree removal |
+| 4 | Removed | Snag collapses: **stump** (`log-{wood}`) at base + up to **3 fallen logs** nearby; registry cleared |
 
 Blocked inside land claims (phase retries next year).
 
@@ -115,7 +143,9 @@ CanopyBlockHelper block resolve + land claims
 |-----|---------|-------------|
 | `EnableTreeAging` | `true` | Master toggle |
 | `EnableTreeSenescence` | `true` | Phased natural death when calendar age ≥ lifespan |
-| `TreeSenescenceSnagBlocks` | `3` | Trunk blocks left during snag phase (final year removes them) |
+| `EnableTreeSenescenceRemains` | `true` | Final year leaves vanilla stump + fallen logs instead of bare air |
+| `TreeSenescenceSnagBlocks` | `3` | Trunk blocks left during snag phase (year 3) |
+| `TreeSenescenceFallenLogCount` | `3` | Horizontal debarked logs on ground near stump (0 = stump only) |
 | `MaxTreeGrowthAttemptsPerTick` | `6` | Trees advanced per reproduce tick (2 s) |
 | `TreeGrowthActivityScale` | `1` | Growth pace (>1 = faster relative to reference) |
 
@@ -143,6 +173,6 @@ Between restart and chunk re-scan, inspect **(I)** shows no live tree entry — 
 
 ## Limits (v1)
 
-- **Senescence death** — when `TreeAgeYears >= SenescenceAgeYears`, one stage per game year: (1) strip `leaves-grown`, stop spread/growth; (2) strip `leavesbranchy`; (3) reduce to snag (`TreeSenescenceSnagBlocks`); (4) remove remaining trunk. No item drops. Blocked inside land claims. Seasonal spring bud is blocked while senescing.
+- **Senescence death** — when `TreeAgeYears >= SenescenceAgeYears`, one stage per game year: (1) strip `leaves-grown`, stop spread/growth; (2) strip `leavesbranchy`; (3) reduce to snag (`TreeSenescenceSnagBlocks`); (4) collapse snag to **vanilla stump + fallen logs** (`EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`). Stumps are not `log-grown` — ecology does not re-register them. Toggle off remains for instant air removal. Blocked inside land claims. Seasonal spring bud is blocked while senescing.
 - Calendar age **persists in savegame moddata** (`TreeCalendarAgeStore`).
 - Crown radius for inspect: branchy skeleton only; measure cap 9 blocks.
