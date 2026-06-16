@@ -262,4 +262,4 @@ Drain pending queue (round-robin by target chunk)
 - [x] **PR 6.3** — `EcologyWakeIndex` / `WakeAround` + break/place/displacement/succession hooks
 - [x] **PR 6.4** — `EcologyColumnState` + `SpreadColumnSnapshot` + invalidation hub
 - [x] **PR 6.5** — `PendingSpreadQueue` two-phase evaluate/commit
-- [ ] **PR 6.6** — season coarse wake + handbook
+- [x] **PR 6.6** — season coarse wake + handbook

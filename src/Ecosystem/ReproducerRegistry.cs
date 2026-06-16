@@ -46,6 +46,26 @@ namespace WildFarming.Ecosystem
 
         internal bool TryGetChunkEntries(Vec2i chunk, out List<ReproducerEntry> list) => byChunk.TryGetValue(chunk, out list);
 
+        public int WakeMatching(System.Func<ReproducerEntry, bool> predicate)
+        {
+            if (predicate == null || entries.Count == 0) return 0;
+
+            ecologyWakeGeneration++;
+            if (ecologyWakeGeneration == 0) ecologyWakeGeneration = 1;
+
+            int woken = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                ReproducerEntry entry = entries[i];
+                if (!predicate(entry)) continue;
+
+                entry.WakeGeneration = ecologyWakeGeneration;
+                woken++;
+            }
+
+            return woken;
+        }
+
         public void WakeAround(BlockPos center, int radiusBlocks)
         {
             if (center == null || radiusBlocks <= 0 || entries.Count == 0) return;

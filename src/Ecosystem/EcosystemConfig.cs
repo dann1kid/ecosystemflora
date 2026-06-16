@@ -192,6 +192,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Wake nearby reproducers on ecology-relevant block changes (Phase 6.3).</summary>
         public bool EnableEventDrivenSpread { get; set; } = true;
 
+        /// <summary>Wake seasonal reproducers once per in-game month (Phase 6.6).</summary>
+        public bool EnableSeasonCoarseWake { get; set; } = true;
+
         /// <summary>Horizontal wake radius in blocks. 0 = derive from spread radius, spacing, and flora context.</summary>
         public int EcologyWakeRadiusBlocks { get; set; } = 0;
 

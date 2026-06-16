@@ -45,6 +45,7 @@ namespace WildFarming.Ecosystem
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
         readonly PendingSpreadQueue pendingSpreadQueue = new PendingSpreadQueue();
         internal PendingSpreadQueue PendingSpreads => pendingSpreadQueue;
+        int lastSeasonWakeMonth = -1;
 
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
@@ -1262,6 +1263,7 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
+            SeasonEcologyWake.TryWakeOnMonthChange(api, cfg, registry, ref lastSeasonWakeMonth);
             ICollection<Vec2i> spreadActiveChunks = BuildActiveRegistryChunks(cfg);
             ICollection<Vec2i> canopyActiveChunks = BuildActivePlayerChunks(cfg);
 

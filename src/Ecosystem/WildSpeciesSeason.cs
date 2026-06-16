@@ -57,6 +57,22 @@ namespace WildFarming.Ecosystem
                 return stress[Clamp(month, 0, 11)];
             }
 
+            /// <summary>True when monthly spread multipliers differ enough to warrant a calendar wake.</summary>
+            public bool HasSpreadSeasonality(float threshold = 0.08f)
+            {
+                if (spread == null || spread.Length != 12) return false;
+
+                float min = spread[0];
+                float max = spread[0];
+                for (int i = 1; i < 12; i++)
+                {
+                    if (spread[i] < min) min = spread[i];
+                    if (spread[i] > max) max = spread[i];
+                }
+
+                return (max - min) > threshold;
+            }
+
             public float SpreadMultiplier(EnumSeason season)
             {
                 switch (season)
@@ -285,6 +301,11 @@ namespace WildFarming.Ecosystem
         {
             if (TryGet(species, out Profile profile)) return profile;
             return DefaultProfile;
+        }
+
+        public static bool UsesSeasonalSpread(string species)
+        {
+            return Resolve(species).HasSpreadSeasonality();
         }
     }
 }

@@ -37,6 +37,7 @@
   "MaxSpreadAttemptsPerChunkPerTick": 2,
   "MaxSpreadChunksVisitedPerTick": 32,
   "EnableEventDrivenSpread": true,
+  "EnableSeasonCoarseWake": true,
   "EcologyWakeRadiusBlocks": 0,
   "EnableEcologyColumnCache": true,
   "EnableTwoPhaseSpreadPlacement": true,

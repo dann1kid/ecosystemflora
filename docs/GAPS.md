@@ -105,7 +105,9 @@
 
 ## 8. Производительность и масштаб
 
-Реализовано: spatial tick, budgets, player radius, chunk scan resume.
+Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake. См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
+
+**Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
 
 **Не задокументировано числами:** поведение при 20k+ reproducers, несколько игроков на разных краях карты. `OnlyActivateNearPlayers: true` — playtest-режим (урезанный радиус); при default **false** экосистема живёт во всех loaded chunks.
 
