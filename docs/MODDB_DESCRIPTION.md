@@ -34,6 +34,20 @@ Default preset is natural; use BalancePreset sparse for patchier wilderness.
 
 ---
 
+## 3.8 — ModDB update (short paste, Phase 6)
+
+```
+3.8 — simulation engine (spread scheduling)
+
+• Chunk-fair spread — round-robin across all loaded ecology chunks (not just near players). EnableChunkFairSpread (default on).
+• Event wake — nearby plants react to breaks, placement, displacement, and soil changes; calendar spread remains as fallback. EnableEventDrivenSpread (default on).
+• Optional reproduce-tick profiling for large worlds (EnableReproduceTickProfiling).
+
+Full scope in loaded chunks; tune MaxSpreadAttemptsPerChunkPerTick / MaxSpreadChunksVisitedPerTick on powerful hardware.
+```
+
+---
+
 ## Screenshots (gallery note)
 
 Dense meadow images are from **early builds** or **lush / aggressive tuning** on purpose — captions on the gallery say so. Default gameplay uses **`BalancePreset: natural`** (~72 spread attempts/year). For a wilder, patchier look (less “curated European garden”), use **`sparse`** or lower `ReproduceAttemptsPerYear` / raise `MinFitness` in `ModConfig/ecosystemflora.json`.
