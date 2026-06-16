@@ -109,6 +109,138 @@ namespace WildFarming.Ecosystem
             return placed;
         }
 
+        /// <summary>Evaluate spread candidates and enqueue winners without SetBlock (Phase 6.5).</summary>
+        public static int TryEnqueueSpreadAmongNeighbors(
+            ICoreAPI api,
+            BlockPos origin,
+            Block spreadBlock,
+            PlantRequirements requirements,
+            float minFitness,
+            bool harshClimate,
+            int radius,
+            int verticalSearch,
+            int maxSpawns,
+            System.Random rand,
+            PendingSpreadQueue queue,
+            bool logFailures,
+            out string failureReason)
+        {
+            failureReason = null;
+            if (maxSpawns <= 0 || queue == null) return 0;
+
+            MatSpreadCollectMode matMode = MatSpreadCollectMode.NotApplicable;
+            int searchRadius = radius;
+
+            if (requirements != null && requirements.UsesRhizomeSpread)
+            {
+                matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.UsesSurfaceMatSpread)
+            {
+                matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = SurfaceMatSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.SpreadRadius > 0)
+            {
+                searchRadius = requirements.SpreadRadius;
+            }
+
+            List<SpreadCandidate> candidates = CollectSpreadCandidates(
+                api, origin, searchRadius, verticalSearch, requirements, minFitness, harshClimate, matMode);
+
+            if (candidates.Count == 0)
+            {
+                failureReason = "No competitive cells in radius " + searchRadius;
+                return 0;
+            }
+
+            if (EcosystemConfig.Loaded.PreferSpreadToEmptyCells
+                && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
+            {
+                ApplyEmptySpreadPreference(candidates, EcosystemConfig.Loaded.EmptySpreadFitnessMultiplier);
+            }
+
+            int enqueued = 0;
+            var remaining = new List<SpreadCandidate>(candidates);
+
+            while (enqueued < maxSpawns && remaining.Count > 0)
+            {
+                int index = PickWeightedIndex(remaining, rand);
+                SpreadCandidate chosen = remaining[index];
+                remaining.RemoveAt(index);
+
+                queue.Enqueue(new PendingSpreadIntent
+                {
+                    ParentOrigin = origin.Copy(),
+                    TargetPos = chosen.Pos.Copy(),
+                    SpreadBlock = spreadBlock,
+                    Requirements = requirements,
+                    Displacing = chosen.Displacing,
+                });
+                enqueued++;
+
+                if (logFailures)
+                {
+                    api.Logger.Notification(
+                        "[ecosystemflora] Queued {0} {1} at {2} ({3} candidates near {4})",
+                        chosen.Displacing ? "displace" : "spread",
+                        spreadBlock.Code,
+                        chosen.Pos,
+                        candidates.Count,
+                        origin);
+                }
+            }
+
+            return enqueued;
+        }
+
+        internal static bool TryCommitSpread(ICoreAPI api, PendingSpreadIntent intent, bool logFailures)
+        {
+            if (api == null || intent?.TargetPos == null || intent.SpreadBlock == null || intent.Requirements == null)
+            {
+                return false;
+            }
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            BlockPos targetPos = intent.TargetPos;
+
+            if (!LandClaimGuard.AllowsEcologyChange(api, targetPos)) return false;
+
+            CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, targetPos);
+            if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, intent.Requirements, in snap, out bool isEmpty))
+            {
+                return false;
+            }
+
+            if (intent.Displacing)
+            {
+                if (!PlantCodeHelper.IsEcologySpreadParent(snap.Space)) return false;
+            }
+            else if (!isEmpty && !SpreadVacancy.CanOccupy(acc, targetPos, intent.Requirements, snap.Space, isEmpty))
+            {
+                return false;
+            }
+
+            bool placed = PlaceSpreadBlock(
+                api,
+                targetPos,
+                intent.SpreadBlock,
+                intent.Requirements,
+                intent.ParentOrigin,
+                intent.Displacing);
+
+            if (!placed && logFailures)
+            {
+                api.Logger.Notification(
+                    "[ecosystemflora] Commit failed for {0} at {1}",
+                    intent.SpreadBlock.Code,
+                    targetPos);
+            }
+
+            return placed;
+        }
+
         static List<SpreadCandidate> CollectSpreadCandidates(
             ICoreAPI api,
             BlockPos origin,

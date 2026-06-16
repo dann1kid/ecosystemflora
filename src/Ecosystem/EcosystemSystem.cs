@@ -43,6 +43,8 @@ namespace WildFarming.Ecosystem
         internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
+        readonly PendingSpreadQueue pendingSpreadQueue = new PendingSpreadQueue();
+        internal PendingSpreadQueue PendingSpreads => pendingSpreadQueue;
 
         BlockBrokenDelegate didBreakBlockHandler;
         BlockPlacedDelegate didPlaceBlockHandler;
@@ -1394,8 +1396,68 @@ namespace WildFarming.Ecosystem
                 timings.DueQueueSize = registry.LastDueQueueSize;
             }
 
+            if (cfg.EnableTwoPhaseSpreadPlacement && pendingSpreadQueue.Count > 0)
+            {
+                tickBudgetWatch.Restart();
+
+                int maxCommits = cfg.MaxSpreadCommitsPerTick > 0
+                    ? cfg.MaxSpreadCommitsPerTick
+                    : cfg.MaxReproduceAttemptsPerTick;
+
+                timings.SpreadCommitted = pendingSpreadQueue.ProcessCommit(
+                    api,
+                    cfg,
+                    intent => OnSpreadPlaced(
+                        intent.TargetPos,
+                        intent.Requirements,
+                        intent.Displacing,
+                        intent.ParentOrigin),
+                    maxCommits,
+                    spreadBudgetTicks,
+                    tickBudgetWatch,
+                    cfg.VerboseLogging && cfg.ReproduceDebug);
+
+                timings.SpreadCommitTicks = tickBudgetWatch.ElapsedTicks;
+                timings.PendingSpreadQueueSize = pendingSpreadQueue.Count;
+            }
+
             timings.TotalTicks = Stopwatch.GetTimestamp() - tickStart;
             ReproduceTickProfiler.MaybeLog(api, cfg, registry, timings);
+        }
+
+        void OnSpreadPlaced(BlockPos pos, PlantRequirements requirements, bool displaced, BlockPos spreadOrigin)
+        {
+            if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
+            {
+                pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
+                return;
+            }
+
+            if (requirements.Habitat == EcologyHabitat.Ferntree)
+            {
+                BlockPos basePos = FerntreeStructure.GetTrunkBase(api.World.BlockAccessor, pos);
+                Block trunkBlock = api.World.BlockAccessor.GetBlock(basePos);
+                if (EcosystemParticipant.TryFromBlock(trunkBlock, out IEcosystemParticipant ferntreeParticipant))
+                {
+                    RegisterReproducer(basePos, ferntreeParticipant, spawnBurst: false);
+                }
+
+                InvalidateEnvironmentAround(basePos);
+                return;
+            }
+
+            Block placed = api.World.BlockAccessor.GetBlock(pos);
+            if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
+            {
+                RegisterReproducer(pos, participant, spawnBurst: false);
+            }
+
+            InvalidateEnvironmentAround(pos);
+            WakeEcologyAround(pos);
+            if (spreadOrigin != null)
+            {
+                WakeEcologyAround(spreadOrigin);
+            }
         }
 
         void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
@@ -1420,52 +1482,48 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            int spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
-                api,
-                spreadOrigin,
-                spreadBlock,
-                entry.Requirements,
-                cfg.MinFitness,
-                cfg.HarshWildPlants,
-                cfg.ReproduceRadius,
-                cfg.ReproduceVerticalSearch,
-                maxSpawns,
-                api.World.Rand,
-                cfg.VerboseLogging && cfg.ReproduceDebug,
-                out string failureReason,
-                onPlaced: (pos, requirements, displaced) =>
-                {
-                    if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
-                    {
-                        pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
-                        return;
-                    }
+            bool logFailures = cfg.VerboseLogging && cfg.ReproduceDebug;
+            BlockPos spreadOriginCopy = spreadOrigin.Copy();
 
-                    if (requirements.Habitat == EcologyHabitat.Ferntree)
-                    {
-                        BlockPos basePos = FerntreeStructure.GetTrunkBase(api.World.BlockAccessor, pos);
-                        Block trunkBlock = api.World.BlockAccessor.GetBlock(basePos);
-                        if (EcosystemParticipant.TryFromBlock(trunkBlock, out IEcosystemParticipant ferntreeParticipant))
-                        {
-                            RegisterReproducer(basePos, ferntreeParticipant, spawnBurst: false);
-                        }
+            int spawned;
+            string failureReason;
+            if (cfg.EnableTwoPhaseSpreadPlacement)
+            {
+                spawned = ReproducePlacement.TryEnqueueSpreadAmongNeighbors(
+                    api,
+                    spreadOrigin,
+                    spreadBlock,
+                    entry.Requirements,
+                    cfg.MinFitness,
+                    cfg.HarshWildPlants,
+                    cfg.ReproduceRadius,
+                    cfg.ReproduceVerticalSearch,
+                    maxSpawns,
+                    api.World.Rand,
+                    pendingSpreadQueue,
+                    logFailures,
+                    out failureReason);
+            }
+            else
+            {
+                spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
+                    api,
+                    spreadOrigin,
+                    spreadBlock,
+                    entry.Requirements,
+                    cfg.MinFitness,
+                    cfg.HarshWildPlants,
+                    cfg.ReproduceRadius,
+                    cfg.ReproduceVerticalSearch,
+                    maxSpawns,
+                    api.World.Rand,
+                    logFailures,
+                    out failureReason,
+                    onPlaced: (pos, requirements, displaced) =>
+                        OnSpreadPlaced(pos, requirements, displaced, spreadOriginCopy));
+            }
 
-                        InvalidateEnvironmentAround(basePos);
-                        return;
-                    }
-
-                    Block placed = api.World.BlockAccessor.GetBlock(pos);
-                    if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
-                    {
-                        RegisterReproducer(pos, participant, spawnBurst: false);
-                    }
-
-                    InvalidateEnvironmentAround(pos);
-                    WakeEcologyAround(pos);
-                    WakeEcologyAround(spreadOrigin);
-                });
-
-            if (cfg.VerboseLogging && cfg.ReproduceDebug && spawned == 0 && failureReason != null)
+            if (logFailures && spawned == 0 && failureReason != null)
             {
                 api.Logger.Notification("[ecosystemflora] No spread near {0}: {1}", entry.Origin, failureReason);
             }

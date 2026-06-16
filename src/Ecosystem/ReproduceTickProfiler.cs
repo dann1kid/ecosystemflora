@@ -11,9 +11,12 @@ namespace WildFarming.Ecosystem
         public long FerntreeGrowthTicks;
         public long CollectDueTicks;
         public long SpreadProcessTicks;
+        public long SpreadCommitTicks;
         public long TotalTicks;
         public int SpreadProcessed;
+        public int SpreadCommitted;
         public int DueQueueSize;
+        public int PendingSpreadQueueSize;
     }
 
     /// <summary>Throttled server log of reproduce-tick phase costs (enable via config).</summary>
@@ -44,7 +47,7 @@ namespace WildFarming.Ecosystem
             api.Logger.Notification(
                 "[ecosystemflora] Reproduce tick profile (registry={0}): "
                 + "saplings={1:F1}ms foliage={2:F1}ms trees={3:F1}ms ferntrees={4:F1}ms "
-                + "collectDue={5:F1}ms spread={6:F1}ms total={7:F1}ms dueQueue={8} processed={9}",
+                + "collectDue={5:F1}ms spread={6:F1}ms commit={10:F1}ms total={7:F1}ms dueQueue={8} processed={9} pending={11} committed={12}",
                 registry.Count,
                 timings.SaplingsTicks * toMs,
                 timings.FoliageTicks * toMs,
@@ -54,7 +57,10 @@ namespace WildFarming.Ecosystem
                 timings.SpreadProcessTicks * toMs,
                 timings.TotalTicks * toMs,
                 timings.DueQueueSize,
-                timings.SpreadProcessed);
+                timings.SpreadProcessed,
+                timings.SpreadCommitTicks * toMs,
+                timings.PendingSpreadQueueSize,
+                timings.SpreadCommitted);
         }
     }
 }

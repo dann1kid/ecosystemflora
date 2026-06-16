@@ -198,6 +198,18 @@ namespace WildFarming.Ecosystem
         /// <summary>Cache spread cell snapshots (blocks + rain + forest cover) on the spread hot path (Phase 6.4).</summary>
         public bool EnableEcologyColumnCache { get; set; } = true;
 
+        /// <summary>Evaluate spread into a pending queue; SetBlock runs in a chunk-fair commit pass (Phase 6.5).</summary>
+        public bool EnableTwoPhaseSpreadPlacement { get; set; } = true;
+
+        /// <summary>Max SetBlock commits per reproduce tick when two-phase spread is on. 0 = use MaxReproduceAttemptsPerTick.</summary>
+        public int MaxSpreadCommitsPerTick { get; set; } = 0;
+
+        /// <summary>Max target chunks visited per commit pass. 0 = use MaxSpreadChunksVisitedPerTick.</summary>
+        public int MaxSpreadCommitChunksVisitedPerTick { get; set; } = 0;
+
+        /// <summary>Max commits per target chunk per tick when two-phase spread is on. 0 = use MaxSpreadAttemptsPerChunkPerTick.</summary>
+        public int MaxSpreadCommitsPerChunkPerTick { get; set; } = 0;
+
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
 
         /// <summary>Minimum horizontal distance between spread plants.</summary>

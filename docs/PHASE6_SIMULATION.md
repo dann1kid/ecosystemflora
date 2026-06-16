@@ -261,6 +261,5 @@ Drain pending queue (round-robin by target chunk)
 - [x] **PR 6.1** — `SpreadChunkScheduler` + `EnableChunkFairSpread` (default true)
 - [x] **PR 6.3** — `EcologyWakeIndex` / `WakeAround` + break/place/displacement/succession hooks
 - [x] **PR 6.4** — `EcologyColumnState` + `SpreadColumnSnapshot` + invalidation hub
-- [ ] **PR 6.5** — pending spread queue (two-phase commit)
-
-Агенту: перед кодом прочитать `CyclicTreeTrunkScanner.cs`, `ReproducerRegistry.cs`, `SpreadChunkScheduler.cs`, `EcosystemSystem.OnReproduceTick`.
+- [x] **PR 6.5** — `PendingSpreadQueue` two-phase evaluate/commit
+- [ ] **PR 6.6** — season coarse wake + handbook
