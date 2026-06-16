@@ -314,6 +314,14 @@ namespace WildFarming.Ecosystem
             Niche?.InvalidateAround(pos, 2);
         }
 
+        public void WakeEcologyAround(BlockPos pos)
+        {
+            if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null || pos == null) return;
+            if (!EcosystemConfig.Loaded.EnableEventDrivenSpread) return;
+
+            registry.WakeAround(pos, EcologyWake.ResolveRadiusBlocks(EcosystemConfig.Loaded));
+        }
+
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
         {
             return SuitabilityEvaluator.MeetsSurvivalRequirements(
@@ -738,7 +746,11 @@ namespace WildFarming.Ecosystem
             Block oldGround = oldBlockId > 0 ? api.World.Blocks[oldBlockId] : null;
             BlockPos placed = blockSel.Position.Copy();
             ScheduleFarmlandBridgeCheck(placed, oldGround);
-            api.Event.RegisterCallback(_ => TryRegisterPlacedBlock(placed), 0);
+            api.Event.RegisterCallback(_ =>
+            {
+                TryRegisterPlacedBlock(placed);
+                WakeEcologyAround(placed);
+            }, 0);
         }
 
         void TryRegisterPlacedBlock(BlockPos pos)
@@ -836,6 +848,7 @@ namespace WildFarming.Ecosystem
                 registry.Remove(pos);
                 SpacingIndex?.Remove(pos);
                 InvalidateEnvironmentAround(pos);
+                WakeEcologyAround(pos);
                 return;
             }
 
@@ -848,6 +861,7 @@ namespace WildFarming.Ecosystem
             registry.Remove(pos);
             SpacingIndex?.Remove(pos);
             InvalidateEnvironmentAround(pos);
+            WakeEcologyAround(pos);
         }
 
         void OnChunkScanTick(float dt)
@@ -1185,7 +1199,7 @@ namespace WildFarming.Ecosystem
 
         ICollection<Vec2i> BuildActiveRegistryChunks(EcosystemConfig cfg)
         {
-            if (!cfg.OnlyActivateNearPlayers) return null;
+            if (!cfg.OnlyActivateNearPlayers && !cfg.LimitSpreadNearPlayers) return null;
 
             activeChunkScratch.Clear();
             activeChunkScratch.AddRange(registry.CollectChunksNearPlayers(api, cfg.PlayerActivationRadiusBlocks));
@@ -1256,9 +1270,12 @@ namespace WildFarming.Ecosystem
                 ? cfg.ResolveSpreadBudgetMs() * Stopwatch.Frequency / 1000
                 : 0;
 
-            tickBudgetWatch.Restart();
+            var timings = new ReproduceTickTimings();
+            long tickStart = Stopwatch.GetTimestamp();
 
+            tickBudgetWatch.Restart();
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
+            timings.SaplingsTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
 
@@ -1267,7 +1284,9 @@ namespace WildFarming.Ecosystem
                 : 0;
 
             foliageCells.ProcessRandomTick(api, canopyActiveChunks, foliageBudgetTicks, tickBudgetWatch);
+            timings.FoliageTicks = tickBudgetWatch.ElapsedTicks;
 
+            tickBudgetWatch.Restart();
             treeGrowthScheduler.Tick(
                 api,
                 cfg,
@@ -1275,7 +1294,9 @@ namespace WildFarming.Ecosystem
                 spreadActiveChunks,
                 treeCalendarAgeStore,
                 CompleteTreeSenescenceRemoval);
+            timings.TreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
 
+            tickBudgetWatch.Restart();
             ferntreeGrowthScheduler.Tick(
                 api,
                 cfg,
@@ -1283,6 +1304,7 @@ namespace WildFarming.Ecosystem
                 spreadActiveChunks,
                 treeCalendarAgeStore,
                 CompleteTreeSenescenceRemoval);
+            timings.FerntreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
 
             IBlockAccessor acc = api.World.BlockAccessor;
 
@@ -1290,61 +1312,86 @@ namespace WildFarming.Ecosystem
             {
                 tickBudgetWatch.Restart();
 
-                registry.ProcessDue(
-                    now,
-                    cfg.MaxReproduceAttemptsPerTick,
-                    entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                        ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                        : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
-                    entry =>
+                System.Func<ReproducerEntry, bool> trySpread = entry =>
+                {
+                    Block block = acc.GetBlock(entry.Origin);
+                    if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
                     {
-                        Block block = acc.GetBlock(entry.Origin);
-                        if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
-                        {
-                            if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
-                            {
-                                return false;
-                            }
-
-                            if (cfg.EnableMyceliumNetworkSpread)
-                            {
-                                MyceliumNetworkSpread.TrySpread(
-                                    this,
-                                    entry,
-                                    cfg.VerboseLogging && cfg.ReproduceDebug);
-                            }
-
-                            return true;
-                        }
-
-                        if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
-                        {
-                            if (!cfg.EnableWildVineEcology || !WildVineHelper.IsEndBlock(block))
-                            {
-                                return false;
-                            }
-
-                            float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, entry.Requirements);
-                            if (api.World.Rand.NextDouble() > vineChance) return true;
-
-                            WildVineSpread.TrySpread(this, entry, api, cfg);
-                            return true;
-                        }
-
-                        if (block.Id == 0 || !entry.IsMatureBlock(block))
+                        if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
                         {
                             return false;
                         }
 
-                        TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
+                        if (cfg.EnableMyceliumNetworkSpread)
+                        {
+                            MyceliumNetworkSpread.TrySpread(
+                                this,
+                                entry,
+                                cfg.VerboseLogging && cfg.ReproduceDebug);
+                        }
+
                         return true;
-                    },
-                    spreadActiveChunks,
-                    spreadBudgetTicks,
-                    tickBudgetWatch);
+                    }
+
+                    if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
+                    {
+                        if (!cfg.EnableWildVineEcology || !WildVineHelper.IsEndBlock(block))
+                        {
+                            return false;
+                        }
+
+                        float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, entry.Requirements);
+                        if (api.World.Rand.NextDouble() > vineChance) return true;
+
+                        WildVineSpread.TrySpread(this, entry, api, cfg);
+                        return true;
+                    }
+
+                    if (block.Id == 0 || !entry.IsMatureBlock(block))
+                    {
+                        return false;
+                    }
+
+                    TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
+                    return true;
+                };
+
+                if (cfg.EnableChunkFairSpread)
+                {
+                    timings.SpreadProcessed = registry.ProcessDueChunkFair(
+                        cfg,
+                        now,
+                        cfg.MaxReproduceAttemptsPerTick,
+                        spreadActiveChunks,
+                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
+                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
+                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                        trySpread,
+                        spreadBudgetTicks,
+                        tickBudgetWatch);
+                }
+                else
+                {
+                    timings.SpreadProcessed = registry.ProcessDue(
+                        now,
+                        cfg.MaxReproduceAttemptsPerTick,
+                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
+                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
+                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                        trySpread,
+                        spreadActiveChunks,
+                        spreadBudgetTicks,
+                        tickBudgetWatch,
+                        cfg.EnableEventDrivenSpread);
+                }
+
+                timings.CollectDueTicks = registry.LastCollectDueTicks;
+                timings.SpreadProcessTicks = registry.LastProcessDueTicks;
+                timings.DueQueueSize = registry.LastDueQueueSize;
             }
 
-            tickBudgetWatch.Stop();
+            timings.TotalTicks = Stopwatch.GetTimestamp() - tickStart;
+            ReproduceTickProfiler.MaybeLog(api, cfg, registry, timings);
         }
 
         void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
@@ -1410,6 +1457,8 @@ namespace WildFarming.Ecosystem
                     }
 
                     InvalidateEnvironmentAround(pos);
+                    WakeEcologyAround(pos);
+                    WakeEcologyAround(spreadOrigin);
                 });
 
             if (cfg.VerboseLogging && cfg.ReproduceDebug && spawned == 0 && failureReason != null)

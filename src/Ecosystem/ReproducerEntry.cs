@@ -11,6 +11,12 @@ namespace WildFarming.Ecosystem
         public PlantRequirements Requirements { get; }
         public double NextAttemptHours { get; set; }
 
+        /// <summary>Bumped when ecology events occur nearby (Phase 6 wake).</summary>
+        public ulong WakeGeneration { get; set; }
+
+        /// <summary>Last wake generation consumed by a spread attempt.</summary>
+        public ulong LastProcessedWakeGeneration { get; set; }
+
         public double EstablishedAtHours { get; set; }
 
         public int FailedSurvivalChecks { get; set; }

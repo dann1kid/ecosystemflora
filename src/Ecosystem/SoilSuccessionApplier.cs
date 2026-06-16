@@ -59,6 +59,7 @@ namespace WildFarming.Ecosystem
             }
 
             EcosystemSystem.Instance?.InvalidateEnvironmentAround(plantPos);
+            EcosystemSystem.Instance?.WakeEcologyAround(plantPos);
         }
     }
 }

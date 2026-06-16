@@ -152,6 +152,15 @@ namespace WildFarming.Ecosystem
 
         public int ResolveRegistrationBudgetMs() => RegistrationBudgetMs > 0 ? RegistrationBudgetMs : TickBudgetMs;
 
+        /// <summary>Log reproduce-tick phase timings when registry is large (server diagnostics).</summary>
+        public bool EnableReproduceTickProfiling { get; set; } = false;
+
+        /// <summary>Minimum registry size before profiling logs emit.</summary>
+        public int ReproduceTickProfilingMinRegistry { get; set; } = 2000;
+
+        /// <summary>Minimum real-time ms between profiling log lines.</summary>
+        public int ReproduceTickProfilingIntervalMs { get; set; } = 30000;
+
         /// <summary>Interval (ms) between stress-check ticks. Higher = less CPU for stress, slower die-off.</summary>
         public int StressTickIntervalMs { get; set; } = 6000;
 
@@ -163,6 +172,28 @@ namespace WildFarming.Ecosystem
         /// Default false — normal play processes all plants in loaded chunks (registry scope).
         /// </summary>
         public bool OnlyActivateNearPlayers { get; set; } = false;
+
+        /// <summary>
+        /// When true (and <see cref="OnlyActivateNearPlayers"/> is false), spread attempts are limited to
+        /// registry chunks within <see cref="PlayerActivationRadiusBlocks"/> of a player. Stress, aging, and
+        /// chunk registration are unchanged — use for large loaded areas without full playtest mode.
+        /// </summary>
+        public bool LimitSpreadNearPlayers { get; set; } = false;
+
+        /// <summary>Round-robin spread across all registry chunks (Phase 6.1).</summary>
+        public bool EnableChunkFairSpread { get; set; } = true;
+
+        /// <summary>Max spread attempts per registry chunk per reproduce tick when chunk-fair spread is on.</summary>
+        public int MaxSpreadAttemptsPerChunkPerTick { get; set; } = 2;
+
+        /// <summary>How many registry chunks to visit per reproduce tick when chunk-fair spread is on.</summary>
+        public int MaxSpreadChunksVisitedPerTick { get; set; } = 32;
+
+        /// <summary>Wake nearby reproducers on ecology-relevant block changes (Phase 6.3).</summary>
+        public bool EnableEventDrivenSpread { get; set; } = true;
+
+        /// <summary>Horizontal wake radius in blocks. 0 = derive from spread radius, spacing, and flora context.</summary>
+        public int EcologyWakeRadiusBlocks { get; set; } = 0;
 
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
 

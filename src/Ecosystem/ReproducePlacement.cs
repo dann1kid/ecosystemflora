@@ -373,6 +373,7 @@ namespace WildFarming.Ecosystem
                 if (eco != null && PlantCodeHelper.IsEcologySpreadParent(incumbent))
                 {
                     eco.RemoveEcologyPlant(plantPos, cascadeSymbiosis: true, reason: "displaced");
+                    eco.WakeEcologyAround(plantPos);
                 }
             }
 
