@@ -15,6 +15,7 @@ namespace WildFarming.Ecosystem
         {
             public int MaxFlowerHits { get; init; }
             public int MaxTreeHits { get; init; }
+            public int MaxVineHits { get; init; }
             public bool SyncFoliage { get; init; }
             public FoliageCellIndex FoliageIndex { get; init; }
         }
@@ -22,6 +23,7 @@ namespace WildFarming.Ecosystem
         public readonly struct Result
         {
             public readonly List<ChunkFlowerHit> FlowerHits;
+            public readonly List<ChunkFlowerHit> VineHits;
             public readonly int TreesRegistered;
             public readonly int FoliageIndexed;
             public readonly int FoliageChanged;
@@ -32,6 +34,7 @@ namespace WildFarming.Ecosystem
 
             public Result(
                 List<ChunkFlowerHit> flowerHits,
+                List<ChunkFlowerHit> vineHits,
                 int treesRegistered,
                 int foliageIndexed,
                 int foliageChanged,
@@ -41,6 +44,7 @@ namespace WildFarming.Ecosystem
                 bool completed)
             {
                 FlowerHits = flowerHits;
+                VineHits = vineHits;
                 TreesRegistered = treesRegistered;
                 FoliageIndexed = foliageIndexed;
                 FoliageChanged = foliageChanged;
@@ -63,9 +67,10 @@ namespace WildFarming.Ecosystem
             long budgetDeadline)
         {
             var flowerHits = new List<ChunkFlowerHit>();
+            var vineHits = new List<ChunkFlowerHit>();
             if (acc == null)
             {
-                return new Result(flowerHits, 0, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
+                return new Result(flowerHits, vineHits, 0, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
             }
 
             int chunkSize = GlobalConstants.ChunkSize;
@@ -74,7 +79,7 @@ namespace WildFarming.Ecosystem
             IMapChunk mapChunk = acc.GetMapChunk(chunkCoord.X, chunkCoord.Y);
             if (mapChunk == null)
             {
-                return new Result(flowerHits, 0, 0, 0, 0, 0, 0, completed: true);
+                return new Result(flowerHits, vineHits, 0, 0, 0, 0, 0, 0, completed: true);
             }
 
             int columnTop = acc.MapSizeY - 1;
@@ -103,7 +108,7 @@ namespace WildFarming.Ecosystem
                         if (budgetDeadline > 0 && Stopwatch.GetTimestamp() >= budgetDeadline)
                         {
                             return new Result(
-                                flowerHits, treesRegistered, foliageIndexed, foliageChanged,
+                                flowerHits, vineHits, treesRegistered, foliageIndexed, foliageChanged,
                                 lx, lz, y, completed: false);
                         }
 
@@ -159,6 +164,12 @@ namespace WildFarming.Ecosystem
                             }
                         }
 
+                        if (vineHits.Count < request.MaxVineHits
+                            && WildVineHelper.IsEndBlock(block))
+                        {
+                            vineHits.Add(new ChunkFlowerHit(scanScratch.Copy(), block.Code));
+                        }
+
                         if (!flowerFound
                             && flowerHits.Count < request.MaxFlowerHits
                             && y <= surfaceY + 2
@@ -178,7 +189,7 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            return new Result(flowerHits, treesRegistered, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
+            return new Result(flowerHits, vineHits, treesRegistered, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
         }
 
         static int GetSurfaceY(IMapChunk mapChunk, int lx, int lz, int chunkSize, int fallbackY)

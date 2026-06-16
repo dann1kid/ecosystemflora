@@ -16,5 +16,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Vanilla <c>ferntree-normal-trunk</c> — tropical arborescent fern column.</summary>
         Ferntree = 6,
+
+        /// <summary>Vanilla <c>wildvine-end-*</c> tips on vertical surfaces.</summary>
+        WildVine = 7,
     }
 }

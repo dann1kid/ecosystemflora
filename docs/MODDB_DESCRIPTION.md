@@ -4,6 +4,20 @@
 
 ---
 
+## 3.7.0 — release notes (paste for update)
+
+**Since 3.6.0**
+
+**Tree fern** — vanilla `ferntree-normal-*`: register, yearly aging, spread young columns, phased senescence. Symbiosis tree host. `EnableFerntreeEcology`.
+
+**Canopy** — partial autumn branchy strip (default 0.35); fallen **loose sticks** when branchy strips; spring **branchy buds** scale with tree calendar age.
+
+**Wild vines** — `wildvine-end-*` tips extend downward and capture adjacent vertical wall faces. `EnableWildVineEcology`.
+
+Full notes: [`docs/CHANGELOG.md`](CHANGELOG.md).
+
+---
+
 ## 3.6.0 — release notes (paste for update)
 
 **Since last public release 3.1.12**
@@ -55,6 +69,8 @@ Living wild flora: flowers, grass, ferns, berries, reeds, trees, and **mycelium 
 **3.5.0** — **Canopy ambience:** subtle leaf particles and flutter near tree crowns (client-side; respects view distance and particle settings). Autumn crown sync fix for mixed foliage states.
 
 **3.6.0** — **Wild tree maturation:** calendar age + slow structure growth once per game year (`EnableTreeAging`, loaded chunks). **Senescence:** phased death at species horizon — four yearly stages: strip crown leaves (spread stops), strip branchy skeleton, short standing trunk (`TreeSenescenceSnagBlocks`, default 3), then **stump + fallen logs** (`EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`). Age **persists in saves** including senescence phase. **Inspect (I)** on trunk logs. **Handbook (en/ru):** nine pages — overview, species groups, trees, canopy, inspect, config. **`OnlyActivateNearPlayers`** default **false** (ecology in all loaded chunks).
+
+**3.7.0** — **Tree fern:** `ferntree-normal-*` register, spread, aging, senescence (`EnableFerntreeEcology`). **Canopy:** partial branchy autumn strip, fallen sticks under crown, spring branchy buds × tree age. **Wild vines:** tip spread down + wall capture (`EnableWildVineEcology`). See [`FERNTREE.md`](FERNTREE.md), [`WILD_VINE.md`](WILD_VINE.md), [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
 
 Press **I** on any wild plant, mushroom cap, tree trunk, or mycelium soil to debug spread timing, stress, and mat status. Enable **`VerboseLogging`** + **`ReproduceDebug`** in config for server log detail.
 
@@ -199,6 +215,17 @@ Edit `ModConfig/ecosystemflora.json` (created on first server launch). Full exam
 | `TreeSenescenceFallenLogCount` | 3 | **3.6.0** | Horizontal logs scattered near stump (0 = stump only) |
 | `MaxTreeGrowthAttemptsPerTick` | 6 | **3.6.0** | Cap structure growth work per server tick |
 | `TreeGrowthActivityScale` | 1.0 | **3.6.0** | Scale tree growth pacing |
+| `EnableFerntreeEcology` | true | **3.7.0** | Tree fern register, spread, aging |
+| `FerntreeSenescenceSnagSegments` | 2 | **3.7.0** | Snag trunk height (ferntree) |
+| `FoliagePeakAutumnBranchyStripActivity` | 0.35 | **3.7.0** | Partial branchy strip threshold (0 = keep all) |
+| `EnableCanopyFallenSticks` | true | **3.7.0** | Drop loose sticks when branchy strips |
+| `CanopyFallenStickChance` | 0.42 | **3.7.0** | Stick drop chance scale at peak autumn |
+| `EnableSpringBranchyAgeBoost` | true | **3.7.0** | Spring branchy buds scale with tree age |
+| `SpringBranchyAgeBoostYearsToMax` | 60 | **3.7.0** | Years to max spring branch boost |
+| `SpringBranchyAgeBoostMax` | 1.5 | **3.7.0** | Max spring branchy bud multiplier |
+| `EnableWildVineEcology` | true | **3.7.0** | Wild vine tip spread |
+| `WildVineWallCaptureRadius` | 4 | **3.7.0** | Horizontal wall-face scan |
+| `WildVineWallCaptureHeight` | 6 | **3.7.0** | Vertical wall-face scan |
 | `EnableSeasonalFoliage` | true | **3.2.0** | Deciduous autumn defol / spring bud on log-grown crowns |
 | `EnableCanopyAmbience` | true | **3.5.0** | Client leaf particles near tall crowns |
 
@@ -269,6 +296,10 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 | `TreeSenescenceSnagBlocks` | 3 | **3.6.0** — standing trunk height during snag year |
 | `EnableTreeSenescenceRemains` | true | **3.6.0** — leave choppable stump + fallen logs on final year |
 | `TreeSenescenceFallenLogCount` | 3 | **3.6.0** — ground logs near stump (0 = stump only) |
+| `EnableFerntreeEcology` | true | **3.7.0** — tree fern ecology |
+| `EnableCanopyFallenSticks` | true | **3.7.0** — loose sticks when branchy strips |
+| `EnableSpringBranchyAgeBoost` | true | **3.7.0** — spring branchy buds × tree age |
+| `EnableWildVineEcology` | true | **3.7.0** — wild vine tip spread |
 | `EnableSeasonalFoliage` | true | **3.2.0** — deciduous seasonal crown phenology |
 | `EnableCanopyAmbience` | true | **3.5.0** — client crown leaf ambience |
 | `MyceliumSkipSoilSuccession` | true | **3.1.12** — no soil succession on mycelium anchor cells |

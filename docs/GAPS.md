@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.6.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **3.7.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -13,7 +13,9 @@
 | **Луг / цветы** | Independent spread + displacement | Нет стадий жизни (seedling → mature); spread = телепорт блока, не рост |
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
-| **Деревья** | `log-grown` → sapling; **3.6** — maturation + senescence; **`ferntree`** — [`FERNTREE.md`](FERNTREE.md) | living trunk stress; sapling burst on death |
+| **Деревья** | `log-grown` → sapling; **3.6** — maturation + senescence + stump/logs | living trunk stress; sapling burst on death |
+| **Древовидный папоротник** | `ferntree` — [`FERNTREE.md`](FERNTREE.md) | playtest баланс spread/senescence в тропиках |
+| **Дикие лианы** | tip spread вниз + wall capture — [`WILD_VINE.md`](WILD_VINE.md) | playtest на зданиях/стволах; нет stress/climate gate на tip |
 | **Грибница** | Soft niche + stress + network spread вокруг vanilla BE; inspect (I) на шляпке и почве; meadow coexistence (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 
@@ -64,7 +66,9 @@
 
 **В scope, но «тонко»:**
 
-- **14 деревьев** — sapling spread + **v3.6** calendar age, structure growth, senescence; нет отдельной тени кроны как сущности.
+- **14 деревьев** — sapling spread + **v3.6** calendar age, structure growth, senescence, stump/logs; **v3.7** — осенние палки, весенние ветви по возрасту.
+- **Tree fern** — **v3.7** spread + aging; без пня/брёвен на смерти.
+- **Wild vines** — **v3.7** reproduce spread; без item drops / harvest ecology.
 - **10 ягод** — traits; third-party berry **не** поддержан.
 - **Tallgrass** — matrix, без отдельной «съеденности» (выпас — backlog / Fauna mod).
 - **Third-party** — JSON контракт ✅; нет каталога совместимых модов, нет версионирования контракта.
@@ -72,7 +76,7 @@
 **Сознательно вне scope (но дыра в «полной экосистеме»):**
 
 - Fauna (grazing, food search) — только дизайн.
-- Living trees, vines, mushrooms, termites.
+- Living trees, custom mushroom blocks, termites.
 - Item-based propagation.
 
 ---
@@ -82,8 +86,8 @@
 | OK | Недоработано |
 |----|--------------|
 | Handbook en/ru — 9 страниц (overview, species, trees, canopy, inspect, tuning) | **de.json** — старые тексты |
-| [`CHANGELOG.md`](CHANGELOG.md) + ModDB 3.6 release block | ~40 ключей в example JSON — порог для новичка |
-| Inspect I — mat frontier, tree age on trunk | |
+| [`CHANGELOG.md`](CHANGELOG.md) + ModDB 3.7 release block | ~50 ключей в example JSON — порог для новичка |
+| Inspect I — ferntree trunk, vine tips | |
 
 ---
 

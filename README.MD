@@ -17,7 +17,7 @@ Plants don't just spread — they **compete**. A stronger species can displace a
 
 The result: meadows fill in naturally, forest edges develop a distinct flora belt, clearings get reclaimed by fast colonizers first and then by perennials, and shorelines grow reeds and water lilies on their own.
 
-**v3.6** adds wild **tree aging** (calendar years, slow growth, **phased senescence** over four game years, **stump + fallen logs** on death), **inspect (I)** on trunk logs, and a rewritten in-game **handbook** (en/ru, nine pages). Full tree lifecycle: [`docs/TREE_AGING.md`](docs/TREE_AGING.md). Release notes: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+**v3.7** adds **tree fern** ecology (`ferntree-normal-*`), **canopy** fallen sticks and age-scaled spring branches, and **wild vine** spread on wall faces. **v3.6** added wild **tree aging** (calendar years, slow growth, **phased senescence**, **stump + fallen logs**), **inspect (I)** on trunk logs, and a rewritten **handbook** (en/ru). Docs: [`docs/CHANGELOG.md`](docs/CHANGELOG.md), [`docs/FERNTREE.md`](docs/FERNTREE.md), [`docs/WILD_VINE.md`](docs/WILD_VINE.md), [`docs/TREE_AGING.md`](docs/TREE_AGING.md).
 
 ## Wild tree lifecycle
 
@@ -41,7 +41,9 @@ Config: `EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains`
 | **Tallgrass** | All vanilla tallgrass variants | Grass matrix under flowers |
 | **Ferns** | Eagle fern, cinnamon fern, deer fern, hart's tongue, tall fern | Forest understory; need shade and moisture |
 | **Berry bushes** | Blueberry, cranberry, strawberry, and 7 more | 10 wild species; soil + forest edge preference |
-| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings; **v3.6** calendar age, slow growth, phased senescence, inspect **I** |
+| **Trees** | Oak, pine, birch, maple, and 10 more | Mature trunks seed free saplings; **v3.6** calendar age, senescence; **v3.7** canopy sticks + age branches |
+| **Tree fern** | `ferntree-normal-*` | Tropical column; spread, aging, senescence (**v3.7**) |
+| **Wild vines** | `wildvine-end-*` | Tip grows down and along walls (**v3.7**) |
 | **Reeds** | Cooper's reed, papyrus | Shore or shallow water over gravel bed |
 | **Water lily** | Waterlily | Open water surface |
 | **Water crowfoot** | Underwater column plant | 2–8 block depth, multi-section column |

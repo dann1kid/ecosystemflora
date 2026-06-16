@@ -3,13 +3,76 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.6.0**
+**This release:** **3.7.0**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## Since 3.1.12 — at a glance
+## Since 3.6.0 — at a glance
+
+| Area | What you get |
+|------|----------------|
+| **Tree fern** | Vanilla `ferntree-normal-*` registers, spreads young columns, ages yearly, phased senescence — [`FERNTREE.md`](FERNTREE.md) |
+| **Canopy** | Partial autumn branchy strip; fallen **sticks** under crown; spring **branchy buds** scale with tree calendar age — [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md) |
+| **Wild vines** | `wildvine-end-*` tips extend downward and capture adjacent wall faces — [`WILD_VINE.md`](WILD_VINE.md) |
+| **Trees (3.6 polish)** | Phased senescence implementation hardened; final year leaves **stump + fallen logs** (`TreeDecayRemains`) |
+| **Handbook** | Species group pages refreshed (flowers, ferns, berries, aquatic) en/ru |
+| **Tests** | 279 unit tests |
+
+---
+
+## 3.7.0 — Tree fern, canopy sticks, wild vines
+
+### Tree fern (`ferntree-normal-*`)
+
+Tropical arborescent fern columns — **not** lumber trees (`log-grown`) and **not** ground ferns (`fern-*`).
+
+- Chunk scan registers trunk base at calendar age **0** (`EnableFerntreeEcology`).
+- Yearly aging: crown top young → medium → old; slow height growth every few years.
+- Spread places a **young column** (trunk + top-young + side foliage) near mature trunks.
+- Phased senescence after ~80 years: foliage → crown removal → snag (`FerntreeSenescenceSnagSegments`) → column cleared.
+- Counts as **tree host** for symbiotic ferns and forest context.
+- Inspect (**I**) on any ferntree block → trunk base age, segments, crown maturity, senescence phase.
+
+See [`FERNTREE.md`](FERNTREE.md).
+
+### Canopy phenology enhancements
+
+On top of **3.2** seasonal strip/bud:
+
+- **Partial branchy autumn strip** — `FoliagePeakAutumnBranchyStripActivity` default **0.35** (was 0 = keep all branchy).
+- **Fallen sticks** — stripping `leavesbranchy` may drop `loosestick-free` on the ground below (`EnableCanopyFallenSticks`, `CanopyFallenStickChance`).
+- **Age-scaled spring branches** — older registered trees bud more `leavesbranchy` in spring from calendar age at trunk base (`EnableSpringBranchyAgeBoost`, `SpringBranchyAgeBoostYearsToMax`, `SpringBranchyAgeBoostMax`).
+
+### Wild vines
+
+Vanilla `wildvine-end-*` and `wildvine-tropical-end-*` tips join the reproduce loop (`EnableWildVineEcology`):
+
+1. **Extend down** — air below tip → new end; former tip → section.
+2. **Wall capture** — scan adjacent vertical faces of buildings and trunks (`WildVineWallCaptureRadius`, `WildVineWallCaptureHeight`).
+
+See [`WILD_VINE.md`](WILD_VINE.md).
+
+### Config (new keys)
+
+| Key | Default | Purpose |
+|-----|:-------:|---------|
+| `EnableFerntreeEcology` | true | Tree fern register, spread, aging |
+| `FerntreeSenescenceSnagSegments` | 2 | Snag trunk height (ferntree) |
+| `FoliagePeakAutumnBranchyStripActivity` | 0.35 | Partial branchy strip threshold |
+| `EnableCanopyFallenSticks` | true | Drop sticks when branchy strips |
+| `CanopyFallenStickChance` | 0.42 | Stick drop chance scale |
+| `EnableSpringBranchyAgeBoost` | true | Spring branchy buds × tree age |
+| `SpringBranchyAgeBoostYearsToMax` | 60 | Years to max branch boost |
+| `SpringBranchyAgeBoostMax` | 1.5 | Max spring branchy multiplier |
+| `EnableWildVineEcology` | true | Vine tip spread |
+| `WildVineWallCaptureRadius` | 4 | Horizontal wall scan |
+| `WildVineWallCaptureHeight` | 6 | Vertical wall scan |
+
+---
+
+## Since 3.1.12 — at a glance (3.6 baseline)
 
 | Area | What you get |
 |------|----------------|
@@ -135,6 +198,32 @@ Still in the mod from earlier releases — no need to re-read if you already pla
 
 ---
 
+## Кратко — с 3.6.0 до 3.7.0 (RU)
+
+**Базовый релиз:** 3.6.0 (деревья, крона, справочник). **Этот релиз:** 3.7.0.
+
+### Древовидный папоротник (`ferntree`)
+
+- Регистрация колонны `ferntree-normal-trunk`, календарный возраст, рост кроны и высоты.
+- Spread молодой колонны; phased senescence (~80 лет).
+- Хост для симбиоза и лесного контекста. Осмотр **I**. [`FERNTREE.md`](FERNTREE.md).
+
+### Крона (дополнение к 3.2)
+
+- Частичное снятие `leavesbranchy` осенью (порог **0.35**).
+- Палки `loosestick-free` под кроной при снятии ветвистой листвы.
+- Весной больше почек `leavesbranchy` у **старых** деревьев (по `TreeAgeYears`).
+
+### Дикие лианы
+
+- Кончики `wildvine-end-*` растут **вниз** и захватывают соседние вертикальные грани. [`WILD_VINE.md`](WILD_VINE.md).
+
+### Деревья (уточнение 3.6)
+
+- Финальный год senescence: пень + брёвна (`TreeDecayRemains`) — реализация закреплена в коде.
+
+---
+
 ## Кратко — с 3.1.12 до 3.6.0 (RU)
 
 **Последняя публикация на ModDB:** 3.1.12. **Этот релиз:** 3.6.0.
@@ -174,7 +263,26 @@ Still in the mod from earlier releases — no need to re-read if you already pla
 
 ---
 
-## ModDB paste — full update text
+## ModDB paste — 3.7.0 update text
+
+```
+Since 3.6.0 → 3.7.0
+
+TREE FERN
+Vanilla ferntree-normal columns: register, yearly aging, spread young structures, phased senescence. Symbiosis tree host. EnableFerntreeEcology.
+
+CANOPY (3.2+)
+Partial autumn branchy strip (default 0.35). Fallen loose sticks under crown when branchy strips. Spring branchy buds scale with tree calendar age.
+
+WILD VINES
+wildvine-end tips extend downward and colonize adjacent wall faces. EnableWildVineEcology.
+
+Press I on ferntree blocks, trunk logs, plants, mushrooms. VerboseLogging + ReproduceDebug for server detail.
+```
+
+---
+
+## ModDB paste — full update text (3.1.12 → 3.6.0)
 
 ```
 Since 3.1.12 → 3.6.0

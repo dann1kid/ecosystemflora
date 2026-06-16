@@ -219,6 +219,15 @@ namespace WildFarming.Ecosystem
         /// <summary>Register and spread vanilla ferntree-normal columns (tropical arborescent fern).</summary>
         public bool EnableFerntreeEcology { get; set; } = true;
 
+        /// <summary>Wild vine tips spread downward and along vertical surfaces.</summary>
+        public bool EnableWildVineEcology { get; set; } = true;
+
+        /// <summary>Horizontal scan radius when capturing adjacent wall faces.</summary>
+        public int WildVineWallCaptureRadius { get; set; } = 4;
+
+        /// <summary>Vertical scan span when capturing adjacent wall faces.</summary>
+        public int WildVineWallCaptureHeight { get; set; } = 6;
+
         /// <summary>Trunk segments left during ferntree snag senescence year.</summary>
         public int FerntreeSenescenceSnagSegments { get; set; } = 2;
 
@@ -374,7 +383,22 @@ namespace WildFarming.Ecosystem
         public int FoliageColumnScanHeightAboveSurface { get; set; } = 0;
 
         /// <summary>Peak autumn activity before optional branchy strip (0 = keep branchy skeleton).</summary>
-        public float FoliagePeakAutumnBranchyStripActivity { get; set; } = 0f;
+        public float FoliagePeakAutumnBranchyStripActivity { get; set; } = 0.35f;
+
+        /// <summary>Drop vanilla loose sticks when branchy crown foliage is stripped in autumn.</summary>
+        public bool EnableCanopyFallenSticks { get; set; } = true;
+
+        /// <summary>Base chance multiplier for fallen sticks at peak autumn activity.</summary>
+        public float CanopyFallenStickChance { get; set; } = 0.42f;
+
+        /// <summary>Scale spring branchy bud attempts by wild tree calendar age.</summary>
+        public bool EnableSpringBranchyAgeBoost { get; set; } = true;
+
+        /// <summary>Calendar years at trunk base to reach max spring branchy boost.</summary>
+        public float SpringBranchyAgeBoostYearsToMax { get; set; } = 60f;
+
+        /// <summary>Max spring branchy bud multiplier from age (1 = disabled scaling).</summary>
+        public float SpringBranchyAgeBoostMax { get; set; } = 1.5f;
 
         /// <summary>Place branchy leaves on log-grown when crown was stripped bare (pillar repair).</summary>
         public bool FoliageRestoreBareSkeleton { get; set; } = true;

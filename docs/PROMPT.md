@@ -27,19 +27,22 @@
 - v3.2.0: **Canopy phenology** — deciduous partial autumn defol + spring bud on log-grown skeleton; in-RAM CA; `EnableSeasonalFoliage`; docs [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
 - v3.5.0: **Canopy ambience** — client crown particles / flutter; docs [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
 - v3.6: **Wild tree maturation** — calendar age (persisted), grown-block growth, **phased senescence** (leaves → skeleton → snag → stump/logs); inspect (I); `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`; docs [`TREE_AGING.md`](TREE_AGING.md).
+- v3.7: **Tree fern** (`ferntree-normal-*`) — register, spread, aging, senescence — [`FERNTREE.md`](FERNTREE.md). **Canopy** — partial branchy strip, fallen sticks, spring branchy × tree age — [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md). **Wild vines** — tip spread down + wall capture — [`WILD_VINE.md`](WILD_VINE.md).
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
 - Terrestrial — flowers, tallgrass, fern, berries
 - TerrestrialTree — log-grown → sapling
+- Ferntree — ferntree-normal-trunk → young column
+- WildVine — wildvine-end-* tips
 - ReedNearWater — coopersreed, tule, papyrus (rhizome mat default)
 - WaterSurface — waterlily (surface mat default)
 - UnderwaterColumn — watercrowfoot
 
-Не расширять без явного запроса: living trees, vines, Harmony, legacy wildplant. Mycelium — только vanilla BE (v3.1.12), без своих блоков грибов.
+Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs для старых BE; Mycelium*.cs для грибницы).
-Тесты: 257 (xUnit). Версия: 3.6.0.
+Тесты: 279 (xUnit). Версия: 3.7.0.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).

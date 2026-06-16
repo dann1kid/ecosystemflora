@@ -344,6 +344,20 @@ namespace WildFarming.Ecosystem
                 otherSpacing = ferntree.OtherSpeciesSpacing;
                 minSunlight = 10;
             }
+            else if (!string.IsNullOrEmpty(species) && WildVineEcology.TryGet(species, out WildVineEcology.Profile vine))
+            {
+                habitat = EcologyHabitat.WildVine;
+                if (float.IsNaN(minTemp)) minTemp = vine.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = vine.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = vine.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = vine.MaxRain;
+                if (float.IsNaN(spreadRate)) spreadRate = vine.SpreadRate;
+                sameSpacing = vine.SameSpeciesSpacing;
+                otherSpacing = vine.OtherSpeciesSpacing;
+                minForest = 0f;
+                maxForest = 1f;
+                minSunlight = 6;
+            }
             else if (!string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
             {
                 habitat = EcologyHabitat.TerrestrialTree;

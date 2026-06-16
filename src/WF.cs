@@ -44,7 +44,7 @@ namespace WildFarming
 
                 EcosystemConfig cfg = EcosystemConfig.Loaded;
                 api.Logger.Notification(
-                    "[ecosystemflora] Ecosystem v3.6 — enabled={0}, displacement={1}, stress={2}, symbiosis={3}, landClaims={4}, seasonal={5}, foliage={6}, treeAging={7}, treeSenescence={8}, verbose={9}",
+                    "[ecosystemflora] Ecosystem v3.7 — enabled={0}, displacement={1}, stress={2}, symbiosis={3}, landClaims={4}, seasonal={5}, foliage={6}, treeAging={7}, treeSenescence={8}, verbose={9}",
                     cfg.EcosystemEnabled,
                     cfg.UseCellDisplacement,
                     cfg.EnableStressDeath,

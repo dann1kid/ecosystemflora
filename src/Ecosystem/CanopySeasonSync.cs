@@ -56,7 +56,8 @@ namespace WildFarming.Ecosystem
                     && activity >= EcosystemConfig.Loaded.FoliagePeakAutumnBranchyStripActivity
                     && PassesDeterministicGate(pos, wood, gameYear + 3, activity, stripScale: 0.22f))
                 {
-                    return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
+                    return CanopyFoliageRules.TryStripForced(
+                        api, acc, pos, index, wood, activity, gameYear, FoliageCellKind.BranchyLeaf);
                 }
 
                 if (!CanopyFoliageRules.ShouldCatchUpBud(api, pos, wood, kind, out activity)) return false;

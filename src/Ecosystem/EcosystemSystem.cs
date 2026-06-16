@@ -349,6 +349,28 @@ namespace WildFarming.Ecosystem
             return registry.TryGetEntry(lookup, out entry);
         }
 
+        public void RelocateVineTip(BlockPos oldPos, BlockPos newPos)
+        {
+            if (oldPos == null || newPos == null || oldPos.Equals(newPos)) return;
+            if (!registry.TryGetEntry(oldPos, out ReproducerEntry entry)) return;
+
+            var replacement = new ReproducerEntry(
+                newPos.Copy(),
+                entry.JuvenileBlockCode.Clone(),
+                entry.MatureBlockCode,
+                entry.Requirements,
+                entry.NextAttemptHours)
+            {
+                EstablishedAtHours = entry.EstablishedAtHours,
+                NextStressCheckAt = entry.NextStressCheckAt,
+                FailedSurvivalChecks = entry.FailedSurvivalChecks,
+                TramplingExposure = entry.TramplingExposure,
+            };
+
+            registry.Remove(oldPos);
+            registry.Add(replacement);
+        }
+
         bool TryResolveFerntreeRegistryPos(BlockPos pos, out BlockPos basePos)
         {
             basePos = pos;
@@ -474,6 +496,7 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (requirements.Habitat == EcologyHabitat.Ferntree && !cfg.EnableFerntreeEcology) return;
+            if (requirements.Habitat == EcologyHabitat.WildVine && !cfg.EnableWildVineEcology) return;
             if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, origin, cfg.PlayerActivationRadiusBlocks))
             {
                 return;
@@ -914,6 +937,7 @@ namespace WildFarming.Ecosystem
                     {
                         MaxFlowerHits = registrationsLeft,
                         MaxTreeHits = registrationsLeft,
+                        MaxVineHits = cfg.EnableWildVineEcology ? registrationsLeft : 0,
                         SyncFoliage = syncFoliage,
                         FoliageIndex = foliageIndex,
                     },
@@ -938,6 +962,23 @@ namespace WildFarming.Ecosystem
                         if (registry.Contains(anchor)) continue;
 
                         RegisterReproducer(anchor, participant, spawnBurst: false);
+                        registrationsLeft--;
+                        if (registrationsLeft <= 0) break;
+                    }
+                }
+
+                if (registrationsLeft > 0 && pass.VineHits != null)
+                {
+                    for (int i = 0; i < pass.VineHits.Count; i++)
+                    {
+                        ChunkFlowerHit hit = pass.VineHits[i];
+                        Block block = acc.GetBlock(hit.Pos);
+
+                        if (registry.Contains(hit.Pos)) continue;
+                        if (!WildVineHelper.IsEndBlock(block)) continue;
+                        if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
+
+                        RegisterReproducer(hit.Pos, participant, spawnBurst: false);
                         registrationsLeft--;
                         if (registrationsLeft <= 0) break;
                     }
@@ -1273,6 +1314,20 @@ namespace WildFarming.Ecosystem
                             return true;
                         }
 
+                        if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
+                        {
+                            if (!cfg.EnableWildVineEcology || !WildVineHelper.IsEndBlock(block))
+                            {
+                                return false;
+                            }
+
+                            float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, entry.Requirements);
+                            if (api.World.Rand.NextDouble() > vineChance) return true;
+
+                            WildVineSpread.TrySpread(this, entry, api, cfg);
+                            return true;
+                        }
+
                         if (block.Id == 0 || !entry.IsMatureBlock(block))
                         {
                             return false;
@@ -1292,6 +1347,8 @@ namespace WildFarming.Ecosystem
         void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
+
+            if (entry.Requirements?.Habitat == EcologyHabitat.WildVine) return;
 
             if (TreeSenescence.SuppressesSpread(entry, cfg)) return;
 

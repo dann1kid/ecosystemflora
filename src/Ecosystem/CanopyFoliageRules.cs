@@ -785,6 +785,8 @@ namespace WildFarming.Ecosystem
 
             index?.Remove(pos);
 
+            CanopyFallenSticks.TryDropFromStrip(api, acc, pos, wood, activity, gameYear, kind);
+
             return true;
 
         }
@@ -817,6 +819,11 @@ namespace WildFarming.Ecosystem
             if (!LandClaimGuard.AllowsEcologyChange(api, sourcePos)) return false;
 
             if (TreeSenescence.BlocksSeasonalCanopy(api, acc, sourcePos, wood)) return false;
+
+            if (budBranchy)
+            {
+                activity *= CanopyTreeAgeBoost.SpringBranchyBudMultiplier(api, acc, sourcePos, wood);
+            }
 
             var scratch = new BlockPos(0);
 
@@ -886,13 +893,23 @@ namespace WildFarming.Ecosystem
             ICoreAPI api,
             IBlockAccessor acc,
             BlockPos pos,
-            FoliageCellIndex index)
+            FoliageCellIndex index,
+            string wood = null,
+            float autumnActivity = 0f,
+            int gameYear = 0,
+            FoliageCellKind strippedKind = FoliageCellKind.None)
         {
             if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
 
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
             index?.Remove(pos);
+
+            if (!string.IsNullOrEmpty(wood) && strippedKind == FoliageCellKind.BranchyLeaf)
+            {
+                CanopyFallenSticks.TryDropFromStrip(api, acc, pos, wood, autumnActivity, gameYear, strippedKind);
+            }
+
             return true;
         }
 
@@ -909,6 +926,12 @@ namespace WildFarming.Ecosystem
         {
             if (!LandClaimGuard.AllowsEcologyChange(api, sourcePos)) return false;
 
+            float budActivity = activity;
+            if (budBranchy)
+            {
+                budActivity *= CanopyTreeAgeBoost.SpringBranchyBudMultiplier(api, acc, sourcePos, wood);
+            }
+
             var scratch = new BlockPos(0);
             for (int i = 0; i < 6; i++)
             {
@@ -923,7 +946,7 @@ namespace WildFarming.Ecosystem
                 if (!PlantVacancyRules.IsVacantPlantSpace(space)) continue;
 
                 float noise = 0.55f + CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear) * 0.45f;
-                float threshold = activity * noise * 0.78f;
+                float threshold = budActivity * noise * 0.78f;
                 if (threshold > 1f) threshold = 1f;
                 float gate = CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear + 500 + i);
                 if (gate >= threshold) continue;

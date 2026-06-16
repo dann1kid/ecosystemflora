@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-06-14 (стадия **Ecosystem v3.6.0**, версия **`3.6.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-06-14 (стадия **Ecosystem v3.7.0**, версия **`3.7.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -219,18 +219,18 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.6.0`, версия `3.6.0`.** v3.0 traits ягод; v3.1 JSON-участники; v3.1.2 soil succession; v3.1.3–6 aquatic mat; v3.1.8 legacy BE; v3.1.9 spread debris + Terrain Slabs guard; v3.1.10 meadow harvest + inspect (I) fix; v3.1.11 tree spread ice/snow + winter spread off; **v3.1.12 mycelium**; **v3.2 seasonal canopy**; **v3.5 canopy ambience**; **v3.6 wild tree maturation + phased senescence**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.7.0`, версия `3.7.0`.** … **v3.6 wild tree maturation + phased senescence**; **v3.7 tree fern + canopy sticks/branches + wild vines**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
 | Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
 | Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **163** |
+| Юнит-тесты (xUnit) | ✅ **279** |
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.6.0**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.7.0**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -277,6 +277,7 @@ docs/
 - [x] **v3.1.12** — mycelium niche + ecology + network spread; meadow coexistence; inspect (I) caps/soil; config auto-merge — ✅.
 - [x] **v3.2.0** — **Canopy phenology** — deciduous partial defol + spring bud (`CanopyPhenology`, [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) — ✅.
 - [x] **v3.6.0** — **Wild tree maturation** + phased senescence — [`TREE_AGING.md`](TREE_AGING.md) — ✅.
+- [x] **v3.7.0** — **Tree fern**, canopy sticks/age branches, **wild vines** — [`FERNTREE.md`](FERNTREE.md), [`WILD_VINE.md`](WILD_VINE.md) — ✅ (playtest).
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.

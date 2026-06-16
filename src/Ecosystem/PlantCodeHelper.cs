@@ -135,6 +135,16 @@ namespace WildFarming.Ecosystem
                 return WildFerntreeEcology.Species;
             }
 
+            if (path != null && path.StartsWith("wildvine-tropical-"))
+            {
+                return WildVineEcology.TropicalSpecies;
+            }
+
+            if (path != null && path.StartsWith("wildvine-"))
+            {
+                return WildVineEcology.TemperateSpecies;
+            }
+
             string wood = GetTreeWood(blockCode);
             if (wood != null) return wood;
 
@@ -178,6 +188,7 @@ namespace WildFarming.Ecosystem
             if (IsWildBerryBushBlock(block)) return true;
             if (IsTreeLogGrownBlock(block)) return true;
             if (IsFerntreeTrunkBlock(block)) return true;
+            if (WildVineHelper.IsEndBlock(block)) return true;
             return IsEcologyPlant(block);
         }
 
@@ -328,6 +339,11 @@ namespace WildFarming.Ecosystem
                 return EcologyHabitat.Ferntree;
             }
 
+            if (WildVineEcology.IsSpecies(species))
+            {
+                return EcologyHabitat.WildVine;
+            }
+
             return EcologyHabitat.Terrestrial;
         }
 
@@ -350,6 +366,11 @@ namespace WildFarming.Ecosystem
             if (IsFerntreeTrunkBlock(block))
             {
                 return new AssetLocation("game:ferntree-normal-trunk");
+            }
+
+            if (WildVineHelper.IsEndBlock(block))
+            {
+                return block.Code;
             }
 
             if (!IsEcologyPlant(block)) return null;

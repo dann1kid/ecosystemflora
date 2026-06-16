@@ -88,7 +88,12 @@ Random/hybrid modes also maintain `FoliageCellIndex` for per-tick picks.
 | `FoliageBudgetMs` | `10` | random-tick wall cap |
 | `CanopyActivityScale` | `1` | monthly curve multiplier |
 | `CanopyBudMinTemperature` | `5` | °C at cell for spring bud |
-| `FoliagePeakAutumnBranchyStripActivity` | `0` | 0 = keep branchy skeleton in autumn |
+| `FoliagePeakAutumnBranchyStripActivity` | `0.35` | peak autumn activity before partial branchy strip (0 = keep all branchy) |
+| `EnableCanopyFallenSticks` | `true` | drop `loosestick-free` when branchy foliage strips |
+| `CanopyFallenStickChance` | `0.42` | stick drop chance scale at peak autumn |
+| `EnableSpringBranchyAgeBoost` | `true` | older trees bud more branchy leaves in spring |
+| `SpringBranchyAgeBoostYearsToMax` | `60` | calendar years to max spring branch boost |
+| `SpringBranchyAgeBoostMax` | `1.5` | max spring branchy bud multiplier from age |
 | `FoliageRestoreBareSkeleton` | `true` | Winter crown repair only (not lower trunk; not autumn) |
 
 Legacy keys `MaxCanopyUpdateOpsPerTick` / `CanopyBudgetMs` still map to foliage fields.
@@ -112,3 +117,4 @@ Toggle: `EnableCanopyAmbience` (requires `EnableSeasonalFoliage`).
 | v3.4 | Chunk-sync + unified `ChunkEcologyColumnPass` |
 | v3.4.1 | Winter force-strip all `leaves-grown` (Dec–Feb) |
 | v3.5 | Client canopy ambience particles |
+| v3.7 | Partial branchy autumn strip; fallen sticks; spring branchy buds × tree age |

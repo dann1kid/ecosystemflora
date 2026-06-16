@@ -2,7 +2,7 @@
 
 Vanilla **tree fern** (`game:ferntree-normal-*`) — arborescent fern columns in tropical wet forest. Separate from lumber trees (`log-grown`) and ground ferns (`fern-*`).
 
-Updated: 2026-06-14.
+Updated: 2026-06-14 (v3.7.0).
 
 ---
 

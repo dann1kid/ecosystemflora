@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flora on vanilla blocks. Seasonal canopy, tree aging with phased senescence, meadow harvest, inspect (I). Handbook (en/ru).",
+  "description": "Wild ecology for vanilla flora on vanilla blocks. Tree aging, ferntree, seasonal canopy with fallen sticks, wild vine spread, meadow harvest, inspect (I). Handbook (en/ru).",
   "authors": ["-"],
-  "version": "3.6.0",
+  "version": "3.7.0",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"
