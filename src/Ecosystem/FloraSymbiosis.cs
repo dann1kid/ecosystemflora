@@ -98,7 +98,7 @@ namespace WildFarming.Ecosystem
             int radius = EcosystemConfig.Loaded.SymbiosisCascadeRadius;
             InvalidateHostCacheAround(hostPos, radius);
             IBlockAccessor acc = api.World.BlockAccessor;
-            bool treeHost = PlantCodeHelper.IsTreeLogGrownBlock(hostBlock);
+            bool treeHost = PlantCodeHelper.IsArborealHostBlock(hostBlock);
             int scanDown = treeHost ? TreeCascadeVerticalSearchDown : NonTreeVerticalSearch;
             int scanUp = NonTreeVerticalSearch;
             var scanPos = new BlockPos(0);
@@ -135,7 +135,7 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < rule.HostKeys.Length; i++)
             {
                 string key = rule.HostKeys[i];
-                if (key == TreeHostToken && PlantCodeHelper.IsTreeLogGrownBlock(hostBlock))
+                if (key == TreeHostToken && PlantCodeHelper.IsArborealHostBlock(hostBlock))
                 {
                     return true;
                 }
@@ -209,7 +209,7 @@ namespace WildFarming.Ecosystem
                         if (HorizontalChebyshev(symbiontPos, scanPos) > maxHorizontalDistance) continue;
 
                         Block block = acc.GetBlock(scanPos);
-                        if (!PlantCodeHelper.IsTreeLogGrownBlock(block)) continue;
+                        if (!PlantCodeHelper.IsArborealHostBlock(block)) continue;
 
                         hostBlock = block;
                         hostPos = scanPos.Copy();
@@ -245,7 +245,7 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < rule.HostKeys.Length; i++)
             {
                 string key = rule.HostKeys[i];
-                if (key == TreeHostToken && PlantCodeHelper.IsTreeLogGrownBlock(block))
+                if (key == TreeHostToken && PlantCodeHelper.IsArborealHostBlock(block))
                     return true;
 
                 string species = PlantCodeHelper.ResolveEcologySpecies(block);

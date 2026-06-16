@@ -13,7 +13,7 @@
 | **Луг / цветы** | Independent spread + displacement | Нет стадий жизни (seedling → mature); spread = телепорт блока, не рост |
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
-| **Деревья** | `log-grown` → sapling; **3.6** — maturation + **phased senescence** (листва → остов → snag → пень/бревна), persist возраста | living trunk stress; sapling burst on death |
+| **Деревья** | `log-grown` → sapling; **3.6** — maturation + senescence; **`ferntree`** — [`FERNTREE.md`](FERNTREE.md) | living trunk stress; sapling burst on death |
 | **Грибница** | Soft niche + stress + network spread вокруг vanilla BE; inspect (I) на шляпке и почве; meadow coexistence (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 

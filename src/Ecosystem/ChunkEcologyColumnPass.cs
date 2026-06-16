@@ -130,6 +130,20 @@ namespace WildFarming.Ecosystem
                         if (!trunkFound
                             && onTreeFound != null
                             && treesRegistered < request.MaxTreeHits
+                            && PlantCodeHelper.IsFerntreeTrunkBlock(block))
+                        {
+                            BlockPos basePos = FerntreeStructure.GetTrunkBase(acc, scanScratch);
+                            if (onTreeFound(basePos, WildFerntreeEcology.Species))
+                            {
+                                treesRegistered++;
+                            }
+
+                            trunkFound = true;
+                        }
+
+                        if (!trunkFound
+                            && onTreeFound != null
+                            && treesRegistered < request.MaxTreeHits
                             && PlantCodeHelper.IsTreeLogGrownBlock(block))
                         {
                             string wood = PlantCodeHelper.GetTreeWood(block);

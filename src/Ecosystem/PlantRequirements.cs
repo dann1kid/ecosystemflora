@@ -244,6 +244,7 @@ namespace WildFarming.Ecosystem
                         break;
 
                     case EcologyHabitat.TerrestrialTree:
+                    case EcologyHabitat.Ferntree:
                         sameSpacing = attrs["ecologySameSpeciesSpacing"].AsInt(-1);
                         otherSpacing = attrs["ecologyOtherSpeciesSpacing"].AsInt(-1);
                         minSunlight = attrs["ecologyMinSunlight"].AsInt(11);
@@ -328,6 +329,21 @@ namespace WildFarming.Ecosystem
                 minGroundFertility = berry.Soil.MinBlockFertility;
                 maxGroundFertility = berry.Soil.MaxBlockFertility;
             }
+            else if (!string.IsNullOrEmpty(species) && WildFerntreeEcology.IsSpecies(species))
+            {
+                WildFerntreeEcology.Profile ferntree = WildFerntreeEcology.Resolve();
+                habitat = EcologyHabitat.Ferntree;
+                if (float.IsNaN(minTemp)) minTemp = ferntree.MinTemp;
+                if (float.IsNaN(maxTemp)) maxTemp = ferntree.MaxTemp;
+                if (float.IsNaN(minRain)) minRain = ferntree.MinRain;
+                if (float.IsNaN(maxRain)) maxRain = ferntree.MaxRain;
+                if (float.IsNaN(minForest)) minForest = ferntree.MinForest;
+                if (float.IsNaN(maxForest)) maxForest = ferntree.MaxForest;
+                if (float.IsNaN(spreadRate)) spreadRate = ferntree.SpreadRate;
+                sameSpacing = ferntree.SameSpeciesSpacing;
+                otherSpacing = ferntree.OtherSpeciesSpacing;
+                minSunlight = 10;
+            }
             else if (!string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
             {
                 habitat = EcologyHabitat.TerrestrialTree;
@@ -383,6 +399,11 @@ namespace WildFarming.Ecosystem
             if (spreadRadius <= 0 && !string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeRadius))
             {
                 spreadRadius = treeRadius.SpreadRadius;
+            }
+
+            if (spreadRadius <= 0 && WildFerntreeEcology.IsSpecies(species))
+            {
+                spreadRadius = WildFerntreeEcology.Resolve().SpreadRadius;
             }
 
             var requirements = new PlantRequirements

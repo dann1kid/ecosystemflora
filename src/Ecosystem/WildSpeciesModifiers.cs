@@ -116,6 +116,7 @@ namespace WildFarming.Ecosystem
             if (string.IsNullOrEmpty(species)) return false;
             if (BySpecies.TryGetValue(species, out profile)) return true;
             if (WildFernEcology.TryGet(species, out _)) { profile = DefaultEdge; return true; }
+            if (WildFerntreeEcology.IsSpecies(species)) { profile = DefaultForest; return true; }
             if (WildTreeEcology.TryGet(species, out _)) { profile = DefaultForest; return true; }
             return true;
         }
@@ -132,6 +133,10 @@ namespace WildFarming.Ecosystem
                     profile = DefaultEdge;
                 }
                 else if (WildTreeEcology.TryGet(req.Species, out _))
+                {
+                    profile = DefaultForest;
+                }
+                else if (WildFerntreeEcology.IsSpecies(req.Species))
                 {
                     profile = DefaultForest;
                 }

@@ -102,7 +102,7 @@ namespace WildFarming.Ecosystem
         public void TryRemoveIfTreeGone(IBlockAccessor acc, BlockPos brokenPos, string wood)
         {
             if (acc == null || brokenPos == null || string.IsNullOrEmpty(wood)) return;
-            if (HasLogGrownInColumn(acc, brokenPos, wood)) return;
+            if (HasArborealInColumn(acc, brokenPos, wood)) return;
 
             string removeKey = null;
             bool found = false;
@@ -133,10 +133,13 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < count; i++)
             {
                 ReproducerEntry entry = reg.GetEntry(i);
-                if (entry?.Requirements?.Habitat != EcologyHabitat.TerrestrialTree) continue;
+                if (entry?.Requirements?.Habitat != EcologyHabitat.TerrestrialTree
+                    && entry?.Requirements?.Habitat != EcologyHabitat.Ferntree) continue;
                 if (entry.Origin == null) continue;
 
-                string wood = PlantCodeHelper.GetTreeWood(entry.MatureBlockCode);
+                string wood = entry.Requirements.Habitat == EcologyHabitat.Ferntree
+                    ? WildFerntreeEcology.Species
+                    : PlantCodeHelper.GetTreeWood(entry.MatureBlockCode);
                 if (string.IsNullOrEmpty(wood)) continue;
 
                 Capture(entry, wood);
@@ -205,6 +208,16 @@ namespace WildFarming.Ecosystem
         {
             if (string.IsNullOrEmpty(stored)) return true;
             return string.Equals(stored, current, StringComparison.OrdinalIgnoreCase);
+        }
+
+        static bool HasArborealInColumn(IBlockAccessor acc, BlockPos origin, string wood)
+        {
+            if (WildFerntreeEcology.IsSpecies(wood))
+            {
+                return FerntreeStructure.HasFerntreeInColumn(acc, origin);
+            }
+
+            return HasLogGrownInColumn(acc, origin, wood);
         }
 
         static bool HasLogGrownInColumn(IBlockAccessor acc, BlockPos origin, string wood)

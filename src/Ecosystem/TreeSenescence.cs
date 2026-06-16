@@ -65,6 +65,11 @@ namespace WildFarming.Ecosystem
         public static bool SuppressesSpread(ReproducerEntry entry, EcosystemConfig cfg)
         {
             if (entry == null || cfg == null || !cfg.EnableTreeSenescence) return false;
+            if (entry.Requirements?.Habitat == EcologyHabitat.Ferntree)
+            {
+                return FerntreeSenescence.SuppressesSpread(entry, cfg);
+            }
+
             if (entry.TreeSenescencePhase != TreeSenescencePhase.None) return true;
 
             string wood = entry.Requirements?.Species;

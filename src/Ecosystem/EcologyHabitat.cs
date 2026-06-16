@@ -13,5 +13,8 @@ namespace WildFarming.Ecosystem
         TerrestrialTree = 4,
         /// <summary>Vanilla <c>BlockEntityMycelium</c> anchor on soil or log (network spread — later phase).</summary>
         MyceliumAnchor = 5,
+
+        /// <summary>Vanilla <c>ferntree-normal-trunk</c> — tropical arborescent fern column.</summary>
+        Ferntree = 6,
     }
 }

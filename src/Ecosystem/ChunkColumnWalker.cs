@@ -35,6 +35,7 @@ namespace WildFarming.Ecosystem
             if (!string.IsNullOrEmpty(path))
             {
                 if (path.StartsWith("log-grown-")) return true;
+                if (path.StartsWith("ferntree-normal-")) return true;
                 if (path.StartsWith("leavesbranchy-") || path.StartsWith("leaves-")) return true;
                 if (path.StartsWith("wildbeehive-inlog-")) return true;
             }

@@ -264,6 +264,12 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
+            if (WildFerntreeEcology.IsSpecies(species))
+            {
+                profile = FernSeason;
+                return true;
+            }
+
             return false;
         }
 

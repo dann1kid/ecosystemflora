@@ -11,6 +11,8 @@ namespace WildFarming.Ecosystem
         /// <summary>Return true when the trunk was newly registered (counts toward maxHits).</summary>
         public delegate bool TrunkFoundHandler(BlockPos basePos, string wood);
 
+        public delegate bool FerntreeFoundHandler(BlockPos basePos);
+
         static readonly BlockPos scanScratch = new BlockPos(0);
 
         public readonly struct ScanResult
@@ -170,6 +172,13 @@ namespace WildFarming.Ecosystem
                     }
 
                     basePos = PlantCodeHelper.GetTreeTrunkBase(acc, scanScratch);
+                    return true;
+                }
+
+                if (PlantCodeHelper.IsFerntreeTrunkBlock(block))
+                {
+                    wood = WildFerntreeEcology.Species;
+                    basePos = FerntreeStructure.GetTrunkBase(acc, scanScratch);
                     return true;
                 }
 

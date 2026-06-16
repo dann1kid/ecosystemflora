@@ -44,6 +44,8 @@
   "TreeSenescenceSnagBlocks": 3,
   "EnableTreeSenescenceRemains": true,
   "TreeSenescenceFallenLogCount": 3,
+  "EnableFerntreeEcology": true,
+  "FerntreeSenescenceSnagSegments": 2,
   "MaxTreeGrowthAttemptsPerTick": 6,
   "TreeGrowthActivityScale": 1.0,
 

@@ -56,6 +56,7 @@ namespace WildFarming.Ecosystem
                 ["deerfern"] = new Profile(MoistureLevel.Wet, LightLevel.Shade, 1.3f),
                 ["hartstongue"] = new Profile(MoistureLevel.Mesic, LightLevel.Shade, 1.2f),
                 ["tallfern"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.15f),
+                [WildFerntreeEcology.Species] = new Profile(MoistureLevel.Wet, LightLevel.Partial, 1.2f),
             };
         }
 

@@ -228,6 +228,7 @@ namespace WildFarming.Ecosystem
             bool occupied)
         {
             if (req.Habitat == EcologyHabitat.TerrestrialTree
+                || req.Habitat == EcologyHabitat.Ferntree
                 || req.Habitat == EcologyHabitat.WaterSurface
                 || req.Habitat == EcologyHabitat.ReedNearWater
                 || req.Habitat == EcologyHabitat.UnderwaterColumn)

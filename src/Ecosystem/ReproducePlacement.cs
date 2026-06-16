@@ -173,6 +173,12 @@ namespace WildFarming.Ecosystem
                         foundPos = TreePlacement.TryFindSaplingPos(
                             acc, origin, dx, dz, verticalSearch, sun, out plantPos, out _);
                     }
+                    else if (requirements.Habitat == EcologyHabitat.Ferntree)
+                    {
+                        int sun = requirements.MinSunlight > 0 ? requirements.MinSunlight : 10;
+                        foundPos = TreePlacement.TryFindSaplingPos(
+                            acc, origin, dx, dz, verticalSearch, sun, out plantPos, out _);
+                    }
                     else if (requirements.Habitat != EcologyHabitat.Terrestrial)
                     {
                         foundPos = WaterPlacement.TryFindPlantPos(
@@ -372,6 +378,19 @@ namespace WildFarming.Ecosystem
             if (requirements.Habitat == EcologyHabitat.ReedNearWater)
             {
                 spreadBlock = PlantCodeHelper.ResolveReedSpreadBlock(api, plantPos, spreadBlock);
+            }
+
+            if (requirements.Habitat == EcologyHabitat.Ferntree)
+            {
+                int parentSegments = FerntreeStructure.MeasureTrunkSegmentCount(accessor, parentOrigin);
+                int segments = System.Math.Max(3, parentSegments - api.World.Rand.Next(2));
+                if (!FerntreeStructure.TryPlaceYoung(accessor, plantPos, segments, api.World.Rand))
+                {
+                    return false;
+                }
+
+                accessor.MarkBlockDirty(plantPos);
+                return FerntreeStructure.IsTrunkBlock(accessor.GetBlock(plantPos));
             }
 
             ItemStack stack = new ItemStack(spreadBlock);

@@ -216,6 +216,12 @@ namespace WildFarming.Ecosystem
         /// <summary>Horizontal debarked logs scattered near stump on final senescence year (0 = stump only).</summary>
         public int TreeSenescenceFallenLogCount { get; set; } = 3;
 
+        /// <summary>Register and spread vanilla ferntree-normal columns (tropical arborescent fern).</summary>
+        public bool EnableFerntreeEcology { get; set; } = true;
+
+        /// <summary>Trunk segments left during ferntree snag senescence year.</summary>
+        public int FerntreeSenescenceSnagSegments { get; set; } = 2;
+
         // --- Flora context (v2) ---
 
         public bool UseFloraContext { get; set; } = true;

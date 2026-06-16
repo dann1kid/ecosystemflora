@@ -170,6 +170,12 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
+            if (WildFerntreeEcology.IsSpecies(species))
+            {
+                role = PlantSoilRole.ForestUnderstory;
+                return true;
+            }
+
             role = PlantSoilRole.MeadowPerennial;
             return false;
         }

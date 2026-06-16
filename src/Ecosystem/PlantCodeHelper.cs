@@ -130,6 +130,11 @@ namespace WildFarming.Ecosystem
                 if (WildFernEcology.TryGet(fernType, out _)) return fernType;
             }
 
+            if (path != null && path.StartsWith("ferntree-normal-"))
+            {
+                return WildFerntreeEcology.Species;
+            }
+
             string wood = GetTreeWood(blockCode);
             if (wood != null) return wood;
 
@@ -144,6 +149,15 @@ namespace WildFarming.Ecosystem
             if (path.StartsWith("log-grown-aged")) return false;
             return GetTreeWood(block) != null;
         }
+
+        public static bool IsFerntreeTrunkBlock(Block block) =>
+            FerntreeStructure.IsTrunkBlock(block);
+
+        public static bool IsFerntreeEcologyBlock(Block block) =>
+            FerntreeStructure.IsFerntreeBlock(block);
+
+        public static bool IsArborealHostBlock(Block block) =>
+            IsTreeLogGrownBlock(block) || IsFerntreeTrunkBlock(block);
 
         public static bool IsTreeSaplingBlock(Block block)
         {
@@ -163,6 +177,7 @@ namespace WildFarming.Ecosystem
             if (IsThirdPartyEcologyBlock(block)) return true;
             if (IsWildBerryBushBlock(block)) return true;
             if (IsTreeLogGrownBlock(block)) return true;
+            if (IsFerntreeTrunkBlock(block)) return true;
             return IsEcologyPlant(block);
         }
 
@@ -286,6 +301,11 @@ namespace WildFarming.Ecosystem
                 return GetTreeTrunkBase(acc, pos);
             }
 
+            if (IsFerntreeEcologyBlock(acc.GetBlock(pos)))
+            {
+                return FerntreeStructure.GetTrunkBase(acc, pos);
+            }
+
             return pos.Copy();
         }
 
@@ -301,6 +321,11 @@ namespace WildFarming.Ecosystem
             if (WildTreeEcology.TryGet(species, out _))
             {
                 return EcologyHabitat.TerrestrialTree;
+            }
+
+            if (WildFerntreeEcology.IsSpecies(species))
+            {
+                return EcologyHabitat.Ferntree;
             }
 
             return EcologyHabitat.Terrestrial;
@@ -320,6 +345,11 @@ namespace WildFarming.Ecosystem
             if (wood != null && IsTreeLogGrownBlock(block))
             {
                 return new AssetLocation("game:sapling-" + wood + "-free");
+            }
+
+            if (IsFerntreeTrunkBlock(block))
+            {
+                return new AssetLocation("game:ferntree-normal-trunk");
             }
 
             if (!IsEcologyPlant(block)) return null;

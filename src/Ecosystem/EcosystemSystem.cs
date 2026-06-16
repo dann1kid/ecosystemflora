@@ -28,6 +28,7 @@ namespace WildFarming.Ecosystem
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
+        readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         bool calendarDebugLogged;
@@ -291,6 +292,8 @@ namespace WildFarming.Ecosystem
             ColumnCache = null;
             activeChunkScratch.Clear();
             foliageCells.Clear();
+            treeGrowthScheduler.Clear();
+            ferntreeGrowthScheduler.Clear();
             cyclicTreeScanner.Clear();
             Instance = null;
             api = null;
@@ -324,7 +327,8 @@ namespace WildFarming.Ecosystem
         {
             if (pos == null) return false;
             if (registry.Contains(pos)) return true;
-            return TryResolveTreeRegistryPos(pos, out BlockPos basePos) && registry.Contains(basePos);
+            if (TryResolveTreeRegistryPos(pos, out BlockPos basePos) && registry.Contains(basePos)) return true;
+            return TryResolveFerntreeRegistryPos(pos, out BlockPos ferntreeBase) && registry.Contains(ferntreeBase);
         }
 
         public bool TryGetReproducer(BlockPos pos, out ReproducerEntry entry)
@@ -337,8 +341,26 @@ namespace WildFarming.Ecosystem
             {
                 lookup = basePos;
             }
+            else if (TryResolveFerntreeRegistryPos(pos, out BlockPos ferntreeBase))
+            {
+                lookup = ferntreeBase;
+            }
 
             return registry.TryGetEntry(lookup, out entry);
+        }
+
+        bool TryResolveFerntreeRegistryPos(BlockPos pos, out BlockPos basePos)
+        {
+            basePos = pos;
+            if (api?.World?.BlockAccessor == null) return false;
+            if (!EcosystemConfig.Loaded.EnableFerntreeEcology) return false;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            Block block = acc.GetBlock(pos);
+            if (!PlantCodeHelper.IsFerntreeEcologyBlock(block)) return false;
+
+            basePos = FerntreeStructure.GetTrunkBase(acc, pos);
+            return true;
         }
 
         bool TryResolveTreeRegistryPos(BlockPos pos, out BlockPos basePos)
@@ -451,6 +473,7 @@ namespace WildFarming.Ecosystem
             if (spreadBlockCode == null || matureBlockCode == null || requirements == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (requirements.Habitat == EcologyHabitat.Ferntree && !cfg.EnableFerntreeEcology) return;
             if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, origin, cfg.PlayerActivationRadiusBlocks))
             {
                 return;
@@ -526,6 +549,18 @@ namespace WildFarming.Ecosystem
 
                     treeCalendarAgeStore.Capture(entry, wood);
                     foliageCells.OnBlockAdded(origin);
+                }
+                else if (requirements.Habitat == EcologyHabitat.Ferntree
+                         && PlantCodeHelper.IsFerntreeTrunkBlock(matureBlock)
+                         && cfg.EnableFerntreeEcology)
+                {
+                    if (!treeCalendarAgeStore.TryRestore(entry, origin, WildFerntreeEcology.Species))
+                    {
+                        entry.TreeAgeYears = 0;
+                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                    }
+
+                    treeCalendarAgeStore.Capture(entry, WildFerntreeEcology.Species);
                 }
 
 
@@ -759,6 +794,11 @@ namespace WildFarming.Ecosystem
                 string wood = PlantCodeHelper.GetTreeWood(oldBlock);
                 treeCalendarAgeStore.TryRemoveIfTreeGone(api.World.BlockAccessor, pos, wood);
             }
+            else if (PlantCodeHelper.IsFerntreeEcologyBlock(oldBlock))
+            {
+                treeCalendarAgeStore.TryRemoveIfTreeGone(
+                    api.World.BlockAccessor, pos, WildFerntreeEcology.Species);
+            }
 
             if (CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock))
             {
@@ -956,7 +996,10 @@ namespace WildFarming.Ecosystem
             if (registrationsLeft <= 0 || basePos == null) return false;
             if (registry.Contains(basePos)) return false;
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
             Block block = acc.GetBlock(basePos);
+            if (PlantCodeHelper.IsFerntreeTrunkBlock(block) && !cfg.EnableFerntreeEcology) return false;
+
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
 
             RegisterReproducer(basePos, participant, spawnBurst: false);
@@ -1189,6 +1232,14 @@ namespace WildFarming.Ecosystem
                 treeCalendarAgeStore,
                 CompleteTreeSenescenceRemoval);
 
+            ferntreeGrowthScheduler.Tick(
+                api,
+                cfg,
+                registry,
+                spreadActiveChunks,
+                treeCalendarAgeStore,
+                CompleteTreeSenescenceRemoval);
+
             IBlockAccessor acc = api.World.BlockAccessor;
 
             if (spreadActiveChunks == null || spreadActiveChunks.Count > 0)
@@ -1276,6 +1327,19 @@ namespace WildFarming.Ecosystem
                     if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
                     {
                         pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
+                        return;
+                    }
+
+                    if (requirements.Habitat == EcologyHabitat.Ferntree)
+                    {
+                        BlockPos basePos = FerntreeStructure.GetTrunkBase(api.World.BlockAccessor, pos);
+                        Block trunkBlock = api.World.BlockAccessor.GetBlock(basePos);
+                        if (EcosystemParticipant.TryFromBlock(trunkBlock, out IEcosystemParticipant ferntreeParticipant))
+                        {
+                            RegisterReproducer(basePos, ferntreeParticipant, spawnBurst: false);
+                        }
+
+                        InvalidateEnvironmentAround(basePos);
                         return;
                     }
 

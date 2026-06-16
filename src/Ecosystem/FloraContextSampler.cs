@@ -146,6 +146,11 @@ namespace WildFarming.Ecosystem
                 return !path.StartsWith("log-grown-aged");
             }
 
+            if (path.StartsWith("ferntree-normal-trunk"))
+            {
+                return true;
+            }
+
             if (path.StartsWith("leaves-") || path.StartsWith("plaintreesapling-"))
             {
                 return true;

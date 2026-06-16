@@ -225,6 +225,12 @@ namespace WildFarming.Ecosystem
                 return PlantCodeHelper.GetTreeTrunkBase(acc, pos);
             }
 
+            if (req?.Habitat == EcologyHabitat.Ferntree
+                && PlantCodeHelper.IsFerntreeEcologyBlock(block))
+            {
+                return FerntreeStructure.GetTrunkBase(acc, pos);
+            }
+
             return pos;
         }
 
@@ -269,6 +275,7 @@ namespace WildFarming.Ecosystem
                 }
 
                 AppendTreeAgingInspect(api, entry, lines);
+            AppendFerntreeAgingInspect(api, entry, lines);
 
                 if (api.World?.Calendar != null)
                 {
@@ -614,6 +621,54 @@ namespace WildFarming.Ecosystem
                 sizePct.ToString(),
                 profile.ReferenceTrunkHeight.ToString(),
                 profile.ReferenceCrownRadius.ToString());
+        }
+
+        static void AppendFerntreeAgingInspect(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            List<InspectLineLite> lines)
+        {
+            if (entry?.Requirements?.Habitat != EcologyHabitat.Ferntree) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableFerntreeEcology || !cfg.EnableTreeAging || api?.World?.BlockAccessor == null) return;
+
+            WildFerntreeEcology.Profile profile = WildFerntreeEcology.Resolve();
+            int segments = FerntreeStructure.MeasureTrunkSegmentCount(api.World.BlockAccessor, entry.Origin);
+            BlockPos topPos = FerntreeStructure.FindTopPos(api.World.BlockAccessor, entry.Origin);
+            FerntreeTopMaturity maturity = FerntreeStructure.ParseTopMaturity(
+                api.World.BlockAccessor.GetBlock(topPos));
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-ferntree-age",
+                entry.TreeAgeYears.ToString(),
+                profile.SenescenceAgeYears.ToString());
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-ferntree-size",
+                segments.ToString(),
+                maturity.ToString().ToLowerInvariant());
+
+            if (FerntreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, cfg))
+            {
+                switch (entry.TreeSenescencePhase)
+                {
+                    case TreeSenescencePhase.Declining:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-ferntree-senescence-foliage");
+                        break;
+                    case TreeSenescencePhase.DeadCrown:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-ferntree-senescence-top");
+                        break;
+                    case TreeSenescencePhase.Snag:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-ferntree-senescence-snag");
+                        break;
+                    default:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-ferntree-senescence");
+                        break;
+                }
+            }
         }
 
         static void AppendMyceliumInspect(

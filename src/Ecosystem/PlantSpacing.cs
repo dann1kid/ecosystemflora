@@ -110,6 +110,7 @@ namespace WildFarming.Ecosystem
                 case EcologyHabitat.UnderwaterColumn:
                     return 1;
                 case EcologyHabitat.TerrestrialTree:
+                case EcologyHabitat.Ferntree:
                     return 2;
                 default:
                     return 0;
