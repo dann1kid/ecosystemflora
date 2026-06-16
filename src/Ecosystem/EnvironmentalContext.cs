@@ -90,6 +90,14 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             EnvironmentalColumnCache cache)
         {
+            EcologyColumnState ecology = EcosystemSystem.Instance?.EcologyColumns;
+            if (ecology != null
+                && EcosystemConfig.Loaded.EnableEcologyColumnCache
+                && ecology.TryGetSpreadSnapshot(api, plantPos, out SpreadColumnSnapshot columnSnap))
+            {
+                return SampleForSpread(api, plantPos, in columnSnap, requirements);
+            }
+
             IBlockAccessor acc = api.World.BlockAccessor;
 
             float worldgenRainfall;
@@ -114,6 +122,35 @@ namespace WildFarming.Ecosystem
                 localForestCover = flora.GetLocalForestCover(api, plantPos);
             }
 
+            return BuildSpreadContext(api, plantPos, in snap, requirements, worldgenRainfall, hasClimate, localForestCover);
+        }
+
+        internal static EnvironmentalContext SampleForSpread(
+            ICoreAPI api,
+            BlockPos plantPos,
+            in SpreadColumnSnapshot columnSnap,
+            PlantRequirements requirements)
+        {
+            return BuildSpreadContext(
+                api,
+                plantPos,
+                in columnSnap.BlockSnap,
+                requirements,
+                columnSnap.WorldgenRainfall,
+                columnSnap.HasClimate,
+                columnSnap.LocalForestCover);
+        }
+
+        static EnvironmentalContext BuildSpreadContext(
+            ICoreAPI api,
+            BlockPos plantPos,
+            in CellBlockSnapshot snap,
+            PlantRequirements requirements,
+            float worldgenRainfall,
+            bool hasClimate,
+            float localForestCover)
+        {
+            IBlockAccessor acc = api.World.BlockAccessor;
             bool shallowWater = ComputeWaterRequirement(acc, plantPos, snap.Ground, requirements);
 
             int groundFertility = (int)snap.Ground.Fertility;

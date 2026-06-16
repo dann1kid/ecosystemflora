@@ -204,7 +204,14 @@ namespace WildFarming.Ecosystem
 
                     if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) { dClaim++; continue; }
 
-                    CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, plantPos);
+                    EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
+                    CellBlockSnapshot snap;
+                    SpreadColumnSnapshot columnSnap = default;
+                    bool haveColumnSnap = ecologyColumns != null
+                        && cfg.EnableEcologyColumnCache
+                        && ecologyColumns.TryGetSpreadSnapshot(api, plantPos, out columnSnap);
+                    snap = haveColumnSnap ? columnSnap.BlockSnap : CellBlockSnapshot.Sample(acc, plantPos);
+
                     if (!SpreadPreflight.PassesPhysicalGate(acc, plantPos, requirements, in snap, out bool isEmpty))
                     {
                         dPreflight++;
@@ -218,9 +225,10 @@ namespace WildFarming.Ecosystem
 
                     if (canOccupy)
                     {
-                        EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
-                        EnvironmentalContext ctx = EnvironmentalContext.SampleForSpread(
-                            api, plantPos, in snap, requirements, cache);
+                        EnvironmentalContext ctx = haveColumnSnap
+                            ? EnvironmentalContext.SampleForSpread(api, plantPos, in columnSnap, requirements)
+                            : EnvironmentalContext.SampleForSpread(
+                                api, plantPos, in snap, requirements, EcosystemSystem.Instance?.ColumnCache);
                         fitness = CellCompetition.SpreadScoreFromContext(
                             api, requirements, plantPos, harshClimate, ctx);
                         fitness *= seedFitnessScale;

@@ -40,6 +40,7 @@ namespace WildFarming.Ecosystem
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
+        internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
 
@@ -71,6 +72,7 @@ namespace WildFarming.Ecosystem
             Niche = new NicheSampler();
             SpacingIndex = new EcologySpacingIndex();
             ColumnCache = new EnvironmentalColumnCache();
+            EcologyColumns = new EcologyColumnState();
 
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
             int stressInterval = EcosystemConfig.Loaded.StressTickIntervalMs > 0
@@ -312,6 +314,8 @@ namespace WildFarming.Ecosystem
             if (pos == null) return;
             ColumnCache?.InvalidateAround(pos, 1);
             Niche?.InvalidateAround(pos, 2);
+            FloraContext?.InvalidateAround(pos, 2);
+            EcologyColumns?.InvalidateAround(pos, 2);
         }
 
         public void WakeEcologyAround(BlockPos pos)

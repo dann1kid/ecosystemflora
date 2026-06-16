@@ -195,6 +195,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Horizontal wake radius in blocks. 0 = derive from spread radius, spacing, and flora context.</summary>
         public int EcologyWakeRadiusBlocks { get; set; } = 0;
 
+        /// <summary>Cache spread cell snapshots (blocks + rain + forest cover) on the spread hot path (Phase 6.4).</summary>
+        public bool EnableEcologyColumnCache { get; set; } = true;
+
         public int PlayerActivationRadiusBlocks { get; set; } = 192;
 
         /// <summary>Minimum horizontal distance between spread plants.</summary>

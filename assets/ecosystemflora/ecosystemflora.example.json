@@ -38,6 +38,7 @@
   "MaxSpreadChunksVisitedPerTick": 32,
   "EnableEventDrivenSpread": true,
   "EcologyWakeRadiusBlocks": 0,
+  "EnableEcologyColumnCache": true,
   "PlayerActivationRadiusBlocks": 192,
   "PlantSpacingEnabled": true,
   "ApplyCrossHabitatSpacing": false,
