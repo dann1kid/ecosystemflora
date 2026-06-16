@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-06-14 (стадия **Ecosystem v3.7.0**, версия **`3.7.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-06-14 (стадия **Ecosystem v3.8.0**, версия **`3.8.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -219,7 +219,7 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.7.0`, версия `3.7.0`.** … **v3.6 wild tree maturation + phased senescence**; **v3.7 tree fern + canopy sticks/branches + wild vines**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v3.8.0`, версия `3.8.0`.** … **v3.6 wild tree maturation + phased senescence**; **v3.7 tree fern + canopy sticks/branches + wild vines**; **v3.8 Phase 6 simulation engine**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
 
 | Компонент | Статус |
 |-----------|--------|
@@ -230,7 +230,7 @@ docs/
 | Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
 | Legacy JakeCool в сборке | ⏸ удалён |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.7.0**).
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.8.0**).
 - **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
 
 ---
@@ -278,6 +278,7 @@ docs/
 - [x] **v3.2.0** — **Canopy phenology** — deciduous partial defol + spring bud (`CanopyPhenology`, [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) — ✅.
 - [x] **v3.6.0** — **Wild tree maturation** + phased senescence — [`TREE_AGING.md`](TREE_AGING.md) — ✅.
 - [x] **v3.7.0** — **Tree fern**, canopy sticks/age branches, **wild vines** — [`FERNTREE.md`](FERNTREE.md), [`WILD_VINE.md`](WILD_VINE.md) — ✅ (playtest).
+- [x] **v3.8.0** — **Phase 6 simulation engine** — chunk-fair spread, wake, column cache, two-phase placement, registration priority, empty-first spread — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) — ✅.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.

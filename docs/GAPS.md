@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.7.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **3.8.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -105,9 +105,9 @@
 
 ## 8. Производительность и масштаб
 
-Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake. См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
+Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake, **player-priority registration**, **empty-first spread collect** with column occupancy hint (displacement when no empty cells). См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 
-**Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
+**Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, `EnableEmptyFirstSpreadCollect`, `EnableSpreadColumnOccupancyHint` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
 
 **Не задокументировано числами:** поведение при 20k+ reproducers, несколько игроков на разных краях карты. `OnlyActivateNearPlayers: true` — playtest-режим (урезанный радиус); при default **false** экосистема живёт во всех loaded chunks.
 

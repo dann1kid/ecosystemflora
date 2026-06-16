@@ -209,6 +209,7 @@ Drain pending queue (round-robin by target chunk)
 | **6.4** | `EcologyColumnState` unified snapshot | Средний | Invalidation + spread preflight hits cache |
 | **6.5** | `PendingSpreadQueue` two-phase commit | Средний | No double-place; version re-check |
 | **6.6** | Season coarse wake + docs/handbook | Низкий | Season mult still applied |
+| **6.7** | Player-priority registration + empty-first spread collect | Низкий | Displacement when no vacancy; burst completes nearby chunk |
 
 **Не в 6.x:** multithreading, LOD «fake ecology» далеко от игрока, item propagation.
 
@@ -263,3 +264,4 @@ Drain pending queue (round-robin by target chunk)
 - [x] **PR 6.4** — `EcologyColumnState` + `SpreadColumnSnapshot` + invalidation hub
 - [x] **PR 6.5** — `PendingSpreadQueue` two-phase evaluate/commit
 - [x] **PR 6.6** — season coarse wake + handbook
+- [x] **PR 6.7** — `RegistrationScanQueue` priority/burst; empty-first spread + `EcologyColumnOccupancy` hint

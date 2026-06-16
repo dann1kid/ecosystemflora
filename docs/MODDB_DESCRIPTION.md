@@ -37,13 +37,16 @@ Default preset is natural; use BalancePreset sparse for patchier wilderness.
 ## 3.8 — ModDB update (short paste, Phase 6)
 
 ```
-3.8 — simulation engine (spread scheduling)
+3.8.0 — simulation engine (Phase 6 complete)
 
-• Chunk-fair spread — round-robin across all loaded ecology chunks (not just near players). EnableChunkFairSpread (default on).
-• Event wake — nearby plants react to breaks, placement, displacement, and soil changes; calendar spread remains as fallback. EnableEventDrivenSpread (default on).
-• Optional reproduce-tick profiling for large worlds (EnableReproduceTickProfiling).
+• Chunk-fair spread — round-robin across all loaded ecology chunks (EnableChunkFairSpread, default on).
+• Event wake — plants retry spread after breaks, placement, displacement, soil changes (EnableEventDrivenSpread).
+• Two-phase placement — evaluate then commit with revalidation (EnableTwoPhaseSpreadPlacement).
+• Season coarse wake — seasonal species wake each in-game month (EnableSeasonCoarseWake).
+• Fast registration — player-vicinity chunks register first; burst completes one nearby chunk on load (EnablePlayerPriorityRegistration, EnableBurstRegistrationNearPlayers).
+• Empty-first spread — scans empty cells first; displacement still runs when no vacancy (EnableEmptyFirstSpreadCollect). Column occupancy hint skips known plant columns (EnableSpreadColumnOccupancyHint).
 
-Full scope in loaded chunks; tune MaxSpreadAttemptsPerChunkPerTick / MaxSpreadChunksVisitedPerTick on powerful hardware.
+Full ecology in loaded chunks — tune MaxSpreadAttemptsPerChunkPerTick / MaxSpreadChunksVisitedPerTick on powerful hardware. Handbook updated (en/ru). Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
 ```
 
 ---

@@ -3,9 +3,74 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.7.0**
+**This release:** **3.8.0**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## Since 3.7.0 — at a glance
+
+| Area | What you get |
+|------|----------------|
+| **Simulation engine** | Chunk-fair spread across loaded chunks; event wake on break/place/displacement; column cache; two-phase evaluate/commit; monthly wake for seasonal species |
+| **Registration** | Player-vicinity chunks register first; burst completes one nearby chunk on load — tallgrass and flowers show in inspect (I) quickly |
+| **Spread perf** | Empty cells scanned first with full fitness; displacement still runs when no vacancy; column occupancy hint skips known plant columns |
+| **Handbook** | Configuration guide updated (en/ru) for v3.8 keys |
+| **Tests** | 323 unit tests |
+
+---
+
+## 3.8.0 — Simulation engine (Phase 6)
+
+Full ecology in **all loaded chunks** without geographic cutoffs. Smarter scheduling instead of throttling scope.
+
+### Spread scheduling
+
+- **Chunk-fair spread** — round-robin across ecology registry chunks (`EnableChunkFairSpread`, default on).
+- **Event wake** — neighbors retry spread after breaks, placement, displacement, soil succession (`EnableEventDrivenSpread`).
+- **Column cache** — spread preflight reads `SpreadColumnSnapshot` (`EnableEcologyColumnCache`).
+- **Two-phase placement** — evaluate candidates without `SetBlock`, then chunk-fair commit with revalidation (`EnableTwoPhaseSpreadPlacement`).
+- **Season coarse wake** — seasonal species wake each in-game month (`EnableSeasonCoarseWake`).
+
+Break turf or fell a tree — the meadow reacts within a couple of spread ticks.
+
+### Registration (deferred chunk scan)
+
+When you explore, flora registers incrementally. New in 3.8:
+
+- **Priority queue** — chunks within `PlayerRegistrationPriorityRadiusBlocks` (default 384) drain before the background queue (`EnablePlayerPriorityRegistration`).
+- **Burst on load** — one nearby chunk can finish registration in a single callback (`EnableBurstRegistrationNearPlayers`, ~250 ms budget).
+
+Distant loaded chunks still register in the background — full scope, faster where you stand.
+
+### Spread collect (terrestrial)
+
+- **Empty-first** — scan empty/vacancy cells with full fitness first (`EnableEmptyFirstSpreadCollect`). **Displacement is unchanged** when no empty cell qualifies.
+- **Occupancy hint** — spacing index tracks occupied XZ columns per chunk; empty-first pass skips them before expensive placement (`EnableSpreadColumnOccupancyHint`).
+
+Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without displacement.
+
+### Config (new / raised defaults)
+
+| Key | Default | Purpose |
+|-----|:-------:|---------|
+| `EnableChunkFairSpread` | true | RR spread per loaded chunk |
+| `EnableEventDrivenSpread` | true | Wake on world changes |
+| `EnableEcologyColumnCache` | true | Spread column snapshot cache |
+| `EnableTwoPhaseSpreadPlacement` | true | Evaluate then commit queue |
+| `EnableSeasonCoarseWake` | true | Monthly wake for seasonal species |
+| `EnablePlayerPriorityRegistration` | true | Player-vicinity registration first |
+| `EnableBurstRegistrationNearPlayers` | true | Finish one nearby chunk on load |
+| `PlayerRegistrationPriorityRadiusBlocks` | 384 | Priority/burst radius |
+| `MaxChunkColumnsScannedPerTick` | 16 | Background registration throughput |
+| `MaxRegistrationsPerTick` | 2048 | Background registration cap |
+| `EnableEmptyFirstSpreadCollect` | true | Empty cells before displacement |
+| `EnableSpreadColumnOccupancyHint` | true | Skip occupied columns on empty-first pass |
+
+Legacy safety (unchanged): `OnlyActivateNearPlayers`, `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
+
+See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) and handbook *Configuration Guide*.
 
 ---
 

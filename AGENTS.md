@@ -7,7 +7,7 @@ Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
 - what to reuse from the original Wild Farming idea vs what to ignore;
-- current repo stage: **Ecosystem v3.7.0** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`; canopy — `docs/CANOPY_PHENOLOGY.md`, ambience — `docs/CANOPY_AMBIENCE.md`, tree lifecycle — `docs/TREE_AGING.md`, tree fern — `docs/FERNTREE.md`, wild vines — `docs/WILD_VINE.md`; player changelog — `docs/CHANGELOG.md`;
+- current repo stage: **Ecosystem v3.8.0** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`; Phase 6 — `docs/PHASE6_SIMULATION.md`; canopy — `docs/CANOPY_PHENOLOGY.md`, ambience — `docs/CANOPY_AMBIENCE.md`, tree lifecycle — `docs/TREE_AGING.md`, tree fern — `docs/FERNTREE.md`, wild vines — `docs/WILD_VINE.md`; player changelog — `docs/CHANGELOG.md`;
 - agent rules and constraints.
 
 Quick constraints:
@@ -19,7 +19,7 @@ Quick constraints:
 - Do **not** expand living trees or termites unless the user asks. **Mycelium (v3.1.12):** soft niche around vanilla `BlockEntityMycelium` only — no custom mushroom blocks. **Ferntree / wild vines (v3.7):** vanilla blocks only; playtest before tuning.
 - Legacy BE: `src/Ecosystem/LegacyBlockEntityMigration.cs` (EcoSystemLife / EcosystemPlant strip on load); new logic under `src/Ecosystem/`.
 - Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
-- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 279 tests).
+- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 323 tests).
 - **Config:** `TryLoadFromDisk` rewrites `ModConfig/ecosystemflora.json` after load so new keys appear automatically (server always; client when file exists).
 - Do **not** run alongside **wildfarmingrevival**.
 
