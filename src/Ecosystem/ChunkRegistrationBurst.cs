@@ -35,7 +35,7 @@ namespace WildFarming.Ecosystem
                 ? Stopwatch.GetTimestamp() + totalBudgetMs * freq / 1000
                 : long.MaxValue;
 
-            int registrationsLeft = maxRegistrations;
+            int scanScratch = 0;
             var job = new PendingChunkScan(chunkCoord);
 
             bool syncFoliage = cfg.EnableSeasonalFoliage && FoliageSyncModeHelper.UsesChunkSync(cfg);
@@ -44,7 +44,7 @@ namespace WildFarming.Ecosystem
                 ? eco.FoliageCells?.Index
                 : null;
 
-            while (registrationsLeft > 0 && Stopwatch.GetTimestamp() < totalDeadline)
+            while (Stopwatch.GetTimestamp() < totalDeadline)
             {
                 long passDeadline = passBudgetMs > 0
                     ? System.Math.Min(
@@ -56,7 +56,7 @@ namespace WildFarming.Ecosystem
                         job,
                         acc,
                         cfg,
-                        ref registrationsLeft,
+                        ref scanScratch,
                         passDeadline,
                         syncFoliage,
                         seasonKey,
@@ -70,7 +70,7 @@ namespace WildFarming.Ecosystem
 
                 if (completed)
                 {
-                    queue.MarkComplete(chunkCoord);
+                    eco.NotifyRegistrationScanCompleted(chunkCoord);
                     return true;
                 }
 

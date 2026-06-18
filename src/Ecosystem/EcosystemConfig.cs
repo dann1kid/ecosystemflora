@@ -142,8 +142,8 @@ namespace WildFarming.Ecosystem
         /// <summary>Complete nearby chunk registration in one load callback (burst ms budget).</summary>
         public bool EnableBurstRegistrationNearPlayers { get; set; } = true;
 
-        /// <summary>Block radius for priority/burst registration (defaults above spread activation).</summary>
-        public int PlayerRegistrationPriorityRadiusBlocks { get; set; } = 384;
+        /// <summary>Horizontal block radius for priority/burst registration near a player.</summary>
+        public int PlayerRegistrationPriorityRadiusBlocks { get; set; } = 16;
 
         /// <summary>Extra chunk scan passes per tick for the priority registration queue.</summary>
         public int MaxPriorityChunkScansPerTick { get; set; } = 48;
@@ -155,10 +155,16 @@ namespace WildFarming.Ecosystem
         public int PriorityRegistrationBudgetMs { get; set; } = 80;
 
         /// <summary>Total ms budget to finish one chunk on load near a player.</summary>
-        public int BurstRegistrationBudgetMs { get; set; } = 250;
+        public int BurstRegistrationBudgetMs { get; set; } = 80;
 
         /// <summary>Max registrations while completing one burst chunk near a player.</summary>
         public int MaxBurstRegistrationsPerChunk { get; set; } = 4096;
+
+        /// <summary>Registry applies per chunk-scan tick from the pending registration queue.</summary>
+        public int MaxRegistryAppliesPerTick { get; set; } = 64;
+
+        /// <summary>Extra pending applies per tick for player-priority chunks before background drain.</summary>
+        public int MaxPriorityRegistryAppliesPerTick { get; set; } = 128;
 
         public int ResolvePriorityRegistrationBudgetMs() =>
             PriorityRegistrationBudgetMs > 0 ? PriorityRegistrationBudgetMs : ResolveRegistrationBudgetMs();
@@ -189,7 +195,16 @@ namespace WildFarming.Ecosystem
         public int ReproduceTickProfilingIntervalMs { get; set; } = 30000;
 
         /// <summary>Interval (ms) between stress-check ticks. Higher = less CPU for stress, slower die-off.</summary>
-        public int StressTickIntervalMs { get; set; } = 6000;
+        public int StressTickIntervalMs { get; set; } = 5500;
+
+        /// <summary>Real-time ms between spread / foliage / tree-growth ticks.</summary>
+        public int ReproduceTickIntervalMs { get; set; } = 2000;
+
+        /// <summary>
+        /// Real-time ms between deferred chunk-registration ticks.
+        /// Use a value not divisible by <see cref="ReproduceTickIntervalMs"/> to avoid aligned CPU spikes.
+        /// </summary>
+        public int ChunkScanTickIntervalMs { get; set; } = 2300;
 
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;

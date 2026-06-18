@@ -17,7 +17,7 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 | **Registration** | Player-vicinity chunks register first; burst completes one nearby chunk on load — tallgrass and flowers show in inspect (I) quickly |
 | **Spread perf** | Empty cells scanned first with full fitness; displacement still runs when no vacancy; column occupancy hint skips known plant columns |
 | **Handbook** | Configuration guide updated (en/ru) for v3.8 keys |
-| **Tests** | 323 unit tests |
+| **Tests** | 329 unit tests |
 
 ---
 
@@ -39,8 +39,9 @@ Break turf or fell a tree — the meadow reacts within a couple of spread ticks.
 
 When you explore, flora registers incrementally. New in 3.8:
 
-- **Priority queue** — chunks within `PlayerRegistrationPriorityRadiusBlocks` (default 384) drain before the background queue (`EnablePlayerPriorityRegistration`).
-- **Burst on load** — one nearby chunk can finish registration in a single callback (`EnableBurstRegistrationNearPlayers`, ~250 ms budget).
+- **Priority queue** — chunks within `PlayerRegistrationPriorityRadiusBlocks` (default 16) drain before the background queue (`EnablePlayerPriorityRegistration`).
+- **Burst on load** — one nearby chunk can finish registration in a single callback (`EnableBurstRegistrationNearPlayers`, ~80 ms scan budget).
+- **Paced registry apply** — column scan collects hits into a pending queue; up to 64–128 `RegisterReproducer` calls per tick (priority first). Fixes “lost tail” flora when scan budget ran out mid-chunk.
 
 Distant loaded chunks still register in the background — full scope, faster where you stand.
 
@@ -62,7 +63,10 @@ Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without d
 | `EnableSeasonCoarseWake` | true | Monthly wake for seasonal species |
 | `EnablePlayerPriorityRegistration` | true | Player-vicinity registration first |
 | `EnableBurstRegistrationNearPlayers` | true | Finish one nearby chunk on load |
-| `PlayerRegistrationPriorityRadiusBlocks` | 384 | Priority/burst radius |
+| `PlayerRegistrationPriorityRadiusBlocks` | 16 | Priority/burst radius |
+| `BurstRegistrationBudgetMs` | 80 | Burst scan time budget per load (ms) |
+| `MaxRegistryAppliesPerTick` | 64 | Paced registry applies per chunk-scan tick |
+| `MaxPriorityRegistryAppliesPerTick` | 128 | Extra applies for player-vicinity chunks |
 | `MaxChunkColumnsScannedPerTick` | 16 | Background registration throughput |
 | `MaxRegistrationsPerTick` | 2048 | Background registration cap |
 | `EnableEmptyFirstSpreadCollect` | true | Empty cells before displacement |
@@ -71,6 +75,48 @@ Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without d
 Legacy safety (unchanged): `OnlyActivateNearPlayers`, `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
 
 See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) and handbook *Configuration Guide*.
+
+---
+
+## Кратко — с 3.7.0 до 3.8.0 (RU)
+
+**Базовый релиз:** 3.7.0 (папоротник-дерево, крона, лианы). **Этот релиз:** 3.8.0.
+
+### Контент (3.7.1)
+
+- **Red top grass** — колонизатор луга, конкурирует с tallgrass (не «цветок луга»).
+- **Brown sedge**, croton, rafflesias, barrel/silver-torch cactus, frosted tallgrass — полные ecology-профили.
+- Turf colonizers без бонуса на пустые клетки — захват существующей травы.
+
+### Симуляция (Phase 6)
+
+- Spread **по чанкам** + **пробуждение** от изменений мира; двухфазный commit; coarse wake сезонных видов.
+- **Быстрая регистрация** рядом с игроком (priority + burst) — осмотр (I) видит луг сразу.
+- **Empty-first spread** — пустые клетки первыми; **displacement** если vacancy нет.
+
+Handbook (en/ru). VS 1.22+. Не совместим с Wild Farming Revival.
+
+---
+
+## ModDB paste — 3.8.0 update text
+
+```
+Since 3.7.0 → 3.8.0
+
+FLORA (3.7.1)
+• Red top grass — meadow colonizer, competes with tallgrass.
+• Brown sedge, croton, rafflesias, cacti, frosted tallgrass — full ecology profiles.
+• Turf colonizers skip empty-cell bonus — invade existing grass, not garden fill.
+
+SIMULATION (Phase 6)
+• Chunk-fair spread + event wake on break/place/displacement.
+• Two-phase placement, column cache, monthly wake for seasonal species.
+• Fast registration near you (priority queue + burst on chunk load).
+• Empty-first spread; displacement when no empty cell. Column occupancy hint.
+
+Handbook updated (en/ru). Press I for ecology inspect.
+VS 1.22+. Do not run alongside Wild Farming Revival.
+```
 
 ---
 

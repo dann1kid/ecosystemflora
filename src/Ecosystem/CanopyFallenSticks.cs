@@ -37,41 +37,13 @@ namespace WildFarming.Ecosystem
             Block stick = api.World.GetBlock(new AssetLocation("game:loosestick-free"));
             if (stick == null || stick.Id == 0) return;
 
-            Block space = acc.GetBlock(stickPos);
-            if (!PlantVacancyRules.IsVacantPlantSpace(space)) return;
+            if (!SurfacePlacement.IsValidPlantSite(acc, stickPos)) return;
 
             acc.SetBlock(stick.BlockId, stickPos);
             acc.MarkBlockDirty(stickPos);
         }
 
-        internal static bool TryFindGroundStickCell(IBlockAccessor acc, BlockPos from, out BlockPos stickPos)
-        {
-            stickPos = null;
-            if (acc == null || from == null) return false;
-
-            var column = new BlockPos(from.X, from.Y, from.Z);
-            int minY = from.Y - MaxDropScan;
-            if (minY < 0) minY = 0;
-
-            for (int y = from.Y - 1; y >= minY; y--)
-            {
-                column.Set(from.X, y, from.Z);
-                if (!acc.IsValidPos(column)) break;
-
-                Block ground = acc.GetBlock(column);
-                if (ground.Id == 0 || ground.Replaceable >= 6000) continue;
-
-                BlockPos above = column.UpCopy();
-                if (!acc.IsValidPos(above)) continue;
-
-                Block air = acc.GetBlock(above);
-                if (!PlantVacancyRules.IsVacantPlantSpace(air)) continue;
-
-                stickPos = above.Copy();
-                return true;
-            }
-
-            return false;
-        }
+        internal static bool TryFindGroundStickCell(IBlockAccessor acc, BlockPos from, out BlockPos stickPos) =>
+            SurfacePlacement.TryFindSurfaceCellBelow(acc, from, MaxDropScan, out stickPos);
     }
 }

@@ -25,7 +25,7 @@ namespace WildFarming.Tests
             var cfg = new EcosystemConfig();
             Assert.True(cfg.EnablePlayerPriorityRegistration);
             Assert.True(cfg.EnableBurstRegistrationNearPlayers);
-            Assert.Equal(384, cfg.PlayerRegistrationPriorityRadiusBlocks);
+            Assert.Equal(16, cfg.PlayerRegistrationPriorityRadiusBlocks);
             Assert.Equal(48, cfg.MaxPriorityChunkScansPerTick);
             Assert.Equal(8192, cfg.MaxPriorityRegistrationsPerTick);
         }
@@ -36,7 +36,9 @@ namespace WildFarming.Tests
             var cfg = new EcosystemConfig();
             Assert.Equal(16, cfg.MaxChunkColumnsScannedPerTick);
             Assert.Equal(2048, cfg.MaxRegistrationsPerTick);
-            Assert.Equal(250, cfg.BurstRegistrationBudgetMs);
+            Assert.Equal(80, cfg.BurstRegistrationBudgetMs);
+            Assert.Equal(64, cfg.MaxRegistryAppliesPerTick);
+            Assert.Equal(128, cfg.MaxPriorityRegistryAppliesPerTick);
         }
     }
 }

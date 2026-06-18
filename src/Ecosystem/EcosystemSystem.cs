@@ -15,6 +15,7 @@ namespace WildFarming.Ecosystem
         ICoreAPI api;
         readonly ReproducerRegistry registry = new ReproducerRegistry();
         readonly RegistrationScanQueue registrationScanQueue = new RegistrationScanQueue();
+        readonly PendingRegistrationQueue pendingRegistrations = new PendingRegistrationQueue();
 
         /// <summary>Cap inactive-chunk rotations per tick (avoids O(queue) spin when queue is huge).</summary>
         const int MaxChunkScanDequeAttemptsPerTick = 128;
@@ -76,11 +77,17 @@ namespace WildFarming.Ecosystem
             ColumnCache = new EnvironmentalColumnCache();
             EcologyColumns = new EcologyColumnState();
 
-            reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, 2000);
-            int stressInterval = EcosystemConfig.Loaded.StressTickIntervalMs > 0
-                ? EcosystemConfig.Loaded.StressTickIntervalMs : 6000;
+            EcosystemConfig tickCfg = EcosystemConfig.Loaded;
+            int reproduceInterval = tickCfg.ReproduceTickIntervalMs > 0
+                ? tickCfg.ReproduceTickIntervalMs : 2000;
+            int stressInterval = tickCfg.StressTickIntervalMs > 0
+                ? tickCfg.StressTickIntervalMs : 5500;
+            int chunkScanInterval = tickCfg.ChunkScanTickIntervalMs > 0
+                ? tickCfg.ChunkScanTickIntervalMs : 2300;
+
+            reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, reproduceInterval);
             stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
-            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, 2000);
+            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, chunkScanInterval);
 
             foliageCells.RequestEcologyScan = coord => EnqueueChunkScan(coord);
 
@@ -778,6 +785,7 @@ namespace WildFarming.Ecosystem
         {
             var cc = new Vec2i(chunkCoord.X, chunkCoord.Z);
             registrationScanQueue.MarkUnloaded(cc);
+            pendingRegistrations.RemoveChunk(cc);
             registry.RemoveChunk(cc);
             SpacingIndex?.RemoveChunk(cc);
             foliageCells.RemoveChunk(cc);
@@ -895,16 +903,34 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (FloraContextSampler.IsForestNeighborBlock(oldBlock)
-                || (oldBlock != null && PlantCodeHelper.IsEcologyPlant(oldBlock)))
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            bool ecologyPlant = oldBlock != null && PlantCodeHelper.IsEcologyPlant(oldBlock);
+            bool forestNeighbor = FloraContextSampler.IsForestNeighborBlock(oldBlock);
+            bool inRegistry = registry.Contains(pos);
+            bool wakeNeighbors = cfg.EnableEventDrivenSpread
+                && (ecologyPlant
+                    || inRegistry
+                    || (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && cfg.EnableSymbiosis)
+                    || CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock));
+
+            if (!inRegistry && !ecologyPlant && !forestNeighbor && !wakeNeighbors) return;
+
+            if (forestNeighbor || ecologyPlant)
             {
                 FloraContext?.InvalidateAround(pos, 2);
             }
 
-            registry.Remove(pos);
-            SpacingIndex?.Remove(pos);
-            InvalidateEnvironmentAround(pos);
-            WakeEcologyAround(pos);
+            if (inRegistry)
+            {
+                registry.Remove(pos);
+                SpacingIndex?.Remove(pos);
+                InvalidateEnvironmentAround(pos);
+            }
+
+            if (wakeNeighbors)
+            {
+                WakeEcologyAround(pos);
+            }
         }
 
         void OnChunkScanTick(float dt)
@@ -1020,7 +1046,111 @@ namespace WildFarming.Ecosystem
                     tickBudgetWatch);
             }
 
+            DrainPendingRegistrations(cfg, acc, activePlayerChunks);
+
             tickBudgetWatch.Stop();
+        }
+
+        void DrainPendingRegistrations(EcosystemConfig cfg, IBlockAccessor acc, HashSet<long> activePlayerChunks)
+        {
+            if (pendingRegistrations.TotalPending == 0) return;
+
+            HashSet<long> priorityChunks = null;
+            if (cfg.EnablePlayerPriorityRegistration && api != null)
+            {
+                priorityChunks = PlayerProximity.BuildActivePlayerChunks(
+                    api, cfg.PlayerRegistrationPriorityRadiusBlocks);
+            }
+
+            int appliesLeft = cfg.MaxPriorityRegistryAppliesPerTick;
+            if (appliesLeft > 0 && priorityChunks != null && priorityChunks.Count > 0)
+            {
+                pendingRegistrations.Drain(this, acc, appliesLeft, priorityChunks);
+            }
+
+            appliesLeft = cfg.MaxRegistryAppliesPerTick;
+            if (appliesLeft > 0)
+            {
+                pendingRegistrations.Drain(this, acc, appliesLeft, priorityChunks);
+            }
+        }
+
+        internal void OnPendingChunkDrained(Vec2i chunkCoord)
+        {
+            if (pendingRegistrations.IsReadyToMarkComplete(chunkCoord))
+            {
+                registrationScanQueue.MarkComplete(chunkCoord);
+            }
+        }
+
+        internal void NotifyRegistrationScanCompleted(Vec2i chunkCoord)
+        {
+            pendingRegistrations.SetScanCompleted(chunkCoord, true);
+            if (pendingRegistrations.IsReadyToMarkComplete(chunkCoord))
+            {
+                registrationScanQueue.MarkComplete(chunkCoord);
+            }
+        }
+
+        internal bool TryApplyPendingRegistration(IBlockAccessor acc, PendingRegistration item, out bool stale)
+        {
+            stale = false;
+            if (acc == null || item.Pos == null) return false;
+
+            Block block = acc.GetBlock(item.Pos);
+            if (block == null || block.Id == 0)
+            {
+                stale = true;
+                return false;
+            }
+
+            if (item.BlockCode != null && block.Code != null
+                && !block.Code.Equals(item.BlockCode))
+            {
+                stale = true;
+                return false;
+            }
+
+            switch (item.Kind)
+            {
+                case PendingRegistrationKind.Tree:
+                    if (registry.Contains(item.Pos)) return true;
+                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant treeParticipant))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
+                    RegisterReproducer(item.Pos, treeParticipant, spawnBurst: false);
+                    return true;
+
+                case PendingRegistrationKind.Vine:
+                    if (registry.Contains(item.Pos)) return true;
+                    if (!WildVineHelper.IsEndBlock(block)) { stale = true; return false; }
+                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant vineParticipant))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
+                    RegisterReproducer(item.Pos, vineParticipant, spawnBurst: false);
+                    return true;
+
+                default:
+                    if (registry.Contains(item.Pos)) return true;
+
+                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
+                    BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, item.Pos, item.BlockCode);
+                    if (registry.Contains(anchor)) return true;
+
+                    RegisterReproducer(anchor, participant, spawnBurst: false);
+                    return true;
+            }
         }
 
         void ProcessRegistrationScanBatch(
@@ -1058,12 +1188,6 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                if (registrationsLeft <= 0 && !(syncFoliage && foliageCells.NeedsChunkSync(job.ChunkCoord, seasonKey)))
-                {
-                    EnqueueChunkScan(job.ChunkCoord, job.NextLx, job.NextLz, job.NextY, highPriority: preferPriority);
-                    continue;
-                }
-
                 passesLeft--;
 
                 if (!TryRunRegistrationPass(
@@ -1089,7 +1213,7 @@ namespace WildFarming.Ecosystem
                 }
                 else
                 {
-                    registrationScanQueue.MarkComplete(job.ChunkCoord);
+                    NotifyRegistrationScanCompleted(job.ChunkCoord);
                 }
             }
         }
@@ -1118,81 +1242,51 @@ namespace WildFarming.Ecosystem
             completed = false;
             pass = default;
 
-            if (registrationsLeft <= 0 && !(syncFoliage && foliageCells.NeedsChunkSync(job.ChunkCoord, seasonKey)))
+            if (acc == null)
             {
                 return false;
             }
 
-            int treeRegistrationsLeft = registrationsLeft;
+            Vec2i chunkCoord = job.ChunkCoord;
+            int maxHits = PendingRegistrationQueue.MaxHitsPerPass;
 
             pass = ChunkEcologyColumnPass.Run(
                 api,
                 acc,
-                job.ChunkCoord,
+                chunkCoord,
                 new ChunkEcologyColumnPass.Request
                 {
-                    MaxFlowerHits = registrationsLeft,
-                    MaxTreeHits = registrationsLeft,
-                    MaxVineHits = cfg.EnableWildVineEcology ? registrationsLeft : 0,
+                    MaxFlowerHits = maxHits,
+                    MaxTreeHits = maxHits,
+                    MaxVineHits = cfg.EnableWildVineEcology ? maxHits : 0,
                     SyncFoliage = syncFoliage,
                     FoliageIndex = foliageIndex,
                 },
                 job.NextLx,
                 job.NextLz,
                 job.NextY,
-                (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref treeRegistrationsLeft),
+                (basePos, wood) =>
+                {
+                    Block trunk = acc.GetBlock(basePos);
+                    if (trunk?.Code == null) return false;
+                    return pendingRegistrations.TryEnqueueTree(chunkCoord, basePos, trunk.Code, registry);
+                },
                 passDeadline);
 
-            registrationsLeft = treeRegistrationsLeft;
-
-            if (pass.FlowerHits != null)
-            {
-                for (int i = 0; i < pass.FlowerHits.Count; i++)
-                {
-                    ChunkFlowerHit hit = pass.FlowerHits[i];
-                    Block block = acc.GetBlock(hit.Pos);
-
-                    if (registry.Contains(hit.Pos)) continue;
-
-                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
-
-                    BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, hit.Pos, hit.BlockCode);
-                    if (registry.Contains(anchor)) continue;
-
-                    RegisterReproducer(anchor, participant, spawnBurst: false);
-                    registrationsLeft--;
-                    if (registrationsLeft <= 0) break;
-                }
-            }
-
-            if (registrationsLeft > 0 && pass.VineHits != null)
-            {
-                for (int i = 0; i < pass.VineHits.Count; i++)
-                {
-                    ChunkFlowerHit hit = pass.VineHits[i];
-                    Block block = acc.GetBlock(hit.Pos);
-
-                    if (registry.Contains(hit.Pos)) continue;
-                    if (!WildVineHelper.IsEndBlock(block)) continue;
-                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) continue;
-
-                    RegisterReproducer(hit.Pos, participant, spawnBurst: false);
-                    registrationsLeft--;
-                    if (registrationsLeft <= 0) break;
-                }
-            }
+            pendingRegistrations.EnqueueHits(chunkCoord, pass.FlowerHits, PendingRegistrationKind.Flower);
+            pendingRegistrations.EnqueueHits(chunkCoord, pass.VineHits, PendingRegistrationKind.Vine);
 
             if (syncFoliage)
             {
-                foliageCells.ApplyEcologyPassResult(job.ChunkCoord, pass, seasonKey);
+                foliageCells.ApplyEcologyPassResult(chunkCoord, pass, seasonKey);
 
                 if (pass.FoliageChanged > 0)
                 {
                     int cs = GlobalConstants.ChunkSize;
                     var invalidateAt = new BlockPos(
-                        job.ChunkCoord.X * cs + 8,
+                        chunkCoord.X * cs + 8,
                         64,
-                        job.ChunkCoord.Y * cs + 8);
+                        chunkCoord.Y * cs + 8);
                     FloraContext?.InvalidateAround(invalidateAt, 3);
                     InvalidateEnvironmentAround(invalidateAt);
                 }

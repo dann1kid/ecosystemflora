@@ -57,6 +57,36 @@ namespace WildFarming.Ecosystem
         public static bool IsValidPlantSite(IBlockAccessor acc, BlockPos pos, PlantRequirements requirements = null) =>
             TryValidatePlantSite(acc, pos, requirements, out _);
 
+        /// <summary>
+        /// Topmost valid surface cell in a column below <paramref name="from"/> (first hit when scanning down).
+        /// Uses the same ground/space rules as wild spread — replaces high-replaceable grass instead of floating above it.
+        /// </summary>
+        public static bool TryFindSurfaceCellBelow(
+            IBlockAccessor acc,
+            BlockPos from,
+            int maxDropBlocks,
+            out BlockPos surfacePos,
+            PlantRequirements requirements = null)
+        {
+            surfacePos = null;
+            if (acc == null || from == null || maxDropBlocks <= 0) return false;
+
+            int minY = from.Y - maxDropBlocks;
+            if (minY < 0) minY = 0;
+
+            for (int y = from.Y - 1; y >= minY; y--)
+            {
+                scanPos.Set(from.X, y, from.Z);
+                if (!acc.IsValidPos(scanPos)) break;
+                if (!TryValidatePlantSite(acc, scanPos, requirements, out _)) continue;
+
+                surfacePos = scanPos.Copy();
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>Returns false with a concise reason suitable for diagnostics (VerboseLogging).</summary>
         static bool TryValidatePlantSite(
             IBlockAccessor acc,
