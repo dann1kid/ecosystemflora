@@ -62,6 +62,11 @@ namespace WildFarming.Ecosystem
             return byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state) && state.Items.Count > 0;
         }
 
+        public bool IsScanCompleted(Vec2i chunk)
+        {
+            return byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state) && state.ScanCompleted;
+        }
+
         public bool IsReadyToMarkComplete(Vec2i chunk)
         {
             if (!byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state)) return true;

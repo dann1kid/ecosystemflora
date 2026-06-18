@@ -37,8 +37,10 @@ namespace WildFarming.Tests
             Assert.Equal(16, cfg.MaxChunkColumnsScannedPerTick);
             Assert.Equal(2048, cfg.MaxRegistrationsPerTick);
             Assert.Equal(80, cfg.BurstRegistrationBudgetMs);
-            Assert.Equal(64, cfg.MaxRegistryAppliesPerTick);
-            Assert.Equal(128, cfg.MaxPriorityRegistryAppliesPerTick);
+            Assert.Equal(512, cfg.MaxRegistryAppliesPerTick);
+            Assert.Equal(2048, cfg.MaxPriorityRegistryAppliesPerTick);
+            Assert.True(cfg.EnableBackgroundRegistrationScan);
+            Assert.Equal(8192, cfg.MaxRegistrationSnapshotCellsPerTick);
         }
     }
 }

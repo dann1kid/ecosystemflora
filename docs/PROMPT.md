@@ -43,7 +43,7 @@ Habitat:
 Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs для старых BE; Mycelium*.cs для грибницы).
-Тесты: 323 (xUnit). Версия: 3.8.0.
+Тесты: 332 (xUnit). Версия: 3.8.0.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).

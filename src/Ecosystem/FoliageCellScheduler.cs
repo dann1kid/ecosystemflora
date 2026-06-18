@@ -341,5 +341,112 @@ namespace WildFarming.Ecosystem
 
             return totalSyncedCells;
         }
+
+        readonly List<Vec2i> pendingSyncScratch = new List<Vec2i>();
+
+        /// <summary>Chunk column foliage sync (main thread). Used when ecology registration runs off-thread.</summary>
+        public int ProcessChunkSyncBatch(
+            ICoreAPI api,
+            int seasonKey,
+            int maxChunks,
+            long passDeadlineTicks,
+            long totalBudgetTicks,
+            System.Diagnostics.Stopwatch budgetWatch,
+            System.Action<Vec2i, int> onFoliageChanged = null)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableSeasonalFoliage || api?.World?.BlockAccessor == null) return 0;
+            if (!FoliageSyncModeHelper.UsesChunkSync(cfg) || maxChunks <= 0) return 0;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            CollectPendingSyncChunks(seasonKey, pendingSyncScratch);
+            if (pendingSyncScratch.Count == 0) return 0;
+
+            int chunksProcessed = 0;
+            int changedThisTick = 0;
+
+            for (int i = 0; i < pendingSyncScratch.Count && chunksProcessed < maxChunks; i++)
+            {
+                if (totalBudgetTicks > 0 && budgetWatch != null && budgetWatch.ElapsedTicks >= totalBudgetTicks)
+                {
+                    break;
+                }
+
+                Vec2i chunkCoord = pendingSyncScratch[i];
+                if (acc.GetMapChunk(chunkCoord.X, chunkCoord.Y) == null) continue;
+
+                long chunkDeadline = passDeadlineTicks;
+                if (totalBudgetTicks > 0 && budgetWatch != null)
+                {
+                    long remaining = totalBudgetTicks - budgetWatch.ElapsedTicks;
+                    if (remaining <= 0) break;
+
+                    long totalDeadline = System.Diagnostics.Stopwatch.GetTimestamp() + remaining;
+                    chunkDeadline = passDeadlineTicks > 0 && passDeadlineTicks < long.MaxValue
+                        ? System.Math.Min(passDeadlineTicks, totalDeadline)
+                        : totalDeadline;
+                }
+
+                long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
+                if (!chunkStates.TryGetValue(key, out FoliageChunkState state))
+                {
+                    state = new FoliageChunkState { SyncedSeasonKey = -1, Completed = false, ResumeY = -1 };
+                }
+
+                int resumeY = state.ResumeY;
+                if (state.Completed || resumeY < 0) resumeY = -1;
+
+                FoliageChunkSyncPass.Result pass = FoliageChunkSyncPass.Run(
+                    api,
+                    acc,
+                    chunkCoord,
+                    Index,
+                    state.ResumeLx,
+                    state.ResumeLz,
+                    resumeY,
+                    chunkDeadline);
+
+                var ecologyResult = new ChunkEcologyColumnPass.Result(
+                    null,
+                    null,
+                    null,
+                    pass.Indexed,
+                    pass.Changed,
+                    pass.ResumeLx,
+                    pass.ResumeLz,
+                    pass.ResumeY,
+                    pass.Completed);
+
+                ApplyEcologyPassResult(chunkCoord, ecologyResult, seasonKey);
+                chunksProcessed++;
+
+                if (pass.Changed > 0)
+                {
+                    changedThisTick += pass.Changed;
+                    onFoliageChanged?.Invoke(chunkCoord, pass.Changed);
+                }
+            }
+
+            if (changedThisTick > 0)
+            {
+                MaybeLogProgress(api, cfg, changedThisTick);
+            }
+
+            return chunksProcessed;
+        }
+
+        void CollectPendingSyncChunks(int seasonKey, List<Vec2i> output)
+        {
+            output.Clear();
+            foreach (KeyValuePair<long, FoliageChunkState> kv in chunkStates)
+            {
+                FoliageChunkState state = kv.Value;
+                if (state.Completed && state.SyncedSeasonKey == seasonKey) continue;
+
+                int cx = (int)(kv.Key >> 32);
+                int cz = (int)(kv.Key & 0xFFFFFFFF);
+                output.Add(new Vec2i(cx, cz));
+            }
+        }
     }
 }

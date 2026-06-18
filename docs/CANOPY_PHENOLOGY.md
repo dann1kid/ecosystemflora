@@ -2,18 +2,35 @@
 
 Per-cell seasonal foliage on **deciduous** `log-grown` / `leavesbranchy` / `leaves-grown` blocks. No trunk anchor BFS, no `GrowTree`, no disk persistence.
 
-Updated: 2026-06-14.
+Updated: 2026-06-18.
 
 ---
 
 ## Architecture
 
+**Chunk mode (default)** — two paths when `EnableBackgroundRegistrationScan` is on (v3.8):
+
 ```
 Chunk load / month change / block place-break
         ↓
-PendingChunkScan queue → ChunkEcologyColumnPass (unified column descent)
+FoliageCellScheduler.ScheduleChunkSync → chunk state pending
         ↓
-CanopySeasonSync.TrySyncCell — deterministic strip/bud per foliage block
+On chunk-scan tick (main thread):
+  FoliageCellScheduler.ProcessChunkSyncBatch → FoliageChunkSyncPass
+        ↓
+CanopySeasonSync.TrySyncCell — strip/bud per foliage block
+```
+
+Ecology registration (flowers, trees, vines) uses a **separate** pipeline: snapshot on main → classify on worker → paced `RegisterReproducer` on main. Foliage **never** runs on the worker thread.
+
+**Legacy / background scan off** — registration column pass may still run `SyncFoliage` inline in `ChunkEcologyColumnPass` during `TryRunRegistrationPass`.
+
+```
+Chunk load / month change / block place-break
+        ↓
+PendingChunkScan queue → ChunkEcologyColumnPass (unified column descent, SyncFoliage when inline)
+        ↓
+CanopySeasonSync.TrySyncCell
         ↓
 WildCanopySeason + CanopyEcology (phase, activity, gates)
 ```
@@ -23,6 +40,7 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 | Per-cell rules | `CanopyFoliageRules.cs` |
 | Chunk season sync | `CanopySeasonSync.cs` |
 | Unified column pass | `ChunkEcologyColumnPass.cs`, `ChunkColumnWalker.cs` |
+| Foliage-only chunk pass | `FoliageChunkSyncPass.cs` |
 | Scheduler / chunk state | `FoliageCellScheduler.cs`, `FoliageChunkState.cs` |
 | Season key | `FoliageSeasonKey.cs` |
 | Season curves | `WildCanopySeason.cs`, `CanopyEcology.cs` |
@@ -117,4 +135,4 @@ Toggle: `EnableCanopyAmbience` (requires `EnableSeasonalFoliage`).
 | v3.4 | Chunk-sync + unified `ChunkEcologyColumnPass` |
 | v3.4.1 | Winter force-strip all `leaves-grown` (Dec–Feb) |
 | v3.5 | Client canopy ambience particles |
-| v3.7 | Partial branchy autumn strip; fallen sticks; spring branchy buds × tree age |
+| v3.8 | Background registration decoupled; `ProcessChunkSyncBatch` + `FoliageChunkSyncPass` on main when worker scan enabled |

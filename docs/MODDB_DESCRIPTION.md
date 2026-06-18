@@ -43,7 +43,8 @@ Default preset is natural; use BalancePreset sparse for patchier wilderness.
 • Event wake — plants retry spread after breaks, placement, displacement, soil changes (EnableEventDrivenSpread).
 • Two-phase placement — evaluate then commit with revalidation (EnableTwoPhaseSpreadPlacement).
 • Season coarse wake — seasonal species wake each in-game month (EnableSeasonCoarseWake).
-• Fast registration — player-vicinity chunks register first; burst completes one nearby chunk on load (EnablePlayerPriorityRegistration, EnableBurstRegistrationNearPlayers).
+• Fast registration — player-vicinity chunks first; burst on load; background column scan; paced registry apply (EnableBackgroundRegistrationScan, MaxRegistryAppliesPerTick).
+• Seasonal canopy — separate main-thread foliage sync when background scan is on (FoliageSyncMode chunk).
 • Empty-first spread — scans empty cells first; displacement still runs when no vacancy (EnableEmptyFirstSpreadCollect). Column occupancy hint skips known plant columns (EnableSpreadColumnOccupancyHint).
 
 Full ecology in loaded chunks — tune MaxSpreadAttemptsPerChunkPerTick / MaxSpreadChunksVisitedPerTick on powerful hardware. Handbook updated (en/ru). Vintage Story 1.22+. Do not run alongside Wild Farming Revival.

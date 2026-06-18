@@ -265,3 +265,15 @@ Drain pending queue (round-robin by target chunk)
 - [x] **PR 6.5** — `PendingSpreadQueue` two-phase evaluate/commit
 - [x] **PR 6.6** — season coarse wake + handbook
 - [x] **PR 6.7** — `RegistrationScanQueue` priority/burst; empty-first spread + `EcologyColumnOccupancy` hint
+- [x] **PR 6.7b** — `PendingRegistrationQueue` paced apply; `BackgroundRegistrationScanner` worker classify; foliage sync decoupled (`FoliageChunkSyncPass` on main)
+
+### Registration pipeline (6.7b)
+
+| Stage | Thread | What |
+|-------|--------|------|
+| Snapshot build | Main | Copy `block.Id` per column cell (`MaxRegistrationSnapshotCellsPerTick`) |
+| Column classify | Worker | Flower / vine / tree hits from snapshot (no `SetBlock`) |
+| Registry apply | Main | `RegisterReproducer` from pending queue (`MaxRegistryAppliesPerTick`) |
+| Foliage sync (chunk mode) | Main | `FoliageCellScheduler.ProcessChunkSyncBatch` when background scan on |
+
+Config: `EnableBackgroundRegistrationScan`, `MaxRegistrationSnapshotCellsPerTick`, `MaxRegistryAppliesPerTick`, `MaxPriorityRegistryAppliesPerTick`, `BurstRegistrationBudgetMs`, `PlayerRegistrationPriorityRadiusBlocks` (16).

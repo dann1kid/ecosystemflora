@@ -30,9 +30,49 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            long freq = Stopwatch.Frequency;
-            long totalDeadline = totalBudgetMs > 0
-                ? Stopwatch.GetTimestamp() + totalBudgetMs * freq / 1000
+            eco.PollBackgroundRegistration(cfg);
+            if (eco.IsChunkRegistrationFinished(chunkCoord))
+            {
+                return true;
+            }
+
+            if (cfg.EnableBackgroundRegistrationScan)
+            {
+                long freq = Stopwatch.Frequency;
+                long totalDeadline = totalBudgetMs > 0
+                    ? Stopwatch.GetTimestamp() + totalBudgetMs * freq / 1000
+                    : long.MaxValue;
+
+                while (Stopwatch.GetTimestamp() < totalDeadline)
+                {
+                    if (eco.TryAdvanceBackgroundScan(
+                            chunkCoord,
+                            acc,
+                            cfg,
+                            highPriority: true,
+                            deadlineTicks: totalDeadline,
+                            out bool needsRequeue))
+                    {
+                        eco.PollBackgroundRegistration(cfg);
+                        if (eco.IsChunkRegistrationFinished(chunkCoord))
+                        {
+                            return true;
+                        }
+
+                        if (!needsRequeue && eco.IsChunkRegistrationFinished(chunkCoord))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                queue.Enqueue(new PendingChunkScan(chunkCoord), highPriority: true);
+                return false;
+            }
+
+            long freqSync = Stopwatch.Frequency;
+            long totalDeadlineSync = totalBudgetMs > 0
+                ? Stopwatch.GetTimestamp() + totalBudgetMs * freqSync / 1000
                 : long.MaxValue;
 
             int scanScratch = 0;
@@ -44,13 +84,13 @@ namespace WildFarming.Ecosystem
                 ? eco.FoliageCells?.Index
                 : null;
 
-            while (Stopwatch.GetTimestamp() < totalDeadline)
+            while (Stopwatch.GetTimestamp() < totalDeadlineSync)
             {
                 long passDeadline = passBudgetMs > 0
                     ? System.Math.Min(
-                        totalDeadline,
-                        Stopwatch.GetTimestamp() + passBudgetMs * freq / 1000)
-                    : totalDeadline;
+                        totalDeadlineSync,
+                        Stopwatch.GetTimestamp() + passBudgetMs * freqSync / 1000)
+                    : totalDeadlineSync;
 
                 if (!eco.TryRunRegistrationPass(
                         job,

@@ -9,6 +9,12 @@ namespace WildFarming.Ecosystem
     {
         public static int GetColumnTopY(IMapChunk mapChunk, int lx, int lz, int chunkSize, int mapTopY)
         {
+            ushort[] heightmap = mapChunk?.RainHeightMap;
+            return GetColumnTopY(heightmap, lx, lz, chunkSize, mapTopY);
+        }
+
+        public static int GetColumnTopY(ushort[] heightmap, int lx, int lz, int chunkSize, int mapTopY)
+        {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             int extra = cfg.FoliageColumnScanHeightAboveSurface;
             if (extra <= 0)
@@ -16,9 +22,6 @@ namespace WildFarming.Ecosystem
                 return mapTopY;
             }
 
-            if (mapChunk == null) return mapTopY;
-
-            ushort[] heightmap = mapChunk.RainHeightMap;
             if (heightmap == null || heightmap.Length < chunkSize * chunkSize) return mapTopY;
 
             int surfaceY = heightmap[lz * chunkSize + lx];

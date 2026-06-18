@@ -161,10 +161,16 @@ namespace WildFarming.Ecosystem
         public int MaxBurstRegistrationsPerChunk { get; set; } = 4096;
 
         /// <summary>Registry applies per chunk-scan tick from the pending registration queue.</summary>
-        public int MaxRegistryAppliesPerTick { get; set; } = 64;
+        public int MaxRegistryAppliesPerTick { get; set; } = 512;
 
         /// <summary>Extra pending applies per tick for player-priority chunks before background drain.</summary>
-        public int MaxPriorityRegistryAppliesPerTick { get; set; } = 128;
+        public int MaxPriorityRegistryAppliesPerTick { get; set; } = 2048;
+
+        /// <summary>Capture block ids on main; column classification runs on a background thread.</summary>
+        public bool EnableBackgroundRegistrationScan { get; set; } = true;
+
+        /// <summary>Block cells copied into a chunk snapshot per main-thread tick (background scan).</summary>
+        public int MaxRegistrationSnapshotCellsPerTick { get; set; } = 8192;
 
         public int ResolvePriorityRegistrationBudgetMs() =>
             PriorityRegistrationBudgetMs > 0 ? PriorityRegistrationBudgetMs : ResolveRegistrationBudgetMs();

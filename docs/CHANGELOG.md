@@ -14,10 +14,10 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 | Area | What you get |
 |------|----------------|
 | **Simulation engine** | Chunk-fair spread across loaded chunks; event wake on break/place/displacement; column cache; two-phase evaluate/commit; monthly wake for seasonal species |
-| **Registration** | Player-vicinity chunks register first; burst completes one nearby chunk on load — tallgrass and flowers show in inspect (I) quickly |
+| **Registration** | Priority + burst near players; background column scan; paced registry apply; seasonal foliage sync on main thread |
 | **Spread perf** | Empty cells scanned first with full fitness; displacement still runs when no vacancy; column occupancy hint skips known plant columns |
 | **Handbook** | Configuration guide updated (en/ru) for v3.8 keys |
-| **Tests** | 329 unit tests |
+| **Tests** | 332 unit tests |
 
 ---
 
@@ -41,7 +41,9 @@ When you explore, flora registers incrementally. New in 3.8:
 
 - **Priority queue** — chunks within `PlayerRegistrationPriorityRadiusBlocks` (default 16) drain before the background queue (`EnablePlayerPriorityRegistration`).
 - **Burst on load** — one nearby chunk can finish registration in a single callback (`EnableBurstRegistrationNearPlayers`, ~80 ms scan budget).
-- **Paced registry apply** — column scan collects hits into a pending queue; up to 64–128 `RegisterReproducer` calls per tick (priority first). Fixes “lost tail” flora when scan budget ran out mid-chunk.
+- **Paced registry apply** — column scan collects hits into a pending queue; up to 512–2048 `RegisterReproducer` calls per tick (priority first). Fixes “lost tail” flora when scan budget ran out mid-chunk.
+- **Background column scan** — main thread copies block ids into a chunk snapshot; flower/tree/vine classification runs on a dedicated worker thread (`EnableBackgroundRegistrationScan`).
+- **Seasonal foliage (chunk mode)** — when background scan is on, canopy strip/bud runs in a separate main-thread pass (`FoliageCellScheduler.ProcessChunkSyncBatch` / `FoliageChunkSyncPass`), not on the worker.
 
 Distant loaded chunks still register in the background — full scope, faster where you stand.
 
@@ -65,8 +67,10 @@ Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without d
 | `EnableBurstRegistrationNearPlayers` | true | Finish one nearby chunk on load |
 | `PlayerRegistrationPriorityRadiusBlocks` | 16 | Priority/burst radius |
 | `BurstRegistrationBudgetMs` | 80 | Burst scan time budget per load (ms) |
-| `MaxRegistryAppliesPerTick` | 64 | Paced registry applies per chunk-scan tick |
-| `MaxPriorityRegistryAppliesPerTick` | 128 | Extra applies for player-vicinity chunks |
+| `MaxRegistryAppliesPerTick` | 512 | Paced registry applies per chunk-scan tick |
+| `MaxPriorityRegistryAppliesPerTick` | 2048 | Extra applies for player-vicinity chunks |
+| `EnableBackgroundRegistrationScan` | true | Worker-thread column classification |
+| `MaxRegistrationSnapshotCellsPerTick` | 8192 | Block ids copied on main per tick |
 | `MaxChunkColumnsScannedPerTick` | 16 | Background registration throughput |
 | `MaxRegistrationsPerTick` | 2048 | Background registration cap |
 | `EnableEmptyFirstSpreadCollect` | true | Empty cells before displacement |
@@ -91,7 +95,8 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) and handbook *Configuration G
 ### Симуляция (Phase 6)
 
 - Spread **по чанкам** + **пробуждение** от изменений мира; двухфазный commit; coarse wake сезонных видов.
-- **Быстрая регистрация** рядом с игроком (priority + burst) — осмотр (I) видит луг сразу.
+- **Быстрая регистрация** рядом с игроком (priority + burst + фоновый скан колонок).
+- **Сезонная крона** — отдельный foliage-pass на main при фоновой регистрации.
 - **Empty-first spread** — пустые клетки первыми; **displacement** если vacancy нет.
 
 Handbook (en/ru). VS 1.22+. Не совместим с Wild Farming Revival.
@@ -111,7 +116,8 @@ FLORA (3.7.1)
 SIMULATION (Phase 6)
 • Chunk-fair spread + event wake on break/place/displacement.
 • Two-phase placement, column cache, monthly wake for seasonal species.
-• Fast registration near you (priority queue + burst on chunk load).
+• Fast registration near you (priority queue + burst + background column scan).
+• Seasonal canopy sync on main thread when background scan is enabled.
 • Empty-first spread; displacement when no empty cell. Column occupancy hint.
 
 Handbook updated (en/ru). Press I for ecology inspect.

@@ -24,7 +24,7 @@ namespace WildFarming.Ecosystem
         {
             public readonly List<ChunkFlowerHit> FlowerHits;
             public readonly List<ChunkFlowerHit> VineHits;
-            public readonly int TreesRegistered;
+            public readonly List<ChunkFlowerHit> TreeHits;
             public readonly int FoliageIndexed;
             public readonly int FoliageChanged;
             public readonly int ResumeLx;
@@ -35,7 +35,7 @@ namespace WildFarming.Ecosystem
             public Result(
                 List<ChunkFlowerHit> flowerHits,
                 List<ChunkFlowerHit> vineHits,
-                int treesRegistered,
+                List<ChunkFlowerHit> treeHits,
                 int foliageIndexed,
                 int foliageChanged,
                 int resumeLx,
@@ -45,7 +45,7 @@ namespace WildFarming.Ecosystem
             {
                 FlowerHits = flowerHits;
                 VineHits = vineHits;
-                TreesRegistered = treesRegistered;
+                TreeHits = treeHits;
                 FoliageIndexed = foliageIndexed;
                 FoliageChanged = foliageChanged;
                 ResumeLx = resumeLx;
@@ -64,30 +64,64 @@ namespace WildFarming.Ecosystem
             int resumeLz,
             int resumeY,
             TreeTrunkDiscovery.TrunkFoundHandler onTreeFound,
+            long budgetDeadline) =>
+            Run(
+                api,
+                new LiveRegistrationColumnView(acc),
+                chunkCoord,
+                in request,
+                resumeLx,
+                resumeLz,
+                resumeY,
+                onTreeFound,
+                budgetDeadline);
+
+        public static Result Run(
+            ICoreAPI api,
+            IRegistrationColumnView view,
+            Vec2i chunkCoord,
+            in Request request,
+            int resumeLx,
+            int resumeLz,
+            int resumeY,
+            TreeTrunkDiscovery.TrunkFoundHandler onTreeFound,
             long budgetDeadline)
         {
             var flowerHits = new List<ChunkFlowerHit>();
             var vineHits = new List<ChunkFlowerHit>();
-            if (acc == null)
+            var treeHits = new List<ChunkFlowerHit>();
+            if (view == null)
             {
-                return new Result(flowerHits, vineHits, 0, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
+                return new Result(flowerHits, vineHits, treeHits, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
             }
 
             int chunkSize = GlobalConstants.ChunkSize;
             int x0 = chunkCoord.X * chunkSize;
             int z0 = chunkCoord.Y * chunkSize;
-            IMapChunk mapChunk = acc.GetMapChunk(chunkCoord.X, chunkCoord.Y);
-            if (mapChunk == null)
+            IMapChunk mapChunk = view.GetMapChunk(chunkCoord);
+            ushort[] heightmap = null;
+            if (view is SnapshotRegistrationColumnView snapView)
             {
-                return new Result(flowerHits, vineHits, 0, 0, 0, 0, 0, 0, completed: true);
+                heightmap = snapView.RainHeightMap;
+            }
+            else if (mapChunk == null)
+            {
+                return new Result(flowerHits, vineHits, treeHits, 0, 0, 0, 0, 0, completed: true);
+            }
+            else
+            {
+                heightmap = mapChunk.RainHeightMap;
             }
 
-            int columnTop = acc.MapSizeY - 1;
+            int columnTop = view.MapSizeY - 1;
             int foliageIndexed = 0;
             int foliageChanged = 0;
             int treesRegistered = 0;
             int gameYear = api != null ? CanopyEcology.GameYear(api.World.Calendar) : 0;
-            bool syncFoliage = request.SyncFoliage && api != null;
+            bool syncFoliage = request.SyncFoliage && api != null && view.SupportsFoliageMutation;
+            IBlockAccessor acc = view.SupportsFoliageMutation && api?.World?.BlockAccessor != null
+                ? api.World.BlockAccessor
+                : null;
 
             for (int lx = resumeLx; lx < chunkSize; lx++)
             {
@@ -96,8 +130,8 @@ namespace WildFarming.Ecosystem
                 {
                     int x = x0 + lx;
                     int z = z0 + lz;
-                    int topY = ChunkColumnWalker.GetColumnTopY(mapChunk, lx, lz, chunkSize, columnTop);
-                    int surfaceY = GetSurfaceY(mapChunk, lx, lz, chunkSize, 0);
+                    int topY = ChunkColumnWalker.GetColumnTopY(heightmap, lx, lz, chunkSize, columnTop);
+                    int surfaceY = GetSurfaceY(heightmap, lx, lz, chunkSize, 0);
                     int yStart = (lx == resumeLx && lz == resumeLz && resumeY >= 0) ? resumeY : topY;
 
                     bool flowerFound = false;
@@ -108,15 +142,15 @@ namespace WildFarming.Ecosystem
                         if (budgetDeadline > 0 && Stopwatch.GetTimestamp() >= budgetDeadline)
                         {
                             return new Result(
-                                flowerHits, vineHits, treesRegistered, foliageIndexed, foliageChanged,
+                                flowerHits, vineHits, treeHits, foliageIndexed, foliageChanged,
                                 lx, lz, y, completed: false);
                         }
 
                         scanScratch.Set(x, y, z);
-                        Block block = acc.GetBlock(scanScratch);
-                        if (block.Id == 0) continue;
+                        Block block = view.GetBlock(x, y, z);
+                        if (block == null || block.Id == 0) continue;
 
-                        if (syncFoliage && CanopyFoliageRules.IsSeasonalFoliageBlock(block))
+                        if (syncFoliage && acc != null && CanopyFoliageRules.IsSeasonalFoliageBlock(block))
                         {
                             if (CanopySeasonSync.TrySyncCell(
                                     api, acc, scanScratch, block, request.FoliageIndex, gameYear, out _))
@@ -133,13 +167,19 @@ namespace WildFarming.Ecosystem
                         }
 
                         if (!trunkFound
-                            && onTreeFound != null
                             && treesRegistered < request.MaxTreeHits
                             && PlantCodeHelper.IsFerntreeTrunkBlock(block))
                         {
-                            BlockPos basePos = FerntreeStructure.GetTrunkBase(acc, scanScratch);
-                            if (onTreeFound(basePos, WildFerntreeEcology.Species))
+                            BlockPos basePos = RegistrationColumnScan.GetFerntreeTrunkBase(view, scanScratch);
+                            Block trunk = view.GetBlock(basePos.X, basePos.Y, basePos.Z);
+                            if (trunk?.Code != null
+                                && (onTreeFound == null || onTreeFound(basePos, WildFerntreeEcology.Species)))
                             {
+                                if (onTreeFound == null)
+                                {
+                                    treeHits.Add(new ChunkFlowerHit(basePos.Copy(), trunk.Code));
+                                }
+
                                 treesRegistered++;
                             }
 
@@ -147,16 +187,22 @@ namespace WildFarming.Ecosystem
                         }
 
                         if (!trunkFound
-                            && onTreeFound != null
                             && treesRegistered < request.MaxTreeHits
                             && PlantCodeHelper.IsTreeLogGrownBlock(block))
                         {
                             string wood = PlantCodeHelper.GetTreeWood(block);
                             if (!string.IsNullOrEmpty(wood) && WildTreeEcology.TryGet(wood, out _))
                             {
-                                BlockPos basePos = PlantCodeHelper.GetTreeTrunkBase(acc, scanScratch);
-                                if (onTreeFound(basePos, wood))
+                                BlockPos basePos = RegistrationColumnScan.GetTreeTrunkBase(view, scanScratch);
+                                Block trunk = view.GetBlock(basePos.X, basePos.Y, basePos.Z);
+                                if (trunk?.Code != null
+                                    && (onTreeFound == null || onTreeFound(basePos, wood)))
                                 {
+                                    if (onTreeFound == null)
+                                    {
+                                        treeHits.Add(new ChunkFlowerHit(basePos.Copy(), trunk.Code));
+                                    }
+
                                     treesRegistered++;
                                 }
 
@@ -189,14 +235,11 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            return new Result(flowerHits, vineHits, treesRegistered, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
+            return new Result(flowerHits, vineHits, treeHits, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
         }
 
-        static int GetSurfaceY(IMapChunk mapChunk, int lx, int lz, int chunkSize, int fallbackY)
+        static int GetSurfaceY(ushort[] heightmap, int lx, int lz, int chunkSize, int fallbackY)
         {
-            if (mapChunk == null) return fallbackY;
-
-            ushort[] heightmap = mapChunk.RainHeightMap;
             if (heightmap == null || heightmap.Length < chunkSize * chunkSize) return fallbackY;
 
             return heightmap[lz * chunkSize + lx];
