@@ -62,6 +62,12 @@ If you omit climate/spacing, the mod applies **template defaults** per `ecologyH
 }
 ```
 
+## Built-in mod compatibility (optional)
+
+When **[Wildgrass](https://mods.vintagestory.at/wildgrass)** or **[Wildgrass Fork](https://mods.vintagestory.at/wildgrassfork)** (`wildgrass:*` blocks) is installed alongside Ecosystem - Flora, JSON patches under `assets/ecosystemflora/patches/wildgrass-*.json` add `ecologyParticipant` on **mature growth stages** for all nine species (stages 3–4 where present; bermudagrass stage 3; buffalograss stage 2). Climate and spread tuning follow the grass mod’s worldgen tables; `ecologyMeadowHarvest: none` leaves knife/scythe/cut behavior to Wildgrass.
+
+No hard dependency — patches apply only when the grass mod is present. Requires **`EnableThirdPartyParticipants`: `true`** (default).
+
 ## Disable
 
 Set **`EnableThirdPartyParticipants`: `false`** to ignore `ecologyParticipant` on all blocks (only vanilla path rules apply).

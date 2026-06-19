@@ -1,0 +1,10 @@
+[
+	{
+		"comment": "Ecology handbook pages for Wildgrass / Wildgrass Fork when that mod is installed.",
+		"file": "wildgrass:blocktypes/plant/*",
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "ecosystemHandbook" },
+		"side": "client"
+	}
+]
