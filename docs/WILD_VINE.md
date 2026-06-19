@@ -4,6 +4,14 @@ Vanilla `wildvine-end-*` and `wildvine-tropical-end-*` tips register in the ecol
 
 **Version:** 3.7.0 · Updated: 2026-06-14.
 
+## Registration
+
+Wild vine tips are discovered in **`ChunkEcologyColumnPass`** when a chunk is scanned (same queue as meadow flora; background worker when `EnableBackgroundRegistrationScan` is on). Tips enter `PendingRegistrationQueue` and then the ecology registry.
+
+**Mycelium** uses the same registry and reproduce tick, but discovery is **`MyceliumChunkRegistrar`** — enumerates vanilla `BlockEntityMycelium` in the loaded chunk column (main thread, short delay after load). Caps still regrow via vanilla rules; ecology handles anchor stress and network spread.
+
+Both habitats run in **chunk-fair spread** when `EnableChunkFairSpread` is on. Spread commits **directly** in the reproduce callback (not via `PendingSpreadQueue` / two-phase placement).
+
 ## Spread behaviour
 
 Each reproduce tick (when chance passes):

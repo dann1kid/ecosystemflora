@@ -7,7 +7,7 @@ Read **`docs/PROJECT_VISION.md`** before non-trivial changes. It defines:
 - ecosystem-first design (interfaces, not monolithic block entities);
 - living = must reproduce (`IReproducible`);
 - what to reuse from the original Wild Farming idea vs what to ignore;
-- current repo stage: **Ecosystem v3.8.0** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`; Phase 6 — `docs/PHASE6_SIMULATION.md`; canopy — `docs/CANOPY_PHENOLOGY.md`, ambience — `docs/CANOPY_AMBIENCE.md`, tree lifecycle — `docs/TREE_AGING.md`, tree fern — `docs/FERNTREE.md`, wild vines — `docs/WILD_VINE.md`; player changelog — `docs/CHANGELOG.md`;
+- current repo stage: **Ecosystem v3.8.0** — see `docs/PROGRESS.md`, gaps — `docs/GAPS.md`; Phase 6 — `docs/PHASE6_SIMULATION.md`; canopy — `docs/CANOPY_PHENOLOGY.md`, ambience — `docs/CANOPY_AMBIENCE.md`, tree lifecycle — `docs/TREE_AGING.md`, tree fern — `docs/FERNTREE.md`, wild vines — `docs/WILD_VINE.md`; chunk load registers **vines** (column pass) and **mycelium anchors** (BE scan) into the same reproduce registry; player changelog — `docs/CHANGELOG.md`;
 - agent rules and constraints.
 
 Quick constraints:

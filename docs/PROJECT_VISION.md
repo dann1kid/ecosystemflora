@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-06-14 (стадия **Ecosystem v3.8.0**, версия **`3.8.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-06-18 (стадия **Ecosystem v3.8.0**, версия **`3.8.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -46,7 +46,7 @@
 | **Семена / wildplant** | **Не** часть дикой экосистемы; не в сборке |
 | **Культивация игроком** | Ванильные механики игры |
 
-**Регистрация:** очередь сканирования чанков + `ChunkFlowerScanner` (без BE на новых блоках). **Размножение:** round-robin по реестру, лимит попыток за тик.
+**Регистрация (3.8):** `RegistrationScanQueue` (priority + burst) → main копирует `block.Id` в snapshot → worker классифицирует колонки (`ChunkEcologyColumnPass`: цветы, лианы, деревья) → `PendingRegistrationQueue` paced `RegisterReproducer` на main; **грибница** — `MyceliumChunkRegistrar` (BE scan при load); сезонная крона — `FoliageChunkSyncPass` на main при фоновом скане. Без BE на новых блоках. **Размножение:** три desynced server ticks (reproduce ~2 s, chunk scan ~2.3 s, stress ~5.5 s); chunk-fair spread + stress round-robin.
 
 ### 2.4. Минимум механик (не тащить из Revival)
 
@@ -95,9 +95,14 @@ EcosystemSystem       →  Score >= MinFitness → SetBlock (ванильный 
 src/
   WF.cs
   Ecosystem/
-    EcosystemSystem.cs          # main system, tick scheduling
+    EcosystemSystem.cs          # main system, tick scheduling (reproduce / chunk scan / stress)
     ReproducerRegistry.cs       # spatial registry, round-robin
-    ChunkFlowerScanner.cs       # очередь PendingChunkScan, ScanChunk — регистрация при загрузке чанка
+    RegistrationScanQueue.cs    # priority + background chunk scan queue
+    BackgroundRegistrationScanner.cs  # snapshot build + worker column classify
+    PendingRegistrationQueue.cs # paced RegisterReproducer apply on main
+    MyceliumChunkRegistrar.cs   # vanilla BE anchor scan on chunk load
+    ChunkFlowerScanner.cs       # legacy sync scan (when background scan off)
+    FoliageCellScheduler.cs     # seasonal foliage sync batches on main
     EcologyInspectService.cs    # снимок для UI «осмотр экологии»
     EcologyInspectServerSystem.cs
     EcologySpacingIndex.cs      # учёт позиций для скана «видов рядом»
@@ -151,7 +156,7 @@ src/
     MyceliumCoexistence.cs      # meadow mycelium vs meadow flora
     MyceliumNetworkSpread.cs    # slow orthogonal network spread
     MyceliumInspect.cs          # inspect (I) anchor resolution
-    MyceliumChunkRegistrar.cs   # scan chunk BEs after load
+    MyceliumChunkRegistrar.cs   # register vanilla BE anchors at chunk load (same ecology registry as vines)
     MyceliumStressEvaluator.cs  # anchor niche stress / death
     MyceliumTreeCascade.cs      # tree-cut stress for forest anchors
     MyceliumAnchorSpawner.cs    # clone vanilla BE on network spread
@@ -434,14 +439,16 @@ holdScore   = ReproduceFitness × ContextMultiplier × HoldStrength
 
 ### 12.1. Где CPU сейчас
 
-Один reproduce-тик (каждые ~2 с):
+Три desynced server ticks (defaults 2000 / 2300 / 5500 ms):
 
 ```
-ProcessStress     → round-robin по List<ReproducerEntry> (весь реестр)
-ProcessDue        → round-robin, до MaxReproduceAttemptsPerTick spread
+OnReproduceTick   → chunk-fair spread + mycelium/vine reproduce (не stress)
+OnChunkScanTick   → registration snapshot → worker classify → paced registry apply
+OnStressTick      → round-robin stress по реестру
   └── CollectSpreadCandidates → O(r² × verticalSearch) × (Sample + spacing + FloraContext)
-ChunkScan         → очередь, лимитирован
 ```
+
+При фоновом скане: worker **только read-only** на snapshot; `SetBlock` / BE / foliage — **main**.
 
 При ~18k reproducers и `OnlyActivateNearPlayers` конфиг **фильтрует** далёкие растения, но код всё равно **сканирует** global list — много холостых итераций. Горячий путь — **один spread**, не размер реестра сам по себе.
 
@@ -452,14 +459,15 @@ ChunkScan         → очередь, лимитирован
 | Spread / displace / stress в worker threads | ❌ `BlockAccessor` не thread-safe; chunk unload → гонки |
 | `Parallel.For` по кандидатам spread | ❌ тот же accessor |
 | Фоновый precompute без snapshot | ❌ invalidation при unload |
+| Worker classify на immutable chunk snapshot (`block.Id` only) | ✅ read-only; apply/registry/foliage на main |
 
-**Правило (§8):** блоки и spread — только main/server thread. Выигрыш — **меньше работы на тик**, spatial indexing, кэши.
+**Правило (§8):** мутации блоков и spread — только main/server thread. Worker — только классификация по snapshot. Выигрыш — **меньше работы на тик**, spatial indexing, кэши, paced registration.
 
 ### 12.3. Асимптотика — приоритеты
 
-| # | Проблема | Сейчас | Цель |
-|---|----------|--------|------|
-| 1 | Tick scope | O(registry) round-robin | O(active chunks × plants) через `byChunk` + радиус игроков |
+| # | Проблема | Сейчас (defaults) | Цель |
+|---|----------|-------------------|------|
+| 1 | Tick scope | Spread: chunk-fair RR; stress: global RR по реестру | O(active chunks × plants) через spatial stress |
 | 2 | `List.Remove` | O(n) | Swap-remove + index map |
 | 3 | `CollectSpreadCandidates` | O(r²v) × heavy Sample | Cheap-first reject; Sample только на прошедших |
 | 4 | `PlantSpacing` | Brute-force O(r²Y) на кандидата | Per-chunk ecology hash |
@@ -485,13 +493,13 @@ ChunkScan         → очередь, лимитирован
 3. **Perf audit:** `CellBlockSnapshot`, scratch `BlockPos`, reflection cache, scratch collections, `HashSet<long>` player chunks, `FloraSymbiosis` FIFO cache, `VerboseLogging` toggle — ✅.
 4. **Tick starvation fix (v2.7):** heightmap chunk scan, per-tick time-budget (`Stopwatch`), lower defaults, NowValues temperature cache; `OnlyActivateNearPlayers` was default true for perf — **v3.6+ default false** (all loaded chunks); set true for playtest only — ✅.
 
-Многопоточность — **не планируется** (`BlockAccessor` не thread-safe).
+**Многопоточность spread/stress/displace** — **не планируется** (`BlockAccessor` не thread-safe). **v3.8:** read-only classify на immutable chunk snapshot (worker) + apply/registry/foliage на main — см. §12.2.
 
-Все четыре фазы завершены (2026-05-26).
+Все четыре фазы завершены (2026-05-26); Phase 6 + registration worker — 2026-06.
 
 ### 12.6. Конфиг-throttle
 
-`OnlyActivateNearPlayers` (default **false** since v3.6; true = playtest radius only), `TickBudgetMs` (default 5), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
+`OnlyActivateNearPlayers` (default **false** since v3.6; true = playtest radius for spread/stress/trees/**and chunk scans**), `LimitSpreadNearPlayers` (default **false**; true = spread/stress/tree aging near players only; **registration unchanged**), `TickBudgetMs` (default **30**), `SpreadBudgetMs` (default **30**), `ReproduceTickIntervalMs` / `ChunkScanTickIntervalMs` / `StressTickIntervalMs` (2000 / 2300 / 5500), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
 
 ---
 

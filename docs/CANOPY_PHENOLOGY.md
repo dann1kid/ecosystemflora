@@ -21,7 +21,7 @@ On chunk-scan tick (main thread):
 CanopySeasonSync.TrySyncCell — strip/bud per foliage block
 ```
 
-Ecology registration (flowers, trees, vines) uses a **separate** pipeline: snapshot on main → classify on worker → paced `RegisterReproducer` on main. Foliage **never** runs on the worker thread.
+Ecology registration (flowers, trees, **vines**) uses the worker column pipeline when background scan is on. **Mycelium anchors** register on chunk load via `MyceliumChunkRegistrar` (BE scan on main) and then share the same reproduce registry as vines. **Seasonal foliage** uses a separate main-thread pass. Foliage **never** runs on the worker thread.
 
 **Legacy / background scan off** — registration column pass may still run `SyncFoliage` inline in `ChunkEcologyColumnPass` during `TryRunRegistrationPass`.
 
@@ -136,3 +136,4 @@ Toggle: `EnableCanopyAmbience` (requires `EnableSeasonalFoliage`).
 | v3.4.1 | Winter force-strip all `leaves-grown` (Dec–Feb) |
 | v3.5 | Client canopy ambience particles |
 | v3.8 | Background registration decoupled; `ProcessChunkSyncBatch` + `FoliageChunkSyncPass` on main when worker scan enabled |
+| v3.8 | Fallen sticks use `SurfacePlacement.TryFindSurfaceCellBelow` (ground/tallgrass surface, not floating) |

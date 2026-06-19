@@ -195,6 +195,8 @@ Drain pending queue (round-robin by target chunk)
 
 **Выигрыш:** оценка 10 кандидатов и 1 commit не в одном spike; можно распределить commits по чанкам.
 
+**Scope (v3.8):** two-phase queue covers spread via `TrySpawnOffspring` (flowers, reeds, lilies, berries, trees as saplings, …). **Mycelium network** (`MyceliumNetworkSpread`) and **wild vines** (`WildVineSpread`) call `SetBlock` directly inside the reproduce `trySpread` callback — not enqueued in `PendingSpreadQueue`.
+
 **Опционально в v3.8:** начать с chunk-fair executor без отдельной pending queue (меньше diff), queue — PR4.
 
 ---
@@ -242,7 +244,7 @@ Drain pending queue (round-robin by target chunk)
 | Ключ | После Phase 6 |
 |------|----------------|
 | `OnlyActivateNearPlayers` | Оставить; документировать как legacy / weak server |
-| `LimitSpreadNearPlayers` | Оставить; не рекомендовать на мощном железе |
+| `LimitSpreadNearPlayers` | Оставить; не рекомендовать на мощном железе. **Документировать:** ограничивает spread, stress и tree aging (не chunk registration) |
 | `MaxReproduceAttemptsPerTick` | Становится **потолок суммарный**; реальный лимит = `chunks × perChunk` |
 | `StaggerReproduceAttempts` | Оставить для регистрации |
 | `TickBudgetMs` | Safety net |
@@ -253,7 +255,7 @@ Drain pending queue (round-robin by target chunk)
 
 1. **Wake на displacement** — когда A вытесняет B, будить B’s neighbors или только origin A?
 2. **MP несколько игроков** — chunk RR по всем loaded или weighted near any player? (предложение: pure RR по всем registry chunks — честнее для «идеала»)
-3. **Mycelium / vine / mat spread** — те же слои или habitat-specific schedulers? (предложение: общий executor, habitat hook в evaluate)
+3. **Mycelium / vine / mat spread** — ✅ общий reproduce executor + habitat hook (`WildVineSpread`, `MyceliumNetworkSpread`, mat spread for reeds/lilies). Регистрация: vines — column pass; mycelium — BE scan at load.
 
 ---
 
@@ -273,7 +275,22 @@ Drain pending queue (round-robin by target chunk)
 |-------|--------|------|
 | Snapshot build | Main | Copy `block.Id` per column cell (`MaxRegistrationSnapshotCellsPerTick`) |
 | Column classify | Worker | Flower / vine / tree hits from snapshot (no `SetBlock`) |
+| Mycelium anchor scan | Main at chunk load | `MyceliumChunkRegistrar` — vanilla BE list → `RegisterMyceliumAnchor` |
 | Registry apply | Main | `RegisterReproducer` from pending queue (`MaxRegistryAppliesPerTick`) |
 | Foliage sync (chunk mode) | Main | `FoliageCellScheduler.ProcessChunkSyncBatch` when background scan on |
 
 Config: `EnableBackgroundRegistrationScan`, `MaxRegistrationSnapshotCellsPerTick`, `MaxRegistryAppliesPerTick`, `MaxPriorityRegistryAppliesPerTick`, `BurstRegistrationBudgetMs`, `PlayerRegistrationPriorityRadiusBlocks` (16).
+
+### Tick scheduling (6.7c)
+
+Three desynced server tick handlers (defaults **2000 / 2300 / 5500** ms):
+
+| Handler | Interval | Work |
+|---------|:--------:|------|
+| `OnReproduceTick` | 2000 ms | Chunk-fair spread, pending spread commit, vine/mycelium reproduce |
+| `OnChunkScanTick` | 2300 ms | Snapshot build, worker classify, paced registry apply, foliage sync batch |
+| `OnStressTick` | 5500 ms | Round-robin stress checks |
+
+Stress no longer shares `TickBudgetMs` with spread. Chunk scan interval is intentionally not a multiple of reproduce — reduces aligned spikes when many chunks load.
+
+**Perf fixes (2026-06-18):** priority radius 16, burst 80 ms, worker null-safety on snapshot, fallen sticks via `SurfacePlacement`, `OnDidBreakBlock` skips wake when block is not ecology plant / registry / forest-context / event target (e.g. `loosestick-free`; breaking `leaves-*` or `log-grown` still wakes).

@@ -28,7 +28,7 @@
 - v3.5.0: **Canopy ambience** — client crown particles / flutter; docs [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
 - v3.6: **Wild tree maturation** — calendar age (persisted), grown-block growth, **phased senescence** (leaves → skeleton → snag → stump/logs); inspect (I); `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`; docs [`TREE_AGING.md`](TREE_AGING.md).
 - v3.7: **Tree fern** (`ferntree-normal-*`) — register, spread, aging, senescence — [`FERNTREE.md`](FERNTREE.md). **Canopy** — partial branchy strip, fallen sticks, spring branchy × tree age — [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md). **Wild vines** — tip spread down + wall capture — [`WILD_VINE.md`](WILD_VINE.md).
-- v3.8: **Phase 6 simulation engine** — chunk-fair spread, event wake, column cache, two-phase placement, season coarse wake — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md). **Registration** — player-priority queue + burst near players. **Spread collect** — empty-first + column occupancy hint; displacement when no vacancy.
+- v3.8: **Phase 6** — chunk-fair spread, event wake, two-phase placement (terrestrial/mat only; mycelium/vine direct), season coarse wake; registration priority/burst, background column scan (`BackgroundRegistrationScanner`, `PendingRegistrationQueue`), foliage sync decoupled (`FoliageChunkSyncPass`); **vines** — column pass; **mycelium anchors** — `MyceliumChunkRegistrar` at chunk load; desynced ticks (2000/2300/5500 ms); `LimitSpreadNearPlayers` limits spread/stress/tree aging (not registration) — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 - Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
 
 Habitat:
@@ -42,7 +42,7 @@ Habitat:
 
 Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning.
 
-Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs для старых BE; Mycelium*.cs для грибницы).
+Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs; Mycelium*.cs; Phase 6 — SpreadChunkScheduler, PendingSpreadQueue, BackgroundRegistrationPipeline, RegistrationScanQueue, PendingRegistrationQueue, FoliageCellScheduler).
 Тесты: 332 (xUnit). Версия: 3.8.0.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.

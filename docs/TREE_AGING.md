@@ -1,6 +1,6 @@
 # Wild tree maturation (v3.6)
 
-Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** in the main reproduce tick (round-robin over the registry, same scope as spread/stress): taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
+Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** in the main reproduce tick (round-robin over the registry; filtered to player radius when `OnlyActivateNearPlayers` or `LimitSpreadNearPlayers`): taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
 
 Updated: 2026-06-14 (lifecycle + senescence remains).
 

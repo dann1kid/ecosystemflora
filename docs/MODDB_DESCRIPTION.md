@@ -44,8 +44,10 @@ Default preset is natural; use BalancePreset sparse for patchier wilderness.
 • Two-phase placement — evaluate then commit with revalidation (EnableTwoPhaseSpreadPlacement).
 • Season coarse wake — seasonal species wake each in-game month (EnableSeasonCoarseWake).
 • Fast registration — player-vicinity chunks first; burst on load; background column scan; paced registry apply (EnableBackgroundRegistrationScan, MaxRegistryAppliesPerTick).
+• Vines (column pass) and mycelium anchors (chunk BE scan) register on load; same reproduce loop and chunk-fair spread.
 • Seasonal canopy — separate main-thread foliage sync when background scan is on (FoliageSyncMode chunk).
 • Empty-first spread — scans empty cells first; displacement still runs when no vacancy (EnableEmptyFirstSpreadCollect). Column occupancy hint skips known plant columns (EnableSpreadColumnOccupancyHint).
+• Desynced server ticks (2 s spread / 2.3 s registration / 5.5 s stress). Fallen sticks land on surface below crown. Less ecology wake when breaking blocks without ecology or forest context (e.g. loose sticks; leaves/logs still wake).
 
 Full ecology in loaded chunks — tune MaxSpreadAttemptsPerChunkPerTick / MaxSpreadChunksVisitedPerTick on powerful hardware. Handbook updated (en/ru). Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
 ```
@@ -435,15 +437,28 @@ Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `Reproduc
 
 | Setting                         | Default | What it does                                                                                                                      |
 | ------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `TickBudgetMs`                  | 30      | Hard cap on ms per server tick for spread (0 = unlimited)                                                                         |
+| `TickBudgetMs`                  | 30      | Hard cap on ms per reproduce tick for spread (0 = unlimited)                                                                         |
+| `SpreadBudgetMs`                | 30      | Spread-only cap (0 = use TickBudgetMs)                                                                                            |
+| `RegistrationBudgetMs`          | 25      | Chunk-scan tick budget (0 = use TickBudgetMs)                                                                                     |
 | `StressBudgetMs`                | 0       | Hard cap for stress tick (0 = use TickBudgetMs)                                                                                   |
-| `StressTickIntervalMs`          | 6000    | Interval between stress ticks (ms)                                                                                                |
-| `MaxReproduceAttemptsPerTick`   | 64      | Spread checks per server tick                                                                                                     |
-| `MaxStressChecksPerTick`        | 16      | Stress checks per tick                                                                                                            |
-| `MaxChunkColumnsScannedPerTick` | 6       | Chunk registration pacing (unfinished chunks stay queued)                                                                         |
-| `MaxRegistrationsPerTick`       | 512     | Max new plant registrations per server tick                                                                                       |
-| `OnlyActivateNearPlayers`       | false   | **Playtest shortcut** — when true, limit spread/stress/trees/scans to player radius; normal play leaves false (all loaded chunks) |
-| `PlayerActivationRadiusBlocks`  | 192     | Radius if above is true                                                                                                           |
+| `ReproduceTickIntervalMs`       | 2000    | Spread / reproduce tick interval (ms)                                                                                             |
+| `ChunkScanTickIntervalMs`       | 2300    | Registration scan tick (desynced from reproduce)                                                                                  |
+| `StressTickIntervalMs`          | 5500    | Interval between stress ticks (ms)                                                                                                |
+| `MaxReproduceAttemptsPerTick`   | 64      | Spread checks per reproduce tick                                                                                                  |
+| `MaxStressChecksPerTick`        | 16      | Stress checks per stress tick                                                                                                     |
+| `EnableBackgroundRegistrationScan` | true | Worker-thread column classify on chunk snapshot                                                                               |
+| `MaxRegistrationSnapshotCellsPerTick` | 8192 | Block ids copied on main per tick                                                                                          |
+| `MaxRegistryAppliesPerTick`     | 512     | Paced `RegisterReproducer` applies per chunk-scan tick                                                                           |
+| `MaxPriorityRegistryAppliesPerTick` | 2048 | Extra paced applies for player-vicinity chunks                                                                                    |
+| `MaxPriorityChunkScansPerTick`  | 48      | Priority registration queue passes per chunk-scan tick                                                                            |
+| `PriorityRegistrationBudgetMs`  | 80      | Per-pass ms budget for priority registration scans                                                                                |
+| `PlayerRegistrationPriorityRadiusBlocks` | 16 | Priority/burst registration radius (blocks)                                                                              |
+| `BurstRegistrationBudgetMs`   | 80      | Burst scan time budget per nearby chunk load (ms)                                                                                 |
+| `MaxChunkColumnsScannedPerTick` | 16    | Legacy sync scan throughput when background scan off                                                                              |
+| `MaxRegistrationsPerTick`       | 2048    | Legacy sync registration cap when background scan off                                                                             |
+| `OnlyActivateNearPlayers`       | false   | **Playtest shortcut** — when true, limit spread/stress/trees/**chunk scans** to player radius                                     |
+| `LimitSpreadNearPlayers`        | false   | When true (and above false): limit spread, stress, and tree aging to player radius; **registration scans unchanged**              |
+| `PlayerActivationRadiusBlocks`  | 192     | Radius for `OnlyActivateNearPlayers` / `LimitSpreadNearPlayers`                                                                   |
 | `VerboseLogging`                | false   | Detailed server log output                                                                                                        |
 | `ReproduceDebug`                | false   | Log each spread attempt (pair with `VerboseLogging` for balance tuning)                                                           |
 

@@ -222,9 +222,9 @@ namespace WildFarming.Ecosystem
         public bool OnlyActivateNearPlayers { get; set; } = false;
 
         /// <summary>
-        /// When true (and <see cref="OnlyActivateNearPlayers"/> is false), spread attempts are limited to
-        /// registry chunks within <see cref="PlayerActivationRadiusBlocks"/> of a player. Stress, aging, and
-        /// chunk registration are unchanged — use for large loaded areas without full playtest mode.
+        /// When true (and <see cref="OnlyActivateNearPlayers"/> is false), spread, stress, and tree/ferntree aging
+        /// run only in registry chunks within <see cref="PlayerActivationRadiusBlocks"/> of a player.
+        /// Chunk registration scans are unchanged. Use for large loaded areas without full playtest mode.
         /// </summary>
         public bool LimitSpreadNearPlayers { get; set; } = false;
 
@@ -295,7 +295,7 @@ namespace WildFarming.Ecosystem
         /// <summary>Once per game year, extend trunk height and crown spread with grown blocks.</summary>
         public bool EnableTreeAging { get; set; } = true;
 
-        /// <summary>Wild trees processed per reproduce tick (round-robin near players).</summary>
+        /// <summary>Wild trees processed per reproduce tick (global round-robin; filtered to player radius when <see cref="OnlyActivateNearPlayers"/> or <see cref="LimitSpreadNearPlayers"/>).</summary>
         public int MaxTreeGrowthAttemptsPerTick { get; set; } = 6;
 
         /// <summary>Multiplier on growth pace vs reference size (higher = faster maturation).</summary>

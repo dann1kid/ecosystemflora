@@ -16,7 +16,7 @@
 | **Деревья** | `log-grown` → sapling; **3.6** — maturation + senescence + stump/logs | living trunk stress; sapling burst on death |
 | **Древовидный папоротник** | `ferntree` — [`FERNTREE.md`](FERNTREE.md) | playtest баланс spread/senescence в тропиках |
 | **Дикие лианы** | tip spread вниз + wall capture — [`WILD_VINE.md`](WILD_VINE.md) | playtest на зданиях/стволах; нет stress/climate gate на tip |
-| **Грибница** | Soft niche + stress + network spread вокруг vanilla BE; inspect (I) на шляпке и почве; meadow coexistence (**3.1.12**) | Нет своих блоков грибов; баланс mat vs vanilla regrowth — playtest + I |
+| **Грибница** | Soft niche + stress + network spread; anchors register on chunk load (`MyceliumChunkRegistrar`); reproduce loop + chunk-fair spread как у lianas (**3.1.12**, **3.8**); inspect (I) на шляпке и почве | Нет своих блоков; баланс mat vs vanilla regrowth — playtest + I |
 | **Ягоды** | Spread + trait clone | Нет стадий куста при spread; мутации trait — опционально и слабо заметны |
 
 **Вывод:** ядро — **конкуренция клеток и ниша**, а не ботаническая модель. Это осознанный компромисс VS API, но «экосистема» для игрока = паттерны на карте, не жизненный цикл.
@@ -105,9 +105,9 @@
 
 ## 8. Производительность и масштаб
 
-Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake, **player-priority registration**, **empty-first spread collect** with column occupancy hint (displacement when no empty cells). См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
+Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake, **player-priority registration** + **background column scan** + paced registry apply, **vines/mycelium** on chunk load, **empty-first spread collect** with column occupancy hint (displacement when no empty cells), desynced tick intervals. См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 
-**Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, `EnableEmptyFirstSpreadCollect`, `EnableSpreadColumnOccupancyHint` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
+**Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `LimitSpreadNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, `EnableBackgroundRegistrationScan`, `EnableEmptyFirstSpreadCollect`, `EnableSpreadColumnOccupancyHint` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers` (spread + stress + tree aging; registration unchanged), `TickBudgetMs`, `SpreadBudgetMs`.
 
 **Не задокументировано числами:** поведение при 20k+ reproducers, несколько игроков на разных краях карты. `OnlyActivateNearPlayers: true` — playtest-режим (урезанный радиус); при default **false** экосистема живёт во всех loaded chunks.
 

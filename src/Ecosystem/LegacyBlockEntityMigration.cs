@@ -7,7 +7,8 @@ namespace WildFarming.Ecosystem
 {
     /// <summary>
     /// One-time migration for saves that still have mod block entities on ecology blocks.
-    /// Ecology uses <see cref="ChunkFlowerScanner"/> only; no BE is attached to new plants.
+    /// Ecology registers via chunk scan (<see cref="RegistrationScanQueue"/>, optional background worker);
+    /// no BE is attached to new plants.
     /// </summary>
     internal static class LegacyBlockEntityMigration
     {

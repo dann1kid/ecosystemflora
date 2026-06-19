@@ -9,13 +9,31 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
+## 3.8.0 — short (EN)
+
+**Since 3.7.0**
+
+- **Phase 6 simulation** — ecology runs in all loaded chunks: chunk-fair spread, wake on world changes, column cache, two-phase placement, monthly wake for seasonal species.
+- **Faster registration** — player-vicinity priority (16-block radius), burst on chunk load, background column scan on a worker thread, paced registry apply (no more “lost tail” flora).
+- **Vines & mushrooms** — wild vine tips and vanilla mycelium anchors register on chunk load and run in the same reproduce loop (chunk-fair spread, stress, inspect **I**) as meadow flora.
+- **Seasonal trees** — deciduous canopy still strips/buds on the main thread; autumn branchy strip can drop `loosestick-free` on the ground.
+- **Spread perf** — empty cells first; displacement when no vacancy; skip occupied columns on empty-first pass.
+- **Tick desync** — reproduce 2 s, chunk scan 2.3 s, stress 5.5 s (fewer aligned server spikes).
+- **Canopy sticks** — autumn branchy strip drops `loosestick-free` on the surface below (not floating on tallgrass).
+- **Break wake** — breaking blocks with no ecology participant and no forest-context semantics (e.g. `loosestick-free`) no longer wakes neighbors; breaking leaves or tree logs still can.
+- **Flora (3.7.1)** — red top grass colonizer, brown sedge, croton, rafflesias, cacti, frosted tallgrass profiles.
+- Handbook updated (en/ru). Press **I** for ecology inspect.
+
+---
+
 ## Since 3.7.0 — at a glance
 
 | Area | What you get |
 |------|----------------|
 | **Simulation engine** | Chunk-fair spread across loaded chunks; event wake on break/place/displacement; column cache; two-phase evaluate/commit; monthly wake for seasonal species |
-| **Registration** | Priority + burst near players; background column scan; paced registry apply; seasonal foliage sync on main thread |
+| **Registration** | Priority + burst near players; background column scan; paced registry apply; **vines** (column pass) + **mycelium anchors** (chunk BE scan) on load; seasonal foliage sync on main thread |
 | **Spread perf** | Empty cells scanned first with full fitness; displacement still runs when no vacancy; column occupancy hint skips known plant columns |
+| **Perf & fixes** | Desynced tick intervals; fallen sticks on ground surface; reduced wake on breaks without ecology/forest context (e.g. loose sticks) |
 | **Handbook** | Configuration guide updated (en/ru) for v3.8 keys |
 | **Tests** | 332 unit tests |
 
@@ -30,7 +48,7 @@ Full ecology in **all loaded chunks** without geographic cutoffs. Smarter schedu
 - **Chunk-fair spread** — round-robin across ecology registry chunks (`EnableChunkFairSpread`, default on).
 - **Event wake** — neighbors retry spread after breaks, placement, displacement, soil succession (`EnableEventDrivenSpread`).
 - **Column cache** — spread preflight reads `SpreadColumnSnapshot` (`EnableEcologyColumnCache`).
-- **Two-phase placement** — evaluate candidates without `SetBlock`, then chunk-fair commit with revalidation (`EnableTwoPhaseSpreadPlacement`).
+- **Two-phase placement** — evaluate candidates without `SetBlock`, then chunk-fair commit with revalidation (`EnableTwoPhaseSpreadPlacement`). Applies to terrestrial/aquatic mat spread via `TrySpawnOffspring`; **mycelium network** and **wild vines** commit directly in the reproduce callback.
 - **Season coarse wake** — seasonal species wake each in-game month (`EnableSeasonCoarseWake`).
 
 Break turf or fell a tree — the meadow reacts within a couple of spread ticks.
@@ -42,10 +60,18 @@ When you explore, flora registers incrementally. New in 3.8:
 - **Priority queue** — chunks within `PlayerRegistrationPriorityRadiusBlocks` (default 16) drain before the background queue (`EnablePlayerPriorityRegistration`).
 - **Burst on load** — one nearby chunk can finish registration in a single callback (`EnableBurstRegistrationNearPlayers`, ~80 ms scan budget).
 - **Paced registry apply** — column scan collects hits into a pending queue; up to 512–2048 `RegisterReproducer` calls per tick (priority first). Fixes “lost tail” flora when scan budget ran out mid-chunk.
-- **Background column scan** — main thread copies block ids into a chunk snapshot; flower/tree/vine classification runs on a dedicated worker thread (`EnableBackgroundRegistrationScan`).
+- **Background column scan** — main thread copies block ids into a chunk snapshot; flower / vine / tree classification runs on a dedicated worker thread (`EnableBackgroundRegistrationScan`).
+- **Mycelium on chunk load** — vanilla `BlockEntityMycelium` anchors register via `MyceliumChunkRegistrar` on the same chunk-load path as vines (BE scan on main; then network spread + stress like vines in the reproduce tick).
 - **Seasonal foliage (chunk mode)** — when background scan is on, canopy strip/bud runs in a separate main-thread pass (`FoliageCellScheduler.ProcessChunkSyncBatch` / `FoliageChunkSyncPass`), not on the worker.
 
 Distant loaded chunks still register in the background — full scope, faster where you stand.
+
+### Perf & correctness
+
+- **Desynced ticks** — `ReproduceTickIntervalMs` 2000, `ChunkScanTickIntervalMs` 2300, `StressTickIntervalMs` 5500 (intervals not multiples of each other → less aligned CPU spikes).
+- **Priority radius** — default **16** blocks (was 384); **burst** scan budget **80** ms per nearby chunk load.
+- **Fallen sticks** — autumn branchy leaf strip can drop `loosestick-free`; placement uses surface search below the crown (not on tallgrass mid-air).
+- **Break wake** — no ecology wake when the broken block is not an ecology plant, not in the registry, not a forest-context block (`log-grown`, `leaves-*`, ferntree trunk, …), and not an event-driven wake target (e.g. picking up `loosestick-free`).
 
 ### Spread collect (terrestrial)
 
@@ -69,14 +95,24 @@ Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without d
 | `BurstRegistrationBudgetMs` | 80 | Burst scan time budget per load (ms) |
 | `MaxRegistryAppliesPerTick` | 512 | Paced registry applies per chunk-scan tick |
 | `MaxPriorityRegistryAppliesPerTick` | 2048 | Extra applies for player-vicinity chunks |
+| `MaxPriorityChunkScansPerTick` | 48 | Extra priority queue scan passes per chunk-scan tick |
+| `MaxPriorityRegistrationsPerTick` | 8192 | Legacy sync registration cap for priority queue |
+| `PriorityRegistrationBudgetMs` | 80 | Per-pass ms budget for priority registration scans |
+| `MaxBurstRegistrationsPerChunk` | 4096 | Max applies while finishing one burst chunk on load |
+| `RegistrationBudgetMs` | 25 | Chunk-scan tick time budget (0 = `TickBudgetMs`) |
 | `EnableBackgroundRegistrationScan` | true | Worker-thread column classification |
 | `MaxRegistrationSnapshotCellsPerTick` | 8192 | Block ids copied on main per tick |
 | `MaxChunkColumnsScannedPerTick` | 16 | Background registration throughput |
 | `MaxRegistrationsPerTick` | 2048 | Background registration cap |
 | `EnableEmptyFirstSpreadCollect` | true | Empty cells before displacement |
 | `EnableSpreadColumnOccupancyHint` | true | Skip occupied columns on empty-first pass |
+| `ReproduceTickIntervalMs` | 2000 | Spread / reproduce tick interval (ms) |
+| `ChunkScanTickIntervalMs` | 2300 | Registration scan tick (desynced from reproduce) |
+| `StressTickIntervalMs` | 5500 | Stress tick interval (ms) |
 
-Legacy safety (unchanged): `OnlyActivateNearPlayers`, `LimitSpreadNearPlayers`, `TickBudgetMs`, `SpreadBudgetMs`.
+Legacy safety (unchanged): `OnlyActivateNearPlayers`, `LimitSpreadNearPlayers` (spread + stress + tree aging near players; registration scans unchanged), `TickBudgetMs`, `SpreadBudgetMs`.
+
+Full key list: `assets/ecosystemflora/ecosystemflora.example.json`.
 
 See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) and handbook *Configuration Guide*.
 
@@ -95,9 +131,11 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) and handbook *Configuration G
 ### Симуляция (Phase 6)
 
 - Spread **по чанкам** + **пробуждение** от изменений мира; двухфазный commit; coarse wake сезонных видов.
-- **Быстрая регистрация** рядом с игроком (priority + burst + фоновый скан колонок).
+- **Быстрая регистрация** рядом с игроком (priority + burst + фоновый скан колонок; paced apply).
+- **Лианы и грибница** — регистрация при load чанка; spread/stress/inspect (I) в том же reproduce loop, что и луг.
 - **Сезонная крона** — отдельный foliage-pass на main при фоновой регистрации.
 - **Empty-first spread** — пустые клетки первыми; **displacement** если vacancy нет.
+- **Perf** — desynced ticks (2 s / 2.3 s / 5.5 s); палки на поверхности земли; меньше wake при ломании блоков без ecology/forest-context (напр. `loosestick-free`; листва и брёвна — по-прежнему могут будить).
 
 Handbook (en/ru). VS 1.22+. Не совместим с Wild Farming Revival.
 
@@ -117,8 +155,10 @@ SIMULATION (Phase 6)
 • Chunk-fair spread + event wake on break/place/displacement.
 • Two-phase placement, column cache, monthly wake for seasonal species.
 • Fast registration near you (priority queue + burst + background column scan).
+• Vines and mycelium anchors register on chunk load; same reproduce loop as meadow flora.
 • Seasonal canopy sync on main thread when background scan is enabled.
 • Empty-first spread; displacement when no empty cell. Column occupancy hint.
+• Desynced tick intervals (2 s / 2.3 s / 5.5 s). Fallen sticks land on ground surface. Less ecology wake when breaking blocks without ecology or forest context (e.g. loose sticks).
 
 Handbook updated (en/ru). Press I for ecology inspect.
 VS 1.22+. Do not run alongside Wild Farming Revival.
