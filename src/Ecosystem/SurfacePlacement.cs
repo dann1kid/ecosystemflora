@@ -59,7 +59,7 @@ namespace WildFarming.Ecosystem
 
         /// <summary>
         /// Topmost valid surface cell in a column below <paramref name="from"/> (first hit when scanning down).
-        /// Uses the same ground/space rules as wild spread — replaces high-replaceable grass instead of floating above it.
+        /// Air-only placement for spread diagnostics; fallen sticks use <see cref="CanopyFallenSticks.TryFindGroundStickCell"/>.
         /// </summary>
         public static bool TryFindSurfaceCellBelow(
             IBlockAccessor acc,

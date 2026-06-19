@@ -42,14 +42,14 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        /// <summary>Single species key for all growth stages; spread keeps parent variant.</summary>
+        /// <summary>Single species key for all growth stages; spread picks height from local conditions.</summary>
         static readonly Dictionary<string, EcologyEntry> BySpecies = new Dictionary<string, EcologyEntry>
         {
             ["tallgrass"] = new EcologyEntry(
                 -12, 40,
                 0.1f, 1f,
                 0f, 1f,
-                2.0f,
+                1.35f,
                 0, 0,
                 new WildPlantSoil.Profile(SoilKindSets.Meadow | SoilKind.LowFert | SoilKind.ForestFloor, 80, 0),
                 7),

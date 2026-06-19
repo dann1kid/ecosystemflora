@@ -44,10 +44,10 @@ namespace WildFarming.Ecosystem
                 ["catmint"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.72f),
                 ["lupine"] = new Profile(FloraContextAffinity.Open, 1.15f, 0.35f, 0.60f),
 
-                // Meadow perennials — moderate hold
-                ["cornflower"] = Open(1.2f, hold: 1.0f),
-                ["wilddaisy"] = Open(1.1f, hold: 1.0f),
-                ["forgetmenot"] = Open(1.05f, hold: 1.05f),
+                // Meadow perennials — moderate hold, resist grass encroachment
+                ["cornflower"] = Open(1.2f, hold: 1.08f),
+                ["wilddaisy"] = Open(1.1f, hold: 1.08f),
+                ["forgetmenot"] = Open(1.05f, hold: 1.1f),
                 ["woad"] = Open(1.15f, hold: 0.95f),
 
                 // Slow / localized — strong hold once established
@@ -81,7 +81,7 @@ namespace WildFarming.Ecosystem
                 ["tallfern"] = Edge(2f, hold: 1.12f),
 
                 // Grass matrix — weak hold so flowers and colonizers can replace turf
-                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.72f),
+                ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.58f),
 
                 // Grass colonizers — faster spread than matrix, stronger hold once established
                 [EcologyGrassColonizerSpecies.Redtopgrass] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.82f),

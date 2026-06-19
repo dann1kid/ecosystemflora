@@ -631,6 +631,12 @@ namespace WildFarming.Ecosystem
                 spreadBlock = PlantCodeHelper.ResolveReedSpreadBlock(api, plantPos, spreadBlock);
             }
 
+            if (PlantCodeHelper.ResolveEcologySpecies(spreadBlock) == "tallgrass")
+            {
+                spreadBlock = TallgrassSpreadHeight.ResolveSpreadBlock(
+                    api, plantPos, spreadBlock, requirements, api.World.Rand);
+            }
+
             if (requirements.Habitat == EcologyHabitat.Ferntree)
             {
                 int parentSegments = FerntreeStructure.MeasureTrunkSegmentCount(accessor, parentOrigin);

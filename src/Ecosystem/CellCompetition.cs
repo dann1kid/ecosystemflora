@@ -122,6 +122,10 @@ namespace WildFarming.Ecosystem
             }
 
             challengerScore = SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx);
+            challengerScore = MeadowTurfCompetition.AdjustChallengerSpreadScore(
+                challengerScore,
+                challenger.Species,
+                incumbentSpecies);
 
             PlantRequirements incumbent = PlantRequirements.FromBlock(incumbentBlock);
             if (string.IsNullOrEmpty(incumbent.Species))
