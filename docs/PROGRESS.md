@@ -94,7 +94,7 @@
 | **Осмотр (I)** | Шляпка `mushroom-*` или почва (`soil-*`, `forestfloor`, торф, ствол) — клиент шлёт запрос без локального BE; сервер строит отчёт. |
 | **Почва** | `MyceliumSkipSoilSuccession` — без сукцессии/fallow drip на якорной клетке с BE. |
 
-Конфиг: см. таблицу ниже. **Обновление:** при старте мода отсутствующие ключи получают C#-дефолты и **дописываются в** `ModConfig/ecosystemflora.json` (`StoreModConfig` после load).
+Конфиг: **[`CONFIGURATION.md`](CONFIGURATION.md)**. **Обновление:** при старте мода отсутствующие ключи получают C#-дефолты и **дописываются в** `ModConfig/ecosystemflora.json` (`StoreModConfig` после load).
 
 ### Деревья (вариант A)
 
@@ -216,71 +216,24 @@
 
 ## Конфиг (`ecosystemflora.json`)
 
-Файл: `%AppData%/Vintagestory/ModConfig/ecosystemflora.json` (сервер; клиент — своя копия, если есть). Пример всех ключей: `assets/ecosystemflora/ecosystemflora.example.json`. **v3.1.12:** после успешной загрузки мод **дописывает** отсутствующие ключи с C#-дефолтами (`EcosystemConfig.TryLoadFromDisk` → `StoreModConfig`).
+Файл: `%AppData%/Vintagestory/ModConfig/ecosystemflora.json` (сервер; клиент — своя копия, если есть). Пример: `assets/ecosystemflora/ecosystemflora.example.json`.
+
+**Полный справочник** (все ключи, дефолты из `EcosystemConfig.cs`): **[`CONFIGURATION.md`](CONFIGURATION.md)**.
+
+Кратко:
 
 | Параметр | Назначение |
 |----------|------------|
-| `ReproduceRadius` / `ReproduceVerticalSearch` | Поиск клеток |
-| `ReproduceChance` | Базовый шанс (× SpreadRate вида) |
-| `ReproduceAttemptsPerYear` | Попыток spread за **игровой год** при SpreadRate=1 |
-| `UseCalendarScaledSpread` | Интервал в игровых днях |
-| `ReproduceIntervalHours` | Legacy, если calendar off |
-| `MinSpeciesReproduceIntervalDays` / `Hours` | Пол между попытками (0 = без пола) |
-| `MinFitness` | Порог fitness (0–1) |
-| `ApplyWorldgenRainForest` | Только rainfall из worldgen; лес — `LocalForestCover` |
-| `UseSpeciesSpreadRates` | Per-species `SpreadRate` |
-| `PlantSpacingEnabled` | Дистанция между растениями |
-| `DefaultSameSpeciesSpacing` / `DefaultOtherSpeciesSpacing` | Базовые дистанции |
-| `SpacingVerticalSearch` | ±Y при проверке соседей |
-| `TickBudgetMs` | Жёсткий потолок ms/тик для spread (default 30); 0 = без лимита |
-| `MaxReproduceAttemptsPerTick` | Лимит CPU (spread) |
-| `MaxStressChecksPerTick` | Лимит CPU (stress) |
-| `MaxChunkColumnsScannedPerTick` / `MaxRegistrationsPerTick` | Обработка очереди чанков за тик; скан продолжается до конца чанка через курсор (см. v2.11.2) |
-| `EnableEcologyInspect` | Осмотр растения по хоткею (**I**): запрос → отчёт по сети |
-| `EcologyInspectCooldownSeconds` | Кулдаун между запросами осмотра |
-| `EcologyInspectScanRadius` | Радиус зонального скана (доминанты в `SpacingIndex`, 4–32) |
-| `EnableEcologyAreaScan` | Включить блок «экология рядом» в отчёте |
-| `CloneBerryTraits` | **v3.0:** при spread ягоды клонировать черты родителя (`BEBehaviorFruitingBush.OnGrownFromCutting`; default **true**) |
-| `EnableThirdPartyParticipants` | **v3.1:** блоки с `ecologyParticipant` + `ecologySpecies` + `ecologySpreadBlock` из любых доменов модов (default **true**) |
-| `BerryTraitMutationChance` | **v3.1.1:** шанс потери одного trait при spread ягод (default **0**) |
-| `UseSoilSuccession` | Смена tier почвы при spread/death; **false** = только spread без подмены soil |
-| `SoilSuccessionSkipWhenBuiltAbove` | **v3.1.2:** не менять почву под slab/постройкой (default **true**) |
-| `UseRhizomeSpreadForReeds` | **v3.1.3–5:** ризомный spread reeds; **false** = legacy radius |
-| `UseSurfaceMatSpreadForLilies` | **v3.1.5:** ковёр кувшинки на воде |
-| `RhizomeSeedDispersalEnabled` / `RhizomeSeedDispersalChanceScale` / `RhizomeSeedDispersalFitnessScale` | **v3.1.4:** редкий seed/обломок для mat spread |
-| `SoilSuccessionStrength` | Множитель силы сукцессии |
-| `ReproduceDebug` / `VerboseLogging` | Лог spread / Skip; master-switch логирования |
-| `OnlyActivateNearPlayers` | Default **false** — все зарегистрированные растения в **загруженных** чанках; **true** = playtest/perf: spread, stress, tree aging **и chunk scans** только в радиусе игрока |
-| `LimitSpreadNearPlayers` | Default **false**; **true** (при `OnlyActivateNearPlayers: false`) — spread, stress и tree/ferntree aging только в registry chunks в радиусе `PlayerActivationRadiusBlocks`; **регистрация чанков не ограничена** |
-| `PlayerActivationRadiusBlocks` | Радиус для `OnlyActivateNearPlayers` / `LimitSpreadNearPlayers` (192 по умолчанию) |
-| `UseCellDisplacement` / `DisplacementHoldMargin` | Вытеснение занятых ecology-клеток |
-| `EnableStressDeath` / `MaxFailedSurvivalChecks` | Стресс-смерть при несоответствии нише |
-| `EnableSymbiosis` / `UseFloraContext` | Симбиоз с деревьями; локальный forest-edge контекст |
-| `RespectLandClaims` | Нет spread/displace/stress/soil внутри land claim |
-| *(hardcoded)* | Spread запрещён на farmland; на клетку с **активным** mycelium BE (`HasActiveMycelium`) |
-| `EnableMyceliumNiche` | Штраф луга / бонус леса в радиусе якоря (default on) |
-| `MyceliumZoneRadius` | Радиус зоны (default 7, как vanilla growRange) |
-| `MyceliumMeadowSpreadPenalty` | Множитель fitness луга у якоря (default 0.35, taper к 1.0 на краю зоны) |
-| `MyceliumForestSpreadBonus` | Множитель fitness лесного understory у якоря (default 1.22) |
-| `MyceliumSkipSoilSuccession` | Не менять почву / fallow на клетке с mycelium BE (default on) |
-| `EnableMyceliumEcology` | Регистрация BE, стресс/смерть якоря, осмотр грибницы |
-| `EnableMyceliumNetworkSpread` | Медленный spread сети по кромке |
-| `MyceliumSpreadRate` / `MyceliumSpreadAttemptsPerYear` | Темп network spread (default 0.12 / 4 yr) |
-| `MyceliumSpreadMinFitness` | Min fitness для colonize/displace соседнего якоря (default 0.35) |
-| `MyceliumTreeHostRadius` | Поиск tree-host для лесной грибницы (default 4) |
-| `MyceliumForestMinForestCover` / `MyceliumMeadowMaxForestCover` | Пороги стресса лес/луг (default 0.12 / 0.45) |
-| *(config merge)* | **v3.1.12:** после load `StoreModConfig` — новые ключи дописываются в json на диск |
-| `UseSeasonalEcology` / `SeasonalStressEnabled` | Spread и зимняя/осенняя stress по сезону (`WildSpeciesSeason`) |
-| `EnableTrampling` / `TramplingRadius` / `TramplingStressThreshold` | Протаптывание (default **off**): растения гибнут рядом с часто ходящими игроками |
-| `TramplingSoilDegradation` | Деградация почвы на протоптанных тропах (default **off**) |
-| `EnableFlowerDrygrass` | Пустая рука → блок цветка/tallgrass; нож/коса → drygrass (`PlantHandHarvest`, патч косы `flower-`) |
-| `EnableTreeAging` / `EnableTreeSenescence` / `TreeSenescenceSnagBlocks` | **v3.6:** годовой рост; поэтапная senescence (4 года); возраст и фаза в savegame moddata — [`TREE_AGING.md`](TREE_AGING.md) |
-| `EnableFerntreeEcology` / `FerntreeSenescenceSnagSegments` | **v3.7:** древовидный папоротник — [`FERNTREE.md`](FERNTREE.md) |
-| `FoliagePeakAutumnBranchyStripActivity` / `EnableCanopyFallenSticks` / `CanopyFallenStickChance` | **v3.7:** частичный strip branchy; палки под кроной — [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md) |
-| `EnableSpringBranchyAgeBoost` / `SpringBranchyAgeBoostYearsToMax` / `SpringBranchyAgeBoostMax` | **v3.7:** весенние ветви по возрасту дерева |
-| `EnableWildVineEcology` / `WildVineWallCaptureRadius` / `WildVineWallCaptureHeight` | **v3.7:** лианы — [`WILD_VINE.md`](WILD_VINE.md) |
-| `MaxTreeGrowthAttemptsPerTick` / `TreeGrowthActivityScale` | Round-robin деревьев за reproduce tick; темп роста |
-| `BalancePreset` | `natural` / `lush` / `sparse` — пресеты spread |
+| `BalancePreset` | `natural` / `lush` / `sparse` / `custom` — пресет перезаписывает 5 полей spread при старте |
+| `EcosystemEnabled` | Мастер-выключатель экологии |
+| `ReproduceAttemptsPerYear` / `ReproduceChance` / `MinFitness` | Темп и порог spread (см. пресеты) |
+| `ApplyWorldgenRainForest` | Rainfall из worldgen; **лес** — `LocalForestCover` (соседние деревья), не worldgen forest |
+| `LimitSpreadNearPlayers` / `OnlyActivateNearPlayers` | Ограничение spread/stress/деревьев у игроков; второй флаг также режет chunk scans |
+| Phase 6 (v3.8) | `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake` — см. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) и [`CONFIGURATION.md`](CONFIGURATION.md) |
+| Регистрация (v3.8) | `EnableBackgroundRegistrationScan`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, бюджеты ms — см. [`CONFIGURATION.md`](CONFIGURATION.md) |
+| Деревья / крона / грибница / лианы | `EnableTreeAging`, `EnableSeasonalFoliage`, `EnableMyceliumEcology`, `EnableWildVineEcology` — детали в [`CONFIGURATION.md`](CONFIGURATION.md) и topic-доках |
+
+**Обновление:** при старте мода отсутствующие ключи получают C#-дефолты и **дописываются** в json (`EcosystemConfig.TryLoadFromDisk` → `StoreModConfig`).
 
 **Рекомендуемая «естественная» база:** `BalancePreset: natural` или `lush` для более плотного луга; не тестовые `ReproduceChance: 1` / `MinFitness: 0.1` в финальной игре.
 

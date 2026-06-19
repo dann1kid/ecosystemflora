@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flora on vanilla blocks. v3.8: chunk-fair spread, paced registration with background scan, vines and mycelium in the reproduce loop, seasonal canopy. Tree aging, ferntree, meadow harvest, inspect (I). Handbook (en/ru).",
   "authors": ["-"],
-  "version": "3.9.1",
+  "version": "3.9.2",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

@@ -1,0 +1,76 @@
+<!--
+  Ecosystem - Flora — ModDB "paste at top of Description"
+  =======================================================
+  On mods.vintagestory.at → Edit mod → Description:
+  1. Paste this block at the VERY TOP (above changelog / feature list).
+  2. ModDB accepts HTML in the description field (use "Source" / raw HTML mode if offered).
+  3. If a tag is stripped, remove it — keep inline styles on div/table.
+
+  Palette: parchment panels, forest green accents, warm brown text (VS-adjacent).
+-->
+
+<div style="font-family: Georgia, 'Times New Roman', serif; color: #3a3228; line-height: 1.55; max-width: 52em;">
+
+  <div style="background: linear-gradient(135deg, #4a6741 0%, #3d5236 100%); color: #f4ecd8; padding: 14px 18px; border-radius: 8px 8px 0 0; border: 1px solid #2f3f2a;">
+    <div style="font-size: 1.35em; font-weight: bold; letter-spacing: 0.02em;">Ecosystem — Flora</div>
+    <div style="opacity: 0.92; margin-top: 4px; font-size: 0.95em;">Server admin quick answers &nbsp;·&nbsp; Config: <code style="background: rgba(0,0,0,0.2); padding: 1px 6px; border-radius: 3px;">ModConfig/ecosystemflora.json</code> &nbsp;·&nbsp; In-game handbook (H) &nbsp;·&nbsp; Inspect: <strong>I</strong></div>
+  </div>
+
+  <div style="background: #f5ead6; padding: 16px 18px; border: 1px solid #c9b896; border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 18px;">
+
+    <table style="width: 100%; border-collapse: separate; border-spacing: 10px 10px; margin: 0 0 4px 0;">
+      <tr>
+        <td style="width: 33%; vertical-align: top; background: #fff9ee; border: 1px solid #d4c4a8; border-radius: 6px; padding: 12px 14px;">
+          <div style="color: #4a6741; font-weight: bold; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Slower spread (global)</div>
+          <div style="font-size: 0.95em;">Set preset to <strong>sparse</strong> — fewer attempts, stricter fitness, wider spacing.</div>
+          <pre style="background: #ebe0cc; border: 1px solid #c9b896; border-radius: 4px; padding: 8px 10px; margin: 10px 0 0 0; font-size: 0.82em; overflow-x: auto;">"BalancePreset": "sparse"</pre>
+          <div style="font-size: 0.82em; color: #6b5d4a; margin-top: 8px;">Manual tuning? Use <code>"custom"</code> then edit <code>ReproduceAttemptsPerYear</code>, <code>ReproduceChance</code>, <code>MinFitness</code>. Presets <em>natural/lush/sparse</em> overwrite those keys on every server start.</div>
+        </td>
+        <td style="width: 33%; vertical-align: top; background: #fff9ee; border: 1px solid #d4c4a8; border-radius: 6px; padding: 12px 14px;">
+          <div style="color: #4a6741; font-weight: bold; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Treehouses / bases</div>
+          <div style="font-size: 0.95em;">Only wild <strong>log-grown</strong> trunks are in ecology. Player <strong>log-placed</strong> / debarked builds are <em>not</em> aged or killed by the mod.</div>
+          <div style="font-size: 0.82em; color: #6b5d4a; margin-top: 10px;">Living inside natural worldgen trees? Those trunks <em>can</em> senesce. Use land claims — spread, growth, and senescence are blocked inside claims.</div>
+        </td>
+        <td style="width: 33%; vertical-align: top; background: #fff9ee; border: 1px solid #d4c4a8; border-radius: 6px; padding: 12px 14px;">
+          <div style="color: #4a6741; font-weight: bold; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">No wild tree death</div>
+          <div style="font-size: 0.95em;">Growth off <em>and</em> senescence off:</div>
+          <pre style="background: #ebe0cc; border: 1px solid #c9b896; border-radius: 4px; padding: 8px 10px; margin: 10px 0 0 0; font-size: 0.82em;">"EnableTreeAging": false,
+"EnableTreeSenescence": false</pre>
+          <div style="font-size: 0.82em; color: #6b5d4a; margin-top: 8px;">Want slow growth but no death? Aging <strong>on</strong>, senescence <strong>off</strong>. There is no config key for lifespan yet — horizons are per species in code (redwood ~140 y).</div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="background: #ebe0cc; border-left: 4px solid #8b6914; padding: 10px 14px; margin: 6px 0 14px 0; border-radius: 0 4px 4px 0; font-size: 0.92em;">
+      <strong>Do not run alongside Wild Farming Revival.</strong> Vintage Story <strong>1.22+</strong>. Press <strong>I</strong> on a trunk log for calendar age, size index, and senescence phase.
+    </div>
+
+    <div style="font-size: 1.05em; font-weight: bold; color: #4a6741; margin: 0 0 10px 0; border-bottom: 1px solid #d4c4a8; padding-bottom: 6px;">Frequently asked</div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.94em;">
+      <tr>
+        <td style="width: 28%; vertical-align: top; padding: 8px 12px 8px 0; font-weight: bold; color: #5c4a32;">Is redwood affected?</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e0d4bc;">Yes — one of 14 lumber species (<code>log-grown-redwood</code>). Sapling spread, optional yearly growth, senescence at ~<strong>140 in-game years</strong> (longest horizon). Redwood is conifer-like — no deciduous autumn leaf drop from seasonal canopy.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 12px 8px 0; font-weight: bold; color: #5c4a32;">Increase tree lifespan?</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e0d4bc;">No per-species lifespan slider in config yet. Disable <code>EnableTreeSenescence</code> to prevent natural death. Species horizons (oak ~120, birch ~90, redwood ~140) are fixed in mod data.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 12px 8px 0; font-weight: bold; color: #5c4a32;">Slow everything down?</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e0d4bc;"><code>BalancePreset: sparse</code> is the main global knob. Finer control: <code>custom</code> + lower <code>ReproduceAttemptsPerYear</code> (default 72) and <code>ReproduceChance</code> (default 0.5). Per-species <code>SpreadRate</code> in ecology tables still applies on top.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 12px 8px 0; font-weight: bold; color: #5c4a32;">Meadow too dense?</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e0d4bc;"><code>sparse</code> preset, or <code>custom</code> with higher <code>MinFitness</code> and spacing. Gallery screenshots may use lush/aggressive tuning — default is <code>natural</code>.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 12px 8px 0; font-weight: bold; color: #5c4a32;">Safe gardens?</td>
+        <td style="vertical-align: top; padding: 8px 0;">Land claims block wild spread, displacement, stress death, tree growth, and senescence. Greenhouse (enclosed glass roof) protects from temperature stress without claims.</td>
+      </tr>
+    </table>
+
+  </div>
+</div>
+
+<!-- ========== END ADMIN FAQ — your normal description continues below ========== -->

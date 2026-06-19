@@ -69,7 +69,9 @@ A reference template ships with the mod. The easiest way to tune the experience 
 | `lush` | Faster, greener | 120 | 0.65 | 0.35 |
 | `sparse` | Minimal, subtle | 36 | 0.30 | 0.60 |
 
-Set `BalancePreset` to `custom` to use your own numeric fields (see the example JSON in the mod assets).
+Set `BalancePreset` to `custom` to use your own numeric fields.
+
+**Full key reference:** [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) (defaults match `EcosystemConfig.cs`). Example JSON: `assets/ecosystemflora/ecosystemflora.example.json`.
 
 | Setting | Default | What it does |
 |---------|---------|-------------|
@@ -102,8 +104,8 @@ Set `BalancePreset` to `custom` to use your own numeric fields (see the example 
 ## For developers
 
 **Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (260 xUnit tests)
+**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (361 xUnit tests)
 
-Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
+Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 
 Originally inspired by JakeCool19's Wild Farming (v1.2.0). Fully rewritten.

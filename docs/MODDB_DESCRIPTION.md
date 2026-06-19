@@ -2,6 +2,14 @@
 
 > Текст ниже — черновик описания для страницы на ModDB / mods.vintagestory.at.
 
+## Admin FAQ (HTML — paste at top of ModDB Description)
+
+**Файл:** [`MODDB_ADMIN_FAQ.html`](MODDB_ADMIN_FAQ.html) — готовый блок с inline-стилями (пергамент + зелёный заголовок, три карточки рецептов, таблица FAQ).
+
+**Как вставить:** ModDB → Edit mod → Description → вставить содержимое файла **самым первым** (до changelog и «Your world comes alive»). Поле принимает HTML; если редактор режет теги — переключиться в исходник / убрать `linear-gradient` на заголовке.
+
+**Зачем:** ответы на типичные вопросы админов (sparse, treehouses, redwood, lifespan, global spread) видны до длинного feature list.
+
 ---
 
 ## 3.7.0 — ModDB update (short paste)
@@ -134,6 +142,12 @@ Press **I** on any wild plant, mushroom cap, tree trunk, or mycelium soil to deb
 
 ## Full description
 
+**HTML для ModDB (основной текст «Your world comes alive» → «Easy to tune»):** [`MODDB_DESCRIPTION.html`](MODDB_DESCRIPTION.html) — вставить в поле Description на mods.vintagestory.at (принимает HTML).
+
+**Короткий admin-FAQ сверху (опционально):** [`MODDB_ADMIN_FAQ.html`](MODDB_ADMIN_FAQ.html).
+
+Ниже — markdown-черновик того же содержания (для редактирования в репо).
+
 ### Your world comes alive
 
 Ecosystem - Flora turns static worldgen flora into a living ecosystem. Flowers spread across meadows, ferns creep under the forest canopy, reeds colonize shorelines, and mature trees seed new saplings — all without replacing any vanilla blocks.
@@ -241,66 +255,9 @@ Edit `ModConfig/ecosystemflora.json` (created on first server launch). Full exam
 
 **Upgrading:** after an update, launch once — the mod **rewrites** your config file with any **new keys** at default values. Your existing settings are kept. Server always; client when a config file already exists.
 
-#### Config keys added or changed since 3.1.2
+**Full reference:** [`docs/CONFIGURATION.md`](CONFIGURATION.md) — every key, default, and description (synced with `EcosystemConfig.cs`). In-game handbook: *Configuration Guide* (presets + Phase 6 summary).
 
-
-| Key                                     | Default | Since                 | What it does                                                                                                    |
-| --------------------------------------- | ------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `SoilSuccessionSkipWhenBuiltAbove`      | true    | **3.1.2** / **3.1.9** | Skip soil tier swaps under slabs/builds; **3.1.9** also protects Terrain Slabs ground blocks (`terrainslabs:`*) |
-| `UseRhizomeSpreadForReeds`              | true    | **3.1.3**             | Cattail/tule/papyrus: rhizome **mat edge** spread. **false** = legacy radius-4                                  |
-| `RhizomeSeedDispersalEnabled`           | true    | **3.1.4**             | Rare virtual seed/fragment jumps for reed and lily mats (no item seeds)                                         |
-| `RhizomeSeedDispersalChanceScale`       | 1.0     | **3.1.4**             | Multiplier on per-species seed jump chance                                                                      |
-| `RhizomeSeedDispersalFitnessScale`      | 0.25    | **3.1.4**             | Harder establishment for distant seed landing sites                                                             |
-| `UseSurfaceMatSpreadForLilies`          | true    | **3.1.5**             | Water lily: floating **pad mat** on open water. **false** = legacy radius spread                                |
-| `EnableFlowerDrygrass`                  | true    | **3.1.10**            | Meadow harvest: **flowers** → block in world; **tallgrass** → no drop (knife/scythe → drygrass)                 |
-| `EnableMyceliumNiche`                   | true    | **3.1.12**            | Meadow spread penalty / forest bonus near vanilla mycelium anchors                                              |
-| `EnableMyceliumEcology`                 | true    | **3.1.12**            | Register mycelium BE: stress/death, inspect (I) on caps and soil                                                |
-| `EnableMyceliumNetworkSpread`           | true    | **3.1.12**            | Slow orthogonal network spread from mat edge                                                                    |
-| `MyceliumZoneRadius`                    | 7       | **3.1.12**            | Niche zone radius (matches vanilla growRange)                                                                   |
-| `MyceliumMeadowSpreadPenalty`           | 0.35    | **3.1.12**            | Meadow spread fitness at anchor (tapers to 1.0 at zone edge)                                                    |
-| `MyceliumForestSpreadBonus`             | 1.22    | **3.1.12**            | Forest understory spread bonus at anchor                                                                        |
-| `MyceliumSkipSoilSuccession`            | true    | **3.1.12**            | Skip soil succession / fallow drip on mycelium anchor cells                                                     |
-| `MyceliumTreeHostRadius`                | 4       | **3.1.12**            | Tree-host search for forest mycelium survival                                                                   |
-| `MyceliumForestMinForestCover`          | 0.12    | **3.1.12**            | Below this, forest mycelium stressed in open context                                                            |
-| `MyceliumMeadowMaxForestCover`          | 0.45    | **3.1.12**            | Above this, meadow mycelium stressed                                                                            |
-| `MyceliumSpreadRate`                    | 0.12    | **3.1.12**            | Scales mycelium network spread interval                                                                         |
-| `MyceliumSpreadAttemptsPerYear`         | 4       | **3.1.12**            | Network spread attempts per game year at rate 1.0                                                               |
-| `MyceliumSpreadMinFitness`              | 0.35    | **3.1.12**            | Min fitness to colonize / displace neighbor anchor                                                              |
-| `EnableTreeAging`                       | true    | **3.6.0**             | Yearly calendar age + structure growth for registered log-grown trunks                                          |
-| `EnableTreeSenescence`                  | true    | **3.6.0**             | Phased natural death after species lifespan                                                                     |
-| `TreeSenescenceSnagBlocks`              | 3       | **3.6.0**             | Trunk blocks left during snag year                                                                              |
-| `EnableTreeSenescenceRemains`           | true    | **3.6.0**             | Final year: vanilla stump + fallen logs (not log-grown)                                                         |
-| `TreeSenescenceFallenLogCount`          | 3       | **3.6.0**             | Horizontal logs scattered near stump (0 = stump only)                                                           |
-| `MaxTreeGrowthAttemptsPerTick`          | 6       | **3.6.0**             | Cap structure growth work per server tick                                                                       |
-| `TreeGrowthActivityScale`               | 1.0     | **3.6.0**             | Scale tree growth pacing                                                                                        |
-| `EnableFerntreeEcology`                 | true    | **3.7.0**             | Tree fern register, spread, aging                                                                               |
-| `FerntreeSenescenceSnagSegments`        | 2       | **3.7.0**             | Snag trunk height (ferntree)                                                                                    |
-| `FoliagePeakAutumnBranchyStripActivity` | 0.35    | **3.7.0**             | Partial branchy strip threshold (0 = keep all)                                                                  |
-| `EnableCanopyFallenSticks`              | true    | **3.7.0**             | Drop loose sticks when branchy strips                                                                           |
-| `CanopyFallenStickChance`               | 0.42    | **3.7.0**             | Stick drop chance scale at peak autumn                                                                          |
-| `EnableSpringBranchyAgeBoost`           | true    | **3.7.0**             | Spring branchy buds scale with tree age                                                                         |
-| `SpringBranchyAgeBoostYearsToMax`       | 60      | **3.7.0**             | Years to max spring branch boost                                                                                |
-| `SpringBranchyAgeBoostMax`              | 1.5     | **3.7.0**             | Max spring branchy bud multiplier                                                                               |
-| `EnableWildVineEcology`                 | true    | **3.7.0**             | Wild vine tip spread                                                                                            |
-| `WildVineWallCaptureRadius`             | 4       | **3.7.0**             | Horizontal wall-face scan                                                                                       |
-| `WildVineWallCaptureHeight`             | 6       | **3.7.0**             | Vertical wall-face scan                                                                                         |
-| `EnableSeasonalFoliage`                 | true    | **3.2.0**             | Deciduous autumn defol / spring bud on log-grown crowns                                                         |
-| `EnableCanopyAmbience`                  | true    | **3.5.0**             | Client leaf particles near tall crowns                                                                          |
-
-
-Related (unchanged keys, but behavior context from **3.1.2**):
-
-
-| Key                            | Default | Note                                                                                                    |
-| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------- |
-| `UseSoilSuccession`            | true    | **3.1.2 balance:** meadows enrich soil on spread/death; heather & western gorse slightly dry poor soils |
-| `SoilSuccessionStrength`       | 1.0     | Scale of all soil succession changes                                                                    |
-| `EnableEcologyInspect`         | true    | **3.1.6:** inspect (**I**) shows mat edge / seed % on reeds & lily                                      |
-| `BerryTraitMutationChance`     | 0.0     | Optional trait loss on berry spread (**3.1.1**; 0 = off)                                                |
-| `EnableThirdPartyParticipants` | true    | JSON `ecologyParticipant` on blocktypes (**3.1.0**)                                                     |
-
-
-Third-party block JSON (not in `ecosystemflora.json`): `ecologySpreadMode` — `"rhizome"`, `"surfacemat"`, or `"independent"` (**3.1.3+**).
+Third-party block JSON (not in `ecosystemflora.json`): `ecologySpreadMode` — `"rhizome"`, `"surfacemat"`, or `"independent"` (**3.1.3+**). See [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md).
 
 #### Quick start — balance presets
 
@@ -317,153 +274,18 @@ Set `"BalancePreset"` to one of:
 
 Presets overwrite **5 fields** on startup: `ReproduceAttemptsPerYear`, `ReproduceChance`, `MinFitness`, `DefaultSameSpeciesSpacing`, `DefaultOtherSpeciesSpacing`. Set `"custom"` to use your own values.
 
-#### Feature toggles (true/false)
+#### Common admin tweaks
 
+| Goal | Keys |
+|------|------|
+| Slower spread | `BalancePreset: "sparse"` or lower `ReproduceAttemptsPerYear` / `ReproduceChance` |
+| No wild tree death | `EnableTreeSenescence: false` (or `EnableTreeAging: false` for no growth) |
+| Spread only near players | `LimitSpreadNearPlayers: true` (registration still global) |
+| Full ecology only near players | `OnlyActivateNearPlayers: true` (also limits chunk scans — playtest) |
+| Phase 6 fairness (defaults on) | `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableTwoPhaseSpreadPlacement` |
+| Server spread logs | `VerboseLogging: true` + `ReproduceDebug: true` |
 
-| Setting                            | Default | What it does                                                                                                                              |
-| ---------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `EcosystemEnabled`                 | true    | Master switch — disable all spread/competition                                                                                            |
-| `UseSeasonalEcology`               | true    | Spread rates follow spring/summer/fall/winter                                                                                             |
-| `SeasonalStressEnabled`            | true    | Winter and fall die-off                                                                                                                   |
-| `UseCellDisplacement`              | true    | Stronger species displace weaker ones                                                                                                     |
-| `EnableStressDeath`                | true    | Plants in wrong niche die over time                                                                                                       |
-| `EnableSymbiosis`                  | true    | Some species boost each other                                                                                                             |
-| `UseFloraContext`                  | true    | Forest interior/edge affects spread                                                                                                       |
-| `UseNicheContext`                  | true    | Local soil + climate niche scoring                                                                                                        |
-| `UseSoilSuccession`                | true    | Wild plants gradually enrich soil on spread/death (**3.1.2:** meadows +; heather/gorse dry). **false** = spread only, no soil block swaps |
-| `SoilSuccessionSkipWhenBuiltAbove` | true    | **3.1.2** — skip soil swaps under slabs/builds (Terrain Slabs)                                                                            |
-| `UseFarmlandNutrientBridge`        | true    | Wild plants enrich tilled farmland N/P/K                                                                                                  |
-| `EnableFallowRestoration`          | true    | Healthy plants on farmland slowly restore nutrients                                                                                       |
-| `RespectLandClaims`                | true    | No spread/death inside player claims                                                                                                      |
-| `PlantSpacingEnabled`              | true    | Minimum distance between plants                                                                                                           |
-| `HarshWildPlants`                  | true    | Wild plants enforce survival checks                                                                                                       |
-| `ApplyWorldgenRainForest`          | true    | Respect worldgen rain/forest values                                                                                                       |
-| `UseCalendarScaledSpread`          | true    | Scale intervals to DaysPerYear                                                                                                            |
-| `UseSpeciesSpreadRates`            | true    | Per-species spread rates from ecology table                                                                                               |
-| `EnableEcologyInspect`             | true    | Hotkey **I**: ecology report (spread mode, mat edge, seed % — **3.1.6**; mycelium niche — **3.1.12**)                                     |
-| `EnableEcologyAreaScan`            | true    | Include nearby-species mix in the inspect dialog                                                                                          |
-| `EnableTrampling`                  | false   | Plants near player paths accumulate stress and die                                                                                        |
-| `TramplingSoilDegradation`         | false   | Trampled paths lose soil fertility                                                                                                        |
-| `EnableFlowerDrygrass`             | true    | **3.1.7** — empty hand → plant block; knife/scythe → drygrass                                                                             |
-| `CloneBerryTraits`                 | true    | Wild berry spread copies parent traits (**1.22+**, **3.0**)                                                                               |
-| `EnableThirdPartyParticipants`     | true    | Other mods: JSON `ecologyParticipant` on blocktypes (**3.1.0**)                                                                           |
-| `UseRhizomeSpreadForReeds`         | true    | **3.1.3** — cattail/tule/papyrus mat edge spread                                                                                          |
-| `UseSurfaceMatSpreadForLilies`     | true    | **3.1.5** — water lily floating pad mat                                                                                                   |
-| `RhizomeSeedDispersalEnabled`      | true    | **3.1.4** — rare seed jumps for reed & lily mats                                                                                          |
-| `RhizomeSeedDispersalChanceScale`  | 1.0     | **3.1.4** — multiplier on seed jump chance                                                                                                |
-| `RhizomeSeedDispersalFitnessScale` | 0.25    | **3.1.4** — fitness penalty for distant seed sites                                                                                        |
-| `EnableMyceliumNiche`              | true    | **3.1.12** — forest mycelium meadow spread penalty / forest bonus zone                                                                    |
-| `EnableMyceliumEcology`            | true    | **3.1.12** — mycelium anchor stress, death, inspect (I)                                                                                   |
-| `EnableMyceliumNetworkSpread`      | true    | **3.1.12** — slow mycelium network spread from mat edge                                                                                   |
-| `EnableTreeAging`                  | true    | **3.6.0** — wild trunk calendar age + structure growth                                                                                    |
-| `EnableTreeSenescence`             | true    | **3.6.0** — phased senescence (leaves → skeleton → snag → stump/logs)                                                                     |
-| `TreeSenescenceSnagBlocks`         | 3       | **3.6.0** — standing trunk height during snag year                                                                                        |
-| `EnableTreeSenescenceRemains`      | true    | **3.6.0** — leave choppable stump + fallen logs on final year                                                                             |
-| `TreeSenescenceFallenLogCount`     | 3       | **3.6.0** — ground logs near stump (0 = stump only)                                                                                       |
-| `EnableFerntreeEcology`            | true    | **3.7.0** — tree fern ecology                                                                                                             |
-| `EnableCanopyFallenSticks`         | true    | **3.7.0** — loose sticks when branchy strips                                                                                              |
-| `EnableSpringBranchyAgeBoost`      | true    | **3.7.0** — spring branchy buds × tree age                                                                                                |
-| `EnableWildVineEcology`            | true    | **3.7.0** — wild vine tip spread                                                                                                          |
-| `EnableSeasonalFoliage`            | true    | **3.2.0** — deciduous seasonal crown phenology                                                                                            |
-| `EnableCanopyAmbience`             | true    | **3.5.0** — client crown leaf ambience                                                                                                    |
-| `MyceliumSkipSoilSuccession`       | true    | **3.1.12** — no soil succession on mycelium anchor cells                                                                                  |
-
-
-#### Mycelium tuning (numbers, **3.1.12**)
-
-
-| Setting                         | Default | What it does                                        |
-| ------------------------------- | ------- | --------------------------------------------------- |
-| `MyceliumZoneRadius`            | 7       | Chebyshev radius for niche zone (vanilla growRange) |
-| `MyceliumMeadowSpreadPenalty`   | 0.35    | Meadow spread fitness at forest mycelium anchor     |
-| `MyceliumForestSpreadBonus`     | 1.22    | Forest understory spread bonus at anchor            |
-| `MyceliumTreeHostRadius`        | 4       | Horizontal tree search for forest anchor survival   |
-| `MyceliumForestMinForestCover`  | 0.12    | Forest anchor stress below this cover in open       |
-| `MyceliumMeadowMaxForestCover`  | 0.45    | Meadow anchor stress above this cover               |
-| `MyceliumSpreadRate`            | 0.12    | Network spread interval scale (lower = slower)      |
-| `MyceliumSpreadAttemptsPerYear` | 4       | Network attempts per year at spread rate 1.0        |
-| `MyceliumSpreadMinFitness`      | 0.35    | Min fitness to spread to / displace neighbor cell   |
-
-
-#### Ecology inspect tuning
-
-
-| Setting                         | Default | What it does                                               |
-| ------------------------------- | ------- | ---------------------------------------------------------- |
-| `EcologyInspectCooldownSeconds` | 2.0     | Min seconds between inspect requests per player            |
-| `EcologyInspectScanRadius`      | 16      | Radius (blocks) for nearby-species tally in inspect dialog |
-
-
-#### Spread tuning (numbers)
-
-
-| Setting                    | Default | What it does                            |
-| -------------------------- | ------- | --------------------------------------- |
-| `ReproduceAttemptsPerYear` | 72      | Spread attempts per game year           |
-| `ReproduceChance`          | 0.50    | Base chance per attempt                 |
-| `MinFitness`               | 0.45    | Minimum fitness to reproduce            |
-| `ReproduceRadius`          | 4       | Max horizontal spread distance (blocks) |
-| `ReproduceVerticalSearch`  | 5       | Y-axis search range                     |
-| `MaxFailedSurvivalChecks`  | 5       | Failed checks before plant dies         |
-| `GrowthHoursMultiplier`    | 1.0     | Scale sapling → mature growth time      |
-
-
-#### Competition & niche tuning
-
-
-| Setting                          | Default | What it does                                                     |
-| -------------------------------- | ------- | ---------------------------------------------------------------- |
-| `DisplacementHoldMargin`         | 1.18    | Challenger must beat incumbent × this                            |
-| `EmptySpreadFitnessMultiplier`   | 2.5     | Empty-cell spread weight when mixed with displacement            |
-| `NicheStressThreshold`           | 0.45    | Niche score below this = stress                                  |
-| `SoilSuccessionStrength`         | 1.0     | Speed of soil tier changes                                       |
-| `BerryTraitMutationChance`       | 0.0     | **3.1.1** — chance berry spread drops one parent trait (0 = off) |
-| `FarmlandNutrientBridgeStrength` | 1.0     | Scale of till nutrient bonus                                     |
-| `FallowRestorationStrength`      | 1.0     | Scale of fallow restoration bonus                                |
-| `FloraOpenInteriorPenalty`       | 0.35    | Penalty for open-field species in forest                         |
-
-
-#### Trampling tuning
-
-
-| Setting                    | Default | What it does                              |
-| -------------------------- | ------- | ----------------------------------------- |
-| `TramplingRadius`          | 1       | Detection range around player (blocks)    |
-| `TramplingStressThreshold` | 8       | Stress ticks before a trampled plant dies |
-
-
-#### Performance
-
-
-| Setting                         | Default | What it does                                                                                                                      |
-| ------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `TickBudgetMs`                  | 30      | Hard cap on ms per reproduce tick for spread (0 = unlimited)                                                                         |
-| `SpreadBudgetMs`                | 30      | Spread-only cap (0 = use TickBudgetMs)                                                                                            |
-| `RegistrationBudgetMs`          | 25      | Chunk-scan tick budget (0 = use TickBudgetMs)                                                                                     |
-| `StressBudgetMs`                | 0       | Hard cap for stress tick (0 = use TickBudgetMs)                                                                                   |
-| `ReproduceTickIntervalMs`       | 2000    | Spread / reproduce tick interval (ms)                                                                                             |
-| `ChunkScanTickIntervalMs`       | 2300    | Registration scan tick (desynced from reproduce)                                                                                  |
-| `StressTickIntervalMs`          | 5500    | Interval between stress ticks (ms)                                                                                                |
-| `MaxReproduceAttemptsPerTick`   | 64      | Spread checks per reproduce tick                                                                                                  |
-| `MaxStressChecksPerTick`        | 16      | Stress checks per stress tick                                                                                                     |
-| `EnableBackgroundRegistrationScan` | true | Worker-thread column classify on chunk snapshot                                                                               |
-| `MaxRegistrationSnapshotCellsPerTick` | 8192 | Block ids copied on main per tick                                                                                          |
-| `MaxRegistryAppliesPerTick`     | 512     | Paced `RegisterReproducer` applies per chunk-scan tick                                                                           |
-| `MaxPriorityRegistryAppliesPerTick` | 2048 | Extra paced applies for player-vicinity chunks                                                                                    |
-| `MaxPriorityChunkScansPerTick`  | 48      | Priority registration queue passes per chunk-scan tick                                                                            |
-| `PriorityRegistrationBudgetMs`  | 80      | Per-pass ms budget for priority registration scans                                                                                |
-| `PlayerRegistrationPriorityRadiusBlocks` | 16 | Priority/burst registration radius (blocks)                                                                              |
-| `BurstRegistrationBudgetMs`   | 80      | Burst scan time budget per nearby chunk load (ms)                                                                                 |
-| `MaxChunkColumnsScannedPerTick` | 16    | Legacy sync scan throughput when background scan off                                                                              |
-| `MaxRegistrationsPerTick`       | 2048    | Legacy sync registration cap when background scan off                                                                             |
-| `OnlyActivateNearPlayers`       | false   | **Playtest shortcut** — when true, limit spread/stress/trees/**chunk scans** to player radius                                     |
-| `LimitSpreadNearPlayers`        | false   | When true (and above false): limit spread, stress, and tree aging to player radius; **registration scans unchanged**              |
-| `PlayerActivationRadiusBlocks`  | 192     | Radius for `OnlyActivateNearPlayers` / `LimitSpreadNearPlayers`                                                                   |
-| `VerboseLogging`                | false   | Detailed server log output                                                                                                        |
-| `ReproduceDebug`                | false   | Log each spread attempt (pair with `VerboseLogging` for balance tuning)                                                           |
-
-
-All settings work together — presets give a good baseline, toggles let you disable features you don't want, and number fields let you fine-tune the balance.
+All other keys — spread, trees, canopy, mycelium, ferntree, vines, performance budgets — are in [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ### Requirements
 

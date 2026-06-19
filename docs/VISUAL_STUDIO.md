@@ -72,15 +72,18 @@ wildfarming.sln
 
 `%AppData%\VintagestoryData\ModConfig\ecosystemflora.json` — создаётся при первом запуске.
 
+Полный справочник всех ключей: [`CONFIGURATION.md`](CONFIGURATION.md). Шаблон: `assets/ecosystemflora/ecosystemflora.example.json`.
+
 | Поле | По умолчанию | Смысл |
 |------|----------------|-------|
-| `BalancePreset` | `"natural"` | Пресет перезаписывает часть полей при старте (см. `ecosystemflora.example.json`) |
+| `BalancePreset` | `"natural"` | Пресет перезаписывает 5 полей spread при старте (`custom` — свои значения) |
 | `ReproduceRadius` | 4 | Радиус дикого размножения |
 | `ReproduceChance` | 0.50 | Шанс попытки (при пресете `natural`) |
 | `MinFitness` | 0.45 | Порог только для **reproduce**, не для посадки |
-| `MaxFailedSurvivalChecks` | 5 | Сколько раз ×18ч в плохом климате до смерти ростка |
+| `MaxFailedSurvivalChecks` | 5 | Неудачных проверок выживания до смерти от стресса |
 | `HarshWildPlants` | true | Учитывать min/maxTemp при выживании |
-| `GrowthHoursMultiplier` | 1 | Ускорение роста для тестов (0.1 = в 10 раз быстрее) |
+| `GrowthHoursMultiplier` | 1 | **Не используется в коде** — зарезервировано |
+| `LimitSpreadNearPlayers` | false | Spread/stress/деревья только у игроков; регистрация чанков без изменений |
 | `CloneBerryTraits` | true | Клонирование traits ягодника при spread |
 | `EnableThirdPartyParticipants` | true | JSON-участники из других модов (`ecologyParticipant`) |
 

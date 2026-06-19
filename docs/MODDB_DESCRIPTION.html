@@ -1,0 +1,209 @@
+<!--
+  Ecosystem - Flora — main ModDB Description (HTML)
+  Paste into mods.vintagestory.at → Edit mod → Description
+  (replace or place below a short changelog block if you keep one)
+
+  If linear-gradient is stripped, use: background: #4a6741; on the hero div.
+-->
+
+<div style="font-family: Georgia, 'Times New Roman', serif; color: #3a3228; line-height: 1.58; max-width: 54em;">
+
+  <!-- Hero -->
+  <div style="background: linear-gradient(160deg, #4a6741 0%, #3a4f34 55%, #2f3f2a 100%); color: #f4ecd8; padding: 20px 22px; border-radius: 10px; border: 1px solid #243022; margin-bottom: 20px;">
+    <div style="font-size: 1.55em; font-weight: bold; margin-bottom: 8px;">Your world comes alive</div>
+    <p style="margin: 0 0 10px 0; font-size: 1.02em; opacity: 0.96;">
+      <strong>Ecosystem — Flora</strong> turns static worldgen flora into a living ecosystem. Flowers spread across meadows, ferns creep under the forest canopy, reeds colonize shorelines, and mature trees seed new saplings — <em>all without replacing any vanilla blocks</em>.
+    </p>
+    <p style="margin: 0; font-size: 0.95em; opacity: 0.88;">Install the mod, load your world, and watch it change over the seasons.</p>
+  </div>
+
+  <!-- What spreads -->
+  <div style="background: #f5ead6; border: 1px solid #c9b896; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+    <div style="font-size: 1.15em; font-weight: bold; color: #4a6741; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #b8c9a8;">What spreads</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.96em;">
+      <tr>
+        <td style="width: 50%; vertical-align: top; padding: 6px 14px 6px 0;">
+          <ul style="margin: 0; padding-left: 1.2em;">
+            <li style="margin-bottom: 6px;"><strong>20 flower species</strong> — daisies, cornflowers, poppies, catmint, heather, and more</li>
+            <li style="margin-bottom: 6px;"><strong>Tallgrass</strong> — grass matrix under flowers</li>
+            <li style="margin-bottom: 6px;"><strong>5 fern species</strong> — forest understory; shade and moisture</li>
+            <li style="margin-bottom: 0;"><strong>10 wild berry bushes</strong> — blueberry, cranberry, strawberry…</li>
+          </ul>
+        </td>
+        <td style="width: 50%; vertical-align: top; padding: 6px 0;">
+          <ul style="margin: 0; padding-left: 1.2em;">
+            <li style="margin-bottom: 6px;"><strong>14 tree species</strong> — mature trunks spread free saplings; calendar aging, phased senescence, stump + fallen logs; inspect age / size / phase</li>
+            <li style="margin-bottom: 6px;"><strong>Reeds, tule, papyrus</strong> — shore and shallow water</li>
+            <li style="margin-bottom: 6px;"><strong>Water lily</strong> — open water surfaces</li>
+            <li style="margin-bottom: 6px;"><strong>Water crowfoot</strong> — underwater columns 2–8 blocks</li>
+            <li style="margin-bottom: 0;"><strong>Vanilla mushrooms</strong> — mycelium ecology (no new blocks)</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top: 12px; padding: 10px 12px; background: #ebe0cc; border-radius: 5px; font-size: 0.92em; border-left: 3px solid #6b8f4e;">
+      <strong>Seasonal tree canopy</strong> — deciduous partial autumn defoliation and spring bud on existing <code style="font-size: 0.95em;">log-grown</code> trees; optional ambience particles.
+    </div>
+  </div>
+
+  <!-- Tree lifecycle -->
+  <div style="background: #fff9ee; border: 1px solid #d4c4a8; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+    <div style="font-size: 1.15em; font-weight: bold; color: #5c4a32; margin-bottom: 12px;">Wild tree lifecycle</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.94em;">
+      <tr>
+        <td style="width: 2.2em; vertical-align: top; padding: 8px 10px 8px 0; font-weight: bold; color: #4a6741;">1</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e8dcc8;"><strong>Spread</strong> — mature <code>log-grown</code> seeds <code>sapling-*-free</code> (winter off; no ice/snow).</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 10px 8px 0; font-weight: bold; color: #4a6741;">2</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e8dcc8;"><strong>Maturation</strong> — vanilla treegen; ecology registers trunk base at calendar age <strong>0</strong>.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 10px 8px 0; font-weight: bold; color: #4a6741;">3</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e8dcc8;"><strong>Life</strong> — each game year: age +1, slow structure growth, sapling spread (no stress death on trunks).</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 10px 8px 0; font-weight: bold; color: #4a6741;">4</td>
+        <td style="vertical-align: top; padding: 8px 0; border-bottom: 1px solid #e8dcc8;"><strong>Senescence</strong> — after species lifespan, four game years: crown leaves → branchy skeleton → dry snag → stump + fallen debarked logs.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; padding: 8px 10px 8px 0; font-weight: bold; color: #4a6741;">5</td>
+        <td style="vertical-align: top; padding: 8px 0;"><strong>Aftermath</strong> — remains are vanilla choppable blocks (not <code>log-grown</code>); neighbours refill gaps via normal spread.</td>
+      </tr>
+    </table>
+    <p style="margin: 12px 0 0 0; font-size: 0.9em; color: #6b5d4a;">Press <strong>I</strong> on any trunk log for age, size index, and senescence phase.</p>
+  </div>
+
+  <!-- Two columns: compete + seasons -->
+  <table style="width: 100%; border-collapse: separate; border-spacing: 14px 0; margin-bottom: 16px;">
+    <tr>
+      <td style="width: 50%; vertical-align: top; background: #f5ead6; border: 1px solid #c9b896; border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: bold; color: #4a6741; margin-bottom: 8px;">Not just spreading — competing</div>
+        <p style="margin: 0 0 8px 0; font-size: 0.94em;">Plants don't blindly fill every empty cell. They <strong>compete</strong>:</p>
+        <ul style="margin: 0; padding-left: 1.15em; font-size: 0.92em;">
+          <li style="margin-bottom: 5px;">Stronger species <strong>displace</strong> weaker ones</li>
+          <li style="margin-bottom: 5px;">Wrong niche → <strong>stress</strong> and death</li>
+          <li style="margin-bottom: 5px;">Forest flowers &amp; ferns need a <strong>tree host</strong></li>
+          <li style="margin-bottom: 0;">Colonizers grab ground first; perennials replace them over time</li>
+        </ul>
+      </td>
+      <td style="width: 50%; vertical-align: top; background: #f5ead6; border: 1px solid #c9b896; border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: bold; color: #4a6741; margin-bottom: 8px;">Seasons matter</div>
+        <p style="margin: 0 0 8px 0; font-size: 0.94em;">Each species follows a <strong>12-month curve</strong>:</p>
+        <ul style="margin: 0; padding-left: 1.15em; font-size: 0.92em;">
+          <li style="margin-bottom: 5px;"><strong>Spring</strong> — meadows bloom; colonizers rush cleared ground</li>
+          <li style="margin-bottom: 5px;"><strong>Summer</strong> — steady peak for most species</li>
+          <li style="margin-bottom: 5px;"><strong>Fall</strong> — annuals die off; perennials slow</li>
+          <li style="margin-bottom: 0;"><strong>Winter</strong> — dormancy; hardy perennials survive</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Paths + Inspect -->
+  <table style="width: 100%; border-collapse: separate; border-spacing: 14px 0; margin-bottom: 16px;">
+    <tr>
+      <td style="width: 50%; vertical-align: top; background: #ebe0cc; border: 1px solid #c9b896; border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: bold; color: #5c4a32; margin-bottom: 6px;">Paths form where you walk</div>
+        <p style="margin: 0; font-size: 0.92em;">Trample nearby plants over time — soil degrades, a natural path appears. Leave the area alone and the ecosystem reclaims it. <em>Experimental; off by default.</em></p>
+      </td>
+      <td style="width: 50%; vertical-align: top; background: #4a6741; color: #f4ecd8; border-radius: 8px; padding: 14px 16px; border: 1px solid #2f3f2a;">
+        <div style="font-weight: bold; margin-bottom: 6px;">Ecology inspect — hotkey <span style="background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 4px;">I</span></div>
+        <p style="margin: 0; font-size: 0.92em; opacity: 0.95;">Aim at any wild plant, tree trunk, mushroom cap, or mycelium soil: spread timing, stress, seasons, tree age, mat status. Handbook pages: <em>Ecology Inspect</em>, <em>Trees</em>, <em>Seasonal Canopy</em>.</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Harvest + Safety -->
+  <div style="background: #fff9ee; border: 1px solid #d4c4a8; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="width: 50%; vertical-align: top; padding-right: 16px;">
+          <div style="font-weight: bold; color: #5c4a32; margin-bottom: 6px;">Harvest balance</div>
+          <p style="margin: 0; font-size: 0.92em;">Empty hand → flower <strong>block on the ground</strong>. <strong>Tallgrass</strong> — no drop unless knife/scythe (drygrass). Toggle: <code>EnableFlowerDrygrass</code>.</p>
+        </td>
+        <td style="width: 50%; vertical-align: top;">
+          <div style="font-weight: bold; color: #5c4a32; margin-bottom: 6px;">Your world stays safe</div>
+          <p style="margin: 0; font-size: 0.92em;">No replacement of worldgen blocks. Remove the mod — vanilla parents stay vanilla. Optional JSON integration for other mods (<code>ecologyParticipant</code>).</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Respects builds -->
+  <div style="background: #f5ead6; border-left: 5px solid #8b6914; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 6px 6px 0; font-size: 0.94em;">
+    <strong>Respects your builds</strong> — spread, displacement, and stress death are blocked inside <strong>land claims</strong>. Gardens and farms are safe. Mycelium coexists with meadow flora; farmland can be colonized on unclaimed land (fallow restoration). Only wild <code>log-grown</code> trunks join tree ecology — player <code>log-placed</code> builds are not aged or killed by the mod.
+  </div>
+
+  <!-- Soil + Aquatic -->
+  <table style="width: 100%; border-collapse: separate; border-spacing: 14px 0; margin-bottom: 16px;">
+    <tr>
+      <td style="width: 50%; vertical-align: top; background: #f5ead6; border: 1px solid #c9b896; border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: bold; color: #4a6741; margin-bottom: 8px;">Soil succession <span style="font-weight: normal; font-size: 0.85em;">(optional)</span></div>
+        <p style="margin: 0; font-size: 0.91em;"><code>UseSoilSuccession</code> on (default): meadows enrich soil over time. Heather &amp; western gorse slightly dry poor soils. Off: <code>UseSoilSuccession: false</code>. <code>SoilSuccessionSkipWhenBuiltAbove</code> — Terrain Slabs friendly.</p>
+      </td>
+      <td style="width: 50%; vertical-align: top; background: #f5ead6; border: 1px solid #c9b896; border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: bold; color: #4a6741; margin-bottom: 8px;">Aquatic spread</div>
+        <p style="margin: 0 0 8px 0; font-size: 0.91em;"><strong>Rhizome mat</strong> for reeds — edge plants step along shore; rare seed jumps (~6–10%). <strong>Lily pad mat</strong> on open water (~5% seed jumps). Press <strong>I</strong> for mat edge &amp; seed chance.</p>
+        <p style="margin: 0; font-size: 0.85em; color: #6b5d4a;">Legacy radius spread: <code>UseRhizomeSpreadForReeds: false</code>, <code>UseSurfaceMatSpreadForLilies</code>.</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Mycelium -->
+  <div style="background: #ebe0cc; border: 1px solid #c9b896; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+    <div style="font-size: 1.1em; font-weight: bold; color: #5c4a32; margin-bottom: 10px;">Mycelium ecology</div>
+    <p style="margin: 0 0 10px 0; font-size: 0.92em;">Vanilla <code>BlockEntityMycelium</code> only — caps and regrowth stay vanilla.</p>
+    <table style="width: 100%; font-size: 0.9em; border-collapse: collapse;">
+      <tr><td style="padding: 4px 12px 4px 0; vertical-align: top; width: 28%; font-weight: bold;">Forest</td><td style="padding: 4px 0;">Soft meadow spread penalty nearby; bonus for understory ferns</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Meadow</td><td style="padding: 4px 0;">Coexists with flowers &amp; tallgrass</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Niche stress</td><td style="padding: 4px 0;">Wrong habitat → anchor BE removed (not the whole mod)</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Network</td><td style="padding: 4px 0;">Slow spread from mat edge; species can displace each other</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Inspect</td><td style="padding: 4px 0;"><strong>I</strong> on mushroom cap or forest soil</td></tr>
+    </table>
+    <p style="margin: 10px 0 0 0; font-size: 0.85em; color: #6b5d4a;">Toggles: <code>EnableMyceliumNiche</code>, <code>EnableMyceliumEcology</code>, <code>EnableMyceliumNetworkSpread</code></p>
+  </div>
+
+  <!-- Greenhouse -->
+  <div style="text-align: center; padding: 12px 16px; margin-bottom: 16px; font-size: 0.94em; color: #4a6741; font-style: italic;">
+    Greenhouse — fully enclosed glass roof protects from temperature stress (no land claim required). Grow tropical flowers in cold biomes.
+  </div>
+
+  <!-- Easy to tune -->
+  <div style="background: linear-gradient(160deg, #4a6741 0%, #3d5236 100%); color: #f4ecd8; border-radius: 8px; padding: 16px 18px; border: 1px solid #2f3f2a;">
+    <div style="font-size: 1.12em; font-weight: bold; margin-bottom: 10px;">Easy to tune</div>
+    <p style="margin: 0 0 12px 0; font-size: 0.94em; opacity: 0.95;">
+      Edit <code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 3px;">ModConfig/ecosystemflora.json</code> (created on first server launch). Example in mod package: <code style="font-size: 0.9em;">assets/ecosystemflora/ecosystemflora.example.json</code>.
+    </p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.88em; background: rgba(0,0,0,0.15); border-radius: 6px; overflow: hidden;">
+      <tr style="background: rgba(0,0,0,0.2);">
+        <th style="text-align: left; padding: 8px 10px;">BalancePreset</th>
+        <th style="text-align: left; padding: 8px 10px;">Spread / year</th>
+        <th style="text-align: left; padding: 8px 10px;">Feel</th>
+      </tr>
+      <tr>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);"><code>natural</code> (default)</td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">~72 attempts</td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">Balanced wilderness</td>
+      </tr>
+      <tr>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);"><code>sparse</code></td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">~36</td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">Patchier, slower spread</td>
+      </tr>
+      <tr>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);"><code>lush</code></td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">~120</td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);">Dense meadows</td>
+      </tr>
+      <tr>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);"><code>custom</code></td>
+        <td style="padding: 7px 10px; border-top: 1px solid rgba(255,255,255,0.1);" colspan="2">Your values — preset won't overwrite on restart</td>
+      </tr>
+    </table>
+    <p style="margin: 12px 0 0 0; font-size: 0.85em; opacity: 0.88;">
+      After an update, launch once — new config keys are added automatically; your settings are kept. Trees: <code>EnableTreeAging</code>, <code>EnableTreeSenescence</code>. Do <strong>not</strong> run alongside Wild Farming Revival. VS <strong>1.22+</strong>.
+    </p>
+  </div>
+
+</div>
