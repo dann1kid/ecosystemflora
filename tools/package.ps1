@@ -45,6 +45,12 @@ $zipPath = Join-Path $repoRoot $zipName
 
 if (Test-Path $zipPath) { Remove-Item $zipPath }
 
+$pdbFiles = @(Get-ChildItem $outputDir -Filter *.pdb -Recurse -File -ErrorAction SilentlyContinue)
+if ($pdbFiles.Count -gt 0) {
+    Write-Host "Removing $($pdbFiles.Count) .pdb file(s) from package output ..."
+    $pdbFiles | Remove-Item -Force
+}
+
 Write-Host "Packaging $zipName ..."
 Compress-Archive -Path "$outputDir\*" -DestinationPath $zipPath -Force
 
