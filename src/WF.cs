@@ -12,6 +12,7 @@ namespace WildFarming
         {
             base.StartPre(api);
             LegacyBlockEntityMigration.Register(api);
+            api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);
 

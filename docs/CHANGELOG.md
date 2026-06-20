@@ -3,9 +3,16 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.7**
+**This release:** **3.9.8**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.8 — Server crash fix + config UI copy
+
+- **Fix:** register `ecosystemHandbook` with `RegisterCollectibleBehaviorClass` (required on VS 1.22+ dedicated servers).
+- **Config UI (RU):** shorter maturation field labels and tooltips without anglicisms.
 
 ---
 

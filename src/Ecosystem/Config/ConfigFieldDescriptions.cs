@@ -77,24 +77,24 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше неудач до удаления от стресса. Меньше: быстрее гибель.");
 
             D(nameof(EcosystemConfig.GrowthHoursMultiplier),
-                "Higher: colonizer spread offspring mature faster (juvenile → adult). Lower: longer establishing phase.",
-                "Больше: spread-ростки colonizers быстрее созревают. Меньше: дольше фаза укоренения.");
+                "Higher: spread flower seedlings mature faster. Lower: longer establishing phase.",
+                "Больше: быстрее взрослеют. Меньше: дольше ждать.");
 
             D(nameof(EcosystemConfig.EnableFlowerSpreadMaturation),
-                "On: colonizer spread places small juvenile blocks before mature reproduction. Off: instant mature spread.",
-                "Вкл.: colonizers spread ставит малые ростки перед взрослым размножением. Выкл.: сразу взрослый блок.");
+                "On: meadow colonizer flowers spread as small seedlings, then mature. Off: instant adult plant.",
+                "Вкл.: новый цветок маленький, потом взрослеет. Выкл.: сразу взрослый.");
 
             D(nameof(EcosystemConfig.MaxPendingFlowerMaturationChecksPerTick),
-                "Higher: more juvenile maturation commits per reproduce tick. Lower: slower maturation pacing.",
-                "Больше: больше созреваний за тик reproduce. Меньше: медленнее pacing созревания.");
+                "Higher: more maturation checks per game tick. Lower: slower maturation queue.",
+                "Больше: быстрее очередь созревания. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EnableTallgrassSpreadMaturation),
-                "On: tallgrass spread places veryshort; spread registration waits until height is short or taller. Off: legacy height at spread.",
-                "Вкл.: spread ставит veryshort; регистрация spread после short+. Выкл.: legacy высота при spread.");
+                "On: spread places very low grass; vanilla growth must reach short before spread again. Off: height chosen at spread.",
+                "Вкл.: новая трава очень низкая, дорастает, потом размножается. Выкл.: высота сразу по месту.");
 
             D(nameof(EcosystemConfig.MaxPendingTallgrassPromotionChecksPerTick),
-                "Higher: more establishing tallgrass promotion checks per reproduce tick. Lower: slower registration pacing.",
-                "Больше: больше проверок укоренения травы за тик. Меньше: медленнее регистрация.");
+                "Higher: more grass establishment checks per game tick. Lower: slower promotion queue.",
+                "Больше: быстрее ждёт рост. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EventWakeRetryHours),
                 "Higher: event wake pulls spread retry farther forward (after spawn cooldown). Lower: subtler wake nudge.",
