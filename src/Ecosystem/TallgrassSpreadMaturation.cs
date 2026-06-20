@@ -4,7 +4,7 @@ using Vintagestory.API.MathTools;
 namespace WildFarming.Ecosystem
 {
     /// <summary>
-    /// Tallgrass spread offspring start at veryshort; vanilla transient growth raises height.
+    /// Tallgrass spread offspring start at veryshort; mod raises height on a calendar timer.
     /// Ecology spread registration waits until height is at least short (not veryshort or eaten).
     /// </summary>
     internal static class TallgrassSpreadMaturation

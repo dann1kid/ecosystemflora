@@ -57,5 +57,27 @@ namespace WildFarming.Tests
             Assert.Equal(1, TallgrassSpreadHeight.GetHeightStageIndex("short"));
             Assert.Equal(-1, TallgrassSpreadHeight.GetHeightStageIndex("eaten"));
         }
+
+        [Fact]
+        public void StageAdvanceHours_ScalesWithGrowthHoursMultiplier()
+        {
+            var slow = new EcosystemConfig
+            {
+                EnableTallgrassSpreadMaturation = true,
+                GrowthHoursMultiplier = 0.5f,
+            };
+            var fast = new EcosystemConfig
+            {
+                EnableTallgrassSpreadMaturation = true,
+                GrowthHoursMultiplier = 2f,
+            };
+
+            double slowHours = WildTallgrassMaturation.StageAdvanceHours(null, null, slow);
+            double fastHours = WildTallgrassMaturation.StageAdvanceHours(null, null, fast);
+
+            Assert.True(fastHours < slowHours);
+            Assert.True(slowHours >= 6);
+            Assert.True(fastHours >= 6);
+        }
     }
 }

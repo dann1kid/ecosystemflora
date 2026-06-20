@@ -4,18 +4,30 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Polls establishing tallgrass until vanilla growth reaches a spread-eligible height.</summary>
+    /// <summary>Advances establishing veryshort tallgrass by timer, then registers for spread at short+.</summary>
     internal sealed class PendingTallgrassPromotion
     {
-        readonly List<BlockPos> entries = new List<BlockPos>();
+        readonly List<Entry> entries = new List<Entry>();
         readonly Dictionary<BlockPos, int> indexByPos = new Dictionary<BlockPos, int>();
 
-        public void Add(BlockPos pos)
+        struct Entry
         {
-            if (pos == null || indexByPos.ContainsKey(pos)) return;
+            public BlockPos Pos;
+            public double NextAdvanceAtHours;
+        }
+
+        const double TimeoutHours = 60 * 24 * 14;
+
+        public void Add(ICoreAPI api, BlockPos pos)
+        {
+            if (api == null || pos == null || indexByPos.ContainsKey(pos)) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            double nextAt = api.World.Calendar.TotalHours
+                + WildTallgrassMaturation.StageAdvanceHours(api, pos, cfg);
 
             indexByPos[pos] = entries.Count;
-            entries.Add(pos.Copy());
+            entries.Add(new Entry { Pos = pos.Copy(), NextAdvanceAtHours = nextAt });
         }
 
         public void Remove(BlockPos pos)
@@ -23,31 +35,39 @@ namespace WildFarming.Ecosystem
             if (pos == null || !indexByPos.TryGetValue(pos, out int index)) return;
 
             int last = entries.Count - 1;
-            BlockPos removed = entries[index];
+            BlockPos removed = entries[index].Pos;
             if (index != last)
             {
-                BlockPos moved = entries[last];
+                Entry moved = entries[last];
                 entries[index] = moved;
-                indexByPos[moved] = index;
+                indexByPos[moved.Pos] = index;
             }
 
             entries.RemoveAt(last);
             indexByPos.Remove(removed);
         }
 
-        public void Process(ICoreAPI api, EcosystemSystem ecosystem, int maxChecks)
+        public void Process(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
         {
             if (entries.Count == 0 || api == null || ecosystem == null || maxChecks <= 0) return;
             if (!TallgrassSpreadMaturation.UsesMaturation(EcosystemConfig.Loaded)) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
             var remove = new List<BlockPos>();
             int checkedCount = 0;
 
             for (int i = entries.Count - 1; i >= 0 && checkedCount < maxChecks; i--)
             {
-                BlockPos pos = entries[i];
+                Entry entry = entries[i];
+                BlockPos pos = entry.Pos;
                 checkedCount++;
+
+                if (nowHours - entry.NextAdvanceAtHours > TimeoutHours)
+                {
+                    remove.Add(pos);
+                    continue;
+                }
 
                 Block block = acc.GetBlock(pos);
                 if (block == null || block.Id == 0
@@ -57,37 +77,66 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                if (!TallgrassSpreadMaturation.CanReproduceFrom(block))
-                {
-                    continue;
-                }
-
                 if (!LandClaimGuard.AllowsEcologyChange(api, pos))
                 {
                     continue;
                 }
 
-                if (ecosystem.RegistryContains(pos))
+                if (TallgrassSpreadMaturation.CanReproduceFrom(block))
                 {
-                    remove.Add(pos);
+                    TryRegister(ecosystem, acc, pos, remove);
                     continue;
                 }
 
-                if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+                if (nowHours < entry.NextAdvanceAtHours)
                 {
-                    remove.Add(pos);
                     continue;
                 }
 
-                ecosystem.RegisterReproducer(pos, participant, spawnBurst: false);
+                if (!TallgrassSpreadHeight.TryAdvanceOneStage(api, acc, pos))
+                {
+                    entry.NextAdvanceAtHours = nowHours + WildTallgrassMaturation.StageAdvanceHours(api, pos, cfg);
+                    entries[i] = entry;
+                    continue;
+                }
+
                 ecosystem.InvalidateEnvironmentAround(pos);
-                remove.Add(pos);
+                block = acc.GetBlock(pos);
+                if (TallgrassSpreadMaturation.CanReproduceFrom(block))
+                {
+                    TryRegister(ecosystem, acc, pos, remove);
+                }
+                else
+                {
+                    entry.NextAdvanceAtHours = nowHours + WildTallgrassMaturation.StageAdvanceHours(api, pos, cfg);
+                    entries[i] = entry;
+                }
             }
 
             for (int r = 0; r < remove.Count; r++)
             {
                 Remove(remove[r]);
             }
+        }
+
+        static void TryRegister(EcosystemSystem ecosystem, IBlockAccessor acc, BlockPos pos, List<BlockPos> remove)
+        {
+            if (ecosystem.RegistryContains(pos))
+            {
+                remove.Add(pos);
+                return;
+            }
+
+            Block block = acc.GetBlock(pos);
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+            {
+                remove.Add(pos);
+                return;
+            }
+
+            ecosystem.RegisterReproducer(pos, participant, spawnBurst: false);
+            ecosystem.InvalidateEnvironmentAround(pos);
+            remove.Add(pos);
         }
     }
 }

@@ -841,7 +841,7 @@ namespace WildFarming.Ecosystem
             {
                 if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
                 {
-                    pendingTallgrassPromotion.Add(pos);
+                    pendingTallgrassPromotion.Add(api, pos);
                 }
 
                 return;
@@ -1174,7 +1174,7 @@ namespace WildFarming.Ecosystem
                     {
                         if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
                         {
-                            pendingTallgrassPromotion.Add(item.Pos);
+                            pendingTallgrassPromotion.Add(api, item.Pos);
                             return true;
                         }
 
@@ -1678,7 +1678,7 @@ namespace WildFarming.Ecosystem
             timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
-            pendingTallgrassPromotion.Process(api, this, cfg.MaxPendingTallgrassPromotionChecksPerTick);
+            pendingTallgrassPromotion.Process(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
             timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
@@ -1872,7 +1872,7 @@ namespace WildFarming.Ecosystem
 
             if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements))
             {
-                pendingTallgrassPromotion.Add(pos);
+                pendingTallgrassPromotion.Add(api, pos);
                 InvalidateEnvironmentAround(pos);
                 WakeEcologyAround(pos);
                 if (spreadOrigin != null)

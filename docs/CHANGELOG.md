@@ -3,9 +3,16 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.8**
+**This release:** **3.9.9**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.9 — Tallgrass stage advance
+
+- **Fix:** veryshort spread turf did not grow in vanilla — mod now advances **veryshort → short** on a calendar timer (`GrowthHoursMultiplier`), then registers for spread.
+- See [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md).
 
 ---
 

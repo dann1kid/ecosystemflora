@@ -77,8 +77,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше неудач до удаления от стресса. Меньше: быстрее гибель.");
 
             D(nameof(EcosystemConfig.GrowthHoursMultiplier),
-                "Higher: spread flower seedlings mature faster. Lower: longer establishing phase.",
-                "Больше: быстрее взрослеют. Меньше: дольше ждать.");
+                "Higher: spread flower seedlings and tallgrass stages mature faster. Lower: longer establishing phase.",
+                "Больше: быстрее взрослеют цветы и трава. Меньше: дольше ждать.");
 
             D(nameof(EcosystemConfig.EnableFlowerSpreadMaturation),
                 "On: meadow colonizer flowers spread as small seedlings, then mature. Off: instant adult plant.",
@@ -89,8 +89,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: быстрее очередь созревания. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EnableTallgrassSpreadMaturation),
-                "On: spread places very low grass; vanilla growth must reach short before spread again. Off: height chosen at spread.",
-                "Вкл.: новая трава очень низкая, дорастает, потом размножается. Выкл.: высота сразу по месту.");
+                "On: spread places very low grass; mod raises to short on a timer before spread. Off: height chosen at spread.",
+                "Вкл.: новая трава очень низкая, мод доращивает до низкой, потом размножается. Выкл.: высота сразу по месту.");
 
             D(nameof(EcosystemConfig.MaxPendingTallgrassPromotionChecksPerTick),
                 "Higher: more grass establishment checks per game tick. Lower: slower promotion queue.",
