@@ -118,6 +118,21 @@ namespace WildFarming.Ecosystem
 
         public float GrowthHoursMultiplier { get; set; } = 1f;
 
+        /// <summary>Spread colonizer flowers as small juvenile blocks that mature before reproducing.</summary>
+        public bool EnableFlowerSpreadMaturation { get; set; } = true;
+
+        /// <summary>Juvenile → mature checks per reproduce tick.</summary>
+        public int MaxPendingFlowerMaturationChecksPerTick { get; set; } = 32;
+
+        /// <summary>Spread tallgrass as veryshort; register for spread only after vanilla growth reaches short+.</summary>
+        public bool EnableTallgrassSpreadMaturation { get; set; } = true;
+
+        /// <summary>Establishing tallgrass promotion checks per reproduce tick.</summary>
+        public int MaxPendingTallgrassPromotionChecksPerTick { get; set; } = 32;
+
+        /// <summary>Event wake pulls NextAttemptHours forward by at most this many game hours (after spawn cooldown).</summary>
+        public double EventWakeRetryHours { get; set; } = 6;
+
         public bool ReproduceDebug { get; set; } = false;
 
         /// <summary>

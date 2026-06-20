@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.8.0**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **3.9.7**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -10,7 +10,7 @@
 
 | Область | Сейчас | Пробел |
 |---------|--------|--------|
-| **Луг / цветы** | Independent spread + displacement | Нет стадий жизни (seedling → mature); spread = телепорт блока, не рост |
+| **Луг / цветы** | Spread + maturation queue for colonizers (juvenile → mature); tallgrass spread → veryshort + promotion to short+ | Full life cycle still abstract; no runner blocks; juvenile/veryshort inspect shows «не участвует» until established |
 | **Reeds / lily** | Mat edge + virtual seed (A–D) | Нет предметов семян/ризомов; игрок не видит «канал» spread |
 | **Water crowfoot** | Radius-4 independent | Не mat и не ризом — логика **старого** типа; может снова «заливать» мелководье при высоком preset |
 | **Деревья** | `log-grown` → sapling; **3.6** — maturation + senescence + stump/logs | living trunk stress; sapling burst on death |

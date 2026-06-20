@@ -3,9 +3,28 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.4**
+**This release:** **3.9.7**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.7 — Tallgrass spread maturation
+
+- **Veryshort spread** — meadow tallgrass spread places **veryshort** turf (cover/snow/free preserved); vanilla grass growth raises height before the patch spreads again from that cell.
+- **Spread gate** — ecology registration and parent spread only from **short** and taller; `veryshort` and eaten grass do not reproduce.
+- **`EnableTallgrassSpreadMaturation`** — turn off to restore legacy spread height selection at commit time.
+- Design doc: [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md).
+
+---
+
+## 3.9.6 — Flower spread maturation
+
+- **Juvenile spread** — colonizer meadow flowers (cow parsley, horsetail, mugwort, lupine, woad, red top grass, heather, western gorse) spread as a **small establishing plant**, then mature into the vanilla parent after a calendar delay.
+- **`GrowthHoursMultiplier`** — now controls juvenile → mature pace (higher = faster).
+- **Post-spawn cooldown** — parents wait after a successful offspring before spreading again; event wake no longer bypasses this floor.
+- **`EnableFlowerSpreadMaturation`** — turn off to restore instant mature spread for all flowers.
+- Design doc: [`FLOWER_SPREAD_MATURATION.md`](FLOWER_SPREAD_MATURATION.md).
 
 ---
 

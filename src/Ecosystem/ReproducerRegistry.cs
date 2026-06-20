@@ -66,12 +66,19 @@ namespace WildFarming.Ecosystem
             return woken;
         }
 
-        public void WakeAround(BlockPos center, int radiusBlocks)
+        public void WakeAround(BlockPos center, int radiusBlocks, double now = 0, EcosystemConfig cfg = null)
         {
             if (center == null || radiusBlocks <= 0 || entries.Count == 0) return;
 
             ecologyWakeGeneration++;
             if (ecologyWakeGeneration == 0) ecologyWakeGeneration = 1;
+
+            bool pullRetry = now > 0
+                && cfg != null
+                && cfg.EnableEventDrivenSpread;
+            double wakeRetryHours = cfg != null && cfg.EventWakeRetryHours > 0
+                ? cfg.EventWakeRetryHours
+                : 6;
 
             long radiusSq = (long)radiusBlocks * radiusBlocks;
             int cs = GlobalConstants.ChunkSize;
@@ -94,6 +101,15 @@ namespace WildFarming.Ecosystem
                         if (dx * dx + dz * dz > radiusSq) continue;
 
                         entry.WakeGeneration = ecologyWakeGeneration;
+
+                        if (pullRetry && now >= entry.NextSpawnAllowedAtHours)
+                        {
+                            double earliest = now + wakeRetryHours;
+                            if (entry.NextAttemptHours > earliest)
+                            {
+                                entry.NextAttemptHours = earliest;
+                            }
+                        }
                     }
                 }
             }
@@ -102,12 +118,12 @@ namespace WildFarming.Ecosystem
         internal static bool IsEntryDue(ReproducerEntry entry, double now, bool eventDriven)
         {
             if (entry == null) return false;
+            if (now < entry.NextSpawnAllowedAtHours) return false;
 
-            bool calendarDue = now >= entry.NextAttemptHours;
-            if (!eventDriven) return calendarDue;
+            if (now >= entry.NextAttemptHours) return true;
+            if (!eventDriven) return false;
 
-            bool wakeDue = entry.WakeGeneration > entry.LastProcessedWakeGeneration;
-            return wakeDue || calendarDue;
+            return entry.WakeGeneration > entry.LastProcessedWakeGeneration;
         }
 
         internal bool IsLiveEntry(ReproducerEntry entry)
@@ -356,7 +372,7 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                if (entry.NextAttemptHours > now)
+                if (entry.NextAttemptHours > now || entry.NextSpawnAllowedAtHours > now)
                 {
                     dueHeap.Push(entry);
                     break;
@@ -479,10 +495,7 @@ namespace WildFarming.Ecosystem
         {
             if (!IsEntryDue(entry, now, eventDriven)) return false;
 
-            double intervalHours = intervalHoursForEntry != null ? intervalHoursForEntry(entry) : 24;
-            entry.NextAttemptHours = now + intervalHours;
             entry.LastProcessedWakeGeneration = entry.WakeGeneration;
-            dueHeap.Push(entry);
 
             bool keep = tryProcess(entry);
             if (!keep)
@@ -491,6 +504,9 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            double intervalHours = intervalHoursForEntry != null ? intervalHoursForEntry(entry) : 24;
+            entry.NextAttemptHours = now + intervalHours;
+            dueHeap.Push(entry);
             return true;
         }
 

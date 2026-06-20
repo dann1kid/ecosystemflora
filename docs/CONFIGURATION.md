@@ -30,6 +30,9 @@ Use `"custom"` to keep your own spread values across restarts.
 | Goal | Settings |
 |------|----------|
 | Slower spread everywhere | `"BalancePreset": "sparse"` or `custom` + lower `ReproduceAttemptsPerYear` / `ReproduceChance` |
+| Less “instant meadow” after harvest | Default maturation on; or `"GrowthHoursMultiplier": 0.5` for slower juvenile growth |
+| Instant mature spread (legacy feel) | `"EnableFlowerSpreadMaturation": false` |
+| Instant tallgrass height at spread | `"EnableTallgrassSpreadMaturation": false` |
 | No wild tree death | `"EnableTreeSenescence": false` (optionally `"EnableTreeAging": false` for no growth either) |
 | Treehouse-friendly | `"EnableTreeSenescence": false`; only natural `log-grown` trunks are in ecology — player `log-placed` builds are not |
 | Ecology only near players | `"OnlyActivateNearPlayers": true` (spread, stress, trees, **and** chunk scans) |
@@ -68,7 +71,12 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `MinSpeciesReproduceIntervalDays` | double | 0 | Floor between attempts (calendar mode); 0 = none |
 | `MinSpeciesReproduceIntervalHours` | double | 0 | Floor between attempts (legacy mode only) |
 | `MaxFailedSurvivalChecks` | int | 5 | Failed survival checks before stress removal |
-| `GrowthHoursMultiplier` | float | 1 | **Not wired in code** — reserved; vanilla sapling growth unchanged |
+| `GrowthHoursMultiplier` | float | 1 | Juvenile flower → mature pace (higher = faster); see [`FLOWER_SPREAD_MATURATION.md`](FLOWER_SPREAD_MATURATION.md) |
+| `EnableFlowerSpreadMaturation` | bool | true | Colonizer spread uses small juvenile blocks before mature registration |
+| `MaxPendingFlowerMaturationChecksPerTick` | int | 32 | Maturation commits per reproduce tick |
+| `EnableTallgrassSpreadMaturation` | bool | true | Tallgrass spread uses veryshort; registration waits for short+ height |
+| `MaxPendingTallgrassPromotionChecksPerTick` | int | 32 | Establishing tallgrass promotion checks per reproduce tick |
+| `EventWakeRetryHours` | double | 6 | Event wake may pull spread retry forward by this many game hours (not during spawn cooldown) |
 | `StaggerReproduceAttempts` | bool | true | Random initial delay on registration to spread tick load |
 
 ### Spread — aquatic mats

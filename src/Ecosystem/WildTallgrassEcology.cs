@@ -42,7 +42,7 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        /// <summary>Single species key for all growth stages; spread picks height from local conditions.</summary>
+        /// <summary>Single species key for all growth stages; spread uses veryshort when maturation enabled.</summary>
         static readonly Dictionary<string, EcologyEntry> BySpecies = new Dictionary<string, EcologyEntry>
         {
             ["tallgrass"] = new EcologyEntry(

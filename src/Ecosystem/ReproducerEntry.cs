@@ -11,6 +11,9 @@ namespace WildFarming.Ecosystem
         public PlantRequirements Requirements { get; }
         public double NextAttemptHours { get; set; }
 
+        /// <summary>Earliest hour allowed after a successful offspring spawn (post-spawn cooldown).</summary>
+        public double NextSpawnAllowedAtHours { get; set; }
+
         /// <summary>Bumped when ecology events occur nearby (Phase 6 wake).</summary>
         public ulong WakeGeneration { get; set; }
 

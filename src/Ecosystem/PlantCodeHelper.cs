@@ -203,7 +203,16 @@ namespace WildFarming.Ecosystem
             if (IsTreeLogGrownBlock(block)) return true;
             if (IsFerntreeTrunkBlock(block)) return true;
             if (WildVineHelper.IsEndBlock(block)) return true;
-            return IsEcologyPlant(block);
+            if (!IsEcologyPlant(block)) return false;
+
+            if (ResolveEcologySpecies(block) == "tallgrass"
+                && TallgrassSpreadMaturation.UsesMaturation(EcosystemConfig.Loaded)
+                && !TallgrassSpreadMaturation.CanReproduceFrom(block))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static bool IsWildBerryBushBlock(Block block)

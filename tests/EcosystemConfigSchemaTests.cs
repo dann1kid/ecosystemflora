@@ -17,7 +17,12 @@ namespace WildFarming.Tests
         {
             Assert.Null(EcosystemConfigSchema.GetField(nameof(EcosystemConfig.MaxCanopyUpdateOpsPerTick)));
             Assert.Null(EcosystemConfigSchema.GetField(nameof(EcosystemConfig.CanopyBudgetMs)));
-            Assert.Null(EcosystemConfigSchema.GetField(nameof(EcosystemConfig.GrowthHoursMultiplier)));
+        }
+
+        [Fact]
+        public void Schema_ExposesGrowthHoursMultiplier()
+        {
+            Assert.NotNull(EcosystemConfigSchema.GetField(nameof(EcosystemConfig.GrowthHoursMultiplier)));
         }
 
         [Fact]

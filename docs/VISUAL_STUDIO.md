@@ -82,7 +82,9 @@ wildfarming.sln
 | `MinFitness` | 0.45 | Порог только для **reproduce**, не для посадки |
 | `MaxFailedSurvivalChecks` | 5 | Неудачных проверок выживания до смерти от стресса |
 | `HarshWildPlants` | true | Учитывать min/maxTemp при выживании |
-| `GrowthHoursMultiplier` | 1 | **Не используется в коде** — зарезервировано |
+| `GrowthHoursMultiplier` | 1 | Скорость созревания spread-ростков (colonizers); см. [`FLOWER_SPREAD_MATURATION.md`](FLOWER_SPREAD_MATURATION.md) |
+| `EnableFlowerSpreadMaturation` | true | Juvenile flower spread (v3.9.6) |
+| `EnableTallgrassSpreadMaturation` | true | Veryshort tallgrass spread + promotion queue (v3.9.7); см. [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md) |
 | `LimitSpreadNearPlayers` | false | Spread/stress/деревья только у игроков; регистрация чанков без изменений |
 | `CloneBerryTraits` | true | Клонирование traits ягодника при spread |
 | `EnableThirdPartyParticipants` | true | JSON-участники из других модов (`ecologyParticipant`) |

@@ -49,12 +49,14 @@ namespace WildFarming.Client
                 return true;
             });
 
-            api.RegisterCommand(CommandCode, Lang.Get("ecosystemflora:config-command-desc"), "", OnConfigCommand);
-        }
-
-        void OnConfigCommand(int groupId, CmdArgs args)
-        {
-            OpenConfigDialog();
+            api.ChatCommands
+                .GetOrCreate(CommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:config-command-desc"))
+                .HandleWith(_ =>
+                {
+                    OpenConfigDialog();
+                    return TextCommandResult.Success();
+                });
         }
 
         void OpenConfigDialog()

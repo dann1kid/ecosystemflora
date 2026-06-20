@@ -27,6 +27,8 @@ namespace WildFarming.Ecosystem
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
+        readonly PendingFlowerMaturation pendingFlowerMaturation = new PendingFlowerMaturation();
+        readonly PendingTallgrassPromotion pendingTallgrassPromotion = new PendingTallgrassPromotion();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
         readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
@@ -342,7 +344,7 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null || pos == null) return;
             if (!EcosystemConfig.Loaded.EnableEventDrivenSpread) return;
 
-            registry.WakeAround(pos, EcologyWake.ResolveRadiusBlocks(EcosystemConfig.Loaded));
+            registry.WakeAround(pos, EcologyWake.ResolveRadiusBlocks(EcosystemConfig.Loaded), api.World.Calendar.TotalHours, EcosystemConfig.Loaded);
         }
 
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)
@@ -835,7 +837,15 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return;
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+            {
+                if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
+                {
+                    pendingTallgrassPromotion.Add(pos);
+                }
+
+                return;
+            }
 
             BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(api.World.BlockAccessor, pos, block.Code);
             if (registry.Contains(anchor)) return;
@@ -934,6 +944,9 @@ namespace WildFarming.Ecosystem
                 SpacingIndex?.Remove(pos);
                 InvalidateEnvironmentAround(pos);
             }
+
+            pendingFlowerMaturation.Remove(pos);
+            pendingTallgrassPromotion.Remove(pos);
 
             if (wakeNeighbors)
             {
@@ -1159,6 +1172,12 @@ namespace WildFarming.Ecosystem
 
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
                     {
+                        if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
+                        {
+                            pendingTallgrassPromotion.Add(item.Pos);
+                            return true;
+                        }
+
                         stale = true;
                         return false;
                     }
@@ -1655,6 +1674,14 @@ namespace WildFarming.Ecosystem
             timings.SaplingsTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
+            pendingFlowerMaturation.Process(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
+            timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
+            pendingTallgrassPromotion.Process(api, this, cfg.MaxPendingTallgrassPromotionChecksPerTick);
+            timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
 
             long foliageBudgetTicks = cfg.FoliageBudgetMs > 0
                 ? cfg.FoliageBudgetMs * Stopwatch.Frequency / 1000
@@ -1727,6 +1754,13 @@ namespace WildFarming.Ecosystem
                     if (block.Id == 0 || !entry.IsMatureBlock(block))
                     {
                         return false;
+                    }
+
+                    if (entry.Requirements?.Species == "tallgrass"
+                        && TallgrassSpreadMaturation.UsesMaturation(cfg)
+                        && !TallgrassSpreadMaturation.CanReproduceFrom(block))
+                    {
+                        return true;
                     }
 
                     TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
@@ -1818,12 +1852,44 @@ namespace WildFarming.Ecosystem
             }
 
             Block placed = api.World.BlockAccessor.GetBlock(pos);
+            if (FlowerSpreadMaturation.ShouldQueueMaturation(placed, requirements))
+            {
+                double nowHours = api.World.Calendar.TotalHours;
+                AssetLocation matureCode = FlowerJuvenileBlocks.ResolveMatureCode(
+                    api, spreadOrigin, requirements.Species);
+                double matureAt = nowHours + WildFlowerMaturation.MaturationHours(
+                    api, pos, requirements.Species, EcosystemConfig.Loaded);
+                pendingFlowerMaturation.Add(pos, matureCode, requirements.Species, matureAt);
+                InvalidateEnvironmentAround(pos);
+                TryApplyPostSpawnCooldown(spreadOrigin, requirements);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
+                return;
+            }
+
+            if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements))
+            {
+                pendingTallgrassPromotion.Add(pos);
+                InvalidateEnvironmentAround(pos);
+                WakeEcologyAround(pos);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
+                return;
+            }
+
             if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
             {
                 RegisterReproducer(pos, participant, spawnBurst: false);
             }
 
             InvalidateEnvironmentAround(pos);
+            TryApplyPostSpawnCooldown(spreadOrigin, requirements);
             WakeEcologyAround(pos);
             if (spreadOrigin != null)
             {
@@ -1852,6 +1918,10 @@ namespace WildFarming.Ecosystem
                     api.Logger.Warning("[ecosystemflora] Spread block not found: {0}", entry.JuvenileBlockCode);
                 return;
             }
+
+            spreadBlock = FlowerSpreadMaturation.ResolveSpreadBlock(
+                api, spreadOrigin, entry.Requirements, spreadBlock);
+            if (spreadBlock == null) return;
 
             bool logFailures = cfg.VerboseLogging && cfg.ReproduceDebug;
             BlockPos spreadOriginCopy = spreadOrigin.Copy();
@@ -1898,6 +1968,20 @@ namespace WildFarming.Ecosystem
             {
                 api.Logger.Notification("[ecosystemflora] No spread near {0}: {1}", entry.Origin, failureReason);
             }
+        }
+
+        void TryApplyPostSpawnCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            if (spreadOrigin == null || requirements == null || api == null) return;
+            if (requirements.Habitat != EcologyHabitat.Terrestrial) return;
+            if (!WildFlowerMaturation.TryGetProfile(requirements.Species, out _)) return;
+
+            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
+
+            double now = api.World.Calendar.TotalHours;
+            double cooldown = WildFlowerMaturation.PostSpawnCooldownHours(
+                api, parent.Origin, requirements, EcosystemConfig.Loaded);
+            parent.NextSpawnAllowedAtHours = now + cooldown;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -13,18 +14,35 @@ namespace WildFarming.Client
     {
         public override string ToggleKeyCombinationCode => EcosystemConfigClientSystem.HotkeyCode;
 
-        const int MaxFieldsPerPage = 6;
         const double DialogWidth = 540;
-        const double DialogHeight = 540;
-        const double RowHeight = 62;
-        const double HeaderBlockHeight = 90;
+        const double DialogHeight = 640;
+        const double BlockLineHeight = 15;
+        const double RowGap = 14;
+        const double ControlHeight = 25;
+        const double ControlWidth = 118;
+        const double HeaderBlockHeight = 96;
         const double FooterBlockHeight = 44;
-        const double FooterGap = 12;
+        const double FooterGap = 18;
+        const int ScopeDescGapLines = 2;
+
+        readonly struct FieldRowLayout
+        {
+            public FieldRowLayout(EcosystemConfigFieldDescriptor field, double height)
+            {
+                Field = field;
+                Height = height;
+            }
+
+            public EcosystemConfigFieldDescriptor Field { get; }
+            public double Height { get; }
+        }
 
         readonly EcosystemConfig working;
         string selectedCategory = "master";
         int fieldPage;
-        int fieldsPerPage = 5;
+        FieldRowLayout[] currentPageRows = Array.Empty<FieldRowLayout>();
+        int currentPageCount = 1;
+
         bool pendingRecompose;
 
         public EcosystemConfig WorkingCopy => working;
@@ -87,7 +105,8 @@ namespace WildFarming.Client
             double contentTop = titleH + pad + HeaderBlockHeight;
             double footerTop = DialogHeight - pad - FooterBlockHeight;
             double contentHeight = footerTop - FooterGap - contentTop;
-            fieldsPerPage = Math.Max(1, Math.Min(MaxFieldsPerPage, (int)Math.Floor(contentHeight / RowHeight)));
+            double contentWidth = DialogWidth - pad * 2;
+            currentPageRows = BuildPageRows(contentWidth, contentHeight, out currentPageCount);
 
             ElementBounds dialogBounds = ElementBounds
                 .FixedSize(DialogWidth, DialogHeight)
@@ -101,7 +120,7 @@ namespace WildFarming.Client
                 .AddDialogTitleBar(L("config-ui-title"), OnTitleBarClose);
 
             AddHeader(composer, pad, titleH);
-            AddFieldRows(composer, pad, contentTop, contentHeight);
+            AddFieldRows(composer, pad, contentTop, contentHeight, contentWidth);
             AddFooter(composer, pad, footerTop, FooterBlockHeight);
 
             try
@@ -166,12 +185,11 @@ namespace WildFarming.Client
 
             y += 30;
 
-            EcosystemConfigFieldDescriptor[] pageFields = GetPageFields(out int pageCount);
             string pageText = string.Format(
                 CultureInfo.InvariantCulture,
                 L("config-ui-page"),
                 fieldPage + 1,
-                Math.Max(1, pageCount));
+                currentPageCount);
 
             composer.AddStaticText(
                 pageText,
@@ -179,53 +197,149 @@ namespace WildFarming.Client
                 ElementBounds.Fixed(pad, y, DialogWidth - pad * 2, 20));
         }
 
-        void AddFieldRows(GuiComposer composer, double pad, double top, double maxHeight)
+        void AddFieldRows(GuiComposer composer, double pad, double top, double maxHeight, double contentWidth)
         {
-            EcosystemConfigFieldDescriptor[] pageFields = GetPageFields(out _);
             double y = top;
 
-            for (int i = 0; i < pageFields.Length; i++)
+            for (int i = 0; i < currentPageRows.Length; i++)
             {
-                if (y + RowHeight > top + maxHeight + 0.5) break;
+                FieldRowLayout row = currentPageRows[i];
+                if (y + row.Height > top + maxHeight + 0.5) break;
 
-                AddFieldRow(composer, pageFields[i], pad, y, DialogWidth - pad * 2);
-                y += RowHeight;
+                AddFieldRow(composer, row, pad, y, contentWidth);
+                y += row.Height;
             }
 
-            if (pageFields.Length == 0)
+            if (currentPageRows.Length == 0)
             {
                 composer.AddStaticText(
                     L("config-ui-empty-category"),
                     CairoFont.WhiteSmallText(),
-                    ElementBounds.Fixed(pad, top + 12, DialogWidth - pad * 2, 30));
+                    ElementBounds.Fixed(pad, top + 12, contentWidth, 30));
             }
         }
 
-        void AddFieldRow(GuiComposer composer, EcosystemConfigFieldDescriptor field, double x, double y, double width)
+        FieldRowLayout[] BuildPageRows(double contentWidth, double maxHeight, out int pageCount)
         {
+            double labelWidth = LabelWidth(contentWidth);
+            EcosystemConfigFieldDescriptor[] all = EcosystemConfigSchema
+                .GetCategoryFields(selectedCategory)
+                .ToArray();
+
+            var layouts = new FieldRowLayout[all.Length];
+            for (int i = 0; i < all.Length; i++)
+            {
+                layouts[i] = MeasureFieldRow(all[i], labelWidth);
+            }
+
+            var pages = new List<FieldRowLayout[]>();
+            var page = new List<FieldRowLayout>();
+            double used = 0;
+
+            for (int i = 0; i < layouts.Length; i++)
+            {
+                FieldRowLayout row = layouts[i];
+                if (used + row.Height > maxHeight && page.Count > 0)
+                {
+                    pages.Add(page.ToArray());
+                    page.Clear();
+                    used = 0;
+                }
+
+                page.Add(row);
+                used += row.Height;
+            }
+
+            if (page.Count > 0 || pages.Count == 0)
+            {
+                pages.Add(page.ToArray());
+            }
+
+            pageCount = Math.Max(1, pages.Count);
+            if (fieldPage >= pageCount) fieldPage = pageCount - 1;
+            if (fieldPage < 0) fieldPage = 0;
+
+            return pages[fieldPage];
+        }
+
+        static double LabelWidth(double contentWidth) => contentWidth - ControlWidth - 10;
+
+        FieldRowLayout MeasureFieldRow(EcosystemConfigFieldDescriptor field, double labelWidth)
+        {
+            string title = ConfigFieldLangResolver.GetTitle(field);
+            string desc = ConfigFieldLangResolver.GetDescription(field);
+            int titleLines = EstimateWrappedLines(title, labelWidth, 6.8);
+            if (titleLines > 0) titleLines++;
+
+            int blockLines = titleLines + 2 + 1;
+            if (!string.IsNullOrWhiteSpace(desc))
+            {
+                int descLines = EstimateWrappedLines(desc, labelWidth, 5.2);
+                blockLines += ScopeDescGapLines + descLines + 3;
+            }
+            else
+            {
+                blockLines += 1;
+            }
+
+            double textHeight = blockLines * BlockLineHeight + 8;
+            double innerHeight = Math.Max(textHeight, ControlHeight + 8);
+            return new FieldRowLayout(field, innerHeight + RowGap);
+        }
+
+        static int EstimateWrappedLines(string text, double widthPx, double charWidthPx)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return 0;
+
+            int charsPerLine = Math.Max(16, (int)(widthPx / charWidthPx));
+            int lines = 1;
+            int lineLen = 0;
+
+            foreach (string word in text.Split(' '))
+            {
+                if (word.Length == 0) continue;
+
+                if (lineLen == 0)
+                {
+                    lineLen = word.Length;
+                    continue;
+                }
+
+                if (lineLen + 1 + word.Length <= charsPerLine)
+                {
+                    lineLen += 1 + word.Length;
+                }
+                else
+                {
+                    lines++;
+                    lineLen = word.Length;
+                }
+            }
+
+            return lines;
+        }
+
+        void AddFieldRow(GuiComposer composer, FieldRowLayout rowLayout, double x, double y, double width)
+        {
+            EcosystemConfigFieldDescriptor field = rowLayout.Field;
             string code = "cfg-" + field.Name;
-            string title = FieldTitle(field.Name);
-            string desc = FieldDescription(field.Name);
+            string title = ConfigFieldLangResolver.GetTitle(field);
+            string desc = ConfigFieldLangResolver.GetDescription(field);
             string scopeHint = field.Scope == ConfigFieldScope.Client
                 ? L("config-ui-scope-client")
                 : L("config-ui-scope-server");
 
-            composer.AddStaticText(
-                title + "  " + scopeHint,
+            double labelWidth = LabelWidth(width);
+            double controlX = x + width - ControlWidth;
+            double controlY = y + 2;
+
+            double bodyHeight = rowLayout.Height - RowGap;
+
+            composer.AddRichtext(
+                BuildFieldHelpText(title, scopeHint, desc),
                 CairoFont.WhiteDetailText(),
-                ElementBounds.Fixed(x, y, width, 18));
-
-            if (!string.IsNullOrEmpty(desc))
-            {
-                composer.AddStaticText(
-                    desc,
-                    CairoFont.WhiteSmallText(),
-                    ElementBounds.Fixed(x, y + 18, width - 120, 16));
-            }
-
-            double controlX = x + width - 118;
-            double controlY = y + 16;
-            double controlW = 118;
+                ElementBounds.Fixed(x, y, labelWidth, bodyHeight),
+                code + "-help");
 
             switch (field.Kind)
             {
@@ -249,13 +363,13 @@ namespace WildFarming.Client
                         labels,
                         idx,
                         (val, selected) => OnStringAllowedChanged(field, val, selected),
-                        ElementBounds.Fixed(controlX, controlY, controlW, 25),
+                        ElementBounds.Fixed(controlX, controlY, ControlWidth, 25),
                         code);
                     break;
 
                 default:
                     composer.AddNumberInput(
-                        ElementBounds.Fixed(controlX, controlY, controlW, 25),
+                        ElementBounds.Fixed(controlX, controlY, ControlWidth, 25),
                         text => OnNumberChanged(field, text),
                         CairoFont.WhiteDetailText(),
                         code);
@@ -305,8 +419,9 @@ namespace WildFarming.Client
 
         void ApplyControlValues()
         {
-            foreach (EcosystemConfigFieldDescriptor field in GetPageFields(out _))
+            foreach (FieldRowLayout row in currentPageRows)
             {
+                EcosystemConfigFieldDescriptor field = row.Field;
                 string code = "cfg-" + field.Name;
                 object value = field.GetValue(working);
 
@@ -325,19 +440,6 @@ namespace WildFarming.Client
 
                 SingleComposer.GetNumberInput(code)?.SetValue(value?.ToString() ?? "0");
             }
-        }
-
-        EcosystemConfigFieldDescriptor[] GetPageFields(out int pageCount)
-        {
-            EcosystemConfigFieldDescriptor[] all = EcosystemConfigSchema
-                .GetCategoryFields(selectedCategory)
-                .ToArray();
-
-            pageCount = Math.Max(1, (all.Length + fieldsPerPage - 1) / fieldsPerPage);
-            if (fieldPage >= pageCount) fieldPage = pageCount - 1;
-            if (fieldPage < 0) fieldPage = 0;
-
-            return all.Skip(fieldPage * fieldsPerPage).Take(fieldsPerPage).ToArray();
         }
 
         void OnPresetSelected(string code, bool selected)
@@ -439,8 +541,7 @@ namespace WildFarming.Client
 
         bool OnNextPage()
         {
-            GetPageFields(out int pageCount);
-            if (fieldPage + 1 < pageCount)
+            if (fieldPage + 1 < currentPageCount)
             {
                 fieldPage++;
                 RequestRecompose();
@@ -468,6 +569,29 @@ namespace WildFarming.Client
 
         public event Action<EcosystemConfig> OnApplyRequested;
 
+        static string BuildFieldHelpText(string title, string scopeHint, string desc)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<strong>").Append(EscapeRichText(title)).Append("</strong><br/><br/>");
+            sb.Append("<i>").Append(EscapeRichText(scopeHint)).Append("</i>");
+
+            if (!string.IsNullOrWhiteSpace(desc))
+            {
+                sb.Append("<br/><br/>").Append(EscapeRichText(desc));
+            }
+
+            return sb.ToString();
+        }
+
+        static string EscapeRichText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text
+                .Replace("&", "&amp;", StringComparison.Ordinal)
+                .Replace("<", "&lt;", StringComparison.Ordinal)
+                .Replace(">", "&gt;", StringComparison.Ordinal);
+        }
+
         static string L(string key) => Lang.Get("ecosystemflora:" + key);
 
         static string PresetLabel(string code)
@@ -484,46 +608,11 @@ namespace WildFarming.Client
             return translated == "ecosystemflora:" + key ? code : translated;
         }
 
-        static string FieldTitle(string name)
-        {
-            string key = "config-field-" + name;
-            string translated = L(key);
-            if (translated != "ecosystemflora:" + key) return translated;
-            return SplitCamelCase(name);
-        }
-
-        static string FieldDescription(string name)
-        {
-            string key = "config-field-" + name + "-desc";
-            string translated = L(key);
-            return translated == "ecosystemflora:" + key ? string.Empty : translated;
-        }
-
         static string FieldAllowedLabel(string fieldName, string value)
         {
             string key = "config-field-" + fieldName + "-val-" + value.ToLowerInvariant();
             string translated = L(key);
             return translated == "ecosystemflora:" + key ? value : translated;
-        }
-
-        static string SplitCamelCase(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return name;
-
-            var sb = new StringBuilder(name.Length + 8);
-            sb.Append(name[0]);
-            for (int i = 1; i < name.Length; i++)
-            {
-                char c = name[i];
-                if (char.IsUpper(c) && !char.IsUpper(name[i - 1]))
-                {
-                    sb.Append(' ');
-                }
-
-                sb.Append(c);
-            }
-
-            return sb.ToString();
         }
     }
 }

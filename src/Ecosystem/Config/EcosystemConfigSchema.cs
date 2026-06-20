@@ -11,7 +11,6 @@ namespace WildFarming.Ecosystem.Config
         {
             nameof(EcosystemConfig.MaxCanopyUpdateOpsPerTick),
             nameof(EcosystemConfig.CanopyBudgetMs),
-            nameof(EcosystemConfig.GrowthHoursMultiplier),
         };
 
         static readonly HashSet<string> PresetFields = new HashSet<string>(StringComparer.Ordinal)
@@ -51,7 +50,12 @@ namespace WildFarming.Ecosystem.Config
             ("MinSpeciesReproduce", "spread"),
             ("UseCalendarScaledSpread", "spread"),
             ("UseSpeciesSpreadRates", "spread"),
-            ("StaggerReproduce", "spread"),
+            ("GrowthHoursMultiplier", "spread"),
+            ("EnableFlowerSpreadMaturation", "spread"),
+            ("MaxPendingFlowerMaturationChecksPerTick", "spread"),
+            ("EnableTallgrassSpreadMaturation", "spread"),
+            ("MaxPendingTallgrassPromotionChecksPerTick", "spread"),
+            ("EventWakeRetryHours", "spread"),
             ("Rhizome", "aquatic"),
             ("UseRhizome", "aquatic"),
             ("UseSurfaceMat", "aquatic"),

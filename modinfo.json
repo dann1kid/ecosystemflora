@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flora on vanilla blocks. v3.9.5: in-game settings UI (U, /ecoconfig) — balance presets, categories, validation; writes ModConfig/ecosystemflora.json. v3.9: Wildgrass integration; VS 1.22 JSON patches. Chunk-fair spread, vines and mycelium, seasonal canopy, tree aging, meadow harvest, inspect (I). Handbook (en/ru).",
+  "description": "Wild ecology for vanilla flora on vanilla blocks. Chunk-fair spread, vines and mycelium, seasonal canopy, tree aging, meadow harvest, inspect (I). In-game settings UI (U, /ecoconfig).",
   "authors": ["-"],
-  "version": "3.9.5",
+  "version": "3.9.7",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

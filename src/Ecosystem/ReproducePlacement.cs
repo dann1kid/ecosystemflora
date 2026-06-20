@@ -633,7 +633,7 @@ namespace WildFarming.Ecosystem
 
             if (PlantCodeHelper.ResolveEcologySpecies(spreadBlock) == "tallgrass")
             {
-                spreadBlock = TallgrassSpreadHeight.ResolveSpreadBlock(
+                spreadBlock = TallgrassSpreadMaturation.ResolveSpreadBlock(
                     api, plantPos, spreadBlock, requirements, api.World.Rand);
             }
 

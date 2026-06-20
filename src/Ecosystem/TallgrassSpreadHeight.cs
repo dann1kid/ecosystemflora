@@ -88,6 +88,28 @@ namespace WildFarming.Ecosystem
             return ResolveBlock(api, parentBlock, parts, stageIdx);
         }
 
+        /// <summary>Spread offspring at minimum height; cover/snow/free preserved from parent.</summary>
+        public static Block ResolveVeryshortSpreadBlock(ICoreAPI api, Block parentBlock)
+        {
+            if (api == null || parentPosInvalid(parentBlock)) return parentBlock;
+
+            if (!TryParsePath(parentBlock.Code.Path, out TallgrassPathParts parts)) return parentBlock;
+
+            return ResolveBlock(api, parentBlock, parts.WithHeight(HeightStages[0]), 0);
+        }
+
+        internal static int GetHeightStageIndex(string height)
+        {
+            if (string.IsNullOrEmpty(height)) return -1;
+
+            for (int i = 0; i < HeightStages.Length; i++)
+            {
+                if (HeightStages[i] == height) return i;
+            }
+
+            return -1;
+        }
+
         static bool parentPosInvalid(Block parentBlock) =>
             parentBlock?.Code?.Path == null;
 

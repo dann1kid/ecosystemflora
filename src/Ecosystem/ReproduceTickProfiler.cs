@@ -6,6 +6,8 @@ namespace WildFarming.Ecosystem
     internal struct ReproduceTickTimings
     {
         public long SaplingsTicks;
+        public long FlowerMaturationTicks;
+        public long TallgrassPromotionTicks;
         public long FoliageTicks;
         public long TreeGrowthTicks;
         public long FerntreeGrowthTicks;
