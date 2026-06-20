@@ -3,9 +3,25 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.8.0**
+**This release:** **3.9.4**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.4 — patch fixes (VS 1.22)
+
+- **Handbook JSON patches** — `addmerge` on `/behaviors` (and `behaviorsByType` for tallgrass) instead of `/behaviors/-`; fixes errors on blocktypes without a root `behaviors` array.
+- **Vanilla asset paths** — reeds → `reedpapyrus.json`; water crowfoot → `aquatic/watercrowfoot.json`; berries/saplings → `fruitingbush.json` / `plaintreesapling.json`.
+- **Server-side patching** — `"side": "server"` on blocktype/item patches (no client “file not found” spam).
+- **Wildgrass handbook** — same `addmerge` fix; `dependsOn` for `wildgrass` / `wildgrasscontinued`.
+
+---
+
+## 3.9.3 — Wildgrass Fork (optional)
+
+- JSON patches register nine **Wildgrass** / **Wildgrass Fork** species (`wildgrass:*`) as third-party ecology participants when that mod is installed (`EnableThirdPartyParticipants`, default on).
+- Mature growth stages spread; climate tuned from Wildgrass worldgen; harvest left to Wildgrass (`ecologyMeadowHarvest: none`).
 
 ---
 

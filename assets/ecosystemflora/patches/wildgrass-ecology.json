@@ -2,6 +2,7 @@
 	{
 		"comment": "Wildgrass / Wildgrass Fork (wildgrass:*). Mature growth stages only; harvest left to wildgrass cutIntoByType.",
 		"file": "wildgrass:blocktypes/plant/bluegrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -43,6 +44,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/switchgrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -84,6 +86,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/ryegrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -125,6 +128,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/bushgrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -166,6 +170,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/fescue.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -207,6 +212,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/buttongrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -248,6 +254,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/bermudagrass.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -272,6 +279,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/buffalograss.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {
@@ -296,6 +304,7 @@
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/common-rush.json",
+		"side": "server",
 		"op": "add",
 		"path": "/attributesByType",
 		"value": {

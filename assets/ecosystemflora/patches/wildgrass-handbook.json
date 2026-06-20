@@ -1,10 +1,19 @@
 [
 	{
-		"comment": "Ecology handbook pages for Wildgrass / Wildgrass Fork when that mod is installed.",
+		"comment": "Wildgrass blocks have no root behaviors array; addMerge creates it. Requires Wildgrass or Wildgrass Fork.",
 		"file": "wildgrass:blocktypes/plant/*",
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"side": "server",
+		"dependsOn": [{ "modid": "wildgrass" }]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/*",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"side": "server",
+		"dependsOn": [{ "modid": "wildgrasscontinued" }]
 	}
 ]

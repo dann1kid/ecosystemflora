@@ -64,9 +64,20 @@ If you omit climate/spacing, the mod applies **template defaults** per `ecologyH
 
 ## Built-in mod compatibility (optional)
 
-When **[Wildgrass](https://mods.vintagestory.at/wildgrass)** or **[Wildgrass Fork](https://mods.vintagestory.at/wildgrassfork)** (`wildgrass:*` blocks) is installed alongside Ecosystem - Flora, JSON patches under `assets/ecosystemflora/patches/wildgrass-*.json` add `ecologyParticipant` on **mature growth stages** for all nine species (stages 3–4 where present; bermudagrass stage 3; buffalograss stage 2). Climate and spread tuning follow the grass mod’s worldgen tables; `ecologyMeadowHarvest: none` leaves knife/scythe/cut behavior to Wildgrass.
+When **[Wildgrass](https://mods.vintagestory.at/wildgrass)** or **[Wildgrass Fork](https://mods.vintagestory.at/wildgrassfork)** (`wildgrass:*` blocks) is installed alongside Ecosystem - Flora, JSON patches under `assets/ecosystemflora/patches/wildgrass-*.json`:
 
-No hard dependency — patches apply only when the grass mod is present. Requires **`EnableThirdPartyParticipants`: `true`** (default).
+| Patch | Purpose |
+|-------|---------|
+| `wildgrass-ecology.json` | `ecologyParticipant` on **mature growth stages** for all nine species (stages 3–4 where present; bermudagrass stage 3; buffalograss stage 2). Climate/spread from Wildgrass worldgen; `ecologyMeadowHarvest: none` leaves cut/harvest to Wildgrass. |
+| `wildgrass-handbook.json` | `ecosystemHandbook` behavior on grass blocktypes (handbook ecology text). |
+
+Patches use **`"side": "server"`** (blocktypes load server-side in VS 1.22+) and **`dependsOn`** for modids `wildgrass` / `wildgrasscontinued` so nothing runs when the grass mod is absent.
+
+No hard dependency on either grass mod. Requires **`EnableThirdPartyParticipants`: `true`** (default).
+
+### Handbook patches (vanilla + third-party)
+
+`handbook-behaviors.json` adds `ecosystemHandbook` via **`addmerge`** on `/behaviors` (or `/behaviorsByType` for tallgrass). On VS **1.22+** many plant blocktypes no longer have a root `behaviors` array — do **not** use `add` on `/behaviors/-`. Reeds and crowfoot paths: `reedpapyrus.json`, `aquatic/watercrowfoot.json` (not legacy `tallplant-*` / flat `aquatic-watercrowfoot` filenames).
 
 ## Disable
 

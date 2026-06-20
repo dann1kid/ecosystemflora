@@ -1,79 +1,74 @@
 [
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
+		"comment": "addMerge creates /behaviors when missing and appends when present (VS 1.22 survival blocktypes).",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
 		"file": "game:blocktypes/plant/flower/*",
-		"side": "client"
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/tallgrass",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviorsByType/*",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/tallgrass.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-snow*",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/tallgrass.json",
+		"side": "server"
+	},
+	{
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
 		"file": "game:blocktypes/plant/fern/*",
-		"side": "client"
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/tallfern",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/tallfern.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/tallplant-coopersreed",
-		"side": "client"
+		"comment": "coopersreed, tule, papyrus share reedpapyrus.json since 1.22.",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/tallplant-tule",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/waterlily.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/tallplant-papyrus",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/aquatic/watercrowfoot.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/waterlily",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/fruitingbush.json",
+		"side": "server"
 	},
 	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/plant/aquatic-watercrowfoot",
-		"side": "client"
-	},
-	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/wood/fruitingbush/*",
-		"side": "client"
-	},
-	{
-		"op": "add",
-		"path": "/behaviors/-",
-		"value": { "name": "ecosystemHandbook" },
-		"file": "game:blocktypes/wood/sapling/*",
-		"side": "client"
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [{ "name": "ecosystemHandbook" }],
+		"file": "game:blocktypes/plant/plaintreesapling.json",
+		"side": "server"
 	}
 ]
