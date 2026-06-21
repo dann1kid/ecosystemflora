@@ -3,46 +3,27 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.14**
+**This release:** **3.9.15**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## 3.9.14 (fixes) — Catmint + tallgrass maturation
+## 3.9.15 — Seasonal foliage regrowth fix
 
-### Catmint
-
-- **Spread:** `MinForest` lowered to **0** — open meadows no longer fail reproduce checks.
-- **Soil succession:** role changed from `ForestEdge` to **`MeadowPerennial`** — no more `forestfloor` under catmint from succession.
-
-### Tallgrass
-
-- Spread/registry opens at **half the environment target height** (`MinSpreadStageIndex`); promotion continues to **full target**.
-- See [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md).
-
-### Docs
-
-- New [`BACKGROUND_REGISTRATION.md`](BACKGROUND_REGISTRATION.md) — snapshot → worker → pending registry pipeline.
+**Fix:** Breaking deciduous leaves no longer triggers immediate chunk foliage resync and catch-up budding (aggressive regrowth at tree bases, especially birch/maple). Player-cleared cells suppress seasonal buds for ~10 game days as a safety net for hybrid/random modes and tree aging.
 
 ---
 
-## 3.9.14 — Crowfoot workers, event-driven chunk due, spread worker default on
+## 3.9.14
 
-### Water crowfoot on worker path (6.12)
+**Performance:** Background spread scoring for meadow plants, reed/lily mats, and water crowfoot (default **on**). Per-chunk spread scheduling and chunk-based event wake.
 
-- **`EnableBackgroundSpreadSolve`** now covers **independent-radius water crowfoot** (`TryBuildCrowfootRequest`, `PassesCrowfoot`, `WaterColumnDepth` in snapshot).
-- Still sync: wild vines, mycelium network.
+**Fixes:** Catmint spreads in open meadows and keeps meadow soil (no forest floor under the plant). Tallgrass spreads only after half its local target height; growth continues to full height.
 
-### Event-driven due without global scan (6.3b)
+**Optional:** `EnableReproduceTickProfiling` for spread/worker debug logs.
 
-- **`CollectDueEntries`** with `eventDriven: true` iterates **per-chunk lists** instead of scanning the full registry flat list.
-
-### Default on
-
-- **`EnableBackgroundSpreadSolve`** default **true** (requires `EnableTwoPhaseSpreadPlacement`, on by default).
-
-See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.12–§6.3b.
+Short ModDB copy: [`RELEASE_3.9.14.md`](RELEASE_3.9.14.md).
 
 ---
 

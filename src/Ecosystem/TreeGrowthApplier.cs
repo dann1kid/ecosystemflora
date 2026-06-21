@@ -264,6 +264,8 @@ namespace WildFarming.Ecosystem
                 if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
                 if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(scratch))) continue;
 
+                if (CanopyFoliageRules.BlocksPlayerClearedVacancy(api, scratch)) continue;
+
                 float gate = CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear + salt + i);
                 if (gate > 0.72f) continue;
 

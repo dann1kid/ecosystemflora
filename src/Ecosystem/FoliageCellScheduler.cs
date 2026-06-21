@@ -61,7 +61,8 @@ namespace WildFarming.Ecosystem
                 Index.Add(pos);
             }
 
-            InvalidateChunkAt(pos);
+            // Do not invalidate chunk sync here — re-scan runs catch-up budding and regrows
+            // player-cleared or mod-placed foliage. Season change and chunk load handle sync.
         }
 
         public void OnBlockRemoved(BlockPos pos)
@@ -73,7 +74,7 @@ namespace WildFarming.Ecosystem
                 Index.Remove(pos);
             }
 
-            InvalidateChunkAt(pos);
+            // Do not invalidate chunk sync on break — see OnBlockAdded.
         }
 
         public void ScheduleChunkSync(ICoreAPI api, Vec2i chunkCoord)

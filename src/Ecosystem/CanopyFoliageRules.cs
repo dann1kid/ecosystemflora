@@ -855,6 +855,8 @@ namespace WildFarming.Ecosystem
 
                 if (!PlantVacancyRules.IsVacantPlantSpace(space)) continue;
 
+                if (BlocksPlayerClearedVacancy(api, scratch)) continue;
+
 
 
                 if (!forcePlace && !CanopyEcology.RollBudAttempt(api, scratch, wood, activity, gameYear)) continue;
@@ -945,6 +947,8 @@ namespace WildFarming.Ecosystem
                 Block space = acc.GetBlock(scratch);
                 if (!PlantVacancyRules.IsVacantPlantSpace(space)) continue;
 
+                if (BlocksPlayerClearedVacancy(api, scratch)) continue;
+
                 float noise = 0.55f + CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear) * 0.45f;
                 float threshold = budActivity * noise * 0.78f;
                 if (threshold > 1f) threshold = 1f;
@@ -966,8 +970,15 @@ namespace WildFarming.Ecosystem
             return false;
         }
 
+        internal static bool BlocksPlayerClearedVacancy(ICoreAPI api, BlockPos target)
+        {
+            if (api?.World?.Calendar == null || target == null) return false;
+
+            FoliagePlayerVacancySuppressor suppressor = EcosystemSystem.Instance?.FoliagePlayerVacancies;
+            return suppressor != null
+                && suppressor.BlocksBudAt(target, api.World.Calendar.TotalHours);
+        }
+
     }
 
 }
-
-

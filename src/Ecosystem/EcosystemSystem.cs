@@ -36,11 +36,13 @@ namespace WildFarming.Ecosystem
         readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
+        readonly FoliagePlayerVacancySuppressor foliagePlayerVacancies = new FoliagePlayerVacancySuppressor();
         bool calendarDebugLogged;
         bool deferredTreeBootstrapDone;
         int foliageBootstrapPasses;
         bool foliageStartupLogged;
         internal FoliageCellScheduler FoliageCells => foliageCells;
+        internal FoliagePlayerVacancySuppressor FoliagePlayerVacancies => foliagePlayerVacancies;
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
@@ -326,6 +328,7 @@ namespace WildFarming.Ecosystem
             ColumnCache = null;
             activeChunkScratch.Clear();
             foliageCells.Clear();
+            foliagePlayerVacancies.Clear();
             treeGrowthScheduler.Clear();
             ferntreeGrowthScheduler.Clear();
             cyclicTreeScanner.Clear();
@@ -928,6 +931,10 @@ namespace WildFarming.Ecosystem
             if (CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock))
             {
                 foliageCells.OnBlockRemoved(pos);
+                if (api.World?.Calendar != null)
+                {
+                    foliagePlayerVacancies.NotePlayerBreak(pos, api.World.Calendar.TotalHours);
+                }
             }
 
             if (WildSoilGroundRules.HasActiveMycelium(api.World.BlockAccessor, pos))
