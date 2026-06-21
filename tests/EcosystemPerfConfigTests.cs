@@ -27,6 +27,7 @@ namespace WildFarming.Tests
             var cfg = new EcosystemConfig();
             Assert.True(cfg.EnableChunkFairSpread);
             Assert.True(cfg.EnableEventDrivenSpread);
+            Assert.True(cfg.EnableBackgroundSpreadSolve);
             Assert.True(cfg.EnableSeasonCoarseWake);
             Assert.Equal(2, cfg.MaxSpreadAttemptsPerChunkPerTick);
             Assert.Equal(32, cfg.MaxSpreadChunksVisitedPerTick);

@@ -1,4 +1,4 @@
-using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
 using Xunit;
 
@@ -6,20 +6,41 @@ namespace WildFarming.Tests
 {
     public class TallgrassSpreadMaturationTests
     {
-        static Block Block(string path) =>
-            new Block { Code = new AssetLocation("game", path) };
+        static Vintagestory.API.Common.Block Block(string path) =>
+            new Vintagestory.API.Common.Block { Code = new Vintagestory.API.Common.AssetLocation("game", path) };
 
         [Theory]
-        [InlineData("tallgrass-veryshort-free", false)]
-        [InlineData("tallgrass-fern-veryshort-free", false)]
-        [InlineData("tallgrass-short-free", true)]
-        [InlineData("tallgrass-medium-free", true)]
-        [InlineData("tallgrass-verytall-free", true)]
-        [InlineData("frostedtallgrass-tall-free", true)]
-        [InlineData("frostedtallgrass-fern-free", false)]
-        public void CanReproduceFrom_RequiresShortOrTaller(string path, bool expected)
+        [InlineData(0, 0)]
+        [InlineData(1, 1)]
+        [InlineData(2, 1)]
+        [InlineData(3, 2)]
+        [InlineData(4, 2)]
+        [InlineData(5, 3)]
+        public void MinSpreadStageIndex_IsHalfOfTargetRoundedUp(int target, int expectedMin)
         {
-            Assert.Equal(expected, TallgrassSpreadMaturation.CanReproduceFrom(Block(path)));
+            Assert.Equal(expectedMin, TallgrassSpreadHeight.MinSpreadStageIndex(target));
+        }
+
+        [Fact]
+        public void CanReproduceFrom_BlocksBelowHalfTarget()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+            var pos = new BlockPos(100, 64, 200);
+            var req = new PlantRequirements { Species = "tallgrass", Habitat = EcologyHabitat.Terrestrial };
+            int target = TallgrassSpreadHeight.PickTargetStageIndex(null, pos, req);
+            int minSpread = TallgrassSpreadHeight.MinSpreadStageIndex(target);
+
+            Assert.False(TallgrassSpreadMaturation.CanReproduceFrom(Block("tallgrass-veryshort-free"), null, pos));
+
+            if (minSpread >= 1)
+            {
+                Assert.False(TallgrassSpreadMaturation.CanReproduceFrom(Block("tallgrass-short-free"), null, pos));
+            }
+
+            string minStage = TallgrassSpreadHeight.HeightStages[minSpread];
+            Assert.True(TallgrassSpreadMaturation.CanReproduceFrom(Block("tallgrass-" + minStage + "-free"), null, pos));
+
+            EcosystemConfig.Loaded = new EcosystemConfig();
         }
 
         [Fact]
@@ -38,14 +59,42 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void ShouldQueuePromotion_OnlyForEstablishingTallgrass()
+        public void ShouldQueuePromotion_EstablishingAndBelowTarget()
         {
             var cfgOn = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
             EcosystemConfig.Loaded = cfgOn;
 
             var req = new PlantRequirements { Species = "tallgrass", Habitat = EcologyHabitat.Terrestrial };
             Assert.True(TallgrassSpreadMaturation.ShouldQueuePromotion(Block("tallgrass-veryshort-free"), req));
-            Assert.False(TallgrassSpreadMaturation.ShouldQueuePromotion(Block("tallgrass-short-free"), req));
+            Assert.True(TallgrassSpreadMaturation.ShouldQueuePromotion(Block("tallgrass-short-free"), req));
+            Assert.False(TallgrassSpreadMaturation.ShouldQueuePromotion(Block("tallgrass-verytall-free"), req));
+
+            EcosystemConfig.Loaded = new EcosystemConfig();
+        }
+
+        [Fact]
+        public void IsReadyToRegister_OpensAtHalfTarget_NotFullTarget()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+            var pos = new BlockPos(12, 64, 34);
+            int target = TallgrassSpreadHeight.PickTargetStageIndex(null, pos, new PlantRequirements { Species = "tallgrass" });
+            int minSpread = TallgrassSpreadHeight.MinSpreadStageIndex(target);
+
+            string minStage = TallgrassSpreadHeight.HeightStages[minSpread];
+            Assert.True(TallgrassEstablishment.IsReadyToRegister(
+                Block("tallgrass-" + minStage + "-free"), target, null, pos));
+
+            if (minSpread > 0)
+            {
+                string below = TallgrassSpreadHeight.HeightStages[minSpread - 1];
+                Assert.False(TallgrassEstablishment.IsReadyToRegister(
+                    Block("tallgrass-" + below + "-free"), target, null, pos));
+            }
+
+            if (target > minSpread)
+            {
+                Assert.True(TallgrassEstablishment.NeedsEstablishment(null, pos, Block("tallgrass-" + minStage + "-free"), out _));
+            }
 
             EcosystemConfig.Loaded = new EcosystemConfig();
         }

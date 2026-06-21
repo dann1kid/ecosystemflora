@@ -3,9 +3,104 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.9**
+**This release:** **3.9.14**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.14 (fixes) — Catmint + tallgrass maturation
+
+### Catmint
+
+- **Spread:** `MinForest` lowered to **0** — open meadows no longer fail reproduce checks.
+- **Soil succession:** role changed from `ForestEdge` to **`MeadowPerennial`** — no more `forestfloor` under catmint from succession.
+
+### Tallgrass
+
+- Spread/registry opens at **half the environment target height** (`MinSpreadStageIndex`); promotion continues to **full target**.
+- See [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md).
+
+### Docs
+
+- New [`BACKGROUND_REGISTRATION.md`](BACKGROUND_REGISTRATION.md) — snapshot → worker → pending registry pipeline.
+
+---
+
+## 3.9.14 — Crowfoot workers, event-driven chunk due, spread worker default on
+
+### Water crowfoot on worker path (6.12)
+
+- **`EnableBackgroundSpreadSolve`** now covers **independent-radius water crowfoot** (`TryBuildCrowfootRequest`, `PassesCrowfoot`, `WaterColumnDepth` in snapshot).
+- Still sync: wild vines, mycelium network.
+
+### Event-driven due without global scan (6.3b)
+
+- **`CollectDueEntries`** with `eventDriven: true` iterates **per-chunk lists** instead of scanning the full registry flat list.
+
+### Default on
+
+- **`EnableBackgroundSpreadSolve`** default **true** (requires `EnableTwoPhaseSpreadPlacement`, on by default).
+
+See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.12–§6.3b.
+
+---
+
+## 3.9.13 — Mat spread workers + per-chunk due heap (Phase 6.11 + 6.2)
+
+### Mat / rhizome / lily pad spread on workers (6.11)
+
+- **`EnableBackgroundSpreadSolve`** now covers **rhizome mat** (reeds) and **surface mat** (lilies) when two-phase spread is on — same snapshot → worker → `PendingSpreadQueue` pipeline as terrestrial meadow spread.
+- Main thread still runs frontier checks, water placement, vacancy, and spacing; worker scores mat candidates only.
+- Not covered at release time: water crowfoot (added in **3.9.14**), vines, mycelium.
+
+### Per-chunk due scheduling (6.2)
+
+- **`ProcessDue`** (when chunk-fair spread is off) now uses the **chunk round-robin executor** with **per-chunk due min-heaps** instead of a global due list scan.
+- Wake vs calendar classification unchanged.
+
+See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.11–§6.2.
+
+---
+
+## 3.9.12 — Reproduce tick profiling (Phase 6.10)
+
+- **`EnableReproduceTickProfiling`** — second log line: chunk-fair spread stats, wake vs calendar attempts, background spread worker queue, pending spread commits, column cache hit rate (interval delta).
+- See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.10.
+
+---
+
+## 3.9.11 — Empty-first spread on worker path (Phase 6.9)
+
+- **Background spread solve** now mirrors sync **empty-first** collect when `EnableEmptyFirstSpreadCollect` is on: worker runs `EmptyOnly` scoring first, then `DisplacementOnly` only if no empty winner qualifies.
+- Removes the v3.9.10 limitation that forced sync spread for default meadow displacement settings.
+- See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.9.
+
+---
+
+## 3.9.10 — Background spread solve + cyclic flora discovery
+
+### Background spread scoring (opt-in)
+
+- **`EnableBackgroundSpreadSolve`** (default **off**) — main thread captures compact **`SpreadSolveCell`** snapshots (surface, soil, climate, niche, spacing); **worker threads** score fitness and pick spread targets; **`SetBlock`** still runs on the main thread via the existing **`PendingSpreadQueue`** commit pass.
+- Requires **`EnableTwoPhaseSpreadPlacement`** (default on). **Terrestrial** meadow spread only — not rhizome/reed mat, surface-mat lilies, vines, or mycelium network.
+- **Empty-first** (`EnableEmptyFirstSpreadCollect`, default on) — supported on worker path since **3.9.11** (Phase 6.9).
+- **`SpreadWorkerCount`** — background scorer threads (0 = half CPU cores, max 8). See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.8.
+
+### Cyclic flora discovery
+
+- **`EnableCyclicFloraDiscovery`** (default **on**) — round-robin **live** column rescan for flowers and tallgrass after chunk load (mirrors cyclic tree trunk discovery). Fixes flora missed by one-shot background registration when heightmap or load order hid plants.
+- **`MaxFloraRescanColumnsPerTick`** (default **32**) — columns rescanned per chunk-scan tick.
+- Worker registration hits can be **supplemented** with a live rescan when the snapshot pass returns zero flora (`FloraColumnDiscovery`).
+
+### Tests
+
+- **`SpreadSolverTests`** — worker-safe scoring unit tests.
+
+### Кратко (RU)
+
+- **Фоновый spread solve** (opt-in) — main собирает `SpreadSolveCell`, worker считает fitness и выбирает клетку; `SetBlock` на main через `PendingSpreadQueue`. Только terrestrial, нужен two-phase spread.
+- **Cyclic flora** — live rescan цветов/травы после load (как cyclic trees); дополняет one-shot background registration.
 
 ---
 
@@ -150,6 +245,11 @@ Not applied to turf colonizers, mat spread (reeds/lilies), or habitats without d
 | `MaxBurstRegistrationsPerChunk` | 4096 | Max applies while finishing one burst chunk on load |
 | `RegistrationBudgetMs` | 25 | Chunk-scan tick time budget (0 = `TickBudgetMs`) |
 | `EnableBackgroundRegistrationScan` | true | Worker-thread column classification |
+| `RegistrationWorkerCount` | 0 | Registration classify workers (0 = half cores, max 8) |
+| `EnableBackgroundSpreadSolve` | false | Worker-thread spread fitness scoring (requires two-phase spread) |
+| `SpreadWorkerCount` | 0 | Spread scoring workers (0 = half cores, max 8) |
+| `EnableCyclicFloraDiscovery` | true | Live round-robin flora rescan after chunk load |
+| `MaxFloraRescanColumnsPerTick` | 32 | Columns rescanned per chunk-scan tick (cyclic flora) |
 | `MaxRegistrationSnapshotCellsPerTick` | 8192 | Block ids copied on main per tick |
 | `MaxChunkColumnsScannedPerTick` | 16 | Background registration throughput |
 | `MaxRegistrationsPerTick` | 2048 | Background registration cap |

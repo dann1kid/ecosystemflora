@@ -410,6 +410,7 @@ namespace WildFarming.Ecosystem
                     null,
                     null,
                     null,
+                    null,
                     pass.Indexed,
                     pass.Changed,
                     pass.ResumeLx,

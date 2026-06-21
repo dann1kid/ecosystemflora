@@ -110,6 +110,13 @@ namespace WildFarming.Ecosystem
             return -1;
         }
 
+        /// <summary>Minimum height index before tallgrass may spread (half of environment target, rounded up).</summary>
+        internal static int MinSpreadStageIndex(int targetStageIndex)
+        {
+            if (targetStageIndex <= 0) return 0;
+            return (targetStageIndex + 1) / 2;
+        }
+
         /// <summary>Raises one vanilla height stage (e.g. veryshort → short). Preserves cover and snow/free.</summary>
         public static bool TryAdvanceOneStage(ICoreAPI api, IBlockAccessor acc, BlockPos pos)
         {
@@ -168,6 +175,45 @@ namespace WildFarming.Ecosystem
                 nicheLight,
                 nicheMoisture,
                 seasonGrowth);
+        }
+
+        /// <summary>Stable target height for establishment (same cell keeps the same target).</summary>
+        public static int PickTargetStageIndex(ICoreAPI api, BlockPos pos, PlantRequirements requirements)
+        {
+            var rand = pos != null
+                ? new System.Random(StablePosSeed(pos))
+                : new System.Random(0);
+
+            if (api == null || pos == null)
+            {
+                return PickStageIndex(in DefaultOpenContext, rand);
+            }
+
+            TallgrassHeightContext ctx = BuildContext(api, pos, requirements);
+            return PickStageIndex(in ctx, rand);
+        }
+
+        static readonly TallgrassHeightContext DefaultOpenContext = new TallgrassHeightContext(
+            sunLightLevel: 20,
+            localForestCover: 0.05f,
+            groundFertility: 80,
+            worldgenRainfall: 0.6f,
+            nicheLight: LightLevel.Open,
+            nicheMoisture: MoistureLevel.Mesic,
+            seasonGrowthFactor: 1f);
+
+        static int StablePosSeed(BlockPos pos)
+        {
+            if (pos == null) return 0;
+
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + pos.X;
+                hash = hash * 31 + pos.Y;
+                hash = hash * 31 + pos.Z;
+                return hash;
+            }
         }
 
         internal static int PickStageIndex(in TallgrassHeightContext ctx, System.Random rand)

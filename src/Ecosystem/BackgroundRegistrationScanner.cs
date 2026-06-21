@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
@@ -58,23 +60,31 @@ namespace WildFarming.Ecosystem
         readonly AutoResetEvent signal = new AutoResetEvent(false);
         readonly object startLock = new object();
 
-        Thread worker;
+        Thread[] workers;
         System.Collections.Generic.IList<Block> blocks;
         volatile bool disposed;
 
-        public void Start(System.Collections.Generic.IList<Block> blockRegistry)
+        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount)
         {
             blocks = blockRegistry;
+            int count = ResolveWorkerCount(workerCount);
             lock (startLock)
             {
-                if (worker != null) return;
+                if (workers != null) return;
 
-                worker = new Thread(WorkerLoop)
+                workers = new Thread[count];
+                for (int i = 0; i < count; i++)
                 {
-                    IsBackground = true,
-                    Name = "ecosystemflora-registration-scan",
-                };
-                worker.Start();
+                    int workerIndex = i;
+                    workers[i] = new Thread(() => WorkerLoop(workerIndex))
+                    {
+                        IsBackground = true,
+                        Name = count == 1
+                            ? "ecosystemflora-registration-scan"
+                            : "ecosystemflora-registration-scan-" + workerIndex,
+                    };
+                    workers[i].Start();
+                }
             }
         }
 
@@ -93,7 +103,7 @@ namespace WildFarming.Ecosystem
             long chunkKey = ChunkKey(snapshot.ChunkCoord);
             if (inFlightByChunk.ContainsKey(chunkKey)) return false;
 
-            token = System.Threading.Interlocked.Increment(ref nextToken);
+            token = Interlocked.Increment(ref nextToken);
             var item = new WorkItem(token, chunkKey, snapshot, in request, highPriority);
             if (!inFlightByChunk.TryAdd(chunkKey, token)) return false;
 
@@ -125,13 +135,32 @@ namespace WildFarming.Ecosystem
         {
             disposed = true;
             signal.Set();
-            worker?.Join(500);
+            if (workers != null)
+            {
+                for (int i = 0; i < workers.Length; i++)
+                {
+                    workers[i]?.Join(500);
+                }
+            }
+
             signal.Dispose();
         }
 
         long nextToken;
 
-        void WorkerLoop()
+        static int ResolveWorkerCount(int configured)
+        {
+            if (configured <= 0)
+            {
+                configured = System.Environment.ProcessorCount / 2;
+            }
+
+            if (configured < 1) configured = 1;
+            if (configured > 8) configured = 8;
+            return configured;
+        }
+
+        void WorkerLoop(int workerIndex)
         {
             while (!disposed)
             {

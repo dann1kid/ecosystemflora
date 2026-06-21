@@ -1,11 +1,11 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v3.9.8` — spread maturation (colonizer flowers + tallgrass veryshort); Phase 6 simulation engine (chunk-fair spread, event wake, two-phase placement); prior **3.7.x** tree fern / canopy / wild vines.  
-**Версия мода:** `3.9.8` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**395**)  
+**Текущая стадия:** `Ecosystem v3.9.14` — crowfoot worker + event-driven chunk due; spread worker default on.  
+**Версия мода:** `3.9.14` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**418**)  
 
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-06-21 (код **3.9.8**, handbook server fix, [`CHANGELOG.md`](CHANGELOG.md)).
+Последнее обновление документации: 2026-06-21 (код **3.9.14**, Phase 6.12 + 6.3b, [`CHANGELOG.md`](CHANGELOG.md)).
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [CHANGELOG.md](CHANGELOG.md) (релизные заметки), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки), [GAPS.md](GAPS.md) (пробелы идеи), [CANOPY_PHENOLOGY.md](CANOPY_PHENOLOGY.md) (сезонная листва), [CANOPY_AMBIENCE.md](CANOPY_AMBIENCE.md) (частицы кроны), [TREE_AGING.md](TREE_AGING.md) (зрелость диких деревьев), [FERNTREE.md](FERNTREE.md) (древовидный папоротник), [WILD_VINE.md](WILD_VINE.md) (дикие лианы).
 
@@ -27,7 +27,7 @@
 
 ---
 
-## Текущая модель (Ecosystem v3.9.8)
+## Текущая модель (Ecosystem v3.9.14)
 
 Дикая экосистема на **ванильных** блоках родителей (`game:`). Сторонние blocktypes — **`ecologyParticipant`** ([`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md)). Валидация баланса: **логи** + **осмотр (I)** — mat edge, seed %, stress, season, **грибница** (ниша, кромка сети, стресс якоря).
 
@@ -53,7 +53,8 @@
 
 | Слой | Поведение |
 |------|-----------|
-| **Объект** | Ванильные блоки; регистрация — `RegistrationScanQueue` + burst; **Phase A** `PendingRegistrationQueue`; **background scan** (snapshot → worker: цветы / лианы / деревья); **грибница** — `MyceliumChunkRegistrar` при load (BE-якоря, main); сезонная крона — `FoliageChunkSyncPass` на main |
+| **Объект** | Ванильные блоки; регистрация — `RegistrationScanQueue` + burst; **Phase A** `PendingRegistrationQueue`; **background scan** (snapshot → worker: цветы / лианы / деревья); **cyclic flora** live rescan (`CyclicFloraScanner`); **грибница** — `MyceliumChunkRegistrar` при load (BE-якоря, main); сезонная крона — `FoliageChunkSyncPass` на main |
+| **Spread (terrestrial)** | Two-phase evaluate/commit; опционально **background spread solve** — worker scoring по `SpreadSolveCell` + empty-first two-phase (6.9), commit на main |
 | **Участник** | `IEcosystemParticipant` → `EcosystemParticipant` |
 | **Среда** | Температура (сезон), `WorldgenRainfall`, **`LocalForestCover`** (соседние стволы), почва, жидкость |
 | **Клетка-кандидат** | Скан в радиусе → **взвешенный** выбор по fitness |
@@ -230,7 +231,7 @@
 | `ApplyWorldgenRainForest` | Rainfall из worldgen; **лес** — `LocalForestCover` (соседние деревья), не worldgen forest |
 | `LimitSpreadNearPlayers` / `OnlyActivateNearPlayers` | Ограничение spread/stress/деревьев у игроков; второй флаг также режет chunk scans |
 | Phase 6 (v3.8) | `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake` — см. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) и [`CONFIGURATION.md`](CONFIGURATION.md) |
-| Регистрация (v3.8) | `EnableBackgroundRegistrationScan`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, бюджеты ms — см. [`CONFIGURATION.md`](CONFIGURATION.md) |
+| Регистрация (v3.8) | `EnableBackgroundRegistrationScan`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, бюджеты ms — см. [`BACKGROUND_REGISTRATION.md`](BACKGROUND_REGISTRATION.md), [`CONFIGURATION.md`](CONFIGURATION.md) |
 | Деревья / крона / грибница / лианы | `EnableTreeAging`, `EnableSeasonalFoliage`, `EnableMyceliumEcology`, `EnableWildVineEcology` — детали в [`CONFIGURATION.md`](CONFIGURATION.md) и topic-доках |
 
 **Обновление:** при старте мода отсутствующие ключи получают C#-дефолты и **дописываются** в json (`EcosystemConfig.TryLoadFromDisk` → `StoreModConfig`).

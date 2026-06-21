@@ -141,6 +141,23 @@ namespace WildFarming.Ecosystem
                 columnSnap.LocalForestCover);
         }
 
+        internal static EnvironmentalContext FromSpreadSolveCell(in SpreadSolveCell cell)
+        {
+            return new EnvironmentalContext(
+                cell.ToPos(),
+                0f,
+                cell.WorldgenRainfall,
+                cell.LocalForestCover,
+                false,
+                cell.GroundFertility,
+                cell.GroundSoilKinds,
+                cell.GroundSideSolid,
+                cell.SpaceReplaceable,
+                cell.HasClimate,
+                cell.TouchesFluid,
+                cell.HasShallowWater || cell.WaterColumnDepth > 0);
+        }
+
         static EnvironmentalContext BuildSpreadContext(
             ICoreAPI api,
             BlockPos plantPos,

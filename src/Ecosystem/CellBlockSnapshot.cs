@@ -23,6 +23,25 @@ namespace WildFarming.Ecosystem
             FluidBelow = fluidBelow;
         }
 
+        internal static CellBlockSnapshot FromBlockIds(
+            System.Collections.Generic.IList<Block> blocks,
+            int spaceId,
+            int groundId)
+        {
+            Block air = ResolveBlock(blocks, 0);
+            return new CellBlockSnapshot(
+                ResolveBlock(blocks, spaceId) ?? air,
+                ResolveBlock(blocks, groundId) ?? air,
+                null,
+                null);
+        }
+
+        static Block ResolveBlock(System.Collections.Generic.IList<Block> blocks, int id)
+        {
+            if (blocks == null || id <= 0 || id >= blocks.Count) return null;
+            return blocks[id];
+        }
+
         public bool TouchesFluid => PlantVacancyRules.TouchesSpreadBlockingFluid(
             Space, Ground, FluidAt, FluidBelow);
 

@@ -16,7 +16,7 @@
 | Календарная скорость (attempts/year) сохраняется в среднем | Искусственное замедление preset’ом ради CPU |
 | `TickBudgetMs` — страховка от багов | Budget как единственный дизайн-лимит |
 
-**Жёсткое ограничение VS:** один server thread, `BlockAccessor` только на main thread. Выигрыш — меньше и умнее работа, не `Parallel.For`.
+**Жёсткое ограничение VS:** один server thread для `BlockAccessor` / `SetBlock`. Выигрыш — меньше и умнее работа на main thread **и** узкие worker-проходы без world access: snapshot classify (registration), env snapshot scoring (spread). Полный `Parallel.For` по чанкам — не цель.
 
 ---
 
@@ -213,7 +213,175 @@ Drain pending queue (round-robin by target chunk)
 | **6.6** | Season coarse wake + docs/handbook | Низкий | Season mult still applied |
 | **6.7** | Player-priority registration + empty-first spread collect | Низкий | Displacement when no vacancy; burst completes nearby chunk |
 
-**Не в 6.x:** multithreading, LOD «fake ecology» далеко от игрока, item propagation.
+**Не в 6.x:** full-world parallel simulation, LOD «fake ecology» далеко от игрока, item propagation. **В 6.7b+ / 6.8:** ограниченные worker threads только для classify/score по snapshot (без `BlockAccessor`).
+
+---
+
+## 6.8 — Background spread solve (v3.9.10)
+
+**Задача:** снять CPU spike с main thread на reproduce-тике, когда terrestrial spread собирает много кандидатов в радиусе — fitness + displacement scoring уходит на worker; commit не меняется.
+
+### Pipeline
+
+| Stage | Thread | What |
+|-------|--------|------|
+| Candidate collect | Main | `SpreadSolveBatchBuilder` — `SurfacePlacement`, claims, mycelium gate, spacing, rain/forest/niche → `SpreadSolveCell` |
+| Fitness + pick | Worker | `SpreadSolver.PickWinners` — preflight, `CellCompetition`, weighted pick |
+| Enqueue | Main | `BackgroundSpreadPipeline.PollCompleted` → `PendingSpreadIntent` |
+| Commit | Main | `PendingSpreadQueue.ProcessCommit` — revalidate + `SetBlock` (unchanged Phase 6.5) |
+
+Entry: `TrySpawnOffspring` → `backgroundSpread.TryQueueSolve` when enabled; иначе sync `ReproducePlacement.TryEnqueueSpreadAmongNeighbors`.
+
+### Scope (v1)
+
+| Included | Excluded (sync path) |
+|----------|----------------------|
+| Terrestrial flowers, tallgrass, berries, ferns | Rhizome / mat edge (reeds, lilies) |
+| Two-phase spread on | `EnableTwoPhaseSpreadPlacement` off |
+| | Rhizome / mat edge (reeds, lilies) |
+| | Wild vines, mycelium network, aquatic independent spread |
+| Empty-first terrestrial (default) | — (worker: `EmptyOnly` then `DisplacementOnly` since **6.9**) |
+| Rhizome / lily mat (6.11) | Worker when `EnableBackgroundSpreadSolve` on |
+| Water crowfoot (6.12) | Worker when `EnableBackgroundSpreadSolve` on |
+| Wild vines, mycelium | Sync |
+
+### Config
+
+```json
+"EnableBackgroundSpreadSolve": true,
+"SpreadWorkerCount": 0
+```
+
+`SpreadWorkerCount`: 0 = `Environment.ProcessorCount / 2`, clamp 1–8 (same pattern as `RegistrationWorkerCount`).
+
+### Code map
+
+| File | Role |
+|------|------|
+| `SpreadSolveCell.cs` | Immutable env per candidate (no accessor) |
+| `SpreadSolveBatchBuilder.cs` | Main-thread cell collection |
+| `SpreadSolvePreflight.cs` | Worker-safe physical gate |
+| `SpreadSolver.cs` | Scoring + weighted pick |
+| `BackgroundSpreadScanner.cs` | Worker queue |
+| `BackgroundSpreadPipeline.cs` | Submit / poll → pending spread queue |
+
+**Tests:** `tests/SpreadSolverTests.cs`.
+
+### Cyclic flora discovery (registration complement, v3.9.10)
+
+One-shot background registration can mark a chunk complete with zero flora hits (heightmap band, interleaved scan, load order). **`CyclicFloraScanner`** mirrors **`CyclicTreeTrunkScanner`**: live `BlockAccessor` column pass on chunk-scan tick.
+
+| Key | Default |
+|-----|:-------:|
+| `EnableCyclicFloraDiscovery` | true |
+| `MaxFloraRescanColumnsPerTick` | 32 |
+
+`FloraColumnDiscovery` also **supplements** empty worker flora hits with a live rescan on the main thread when the snapshot pass found nothing.
+
+---
+
+## 6.9 — Empty-first on worker path (v3.9.11)
+
+**Задача:** при default `EnableEmptyFirstSpreadCollect` worker path больше не откатывается на sync main-thread scoring.
+
+### Behaviour
+
+When `SpreadSolveRequest.EmptyFirstTwoPhase` is set (derived from `UsesEmptyFirstSpreadCollect`):
+
+1. Worker scores with `SpreadCollectPhase.EmptyOnly`.
+2. If no winner — clear scratch list, score with `SpreadCollectPhase.DisplacementOnly`.
+
+Main thread still collects **all** qualifying cells once (`SpreadCollectPhase.All` in batch builder — no occupancy hint skip). Same semantics as `CollectSpreadCandidatesForSpread` on sync path.
+
+### Still sync-only
+
+Rhizome / surface-mat spread, turf colonizers with `PrefersOccupiedTurf`, habitats without displacement, and anything with `EnableTwoPhaseSpreadPlacement` off.
+
+**Tests:** `SpreadSolverTests.PickWinners_EmptyFirstTwoPhase_*`.
+
+---
+
+## 6.10 — Reproduce tick profiling (v3.9.12)
+
+**Задача:** видеть, **почему** reproduce-тик дорогой — wake vs calendar, chunk-fair coverage, worker backlog, column cache.
+
+### Second log line (when `EnableReproduceTickProfiling`)
+
+```
+Reproduce spread stats: chunks=32 max/chunk=2 wake=18 calendar=6 workerQ=4 workerQueued=3 workerDone=2 spreadPending=12 columnCacheHit=87% (142/163)
+```
+
+| Field | Meaning |
+|-------|---------|
+| `chunks` | Registry chunks visited this tick (`EnableChunkFairSpread`) |
+| `max/chunk` | Peak spread attempts in one chunk this tick |
+| `wake` / `calendar` | Spread attempts driven by event wake vs calendar due |
+| `workerQ` | Pending background spread solve jobs (in worker queue) |
+| `workerQueued` / `workerDone` | Solves submitted / completed this reproduce tick |
+| `spreadPending` | `PendingSpreadQueue` size after tick |
+| `columnCacheHit` | Hit rate on `EcologyColumnState.TryGetSpreadSnapshot` since last log |
+
+Set `ReproduceTickProfilingMinRegistry` to **0** for dev servers with small meadows.
+
+**Tests:** `ReproduceTickProfilingTests`.
+
+---
+
+## 6.11 — Mat spread on worker path (v3.9.13)
+
+Extends §6.8 worker pipeline to **rhizome** and **surface-mat** spread:
+
+| Stage | Thread | What |
+|-------|--------|------|
+| Mat frontier + placement | Main | `RhizomeSpread.IsFrontier` / `SurfaceMatSpread.IsFrontier`, `WaterPlacement`, `SpreadVacancy`, spacing |
+| Fitness + pick | Worker | `SpreadSolvePreflight.PassesMat`, `SpreadSolver` mat branch (no displacement) |
+| Commit | Main | `PendingSpreadQueue` (unchanged) |
+
+Entry: `SpreadSolveBatchBuilder.TryBuildRequest` routes terrestrial vs mat. `CanBackgroundSolve()` gate in `TrySpawnOffspring`.
+
+**Still sync:** wild vines, mycelium network.
+
+**Tests:** `SpreadSolveMatTests`.
+
+---
+
+## 6.12 — Water crowfoot on worker path (v3.9.14)
+
+Extends §6.8 worker pipeline to **independent-radius underwater crowfoot**:
+
+| Stage | Thread | What |
+|-------|--------|------|
+| Column base + depth | Main | `CrowfootPlacement.TryFindPlantPos`, `WaterColumnHelper.IsValidCrowfootSpreadBase`, spacing |
+| Fitness + pick | Worker | `SpreadSolvePreflight.PassesCrowfoot`, `WaterColumnDepth` in `SpreadSolveCell` |
+| Commit | Main | `PendingSpreadQueue` (unchanged) |
+
+Entry: `SpreadSolveBatchBuilder.TryBuildCrowfootRequest`. `EnvironmentalContext.FromSpreadSolveCell` maps `WaterColumnDepth` → underwater suitability.
+
+**Tests:** `SpreadSolveCrowfootTests`.
+
+---
+
+## 6.3b — Event-driven due via chunk lists (v3.9.14)
+
+**Goal:** remove O(registry) flat scan in `CollectDueEntries(..., eventDriven: true)`.
+
+- Global and scoped event-driven collection iterate **`byChunk`** entry lists (same wake/calendar rules as `SpreadChunkScheduler`).
+- Calendar due still uses **`chunkDueHeaps`** when `eventDriven: false`.
+
+**Tests:** `ReproducerChunkDueHeapTests.CollectDueEntries_EventDriven_UsesChunkScanNotGlobalHeap`, existing `EcologyWakeSpreadTests`.
+
+---
+
+## 6.2 — Per-chunk due heap (v3.9.13)
+
+**Goal:** replace global `CollectDueEntries` + fair cursor in legacy `ProcessDue` with chunk-scoped scheduling.
+
+- Each registry chunk has a **`ReproducerDueHeap`** (`chunkDueHeaps`).
+- **`PushDueSchedule`** on `Add` only; successful spread updates `NextAttemptHours` in place (no duplicate heap nodes).
+- **`ProcessDue`** delegates to **`SpreadChunkScheduler`** with scope-wide chunk visit cap (all active registry chunks in one tick).
+- **`EnableChunkFairSpread: true`** path unchanged (same scheduler, config-limited chunk cap).
+
+**Tests:** `ReproducerChunkDueHeapTests`, existing `ReproducerRegistryDueQueueTests`.
 
 ---
 
@@ -229,13 +397,9 @@ Drain pending queue (round-robin by target chunk)
 
 ## 10. Метрики и профилирование (расширить текущее)
 
-Уже есть `ReproduceTickProfiler`. Добавить:
+Уже есть `ReproduceTickProfiler`. **6.10:** second log line — `chunksVisited`, `max/chunk`, `wakeDriven` vs `calendarDriven`, spread worker queue, `columnCacheHitRate` (interval delta).
 
-- `chunksVisited`, `attemptsPerChunk` histogram (log line или ring buffer)
-- `wakeDriven` vs `calendarDriven` attempt ratio
-- `columnCacheHitRate` на spread path
-
-Включение: `EnableReproduceTickProfiling` (без порога registry для dev).
+Включение: `EnableReproduceTickProfiling`; dev: `ReproduceTickProfilingMinRegistry = 0`.
 
 ---
 
@@ -268,6 +432,14 @@ Drain pending queue (round-robin by target chunk)
 - [x] **PR 6.6** — season coarse wake + handbook
 - [x] **PR 6.7** — `RegistrationScanQueue` priority/burst; empty-first spread + `EcologyColumnOccupancy` hint
 - [x] **PR 6.7b** — `PendingRegistrationQueue` paced apply; `BackgroundRegistrationScanner` worker classify; foliage sync decoupled (`FoliageChunkSyncPass` on main)
+- [x] **PR 6.8** — `BackgroundSpreadPipeline` worker scoring + cyclic flora discovery (`CyclicFloraScanner`, `FloraColumnDiscovery`)
+- [x] **PR 6.9** — empty-first two-phase scoring on worker (`SpreadSolveRequest.EmptyFirstTwoPhase`)
+- [x] **PR 6.10** — extended `ReproduceTickProfiler` spread stats line + wake/calendar counters
+- [x] **PR 6.11** — mat/rhizome/lily `TryBuildMatRequest` + worker `PassesMat` scoring
+- [x] **PR 6.2** — per-chunk `ReproducerDueHeap`; legacy `ProcessDue` → chunk scheduler
+- [x] **PR 6.12** — water crowfoot `TryBuildCrowfootRequest` + `PassesCrowfoot` worker scoring
+- [x] **PR 6.3b** — event-driven `CollectDueEntries` → per-chunk scan (no global flat list)
+- [x] **PR 6.8b** — `EnableBackgroundSpreadSolve` default **true**
 
 ### Registration pipeline (6.7b)
 
@@ -280,6 +452,8 @@ Drain pending queue (round-robin by target chunk)
 | Foliage sync (chunk mode) | Main | `FoliageCellScheduler.ProcessChunkSyncBatch` when background scan on |
 
 Config: `EnableBackgroundRegistrationScan`, `MaxRegistrationSnapshotCellsPerTick`, `MaxRegistryAppliesPerTick`, `MaxPriorityRegistryAppliesPerTick`, `BurstRegistrationBudgetMs`, `PlayerRegistrationPriorityRadiusBlocks` (16).
+
+Full reference: [`BACKGROUND_REGISTRATION.md`](BACKGROUND_REGISTRATION.md).
 
 ### Tick scheduling (6.7c)
 

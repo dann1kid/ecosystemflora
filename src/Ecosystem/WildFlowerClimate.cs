@@ -41,7 +41,7 @@ namespace WildFarming.Ecosystem
             ["westerngorse"] = new EcologyEntry(2, 15, 0.4f, 1f, 0f, 0.35f, 2.6f),
             ["mugwort"] = new EcologyEntry(11, 28, 0.5f, 1f, 0f, 0.3f, 2.0f),
             ["cowparsley"] = new EcologyEntry(2, 20, 0.4f, 1f, 0f, 0.35f, 1.85f),
-            ["catmint"] = new EcologyEntry(5, 19, 0.39f, 0.86f, 0.1f, 0.5f, 1.65f),
+                ["catmint"] = new EcologyEntry(5, 19, 0.39f, 0.86f, 0f, 0.5f, 1.65f),
             ["bluebell"] = new EcologyEntry(-5, 15, 0.45f, 0.88f, 0.8f, 1f, 1.55f),
             ["cornflower"] = new EcologyEntry(3, 23, 0.35f, 0.75f, 0.1f, 0.45f, 1.55f),
             ["wilddaisy"] = new EcologyEntry(7, 20, 0.4f, 0.75f, 0f, 0.31f, 1.5f),

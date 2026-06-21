@@ -98,9 +98,17 @@ namespace WildFarming.Tests
         [Fact]
         public void EffectiveSeedDispersalChance_ScalesWithConfig()
         {
-            EcosystemConfig.Loaded = new EcosystemConfig { RhizomeSeedDispersalChanceScale = 0.5f };
-            var req = new PlantRequirements { Species = "coopersreed", SeedDispersalChance = 0.08f };
-            Assert.Equal(0.04f, RhizomeSpread.EffectiveSeedDispersalChance(req));
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig { RhizomeSeedDispersalChanceScale = 0.5f };
+                var req = new PlantRequirements { Species = "coopersreed", SeedDispersalChance = 0.08f };
+                Assert.Equal(0.04f, RhizomeSpread.EffectiveSeedDispersalChance(req));
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
         }
     }
 }

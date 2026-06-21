@@ -24,30 +24,38 @@ namespace WildFarming.Ecosystem
             Func<ReproducerEntry, bool> tryProcess,
             long budgetTicks,
             Stopwatch budgetWatch,
-            out int dueQueueSize)
+            out int dueQueueSize,
+            out int chunksVisited,
+            out int maxAttemptsInChunk,
+            int? maxChunksVisitedOverride = null,
+            int? maxAttemptsPerChunkOverride = null,
+            bool? eventDrivenOverride = null)
         {
             dueQueueSize = 0;
+            chunksVisited = 0;
+            maxAttemptsInChunk = 0;
             if (registry == null || cfg == null || maxTotalAttempts <= 0) return 0;
 
-            int maxChunksVisited = cfg.MaxSpreadChunksVisitedPerTick > 0
+            int maxChunksVisited = maxChunksVisitedOverride ?? (cfg.MaxSpreadChunksVisitedPerTick > 0
                 ? cfg.MaxSpreadChunksVisitedPerTick
-                : 32;
-            int maxAttemptsPerChunk = cfg.MaxSpreadAttemptsPerChunkPerTick > 0
+                : 32);
+            int maxAttemptsPerChunk = maxAttemptsPerChunkOverride ?? (cfg.MaxSpreadAttemptsPerChunkPerTick > 0
                 ? cfg.MaxSpreadAttemptsPerChunkPerTick
-                : 2;
-            bool eventDriven = cfg.EnableEventDrivenSpread;
+                : 2);
+            bool eventDriven = eventDrivenOverride ?? cfg.EnableEventDrivenSpread;
 
             RefreshRoundRobin(registry, scopeChunks);
 
             if (roundRobin.Count == 0) return 0;
 
             int processed = 0;
-            int chunksVisited = 0;
+            int visited = 0;
+            int peakAttemptsInChunk = 0;
             int chunkPasses = 0;
             int maxChunkPasses = roundRobin.Count;
 
             while (processed < maxTotalAttempts
-                   && chunksVisited < maxChunksVisited
+                   && visited < maxChunksVisited
                    && chunkPasses < maxChunkPasses)
             {
                 if (budgetTicks > 0 && budgetWatch != null && budgetWatch.ElapsedTicks >= budgetTicks) break;
@@ -61,7 +69,15 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                chunksVisited++;
+                visited++;
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (ReproducerRegistry.IsEntryDue(list[i], now, eventDriven))
+                    {
+                        dueQueueSize++;
+                    }
+                }
 
                 if (!chunkEntryCursor.TryGetValue(chunk, out int cursor)) cursor = 0;
                 int attemptsThisChunk = 0;
@@ -81,7 +97,6 @@ namespace WildFarming.Ecosystem
                     if (!registry.IsLiveEntry(entry)) continue;
                     if (!ReproducerRegistry.IsEntryDue(entry, now, eventDriven)) continue;
 
-                    dueQueueSize++;
                     if (!registry.TryProcessDueEntry(
                             entry,
                             now,
@@ -98,9 +113,15 @@ namespace WildFarming.Ecosystem
                 }
 
                 chunkEntryCursor[chunk] = cursor;
+                if (attemptsThisChunk > peakAttemptsInChunk)
+                {
+                    peakAttemptsInChunk = attemptsThisChunk;
+                }
             }
 
             registry.FlushDueRemoves();
+            chunksVisited = visited;
+            maxAttemptsInChunk = peakAttemptsInChunk;
             return processed;
         }
 

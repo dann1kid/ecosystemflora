@@ -141,5 +141,70 @@ namespace WildFarming.Ecosystem
 
             return challengerScore >= incumbentScore * cfg.DisplacementHoldMargin;
         }
+
+        internal static bool CanDisplaceFromSolveCell(
+            PlantRequirements challenger,
+            Block incumbentBlock,
+            BlockPos targetPos,
+            in SpreadSolveCell cell,
+            bool harshClimate,
+            float seasonSpreadMult,
+            out float challengerScore,
+            out float incumbentScore)
+        {
+            challengerScore = 0f;
+            incumbentScore = float.MaxValue;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.UseCellDisplacement || challenger == null || incumbentBlock == null)
+            {
+                return false;
+            }
+
+            if (!PlantCodeHelper.IsEcologySpreadParent(incumbentBlock)) return false;
+
+            string incumbentSpecies = PlantCodeHelper.ResolveEcologySpecies(incumbentBlock);
+            if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;
+
+            EnvironmentalContext ctx = EnvironmentalContext.FromSpreadSolveCell(in cell);
+            if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: true))
+            {
+                return false;
+            }
+
+            challengerScore = SpreadScoreFromContext(null, challenger, targetPos, harshClimate, ctx);
+            if (cfg.UseFloraContext)
+            {
+                challengerScore *= EcologySpreadFitness.ContextMultiplierFor(challenger, cell.FloraContext);
+            }
+
+            if (cfg.UseNicheContext && challenger.HasNicheProfile)
+            {
+                var niche = new LocalNiche((MoistureLevel)cell.NicheMoisture, (LightLevel)cell.NicheLight);
+                challengerScore *= EcologySpreadFitness.NicheMultiplierFor(challenger, niche);
+            }
+
+            challengerScore *= cell.MyceliumFitnessMult;
+            challengerScore *= seasonSpreadMult;
+
+            challengerScore = MeadowTurfCompetition.AdjustChallengerSpreadScore(
+                challengerScore,
+                challenger.Species,
+                incumbentSpecies);
+
+            PlantRequirements incumbent = PlantRequirements.FromBlock(incumbentBlock);
+            if (string.IsNullOrEmpty(incumbent.Species))
+            {
+                incumbentScore = float.MaxValue;
+            }
+            else
+            {
+                incumbentScore = IncumbentHoldScoreFromContext(null, incumbent, targetPos, harshClimate, ctx);
+            }
+
+            if (challengerScore <= 0f) return false;
+
+            return challengerScore >= incumbentScore * cfg.DisplacementHoldMargin;
+        }
     }
 }

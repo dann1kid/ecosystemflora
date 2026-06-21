@@ -272,6 +272,14 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more columns scanned per tick for tree discovery. Lower: slower discovery, less CPU.",
                 "Больше: больше колонок перескана за тик. Меньше: медленнее поиск, меньше CPU.");
 
+            D(nameof(EcosystemConfig.EnableCyclicFloraDiscovery),
+                "On: round-robin live scan registers flowers/tallgrass after chunk load. Off: one-shot scan only.",
+                "Вкл.: циклический live-скан регистрирует цветы/траву после загрузки. Выкл.: только одноразовый scan.");
+
+            D(nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick),
+                "Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU.",
+                "Больше: больше колонок flora-скана за тик. Меньше: медленнее заполнение луга, меньше CPU.");
+
             D(nameof(EcosystemConfig.EnableTreeAging),
                 "On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this).",
                 "Вкл.: календарный возраст и рост структуры диких деревьев. Выкл.: без роста (senescence требует вкл.).");
@@ -564,6 +572,14 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing.",
                 "Больше: больше RegisterReproducer за тик скана. Меньше: медленнее pacing.");
 
+            D(nameof(EcosystemConfig.MaxRegistryAppliesPerChunkPerTick),
+                "Higher: more registry inserts from one chunk per drain pass. Lower: fairer but slower single-chunk meadows.",
+                "Больше: больше insert из одного чанка за drain. Меньше: честнее round-robin, но медленнее луга.");
+
+            D(nameof(EcosystemConfig.RegistrationWorkerCount),
+                "Higher: more background column-classification threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
+                "Больше: больше потоков классификации (max 8). 0 = половина ядер. Snapshot и SetBlock — на main thread.");
+
             D(nameof(EcosystemConfig.MaxPriorityRegistryAppliesPerTick),
                 "Higher: more extra applies for player-vicinity chunks. Lower: slower near-player registry.",
                 "Больше: больше apply у игрока за тик. Меньше: медленнее реестр у игрока.");
@@ -571,6 +587,14 @@ namespace WildFarming.Ecosystem.Config
             D(nameof(EcosystemConfig.EnableBackgroundRegistrationScan),
                 "On: classify columns on worker from main-thread snapshot. Off: sync scan on main thread only.",
                 "Вкл.: классификация колонок на worker из snapshot. Выкл.: только sync на main thread.");
+
+            D(nameof(EcosystemConfig.EnableBackgroundSpreadSolve),
+                "On: score spread candidates on worker from compact env snapshots; SetBlock stays on main thread. Requires two-phase spread. Terrestrial, mat, and water crowfoot.",
+                "Вкл.: scoring spread на worker из компактных snapshot; SetBlock на main thread. Нужен two-phase spread. Terrestrial, mat и water crowfoot.");
+
+            D(nameof(EcosystemConfig.SpreadWorkerCount),
+                "Higher: more background spread-scoring threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
+                "Больше: больше потоков spread-scoring (max 8). 0 = половина ядер. Snapshot и SetBlock — на main thread.");
 
             D(nameof(EcosystemConfig.MaxRegistrationSnapshotCellsPerTick),
                 "Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed.",

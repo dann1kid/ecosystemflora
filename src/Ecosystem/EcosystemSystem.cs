@@ -17,6 +17,7 @@ namespace WildFarming.Ecosystem
         readonly RegistrationScanQueue registrationScanQueue = new RegistrationScanQueue();
         readonly PendingRegistrationQueue pendingRegistrations = new PendingRegistrationQueue();
         readonly BackgroundRegistrationPipeline backgroundRegistration = new BackgroundRegistrationPipeline();
+        readonly BackgroundSpreadPipeline backgroundSpread = new BackgroundSpreadPipeline();
 
         /// <summary>Cap inactive-chunk rotations per tick (avoids O(queue) spin when queue is huge).</summary>
         const int MaxChunkScanDequeAttemptsPerTick = 128;
@@ -30,6 +31,7 @@ namespace WildFarming.Ecosystem
         readonly PendingFlowerMaturation pendingFlowerMaturation = new PendingFlowerMaturation();
         readonly PendingTallgrassPromotion pendingTallgrassPromotion = new PendingTallgrassPromotion();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
+        readonly CyclicFloraScanner cyclicFloraScanner = new CyclicFloraScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
         readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
@@ -83,7 +85,12 @@ namespace WildFarming.Ecosystem
             EcosystemConfig tickCfg = EcosystemConfig.Loaded;
             if (tickCfg.EnableBackgroundRegistrationScan)
             {
-                backgroundRegistration.Start(api.World.Blocks);
+                backgroundRegistration.Start(api.World.Blocks, tickCfg.RegistrationWorkerCount);
+            }
+
+            if (tickCfg.EnableBackgroundSpreadSolve)
+            {
+                backgroundSpread.Start(api.World.Blocks, tickCfg.SpreadWorkerCount);
             }
 
             int reproduceInterval = tickCfg.ReproduceTickIntervalMs > 0
@@ -297,6 +304,7 @@ namespace WildFarming.Ecosystem
 
             registrationScanQueue.Clear();
             backgroundRegistration.Dispose();
+            backgroundSpread.Dispose();
             reproduceListenerId = 0;
             stressListenerId = 0;
             chunkScanListenerId = 0;
@@ -321,6 +329,7 @@ namespace WildFarming.Ecosystem
             treeGrowthScheduler.Clear();
             ferntreeGrowthScheduler.Clear();
             cyclicTreeScanner.Clear();
+            cyclicFloraScanner.Clear();
             Instance = null;
             api = null;
         }
@@ -749,18 +758,27 @@ namespace WildFarming.Ecosystem
             bool nearPlayer = cfg.EnablePlayerPriorityRegistration
                 && PlayerProximity.IsNearAnyPlayer(api, center, cfg.PlayerRegistrationPriorityRadiusBlocks);
 
+            Vec2i coordCopy = chunkCoord;
+            api.Event.RegisterCallback(_ => ScheduleRegistrationScan(coordCopy, nearPlayer), 500);
+
+            foliageCells.ScheduleChunkSync(api, chunkCoord);
+            MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
+        }
+
+        void ScheduleRegistrationScan(Vec2i chunkCoord, bool nearPlayer)
+        {
+            if (!EcosystemConfig.Loaded.EcosystemEnabled || api?.World?.BlockAccessor == null) return;
+            if (api.World.BlockAccessor.GetMapChunk(chunkCoord.X, chunkCoord.Y) == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (nearPlayer && cfg.EnableBurstRegistrationNearPlayers)
             {
-                Vec2i coordCopy = chunkCoord;
-                api.Event.RegisterCallback(_ => TryBurstRegisterChunk(coordCopy), 0);
+                TryBurstRegisterChunk(chunkCoord);
             }
             else
             {
                 EnqueueChunkScan(chunkCoord, highPriority: nearPlayer);
             }
-
-            foliageCells.ScheduleChunkSync(api, chunkCoord);
-            MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
         }
 
         void TryBurstRegisterChunk(Vec2i chunkCoord)
@@ -839,7 +857,7 @@ namespace WildFarming.Ecosystem
 
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
             {
-                if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
+                if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block), api, pos))
                 {
                     pendingTallgrassPromotion.Add(api, pos);
                 }
@@ -1077,6 +1095,27 @@ namespace WildFarming.Ecosystem
                     tickBudgetWatch);
             }
 
+            if (registrationsLeft > 0)
+            {
+                HashSet<long> floraScanChunks = activePlayerChunks;
+                if (floraScanChunks == null || floraScanChunks.Count == 0)
+                {
+                    floraScanChunks = PlayerProximity.BuildActivePlayerChunks(
+                        api, cfg.PlayerActivationRadiusBlocks);
+                }
+
+                cyclicFloraScanner.ProcessTick(
+                    api,
+                    acc,
+                    cfg,
+                    floraScanChunks,
+                    (pos, block, needsEstablishment) =>
+                        TryRegisterDiscoveredFlora(acc, pos, block, needsEstablishment, ref registrationsLeft),
+                    ref registrationsLeft,
+                    budgetTicks,
+                    tickBudgetWatch);
+            }
+
             DrainPendingRegistrations(cfg, acc, activePlayerChunks);
 
             tickBudgetWatch.Stop();
@@ -1096,13 +1135,23 @@ namespace WildFarming.Ecosystem
             int appliesLeft = cfg.MaxPriorityRegistryAppliesPerTick;
             if (appliesLeft > 0 && priorityChunks != null && priorityChunks.Count > 0)
             {
-                pendingRegistrations.Drain(this, acc, appliesLeft, priorityChunks);
+                pendingRegistrations.Drain(
+                    this,
+                    acc,
+                    appliesLeft,
+                    cfg.MaxRegistryAppliesPerChunkPerTick,
+                    priorityChunks);
             }
 
             appliesLeft = cfg.MaxRegistryAppliesPerTick;
             if (appliesLeft > 0)
             {
-                pendingRegistrations.Drain(this, acc, appliesLeft, priorityChunks);
+                pendingRegistrations.Drain(
+                    this,
+                    acc,
+                    appliesLeft,
+                    cfg.MaxRegistryAppliesPerChunkPerTick,
+                    priorityChunks);
             }
         }
 
@@ -1172,7 +1221,8 @@ namespace WildFarming.Ecosystem
 
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
                     {
-                        if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block)))
+                        if (TallgrassSpreadMaturation.ShouldQueuePromotion(
+                            block, PlantRequirements.FromBlock(block), api, item.Pos))
                         {
                             pendingTallgrassPromotion.Add(api, item.Pos);
                             return true;
@@ -1320,6 +1370,16 @@ namespace WildFarming.Ecosystem
             pendingRegistrations.EnqueueHits(chunkCoord, pass.FlowerHits, PendingRegistrationKind.Flower);
             pendingRegistrations.EnqueueHits(chunkCoord, pass.VineHits, PendingRegistrationKind.Vine);
 
+            if (pass.EstablishingTallgrassHits != null && api != null)
+            {
+                for (int i = 0; i < pass.EstablishingTallgrassHits.Count; i++)
+                {
+                    ChunkFlowerHit hit = pass.EstablishingTallgrassHits[i];
+                    if (hit.Pos == null) continue;
+                    pendingTallgrassPromotion.Add(api, hit.Pos);
+                }
+            }
+
             if (pass.TreeHits != null)
             {
                 for (int i = 0; i < pass.TreeHits.Count; i++)
@@ -1411,18 +1471,7 @@ namespace WildFarming.Ecosystem
                 },
                 passDeadline);
 
-            pendingRegistrations.EnqueueHits(chunkCoord, pass.FlowerHits, PendingRegistrationKind.Flower);
-            pendingRegistrations.EnqueueHits(chunkCoord, pass.VineHits, PendingRegistrationKind.Vine);
-
-            if (pass.TreeHits != null)
-            {
-                for (int i = 0; i < pass.TreeHits.Count; i++)
-                {
-                    ChunkFlowerHit hit = pass.TreeHits[i];
-                    if (hit.Pos == null || hit.BlockCode == null) continue;
-                    pendingRegistrations.TryEnqueueTree(chunkCoord, hit.Pos, hit.BlockCode, registry);
-                }
-            }
+            EnqueueRegistrationScanHits(chunkCoord, pass);
 
             if (syncFoliage)
             {
@@ -1456,6 +1505,40 @@ namespace WildFarming.Ecosystem
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
 
             RegisterReproducer(basePos, participant, spawnBurst: false);
+            registrationsLeft--;
+            return true;
+        }
+
+        bool TryRegisterDiscoveredFlora(
+            IBlockAccessor acc,
+            BlockPos pos,
+            Block block,
+            bool needsEstablishment,
+            ref int registrationsLeft)
+        {
+            if (registrationsLeft <= 0 || pos == null || block == null) return false;
+
+            BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, pos, block.Code);
+            if (registry.Contains(anchor) || registry.Contains(pos)) return false;
+
+            if (needsEstablishment)
+            {
+                pendingTallgrassPromotion.Add(api, pos);
+                registrationsLeft--;
+                return true;
+            }
+
+            if (TallgrassSpreadMaturation.ShouldQueuePromotion(
+                    block, PlantRequirements.FromBlock(block), api, pos))
+            {
+                pendingTallgrassPromotion.Add(api, pos);
+                registrationsLeft--;
+                return true;
+            }
+
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
+
+            RegisterReproducer(anchor, participant, spawnBurst: false);
             registrationsLeft--;
             return true;
         }
@@ -1668,6 +1751,7 @@ namespace WildFarming.Ecosystem
 
             var timings = new ReproduceTickTimings();
             long tickStart = Stopwatch.GetTimestamp();
+            backgroundSpread.BeginReproduceTick();
 
             tickBudgetWatch.Restart();
             pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
@@ -1711,6 +1795,13 @@ namespace WildFarming.Ecosystem
             timings.FerntreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
 
             IBlockAccessor acc = api.World.BlockAccessor;
+
+            if (cfg.EnableBackgroundSpreadSolve)
+            {
+                backgroundSpread.PollCompleted(
+                    this,
+                    cfg.VerboseLogging && cfg.ReproduceDebug);
+            }
 
             if (spreadActiveChunks == null || spreadActiveChunks.Count > 0)
             {
@@ -1758,7 +1849,7 @@ namespace WildFarming.Ecosystem
 
                     if (entry.Requirements?.Species == "tallgrass"
                         && TallgrassSpreadMaturation.UsesMaturation(cfg)
-                        && !TallgrassSpreadMaturation.CanReproduceFrom(block))
+                        && !TallgrassSpreadMaturation.CanReproduceFrom(block, api, entry.Origin))
                     {
                         return true;
                     }
@@ -1799,6 +1890,10 @@ namespace WildFarming.Ecosystem
                 timings.CollectDueTicks = registry.LastCollectDueTicks;
                 timings.SpreadProcessTicks = registry.LastProcessDueTicks;
                 timings.DueQueueSize = registry.LastDueQueueSize;
+                timings.SpreadChunksVisited = registry.LastSpreadChunksVisited;
+                timings.SpreadMaxAttemptsInChunk = registry.LastSpreadMaxAttemptsInChunk;
+                timings.WakeDrivenAttempts = registry.LastWakeDrivenAttempts;
+                timings.CalendarDrivenAttempts = registry.LastCalendarDrivenAttempts;
             }
 
             if (cfg.EnableTwoPhaseSpreadPlacement && pendingSpreadQueue.Count > 0)
@@ -1827,7 +1922,10 @@ namespace WildFarming.Ecosystem
             }
 
             timings.TotalTicks = Stopwatch.GetTimestamp() - tickStart;
-            ReproduceTickProfiler.MaybeLog(api, cfg, registry, timings);
+            timings.SpreadSolveQueued = backgroundSpread.LastTickSolveQueued;
+            timings.SpreadSolveCompleted = backgroundSpread.LastTickSolveCompleted;
+            timings.SpreadSolveWorkerPending = backgroundSpread.WorkerPendingCount;
+            ReproduceTickProfiler.MaybeLog(api, cfg, registry, timings, EcologyColumns);
         }
 
         void OnSpreadPlaced(BlockPos pos, PlantRequirements requirements, bool displaced, BlockPos spreadOrigin)
@@ -1870,7 +1968,7 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements))
+            if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements, api, pos))
             {
                 pendingTallgrassPromotion.Add(api, pos);
                 InvalidateEnvironmentAround(pos);
@@ -1928,7 +2026,25 @@ namespace WildFarming.Ecosystem
 
             int spawned;
             string failureReason;
-            if (cfg.EnableTwoPhaseSpreadPlacement)
+            if (cfg.EnableBackgroundSpreadSolve
+                && cfg.EnableTwoPhaseSpreadPlacement
+                && SpreadSolveBatchBuilder.CanBackgroundSolve(entry.Requirements)
+                && backgroundSpread.TryQueueSolve(
+                    api,
+                    spreadOrigin,
+                    spreadBlock,
+                    entry.Requirements,
+                    cfg.MinFitness,
+                    cfg.HarshWildPlants,
+                    cfg.ReproduceRadius,
+                    cfg.ReproduceVerticalSearch,
+                    maxSpawns,
+                    api.World.Rand))
+            {
+                spawned = 0;
+                failureReason = null;
+            }
+            else if (cfg.EnableTwoPhaseSpreadPlacement)
             {
                 spawned = ReproducePlacement.TryEnqueueSpreadAmongNeighbors(
                     api,

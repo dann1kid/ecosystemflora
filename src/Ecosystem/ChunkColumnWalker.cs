@@ -29,6 +29,20 @@ namespace WildFarming.Ecosystem
             return fromSurface > mapTopY ? mapTopY : fromSurface;
         }
 
+        /// <summary>Top Y for flora registration scans (matches tree crown depth above rain surface).</summary>
+        public static int GetFloraRegistrationScanTopY(ushort[] heightmap, int lx, int lz, int chunkSize, int mapTopY)
+        {
+            int topY = GetColumnTopY(heightmap, lx, lz, chunkSize, mapTopY);
+            if (heightmap == null || heightmap.Length < chunkSize * chunkSize) return topY;
+
+            int surfaceY = heightmap[lz * chunkSize + lx];
+            if (surfaceY <= 0) return topY;
+
+            int fromSurface = surfaceY + 28;
+            if (fromSurface > topY) topY = fromSurface;
+            return topY > mapTopY ? mapTopY : topY;
+        }
+
         public static bool ContinueColumnScan(Block block)
         {
             if (block == null || block.Id == 0) return true;

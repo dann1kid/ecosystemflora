@@ -18,8 +18,7 @@ namespace WildFarming.Ecosystem
         readonly List<Vec2i> spatialChunkScratch = new List<Vec2i>();
         readonly List<BlockPos> removeQueueScratch = new List<BlockPos>();
         readonly List<ReproducerEntry> dueQueueScratch = new List<ReproducerEntry>();
-        readonly ReproducerDueHeap dueHeap = new ReproducerDueHeap();
-        int spreadFairCursor;
+        readonly Dictionary<Vec2i, ReproducerDueHeap> chunkDueHeaps = new Dictionary<Vec2i, ReproducerDueHeap>();
 
         readonly SpreadChunkScheduler spreadChunkScheduler = new SpreadChunkScheduler();
         ulong ecologyWakeGeneration;
@@ -33,6 +32,44 @@ namespace WildFarming.Ecosystem
         public long LastCollectDueTicks { get; private set; }
 
         public long LastProcessDueTicks { get; private set; }
+
+        public int LastSpreadChunksVisited { get; private set; }
+
+        public int LastSpreadMaxAttemptsInChunk { get; private set; }
+
+        public int LastWakeDrivenAttempts { get; private set; }
+
+        public int LastCalendarDrivenAttempts { get; private set; }
+
+        internal enum SpreadDueReason
+        {
+            None,
+            Calendar,
+            Wake,
+        }
+
+        internal static SpreadDueReason ClassifyDueReason(ReproducerEntry entry, double now, bool eventDriven)
+        {
+            if (entry == null || now < entry.NextSpawnAllowedAtHours) return SpreadDueReason.None;
+            if (now >= entry.NextAttemptHours) return SpreadDueReason.Calendar;
+            if (!eventDriven) return SpreadDueReason.None;
+            if (entry.WakeGeneration > entry.LastProcessedWakeGeneration) return SpreadDueReason.Wake;
+            return SpreadDueReason.None;
+        }
+
+        void ResetSpreadTickStats()
+        {
+            LastSpreadChunksVisited = 0;
+            LastSpreadMaxAttemptsInChunk = 0;
+            LastWakeDrivenAttempts = 0;
+            LastCalendarDrivenAttempts = 0;
+        }
+
+        void RecordDueReason(SpreadDueReason reason)
+        {
+            if (reason == SpreadDueReason.Wake) LastWakeDrivenAttempts++;
+            else if (reason == SpreadDueReason.Calendar) LastCalendarDrivenAttempts++;
+        }
 
         public ReproducerEntry GetEntry(int index)
         {
@@ -115,16 +152,8 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        internal static bool IsEntryDue(ReproducerEntry entry, double now, bool eventDriven)
-        {
-            if (entry == null) return false;
-            if (now < entry.NextSpawnAllowedAtHours) return false;
-
-            if (now >= entry.NextAttemptHours) return true;
-            if (!eventDriven) return false;
-
-            return entry.WakeGeneration > entry.LastProcessedWakeGeneration;
-        }
+        internal static bool IsEntryDue(ReproducerEntry entry, double now, bool eventDriven) =>
+            ClassifyDueReason(entry, now, eventDriven) != SpreadDueReason.None;
 
         internal bool IsLiveEntry(ReproducerEntry entry)
         {
@@ -151,6 +180,7 @@ namespace WildFarming.Ecosystem
         {
             var collectWatch = Stopwatch.StartNew();
             removeQueueScratch.Clear();
+            ResetSpreadTickStats();
 
             int processed = spreadChunkScheduler.Process(
                 this,
@@ -162,12 +192,16 @@ namespace WildFarming.Ecosystem
                 tryProcess,
                 budgetTicks,
                 budgetWatch,
-                out int dueQueueSize);
+                out int dueQueueSize,
+                out int chunksVisited,
+                out int maxAttemptsInChunk);
 
             collectWatch.Stop();
             LastCollectDueTicks = collectWatch.ElapsedTicks;
             LastProcessDueTicks = collectWatch.ElapsedTicks;
             LastDueQueueSize = dueQueueSize;
+            LastSpreadChunksVisited = chunksVisited;
+            LastSpreadMaxAttemptsInChunk = maxAttemptsInChunk;
             return processed;
         }
 
@@ -206,7 +240,7 @@ namespace WildFarming.Ecosystem
             entry.EntriesIndex = entries.Count;
             entries.Add(entry);
             AddToChunkIndex(entry);
-            dueHeap.Push(entry);
+            PushDueSchedule(entry);
         }
 
         public bool Remove(BlockPos pos)
@@ -272,54 +306,70 @@ namespace WildFarming.Ecosystem
         {
             if (entries.Count == 0 || maxAttempts <= 0) return 0;
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            int scopeChunks = CountScopeChunks(activeChunks);
+            if (scopeChunks <= 0) return 0;
+
             var collectWatch = Stopwatch.StartNew();
-            dueQueueScratch.Clear();
-            CollectDueEntries(now, activeChunks, dueQueueScratch, eventDriven);
-            LastDueQueueSize = dueQueueScratch.Count;
+            ResetSpreadTickStats();
+
+            int processed = spreadChunkScheduler.Process(
+                this,
+                cfg,
+                now,
+                maxAttempts,
+                activeChunks,
+                intervalHoursForEntry,
+                tryProcess,
+                budgetTicks,
+                budgetWatch,
+                out int dueQueueSize,
+                out int chunksVisited,
+                out int maxAttemptsInChunk,
+                maxChunksVisitedOverride: scopeChunks,
+                maxAttemptsPerChunkOverride: maxAttempts,
+                eventDrivenOverride: eventDriven);
+
             collectWatch.Stop();
             LastCollectDueTicks = collectWatch.ElapsedTicks;
-
-            if (dueQueueScratch.Count == 0)
-            {
-                LastProcessDueTicks = 0;
-                return 0;
-            }
-
-            var processWatch = Stopwatch.StartNew();
-            int processed = 0;
-            int queueSize = dueQueueScratch.Count;
-            removeQueueScratch.Clear();
-            var attemptedOrigins = new HashSet<BlockPos>();
-
-            if (spreadFairCursor >= queueSize) spreadFairCursor = 0;
-
-            for (int i = 0; i < queueSize && processed < maxAttempts; i++)
-            {
-                if (budgetTicks > 0 && budgetWatch != null && budgetWatch.ElapsedTicks >= budgetTicks) break;
-
-                ReproducerEntry entry = dueQueueScratch[(spreadFairCursor + i) % queueSize];
-                if (!byPos.TryGetValue(entry.Origin, out ReproducerEntry current) || !ReferenceEquals(current, entry))
-                {
-                    continue;
-                }
-
-                attemptedOrigins.Add(entry.Origin);
-                if (!TryProcessDueEntry(entry, now, eventDriven, intervalHoursForEntry, tryProcess, removeQueueScratch))
-                {
-                    continue;
-                }
-
-                processed++;
-            }
-
-            RequeueUnprocessedDue(dueQueueScratch, attemptedOrigins);
-
-            spreadFairCursor = queueSize > 0 ? (spreadFairCursor + processed) % queueSize : 0;
-            FlushRemoves(removeQueueScratch);
-
-            processWatch.Stop();
-            LastProcessDueTicks = processWatch.ElapsedTicks;
+            LastProcessDueTicks = collectWatch.ElapsedTicks;
+            LastDueQueueSize = dueQueueSize;
+            LastSpreadChunksVisited = chunksVisited;
+            LastSpreadMaxAttemptsInChunk = maxAttemptsInChunk;
             return processed;
+        }
+
+        int CountScopeChunks(ICollection<Vec2i> activeChunks)
+        {
+            if (activeChunks == null) return ChunkCount;
+
+            int count = 0;
+            foreach (Vec2i chunk in activeChunks)
+            {
+                if (byChunk.TryGetValue(chunk, out List<ReproducerEntry> list) && list.Count > 0)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        void PushDueSchedule(ReproducerEntry entry)
+        {
+            if (entry == null) return;
+            GetChunkDueHeap(ToChunkCoord(entry.Origin)).Push(entry);
+        }
+
+        ReproducerDueHeap GetChunkDueHeap(Vec2i chunkCoord)
+        {
+            if (!chunkDueHeaps.TryGetValue(chunkCoord, out ReproducerDueHeap heap))
+            {
+                heap = new ReproducerDueHeap();
+                chunkDueHeaps[chunkCoord] = heap;
+            }
+
+            return heap;
         }
 
         internal void CollectDueEntries(double now, ICollection<Vec2i> activeChunks, List<ReproducerEntry> output, bool eventDriven = false)
@@ -331,7 +381,7 @@ namespace WildFarming.Ecosystem
             {
                 if (eventDriven)
                 {
-                    CollectDueFromEntries(now, output, eventDriven);
+                    CollectDueFromAllChunksEventDriven(now, output);
                     return;
                 }
 
@@ -343,42 +393,61 @@ namespace WildFarming.Ecosystem
             for (int c = 0; c < spatialChunkScratch.Count; c++)
             {
                 Vec2i chunk = spatialChunkScratch[c];
-                if (!byChunk.TryGetValue(chunk, out List<ReproducerEntry> list)) continue;
-
-                for (int i = 0; i < list.Count; i++)
+                if (eventDriven)
                 {
-                    ReproducerEntry entry = list[i];
-                    if (IsEntryDue(entry, now, eventDriven)) output.Add(entry);
+                    if (!byChunk.TryGetValue(chunk, out List<ReproducerEntry> list)) continue;
+
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        ReproducerEntry entry = list[i];
+                        if (IsEntryDue(entry, now, eventDriven: true)) output.Add(entry);
+                    }
+                }
+                else
+                {
+                    CollectDueFromChunkHeap(chunk, now, output);
                 }
             }
         }
 
-        void CollectDueFromEntries(double now, List<ReproducerEntry> output, bool eventDriven)
+        void CollectDueFromAllChunksEventDriven(double now, List<ReproducerEntry> output)
         {
-            for (int i = 0; i < entries.Count; i++)
+            foreach (KeyValuePair<Vec2i, List<ReproducerEntry>> kv in byChunk)
             {
-                ReproducerEntry entry = entries[i];
-                if (IsEntryDue(entry, now, eventDriven)) output.Add(entry);
+                List<ReproducerEntry> list = kv.Value;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    ReproducerEntry entry = list[i];
+                    if (IsEntryDue(entry, now, eventDriven: true)) output.Add(entry);
+                }
+            }
+        }
+
+        void CollectDueFromChunkHeap(Vec2i chunkCoord, double now, List<ReproducerEntry> output)
+        {
+            if (!chunkDueHeaps.TryGetValue(chunkCoord, out ReproducerDueHeap heap)) return;
+
+            int safety = heap.Count;
+            while (safety-- > 0 && heap.TryPeek(now, out _))
+            {
+                ReproducerEntry entry = heap.Pop();
+                if (!IsLiveEntry(entry)) continue;
+
+                if (entry.NextAttemptHours > now || entry.NextSpawnAllowedAtHours > now)
+                {
+                    heap.Push(entry);
+                    break;
+                }
+
+                output.Add(entry);
             }
         }
 
         void CollectDueFromHeap(double now, List<ReproducerEntry> output)
         {
-            while (dueHeap.TryPeek(now, out _))
+            foreach (Vec2i chunk in chunkDueHeaps.Keys)
             {
-                ReproducerEntry entry = dueHeap.Pop();
-                if (!IsLiveEntry(entry))
-                {
-                    continue;
-                }
-
-                if (entry.NextAttemptHours > now || entry.NextSpawnAllowedAtHours > now)
-                {
-                    dueHeap.Push(entry);
-                    break;
-                }
-
-                output.Add(entry);
+                CollectDueFromChunkHeap(chunk, now, output);
             }
         }
 
@@ -481,7 +550,7 @@ namespace WildFarming.Ecosystem
                 if (attemptedOrigins.Contains(entry.Origin)) continue;
                 if (!IsLiveEntry(entry)) continue;
 
-                dueHeap.Push(entry);
+                PushDueSchedule(entry);
             }
         }
 
@@ -495,6 +564,9 @@ namespace WildFarming.Ecosystem
         {
             if (!IsEntryDue(entry, now, eventDriven)) return false;
 
+            SpreadDueReason reason = ClassifyDueReason(entry, now, eventDriven);
+            RecordDueReason(reason);
+
             entry.LastProcessedWakeGeneration = entry.WakeGeneration;
 
             bool keep = tryProcess(entry);
@@ -506,7 +578,6 @@ namespace WildFarming.Ecosystem
 
             double intervalHours = intervalHoursForEntry != null ? intervalHoursForEntry(entry) : 24;
             entry.NextAttemptHours = now + intervalHours;
-            dueHeap.Push(entry);
             return true;
         }
 

@@ -147,7 +147,7 @@ namespace WildFarming.Ecosystem
                 ["westerngorse"] = PlantSoilRole.SoilDepleter,
                 ["forgetmenot"] = PlantSoilRole.MeadowPerennial,
                 ["cowparsley"] = PlantSoilRole.MeadowPerennial,
-                ["catmint"] = PlantSoilRole.ForestEdge,
+                ["catmint"] = PlantSoilRole.MeadowPerennial,
                 ["edelweiss"] = PlantSoilRole.ForestEdge,
                 ["daffodil"] = PlantSoilRole.MeadowPerennial,
                 ["lupine"] = PlantSoilRole.NitrogenFixer,

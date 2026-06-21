@@ -17,7 +17,8 @@ namespace WildFarming.Ecosystem
         readonly System.Collections.Generic.Dictionary<long, ChunkWork> active =
             new System.Collections.Generic.Dictionary<long, ChunkWork>();
 
-        public void Start(System.Collections.Generic.IList<Block> blockRegistry) => scanner.Start(blockRegistry);
+        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount) =>
+            scanner.Start(blockRegistry, workerCount);
 
         public bool IsBusy(Vec2i chunk) =>
             scanner.IsScanningChunk(chunk) || active.ContainsKey(BackgroundRegistrationScanner.ChunkKey(chunk));
@@ -119,6 +120,11 @@ namespace WildFarming.Ecosystem
             Vec2i chunkCoord,
             ChunkEcologyColumnPass.Result pass)
         {
+            pass = FloraColumnDiscovery.SupplementEmptyWorkerFlora(
+                eco.ServerApi,
+                chunkCoord,
+                in pass,
+                PendingRegistrationQueue.MaxHitsPerPass);
             eco.EnqueueRegistrationScanHits(chunkCoord, pass);
             if (pass.Completed)
             {

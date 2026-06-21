@@ -128,22 +128,28 @@ namespace WildFarming.Ecosystem
             EcosystemSystem eco,
             IBlockAccessor acc,
             int maxApplies,
+            int maxAppliesPerChunk,
             HashSet<long> priorityChunkKeys)
         {
             LastDrainApplied = 0;
             LastDrainStale = 0;
             if (eco == null || acc == null || maxApplies <= 0 || byChunk.Count == 0) return 0;
 
+            if (maxAppliesPerChunk <= 0)
+            {
+                maxAppliesPerChunk = maxApplies;
+            }
+
             RefreshRoundRobin();
             int applied = 0;
-            int chunkPasses = 0;
-            int maxChunkPasses = roundRobin.Count;
+            int chunkVisits = 0;
+            int maxChunkVisits = roundRobin.Count * 4;
 
-            while (applied < maxApplies && chunkPasses < maxChunkPasses && byChunk.Count > 0)
+            while (applied < maxApplies && chunkVisits < maxChunkVisits && byChunk.Count > 0)
             {
                 if (roundRobinIndex >= roundRobin.Count) roundRobinIndex = 0;
                 Vec2i chunk = roundRobin[roundRobinIndex++];
-                chunkPasses++;
+                chunkVisits++;
 
                 long key = ChunkKey(chunk);
                 if (!byChunk.TryGetValue(key, out ChunkState state) || state.Items.Count == 0)
@@ -162,17 +168,25 @@ namespace WildFarming.Ecosystem
                     }
                 }
 
-                if (eco.TryApplyPendingRegistration(acc, state.Items[0], out bool stale))
+                int chunkApplied = 0;
+                while (applied < maxApplies
+                       && chunkApplied < maxAppliesPerChunk
+                       && state.Items.Count > 0)
                 {
-                    applied++;
-                    LastDrainApplied++;
-                }
-                else if (stale)
-                {
-                    LastDrainStale++;
+                    if (eco.TryApplyPendingRegistration(acc, state.Items[0], out bool stale))
+                    {
+                        applied++;
+                        LastDrainApplied++;
+                    }
+                    else if (stale)
+                    {
+                        LastDrainStale++;
+                    }
+
+                    state.Items.RemoveAt(0);
+                    chunkApplied++;
                 }
 
-                state.Items.RemoveAt(0);
                 if (state.Items.Count == 0 && state.ScanCompleted)
                 {
                     byChunk.Remove(key);

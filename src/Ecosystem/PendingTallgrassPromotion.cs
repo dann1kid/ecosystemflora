@@ -4,7 +4,7 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Advances establishing veryshort tallgrass by timer, then registers for spread at short+.</summary>
+    /// <summary>Advances establishing tallgrass toward a condition-based target height, then registers.</summary>
     internal sealed class PendingTallgrassPromotion
     {
         readonly List<Entry> entries = new List<Entry>();
@@ -13,6 +13,7 @@ namespace WildFarming.Ecosystem
         struct Entry
         {
             public BlockPos Pos;
+            public int TargetStageIndex;
             public double NextAdvanceAtHours;
         }
 
@@ -20,14 +21,27 @@ namespace WildFarming.Ecosystem
 
         public void Add(ICoreAPI api, BlockPos pos)
         {
-            if (api == null || pos == null || indexByPos.ContainsKey(pos)) return;
+            if (api == null || pos == null) return;
+
+            Block block = api.World.BlockAccessor.GetBlock(pos);
+            if (!TallgrassEstablishment.NeedsEstablishment(api, pos, block, out int targetStageIndex))
+            {
+                return;
+            }
+
+            if (indexByPos.ContainsKey(pos)) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double nextAt = api.World.Calendar.TotalHours
                 + WildTallgrassMaturation.StageAdvanceHours(api, pos, cfg);
 
             indexByPos[pos] = entries.Count;
-            entries.Add(new Entry { Pos = pos.Copy(), NextAdvanceAtHours = nextAt });
+            entries.Add(new Entry
+            {
+                Pos = pos.Copy(),
+                TargetStageIndex = targetStageIndex,
+                NextAdvanceAtHours = nextAt,
+            });
         }
 
         public void Remove(BlockPos pos)
@@ -50,7 +64,7 @@ namespace WildFarming.Ecosystem
         public void Process(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
         {
             if (entries.Count == 0 || api == null || ecosystem == null || maxChecks <= 0) return;
-            if (!TallgrassSpreadMaturation.UsesMaturation(EcosystemConfig.Loaded)) return;
+            if (!TallgrassEstablishment.UsesEstablishment(EcosystemConfig.Loaded)) return;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
@@ -82,14 +96,26 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                if (TallgrassSpreadMaturation.CanReproduceFrom(block))
+                if (TallgrassEstablishment.IsReadyToRegister(block, entry.TargetStageIndex, api, pos))
                 {
                     TryRegister(ecosystem, acc, pos, remove);
                     continue;
                 }
 
+                if (!TallgrassEstablishment.NeedsEstablishment(api, pos, block, out int refreshedTarget))
+                {
+                    TryRegister(ecosystem, acc, pos, remove);
+                    continue;
+                }
+
+                if (refreshedTarget > entry.TargetStageIndex)
+                {
+                    entry.TargetStageIndex = refreshedTarget;
+                }
+
                 if (nowHours < entry.NextAdvanceAtHours)
                 {
+                    entries[i] = entry;
                     continue;
                 }
 
@@ -102,7 +128,7 @@ namespace WildFarming.Ecosystem
 
                 ecosystem.InvalidateEnvironmentAround(pos);
                 block = acc.GetBlock(pos);
-                if (TallgrassSpreadMaturation.CanReproduceFrom(block))
+                if (TallgrassEstablishment.IsReadyToRegister(block, entry.TargetStageIndex, api, pos))
                 {
                     TryRegister(ecosystem, acc, pos, remove);
                 }

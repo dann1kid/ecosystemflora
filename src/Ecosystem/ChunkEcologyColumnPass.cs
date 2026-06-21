@@ -25,6 +25,7 @@ namespace WildFarming.Ecosystem
             public readonly List<ChunkFlowerHit> FlowerHits;
             public readonly List<ChunkFlowerHit> VineHits;
             public readonly List<ChunkFlowerHit> TreeHits;
+            public readonly List<ChunkFlowerHit> EstablishingTallgrassHits;
             public readonly int FoliageIndexed;
             public readonly int FoliageChanged;
             public readonly int ResumeLx;
@@ -36,6 +37,7 @@ namespace WildFarming.Ecosystem
                 List<ChunkFlowerHit> flowerHits,
                 List<ChunkFlowerHit> vineHits,
                 List<ChunkFlowerHit> treeHits,
+                List<ChunkFlowerHit> establishingTallgrassHits,
                 int foliageIndexed,
                 int foliageChanged,
                 int resumeLx,
@@ -46,6 +48,7 @@ namespace WildFarming.Ecosystem
                 FlowerHits = flowerHits;
                 VineHits = vineHits;
                 TreeHits = treeHits;
+                EstablishingTallgrassHits = establishingTallgrassHits;
                 FoliageIndexed = foliageIndexed;
                 FoliageChanged = foliageChanged;
                 ResumeLx = resumeLx;
@@ -90,9 +93,10 @@ namespace WildFarming.Ecosystem
             var flowerHits = new List<ChunkFlowerHit>();
             var vineHits = new List<ChunkFlowerHit>();
             var treeHits = new List<ChunkFlowerHit>();
+            var establishingTallgrassHits = new List<ChunkFlowerHit>();
             if (view == null)
             {
-                return new Result(flowerHits, vineHits, treeHits, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
+                return new Result(flowerHits, vineHits, treeHits, establishingTallgrassHits, 0, 0, resumeLx, resumeLz, resumeY, completed: true);
             }
 
             int chunkSize = GlobalConstants.ChunkSize;
@@ -106,7 +110,7 @@ namespace WildFarming.Ecosystem
             }
             else if (mapChunk == null)
             {
-                return new Result(flowerHits, vineHits, treeHits, 0, 0, 0, 0, 0, completed: true);
+                return new Result(flowerHits, vineHits, treeHits, establishingTallgrassHits, 0, 0, 0, 0, 0, completed: true);
             }
             else
             {
@@ -131,10 +135,8 @@ namespace WildFarming.Ecosystem
                     int x = x0 + lx;
                     int z = z0 + lz;
                     int topY = ChunkColumnWalker.GetColumnTopY(heightmap, lx, lz, chunkSize, columnTop);
-                    int surfaceY = GetSurfaceY(heightmap, lx, lz, chunkSize, 0);
                     int yStart = (lx == resumeLx && lz == resumeLz && resumeY >= 0) ? resumeY : topY;
 
-                    bool flowerFound = false;
                     bool trunkFound = false;
 
                     for (int y = yStart; y >= 0; y--)
@@ -142,7 +144,7 @@ namespace WildFarming.Ecosystem
                         if (budgetDeadline > 0 && Stopwatch.GetTimestamp() >= budgetDeadline)
                         {
                             return new Result(
-                                flowerHits, vineHits, treeHits, foliageIndexed, foliageChanged,
+                                flowerHits, vineHits, treeHits, establishingTallgrassHits, foliageIndexed, foliageChanged,
                                 lx, lz, y, completed: false);
                         }
 
@@ -216,15 +218,6 @@ namespace WildFarming.Ecosystem
                             vineHits.Add(new ChunkFlowerHit(scanScratch.Copy(), block.Code));
                         }
 
-                        if (!flowerFound
-                            && flowerHits.Count < request.MaxFlowerHits
-                            && y <= surfaceY + 2
-                            && EcologyAttributes.ReproduceEnabled(block))
-                        {
-                            flowerHits.Add(new ChunkFlowerHit(scanScratch.Copy(), block.Code));
-                            flowerFound = true;
-                        }
-
                         if (ChunkColumnWalker.ContinueColumnScan(block))
                         {
                             continue;
@@ -232,17 +225,35 @@ namespace WildFarming.Ecosystem
 
                         break;
                     }
+
+                    if (request.MaxFlowerHits > 0
+                        && flowerHits.Count + establishingTallgrassHits.Count < request.MaxFlowerHits
+                        && RegistrationColumnFlowerScan.TryFindTopReproducer(
+                            view,
+                            api,
+                            x,
+                            z,
+                            ChunkColumnWalker.GetFloraRegistrationScanTopY(heightmap, lx, lz, chunkSize, columnTop),
+                            out Block flowerBlock,
+                            out BlockPos flowerPos,
+                            out bool needsEstablishment))
+                    {
+                        if (needsEstablishment)
+                        {
+                            establishingTallgrassHits.Add(new ChunkFlowerHit(flowerPos, flowerBlock.Code));
+                        }
+                        else
+                        {
+                            flowerHits.Add(new ChunkFlowerHit(flowerPos, flowerBlock.Code));
+                        }
+                    }
                 }
             }
 
-            return new Result(flowerHits, vineHits, treeHits, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
+            return new Result(flowerHits, vineHits, treeHits, establishingTallgrassHits, foliageIndexed, foliageChanged, 0, 0, 0, completed: true);
         }
 
-        static int GetSurfaceY(ushort[] heightmap, int lx, int lz, int chunkSize, int fallbackY)
-        {
-            if (heightmap == null || heightmap.Length < chunkSize * chunkSize) return fallbackY;
-
-            return heightmap[lz * chunkSize + lx];
-        }
+        internal static int ResolveFlowerScanTopY(ushort[] heightmap, int lx, int lz, int chunkSize, int columnTop) =>
+            ChunkColumnWalker.GetFloraRegistrationScanTopY(heightmap, lx, lz, chunkSize, columnTop);
     }
 }

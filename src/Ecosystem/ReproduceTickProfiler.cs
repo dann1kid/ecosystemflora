@@ -19,18 +19,30 @@ namespace WildFarming.Ecosystem
         public int SpreadCommitted;
         public int DueQueueSize;
         public int PendingSpreadQueueSize;
+        public int SpreadChunksVisited;
+        public int SpreadMaxAttemptsInChunk;
+        public int WakeDrivenAttempts;
+        public int CalendarDrivenAttempts;
+        public int SpreadSolveQueued;
+        public int SpreadSolveCompleted;
+        public int SpreadSolveWorkerPending;
+        public long ColumnCacheHits;
+        public long ColumnCacheMisses;
     }
 
     /// <summary>Throttled server log of reproduce-tick phase costs (enable via config).</summary>
     internal static class ReproduceTickProfiler
     {
         static long lastLogTimestamp;
+        static long lastColumnCacheHits;
+        static long lastColumnCacheMisses;
 
         public static void MaybeLog(
             ICoreAPI api,
             EcosystemConfig cfg,
             ReproducerRegistry registry,
-            ReproduceTickTimings timings)
+            ReproduceTickTimings timings,
+            EcologyColumnState columnCache = null)
         {
             if (api == null || cfg == null || registry == null) return;
             if (!cfg.EnableReproduceTickProfiling) return;
@@ -63,6 +75,48 @@ namespace WildFarming.Ecosystem
                 timings.SpreadCommitTicks * toMs,
                 timings.PendingSpreadQueueSize,
                 timings.SpreadCommitted);
+
+            SampleColumnCacheDelta(columnCache, out long cacheHits, out long cacheMisses);
+            long cacheTotal = cacheHits + cacheMisses;
+            float cacheHitRate = cacheTotal > 0 ? (float)cacheHits / cacheTotal : 0f;
+
+            api.Logger.Notification(
+                "[ecosystemflora] Reproduce spread stats: chunks={0} max/chunk={1} wake={2} calendar={3} "
+                + "workerQ={4} workerQueued={5} workerDone={6} spreadPending={7} columnCacheHit={8:P0} ({9}/{10})",
+                timings.SpreadChunksVisited,
+                timings.SpreadMaxAttemptsInChunk,
+                timings.WakeDrivenAttempts,
+                timings.CalendarDrivenAttempts,
+                timings.SpreadSolveWorkerPending,
+                timings.SpreadSolveQueued,
+                timings.SpreadSolveCompleted,
+                timings.PendingSpreadQueueSize,
+                cacheHitRate,
+                cacheHits,
+                cacheTotal);
+        }
+
+        static void SampleColumnCacheDelta(EcologyColumnState columns, out long hits, out long misses)
+        {
+            hits = 0;
+            misses = 0;
+            if (columns == null) return;
+
+            long totalHits = columns.CacheHits;
+            long totalMisses = columns.CacheMisses;
+            hits = totalHits - lastColumnCacheHits;
+            misses = totalMisses - lastColumnCacheMisses;
+            if (hits < 0) hits = 0;
+            if (misses < 0) misses = 0;
+            lastColumnCacheHits = totalHits;
+            lastColumnCacheMisses = totalMisses;
+        }
+
+        internal static void ResetColumnCacheBaseline(EcologyColumnState columns)
+        {
+            if (columns == null) return;
+            lastColumnCacheHits = columns.CacheHits;
+            lastColumnCacheMisses = columns.CacheMisses;
         }
     }
 }

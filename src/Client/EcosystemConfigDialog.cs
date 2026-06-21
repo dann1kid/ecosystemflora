@@ -15,15 +15,17 @@ namespace WildFarming.Client
         public override string ToggleKeyCombinationCode => EcosystemConfigClientSystem.HotkeyCode;
 
         const double DialogWidth = 540;
-        const double DialogHeight = 640;
-        const double BlockLineHeight = 15;
-        const double RowGap = 14;
+        const double DialogHeight = 580;
+        const double RowGap = 6;
+        const double TextPadPx = 2;
         const double ControlHeight = 25;
         const double ControlWidth = 118;
-        const double HeaderBlockHeight = 96;
+        const double HeaderBlockHeight = 88;
         const double FooterBlockHeight = 44;
-        const double FooterGap = 18;
-        const int ScopeDescGapLines = 2;
+        const double FooterGap = 12;
+
+        readonly TextDrawUtil textMeasure = new TextDrawUtil();
+        readonly CairoFont helpFont = CairoFont.WhiteSmallText();
 
         readonly struct FieldRowLayout
         {
@@ -163,7 +165,7 @@ namespace WildFarming.Client
                 ElementBounds.Fixed(pad + labelW, y, controlW, 25),
                 "cfg-preset");
 
-            y += 32;
+            y += 28;
 
             composer.AddStaticText(
                 L("config-ui-category"),
@@ -183,7 +185,7 @@ namespace WildFarming.Client
                 ElementBounds.Fixed(pad + labelW, y, controlW, 25),
                 "cfg-category");
 
-            y += 30;
+            y += 26;
 
             string pageText = string.Format(
                 CultureInfo.InvariantCulture,
@@ -262,61 +264,47 @@ namespace WildFarming.Client
             return pages[fieldPage];
         }
 
-        static double LabelWidth(double contentWidth) => contentWidth - ControlWidth - 10;
+        static double LabelWidth(double contentWidth) => contentWidth - ControlWidth - 6;
 
         FieldRowLayout MeasureFieldRow(EcosystemConfigFieldDescriptor field, double labelWidth)
         {
             string title = ConfigFieldLangResolver.GetTitle(field);
             string desc = ConfigFieldLangResolver.GetDescription(field);
-            int titleLines = EstimateWrappedLines(title, labelWidth, 6.8);
-            if (titleLines > 0) titleLines++;
+            string scopeHint = field.Scope == ConfigFieldScope.Client
+                ? L("config-ui-scope-client")
+                : L("config-ui-scope-server");
 
-            int blockLines = titleLines + 2 + 1;
-            if (!string.IsNullOrWhiteSpace(desc))
-            {
-                int descLines = EstimateWrappedLines(desc, labelWidth, 5.2);
-                blockLines += ScopeDescGapLines + descLines + 3;
-            }
-            else
-            {
-                blockLines += 1;
-            }
-
-            double textHeight = blockLines * BlockLineHeight + 8;
-            double innerHeight = Math.Max(textHeight, ControlHeight + 8);
+            double textHeight = MeasureHelpTextHeight(title, scopeHint, desc, labelWidth);
+            double innerHeight = Math.Max(textHeight, ControlHeight + 2);
             return new FieldRowLayout(field, innerHeight + RowGap);
         }
 
-        static int EstimateWrappedLines(string text, double widthPx, double charWidthPx)
+        /// <summary>Measures help block height at the left-column width (control column excluded).</summary>
+        double MeasureHelpTextHeight(string title, string scopeHint, string desc, double labelWidth)
         {
-            if (string.IsNullOrWhiteSpace(text)) return 0;
+            string plain = BuildFieldHelpPlainText(title, scopeHint, desc);
+            double scaledHeight = textMeasure.GetMultilineTextHeight(
+                helpFont,
+                plain,
+                labelWidth,
+                EnumLinebreakBehavior.AfterWord);
 
-            int charsPerLine = Math.Max(16, (int)(widthPx / charWidthPx));
-            int lines = 1;
-            int lineLen = 0;
+            double height = scaledHeight / RuntimeEnv.GUIScale;
+            height += textMeasure.GetLineHeight(helpFont) / RuntimeEnv.GUIScale * 0.2;
+            return height + TextPadPx;
+        }
 
-            foreach (string word in text.Split(' '))
+        static string BuildFieldHelpPlainText(string title, string scopeHint, string desc)
+        {
+            var sb = new StringBuilder();
+            sb.Append(title);
+            sb.Append('\n').Append(scopeHint);
+            if (!string.IsNullOrWhiteSpace(desc))
             {
-                if (word.Length == 0) continue;
-
-                if (lineLen == 0)
-                {
-                    lineLen = word.Length;
-                    continue;
-                }
-
-                if (lineLen + 1 + word.Length <= charsPerLine)
-                {
-                    lineLen += 1 + word.Length;
-                }
-                else
-                {
-                    lines++;
-                    lineLen = word.Length;
-                }
+                sb.Append('\n').Append(desc);
             }
 
-            return lines;
+            return sb.ToString();
         }
 
         void AddFieldRow(GuiComposer composer, FieldRowLayout rowLayout, double x, double y, double width)
@@ -337,7 +325,7 @@ namespace WildFarming.Client
 
             composer.AddRichtext(
                 BuildFieldHelpText(title, scopeHint, desc),
-                CairoFont.WhiteDetailText(),
+                helpFont,
                 ElementBounds.Fixed(x, y, labelWidth, bodyHeight),
                 code + "-help");
 
@@ -572,12 +560,12 @@ namespace WildFarming.Client
         static string BuildFieldHelpText(string title, string scopeHint, string desc)
         {
             var sb = new StringBuilder();
-            sb.Append("<strong>").Append(EscapeRichText(title)).Append("</strong><br/><br/>");
+            sb.Append("<strong>").Append(EscapeRichText(title)).Append("</strong><br/>");
             sb.Append("<i>").Append(EscapeRichText(scopeHint)).Append("</i>");
 
             if (!string.IsNullOrWhiteSpace(desc))
             {
-                sb.Append("<br/><br/>").Append(EscapeRichText(desc));
+                sb.Append("<br/>").Append(EscapeRichText(desc));
             }
 
             return sb.ToString();

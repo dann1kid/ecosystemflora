@@ -60,7 +60,7 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
-            if (!UsedEmptyFirstSpreadCollect(requirements, matMode)
+            if (!UsesEmptyFirstSpreadCollect(requirements, matMode)
                 && EcosystemConfig.Loaded.PreferSpreadToEmptyCells
                 && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
             {
@@ -131,7 +131,7 @@ namespace WildFarming.Ecosystem
                 return 0;
             }
 
-            if (!UsedEmptyFirstSpreadCollect(requirements, matMode)
+            if (!UsesEmptyFirstSpreadCollect(requirements, matMode)
                 && EcosystemConfig.Loaded.PreferSpreadToEmptyCells
                 && !TurfColonizerSpread.PrefersOccupiedTurf(requirements?.Species))
             {
@@ -218,7 +218,7 @@ namespace WildFarming.Ecosystem
             return placed;
         }
 
-        static int ResolveSpreadSearchRadius(
+        internal static int ResolveSpreadSearchRadius(
             PlantRequirements requirements,
             int radius,
             System.Random rand,
@@ -245,7 +245,7 @@ namespace WildFarming.Ecosystem
             return searchRadius;
         }
 
-        static bool UsedEmptyFirstSpreadCollect(PlantRequirements requirements, MatSpreadCollectMode matMode)
+        internal static bool UsesEmptyFirstSpreadCollect(PlantRequirements requirements, MatSpreadCollectMode matMode)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             return cfg.EnableEmptyFirstSpreadCollect
@@ -265,7 +265,7 @@ namespace WildFarming.Ecosystem
             bool harshClimate,
             MatSpreadCollectMode matMode)
         {
-            if (!UsedEmptyFirstSpreadCollect(requirements, matMode))
+            if (!UsesEmptyFirstSpreadCollect(requirements, matMode))
             {
                 return CollectSpreadCandidates(
                     api, origin, radius, verticalSearch, requirements, minFitness, harshClimate, matMode,

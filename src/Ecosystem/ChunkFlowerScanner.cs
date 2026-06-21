@@ -44,7 +44,16 @@ namespace WildFarming.Ecosystem
                     int z = z0 + lz;
                     int topY = GetSurfaceY(mapChunk, lx, lz, chunkSize, fallbackY);
 
-                    if (TryFindTopFlower(acc, x, z, topY, out Block block, out BlockPos pos))
+                    var view = new LiveRegistrationColumnView(acc);
+                    if (RegistrationColumnFlowerScan.TryFindTopReproducer(
+                            view,
+                            api: null,
+                            x,
+                            z,
+                            topY,
+                            out Block block,
+                            out BlockPos pos,
+                            out _))
                     {
                         hits.Add(new ChunkFlowerHit(pos, block.Code));
                         if (hits.Count >= maxHits)
@@ -80,38 +89,7 @@ namespace WildFarming.Ecosystem
             if (mapChunk == null) return fallbackY;
 
             ushort[] heightmap = mapChunk.RainHeightMap;
-            if (heightmap == null || heightmap.Length < chunkSize * chunkSize) return fallbackY;
-
-            int surfaceY = heightmap[lz * chunkSize + lx];
-            return surfaceY + 2;
-        }
-
-        static readonly BlockPos scanScratch = new BlockPos(0);
-
-        static bool TryFindTopFlower(IBlockAccessor acc, int x, int z, int topY, out Block block, out BlockPos pos)
-        {
-            block = null;
-            pos = null;
-
-            for (int y = topY; y >= 0; y--)
-            {
-                scanScratch.Set(x, y, z);
-                block = acc.GetBlock(scanScratch);
-                if (block.Id == 0) continue;
-
-                if (EcologyAttributes.ReproduceEnabled(block))
-                {
-                    pos = scanScratch.Copy();
-                    return true;
-                }
-
-                if (!PlantVacancyRules.IsPassThroughForColumnScan(block))
-                {
-                    return false;
-                }
-            }
-
-            return false;
+            return ChunkColumnWalker.GetFloraRegistrationScanTopY(heightmap, lx, lz, chunkSize, fallbackY);
         }
     }
 

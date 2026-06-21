@@ -164,7 +164,9 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 |-----|------|---------|-------------|
 | `MaxPendingTreeChecksPerTick` | int | 12 | Mod-placed saplings polled until `log-grown` appears |
 | `EnableCyclicTreeDiscovery` | bool | true | Round-robin scan for new `log-grown` trunks after load |
-| `MaxTreeRescanColumnsPerTick` | int | 16 | Columns scanned per tick for cyclic discovery |
+| `MaxTreeRescanColumnsPerTick` | int | 16 | Columns scanned per tick for cyclic tree discovery |
+| `EnableCyclicFloraDiscovery` | bool | true | Round-robin live rescan for flowers/tallgrass after chunk load |
+| `MaxFloraRescanColumnsPerTick` | int | 32 | Columns scanned per tick for cyclic flora discovery |
 
 ### Wild trees — aging & senescence
 
@@ -266,6 +268,10 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 | `MaxSpreadCommitsPerTick` | int | 0 | Commits per tick (0 = `MaxReproduceAttemptsPerTick`) |
 | `MaxSpreadCommitChunksVisitedPerTick` | int | 0 | Commit pass chunks (0 = `MaxSpreadChunksVisitedPerTick`) |
 | `MaxSpreadCommitsPerChunkPerTick` | int | 0 | Commits per chunk (0 = `MaxSpreadAttemptsPerChunkPerTick`) |
+| `EnableBackgroundSpreadSolve` | bool | **true** | Score spread candidates on worker from main-thread env snapshots; commit via `PendingSpreadQueue` |
+| `SpreadWorkerCount` | int | 0 | Spread scoring worker threads (0 = half CPU cores, max 8) |
+
+See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.8–§6.12 for scope limits (terrestrial, mat, crowfoot on worker when enabled; vines/mycelium stay sync). Registration pipeline: [`BACKGROUND_REGISTRATION.md`](BACKGROUND_REGISTRATION.md).
 
 ### Registration & performance
 
@@ -285,6 +291,11 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 | `MaxRegistryAppliesPerTick` | int | 512 | Paced `RegisterReproducer` applies per chunk-scan tick |
 | `MaxPriorityRegistryAppliesPerTick` | int | 2048 | Extra applies for player-vicinity chunks |
 | `EnableBackgroundRegistrationScan` | bool | true | Classify columns on worker from main-thread snapshot |
+| `RegistrationWorkerCount` | int | 0 | Registration classify workers (0 = half CPU cores, max 8) |
+| `EnableBackgroundSpreadSolve` | bool | **true** | Spread fitness scoring on worker (requires `EnableTwoPhaseSpreadPlacement`) |
+| `SpreadWorkerCount` | int | 0 | Spread scoring workers (0 = half CPU cores, max 8) |
+| `EnableCyclicFloraDiscovery` | bool | true | Live round-robin rescan for flowers/tallgrass after chunk load |
+| `MaxFloraRescanColumnsPerTick` | int | 32 | Columns per tick for cyclic flora discovery |
 | `MaxRegistrationSnapshotCellsPerTick` | int | 8192 | Block ids copied to snapshot per main tick |
 | `TickBudgetMs` | int | 30 | Default ms cap per reproduce tick (0 = unlimited) |
 | `SpreadBudgetMs` | int | 30 | Spread cap (0 = `TickBudgetMs`) |
@@ -298,7 +309,7 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 | `PlayerActivationRadiusBlocks` | int | 192 | Radius for the two flags above |
 | `EnableReproduceTickProfiling` | bool | false | Log phase timings when registry is large |
 | `ReproduceTickProfilingMinRegistry` | int | 2000 | Min registry size before profiling logs |
-| `ReproduceTickProfilingIntervalMs` | int | 30000 | Min ms between profiling log lines |
+| `ReproduceTickProfilingIntervalMs` | int | 30000 | Min ms between profiling log lines (two lines per emit) |
 | `VerboseLogging` | bool | false | Master switch for Notification/Warning diagnostics |
 | `ReproduceDebug` | bool | false | Log spread attempts (use with `VerboseLogging` for tuning) |
 

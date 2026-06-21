@@ -105,7 +105,7 @@
 
 ## 8. Производительность и масштаб
 
-Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake, **player-priority registration** + **background column scan** + paced registry apply, **vines/mycelium** on chunk load, **empty-first spread collect** with column occupancy hint (displacement when no empty cells), desynced tick intervals. См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
+Реализовано: spatial tick, budgets, chunk scan resume, **Phase 6 simulation engine** (v3.8) — chunk-fair spread, event-driven wake, column cache, two-phase placement, season coarse wake, **player-priority registration** + **background column scan** + paced registry apply, **cyclic flora discovery** (v3.9.10), **background spread solve** + **empty-first worker path** (v3.9.11), **vines/mycelium** on chunk load, **empty-first spread collect** with column occupancy hint (displacement when no empty cells), desynced tick intervals. См. [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 
 **Рекомендуемый режим (мощное железо):** `OnlyActivateNearPlayers: false`, `LimitSpreadNearPlayers: false`, `EnableChunkFairSpread`, `EnableEventDrivenSpread`, `EnableEcologyColumnCache`, `EnableTwoPhaseSpreadPlacement`, `EnableSeasonCoarseWake`, `EnablePlayerPriorityRegistration`, `EnableBurstRegistrationNearPlayers`, `EnableBackgroundRegistrationScan`, `EnableEmptyFirstSpreadCollect`, `EnableSpreadColumnOccupancyHint` — все **true** по умолчанию. Legacy safety: `LimitSpreadNearPlayers` (spread + stress + tree aging; registration unchanged), `TickBudgetMs`, `SpreadBudgetMs`.
 

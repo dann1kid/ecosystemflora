@@ -178,11 +178,23 @@ namespace WildFarming.Ecosystem
         /// <summary>Registry applies per chunk-scan tick from the pending registration queue.</summary>
         public int MaxRegistryAppliesPerTick { get; set; } = 512;
 
+        /// <summary>Max registry inserts per chunk per drain pass (fairness cap within one tick).</summary>
+        public int MaxRegistryAppliesPerChunkPerTick { get; set; } = 256;
+
+        /// <summary>Background column-classification workers (snapshot + SetBlock stay on main thread).</summary>
+        public int RegistrationWorkerCount { get; set; } = 0;
+
         /// <summary>Extra pending applies per tick for player-priority chunks before background drain.</summary>
         public int MaxPriorityRegistryAppliesPerTick { get; set; } = 2048;
 
         /// <summary>Capture block ids on main; column classification runs on a background thread.</summary>
         public bool EnableBackgroundRegistrationScan { get; set; } = true;
+
+        /// <summary>Capture spread env snapshots on main; fitness scoring runs on background threads.</summary>
+        public bool EnableBackgroundSpreadSolve { get; set; } = true;
+
+        /// <summary>Background spread scoring workers (snapshot + SetBlock stay on main thread).</summary>
+        public int SpreadWorkerCount { get; set; } = 0;
 
         /// <summary>Block cells copied into a chunk snapshot per main-thread tick (background scan).</summary>
         public int MaxRegistrationSnapshotCellsPerTick { get; set; } = 8192;
@@ -304,6 +316,12 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Chunk columns scanned per tick for cyclic tree discovery (TreeTrunkDiscovery only).</summary>
         public int MaxTreeRescanColumnsPerTick { get; set; } = 16;
+
+        /// <summary>Round-robin live scan for wild flora parents that appeared after chunk load.</summary>
+        public bool EnableCyclicFloraDiscovery { get; set; } = true;
+
+        /// <summary>Chunk columns scanned per tick for cyclic flora discovery.</summary>
+        public int MaxFloraRescanColumnsPerTick { get; set; } = 32;
 
         // --- Wild tree aging (v3.6) — see docs/TREE_AGING.md ---
 
