@@ -202,7 +202,7 @@ namespace WildFarming.Ecosystem
 
 
 
-        /// <summary>Chunk-load catch-up: spring log → branchy and branchy → leaves-grown (species-scaled patchiness).</summary>
+        /// <summary>Chunk-load catch-up: branchy → leaves-grown (species-scaled patchiness).</summary>
 
         public static bool TryCatchUpBudOnScan(
 
@@ -228,15 +228,11 @@ namespace WildFarming.Ecosystem
 
             FoliageCellKind kind = Classify(block);
 
-            if (kind != FoliageCellKind.LogGrown && kind != FoliageCellKind.BranchyLeaf) return false;
+            if (kind != FoliageCellKind.BranchyLeaf) return false;
 
 
 
-            string wood = kind == FoliageCellKind.LogGrown
-
-                ? PlantCodeHelper.GetTreeWood(block)
-
-                : CanopyBlockHelper.GetWoodFromFoliageBlock(block);
+            string wood = CanopyBlockHelper.GetWoodFromFoliageBlock(block);
 
             if (string.IsNullOrEmpty(wood)) return false;
 
@@ -244,17 +240,11 @@ namespace WildFarming.Ecosystem
 
             if (!ShouldCatchUpBud(api, pos, wood, kind, out float activity)) return false;
 
-            if (!NeedsSpringCatchUp(acc, pos, wood, kind)) return false;
-
 
 
             WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
 
-            activity *= kind == FoliageCellKind.LogGrown
-
-                ? profile.BranchyCatchUpScale
-
-                : profile.LeafCatchUpScale;
+            activity *= profile.LeafCatchUpScale;
 
 
 
@@ -268,7 +258,7 @@ namespace WildFarming.Ecosystem
 
                 api, acc, pos, block, wood, activity, gameYear, index,
 
-                budBranchy: kind == FoliageCellKind.LogGrown,
+                budBranchy: false,
 
                 forcePlace: true);
 
@@ -655,11 +645,6 @@ namespace WildFarming.Ecosystem
 
 
 
-                case FoliageCellKind.LogGrown when phase == CanopySeasonPhase.Spring:
-                    return TryBudFromSource(
-                        api, acc, pos, block, wood, activity, gameYear, index,
-                        budBranchy: true);
-
                 case FoliageCellKind.BranchyLeaf when phase == CanopySeasonPhase.Spring:
 
                     return TryBudFromSource(
@@ -769,11 +754,17 @@ namespace WildFarming.Ecosystem
 
 
 
+            float stripActivity = activity;
+            if (kind == FoliageCellKind.RegularLeaf)
+            {
+                stripActivity *= CanopyCrownBias.StripActivityScale(acc, pos, wood);
+            }
+
             bool roll = kind == FoliageCellKind.BranchyLeaf
 
-                ? CanopyEcology.RollBranchyStripAttempt(api, pos, wood, activity, gameYear)
+                ? CanopyEcology.RollBranchyStripAttempt(api, pos, wood, stripActivity, gameYear)
 
-                : CanopyEcology.RollStripAttempt(api, pos, wood, activity, gameYear);
+                : CanopyEcology.RollStripAttempt(api, pos, wood, stripActivity, gameYear);
 
             if (!roll) return false;
 
@@ -825,6 +816,11 @@ namespace WildFarming.Ecosystem
                 activity *= CanopyTreeAgeBoost.SpringBranchyBudMultiplier(api, acc, sourcePos, wood);
             }
 
+            if (budBranchy && !forcePlace && Classify(sourceBlock) == FoliageCellKind.LogGrown)
+            {
+                return false;
+            }
+
             var scratch = new BlockPos(0);
 
             int start = api.World.Rand.Next(6);
@@ -859,7 +855,13 @@ namespace WildFarming.Ecosystem
 
 
 
-                if (!forcePlace && !CanopyEcology.RollBudAttempt(api, scratch, wood, activity, gameYear)) continue;
+                float budRollActivity = activity;
+                if (!budBranchy)
+                {
+                    budRollActivity *= CanopyCrownBias.BudActivityScale(acc, scratch, wood);
+                }
+
+                if (!forcePlace && !CanopyEcology.RollBudAttempt(api, scratch, wood, budRollActivity, gameYear)) continue;
 
 
 
@@ -951,6 +953,10 @@ namespace WildFarming.Ecosystem
 
                 float noise = 0.55f + CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear) * 0.45f;
                 float threshold = budActivity * noise * 0.78f;
+                if (!budBranchy)
+                {
+                    threshold *= CanopyCrownBias.BudActivityScale(acc, scratch, wood);
+                }
                 if (threshold > 1f) threshold = 1f;
                 float gate = CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear + 500 + i);
                 if (gate >= threshold) continue;

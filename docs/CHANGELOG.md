@@ -3,9 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.15**
+**This release:** **3.9.16**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.16 — Branchy-first seasonal canopy (Option B)
+
+**Canopy:** Spring leaf dress only from existing branchy skeleton (not from bare log); new branches via tree aging and rare winter skeleton repair. Autumn strip is patchy with a soft periphery-first bias; spring dress favors the inner crown first.
 
 ---
 

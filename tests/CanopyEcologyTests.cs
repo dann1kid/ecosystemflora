@@ -133,6 +133,22 @@ namespace WildFarming.Tests
     public class CanopySeasonSyncTests
     {
         [Theory]
+        [InlineData(0f, 1f)]
+        [InlineData(1f, 1.35f)]
+        public void StripActivityScaleForPeriphery_IncreasesTowardEdge(float peripheryNorm, float expected)
+        {
+            Assert.Equal(expected, CanopyCrownBias.StripActivityScaleForPeriphery(peripheryNorm), 3);
+        }
+
+        [Theory]
+        [InlineData(0f, 1.35f)]
+        [InlineData(1f, 1f)]
+        public void BudActivityScaleForPeriphery_IncreasesTowardTrunk(float peripheryNorm, float expected)
+        {
+            Assert.Equal(expected, CanopyCrownBias.BudActivityScaleForPeriphery(peripheryNorm), 3);
+        }
+
+        [Theory]
         [InlineData(9, true)]
         [InlineData(10, true)]
         [InlineData(11, false)]

@@ -43,7 +43,7 @@ namespace WildFarming.Ecosystem
                     return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
                 }
 
-                if (!PassesDeterministicGate(pos, wood, gameYear, activity, stripScale: 0.55f)) return false;
+                if (!PassesDeterministicGate(api, acc, pos, wood, gameYear, activity, stripScale: 0.55f)) return false;
                 return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
             }
 
@@ -54,14 +54,13 @@ namespace WildFarming.Ecosystem
                 if (phase == CanopySeasonPhase.Autumn
                     && EcosystemConfig.Loaded.FoliagePeakAutumnBranchyStripActivity > 0f
                     && activity >= EcosystemConfig.Loaded.FoliagePeakAutumnBranchyStripActivity
-                    && PassesDeterministicGate(pos, wood, gameYear + 3, activity, stripScale: 0.22f))
+                    && PassesDeterministicGate(api, acc, pos, wood, gameYear + 3, activity, stripScale: 0.22f))
                 {
                     return CanopyFoliageRules.TryStripForced(
                         api, acc, pos, index, wood, activity, gameYear, FoliageCellKind.BranchyLeaf);
                 }
 
                 if (!CanopyFoliageRules.ShouldCatchUpBud(api, pos, wood, kind, out activity)) return false;
-                if (!CanopyFoliageRules.NeedsSpringCatchUp(acc, pos, wood, kind)) return false;
 
                 activity *= profile.LeafCatchUpScale;
                 return CanopyFoliageRules.TryPlaceSeasonBudDeterministic(
@@ -82,21 +81,14 @@ namespace WildFarming.Ecosystem
                     }
 
                     if (bareActivity > 0f
-                        && PassesDeterministicGate(pos, wood, gameYear + 11, bareActivity, stripScale: 0.14f))
+                        && PassesDeterministicGate(api, acc, pos, wood, gameYear + 11, bareActivity, stripScale: 0.14f))
                     {
                         return CanopyFoliageRules.TryPlaceSeasonBudDeterministic(
                             api, acc, pos, block, wood, budBranchy: true, bareActivity, gameYear, index);
                     }
                 }
 
-                if (!CanopyFoliageRules.ShouldCatchUpBud(api, pos, wood, kind, out float activity)) return false;
-                if (!CanopyFoliageRules.NeedsSpringCatchUp(acc, pos, wood, kind)) return false;
-
-                activity *= profile.BranchyCatchUpScale;
-                if (!PassesDeterministicGate(pos, wood, gameYear + 7, activity, stripScale: 0.52f)) return false;
-
-                return CanopyFoliageRules.TryPlaceSeasonBudDeterministic(
-                    api, acc, pos, block, wood, budBranchy: true, activity, gameYear, index);
+                return false;
             }
 
             return false;
@@ -123,9 +115,21 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        static bool PassesDeterministicGate(BlockPos pos, string wood, int salt, float activity, float stripScale)
+        static bool PassesDeterministicGate(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos pos,
+            string wood,
+            int salt,
+            float activity,
+            float stripScale)
         {
             if (activity <= 0f) return false;
+
+            if (acc != null && pos != null)
+            {
+                activity *= CanopyCrownBias.StripActivityScale(acc, pos, wood);
+            }
 
             float noise = 0.55f + CanopyBlockHelper.DeterministicNoise(pos, wood, salt) * 0.45f;
             float threshold = activity * noise * stripScale;
