@@ -255,6 +255,25 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos contextPos = ResolveInspectContextPos(acc, pos, block, req);
 
+            if (FlowerJuvenileBlocks.IsJuvenileBlock(block))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
+                AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
+
+                if (api.World?.Calendar != null
+                    && EcosystemSystem.Instance != null
+                    && EcosystemSystem.Instance.TryGetFlowerMaturationHoursLeft(pos, out double hoursLeft))
+                {
+                    double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
+                    AddInspectLine(
+                        lines,
+                        "ecosystemflora:inspect-line-flower-maturing",
+                        daysLeft.ToString("0.#"));
+                }
+
+                return;
+            }
+
             if (EcosystemSystem.Instance != null
                 && EcosystemSystem.Instance.TryGetReproducer(pos, out ReproducerEntry entry))
             {
@@ -283,14 +302,32 @@ namespace WildFarming.Ecosystem
                 }
 
                 AppendTreeAgingInspect(api, entry, lines);
-            AppendFerntreeAgingInspect(api, entry, lines);
+                AppendFerntreeAgingInspect(api, entry, lines);
 
                 if (api.World?.Calendar != null)
                 {
-                    double hoursLeft = entry.NextAttemptHours - api.World.Calendar.TotalHours;
+                    double now = api.World.Calendar.TotalHours;
+                    double hoursLeft = entry.NextAttemptHours - now;
                     if (hoursLeft < 0) hoursLeft = 0;
+
+                    double spawnCooldownLeft = entry.NextSpawnAllowedAtHours - now;
+                    if (spawnCooldownLeft > hoursLeft)
+                    {
+                        hoursLeft = spawnCooldownLeft;
+                    }
+
                     double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
                     AddInspectLine(lines, "ecosystemflora:inspect-line-next-spread", daysLeft.ToString("0.#"));
+
+                    if (spawnCooldownLeft > 0
+                        && WildFlowerMaturation.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species))
+                    {
+                        double cooldownDays = spawnCooldownLeft / api.World.Calendar.HoursPerDay;
+                        AddInspectLine(
+                            lines,
+                            "ecosystemflora:inspect-line-spawn-cooldown",
+                            cooldownDays.ToString("0.#"));
+                    }
                 }
             }
             else

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -5,6 +6,8 @@ namespace WildFarming.Ecosystem
 {
     internal static class FlowerSpreadMaturation
     {
+        static readonly HashSet<string> missingJuvenileWarnedSpecies = new HashSet<string>();
+
         public static Block ResolveSpreadBlock(
             ICoreAPI api,
             BlockPos origin,
@@ -21,7 +24,32 @@ namespace WildFarming.Ecosystem
             if (juvenileCode == null) return matureSpreadBlock;
 
             Block juvenile = api.World.GetBlock(juvenileCode);
-            return juvenile ?? matureSpreadBlock;
+            if (juvenile == null || juvenile.Id == 0)
+            {
+                WarnMissingJuvenileBlockOnce(api, cfg, requirements.Species, juvenileCode);
+                return matureSpreadBlock;
+            }
+
+            return juvenile;
+        }
+
+        static void WarnMissingJuvenileBlockOnce(ICoreAPI api, EcosystemConfig cfg, string species, AssetLocation juvenileCode)
+        {
+            if (api == null || string.IsNullOrEmpty(species) || juvenileCode == null) return;
+            if (!missingJuvenileWarnedSpecies.Add(species)) return;
+
+            if (cfg != null && cfg.VerboseLogging)
+            {
+                api.Logger.Warning(
+                    "[ecosystemflora] Juvenile flower block missing: {0}; spread uses mature block",
+                    juvenileCode);
+                return;
+            }
+
+            api.Logger.Notification(
+                "[ecosystemflora] Juvenile flower block missing for {0} ({1}); spread uses mature block",
+                species,
+                juvenileCode);
         }
 
         public static bool ShouldQueueMaturation(Block placedBlock, PlantRequirements requirements)

@@ -27,7 +27,13 @@ namespace WildFarming.Ecosystem
             {
                 code = new AssetLocation("game:peat");
             }
-            else if (wasForestFloor || role.IsForestRole())
+            else if (role.IsMeadowRole())
+            {
+                // Meadow flora never creates or preserves forest floor (open field, clearcut edges).
+                string fert = SoilFertilityTierExtensions.ToSoilPathSegment(composition.FertilityTier);
+                code = new AssetLocation("game:soil-" + fert + "-" + grassCoverage);
+            }
+            else if (role.IsForestRole() || wasForestFloor)
             {
                 bool humusDeathReclaim = wasForestFloor
                     && evt == SoilSuccessionEvent.Death

@@ -16,6 +16,8 @@
   "MaxFailedSurvivalChecks": 5,
   "GrowthHoursMultiplier": 1,
   "EnableFlowerSpreadMaturation": true,
+  "EnableFlowerSpreadAttemptCooldown": true,
+  "FlowerSpreadCooldownHoursMultiplier": 1,
   "MaxPendingFlowerMaturationChecksPerTick": 32,
   "EnableTallgrassSpreadMaturation": true,
   "MaxPendingTallgrassPromotionChecksPerTick": 32,

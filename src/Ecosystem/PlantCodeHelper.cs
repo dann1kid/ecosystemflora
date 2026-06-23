@@ -71,6 +71,7 @@ namespace WildFarming.Ecosystem
         {
             if (block?.Code == null) return false;
             if (IsThirdPartyEcologyBlock(block)) return true;
+            if (FlowerJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
@@ -94,6 +95,9 @@ namespace WildFarming.Ecosystem
         {
             string path = blockCode?.Path;
             if (string.IsNullOrEmpty(path)) return null;
+
+            string juvenileSpecies = FlowerJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
+            if (juvenileSpecies != null) return juvenileSpecies;
 
             if (path.StartsWith("flower-"))
             {

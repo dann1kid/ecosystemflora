@@ -49,6 +49,7 @@ namespace WildFarming.Ecosystem
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
+        readonly HashSet<BlockPos> spreadCooldownOriginsScratch = new HashSet<BlockPos>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
         readonly PendingSpreadQueue pendingSpreadQueue = new PendingSpreadQueue();
         internal PendingSpreadQueue PendingSpreads => pendingSpreadQueue;
@@ -395,6 +396,22 @@ namespace WildFarming.Ecosystem
             }
 
             return registry.TryGetEntry(lookup, out entry);
+        }
+
+        public bool TryGetFlowerMaturationHoursLeft(BlockPos pos, out double hoursLeft)
+        {
+            hoursLeft = 0;
+            if (api?.World?.Calendar == null || pos == null) return false;
+            return pendingFlowerMaturation.TryGetHoursUntilMature(
+                pos,
+                api.World.Calendar.TotalHours,
+                out hoursLeft);
+        }
+
+        internal void NotifySpreadSolveNoWinners(BlockPos origin, PlantRequirements requirements)
+        {
+            if (origin == null || requirements == null) return;
+            TryApplyPostSpreadAttemptCooldownOnce(origin, requirements);
         }
 
         public void RelocateVineTip(BlockPos oldPos, BlockPos newPos)
@@ -1803,6 +1820,8 @@ namespace WildFarming.Ecosystem
 
             IBlockAccessor acc = api.World.BlockAccessor;
 
+            spreadCooldownOriginsScratch.Clear();
+
             if (cfg.EnableBackgroundSpreadSolve)
             {
                 backgroundSpread.PollCompleted(
@@ -1956,6 +1975,8 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            ApplyFlowerSpreadCooldownOnCommit(spreadOrigin, requirements);
+
             Block placed = api.World.BlockAccessor.GetBlock(pos);
             if (FlowerSpreadMaturation.ShouldQueueMaturation(placed, requirements))
             {
@@ -1966,7 +1987,6 @@ namespace WildFarming.Ecosystem
                     api, pos, requirements.Species, EcosystemConfig.Loaded);
                 pendingFlowerMaturation.Add(pos, matureCode, requirements.Species, matureAt);
                 InvalidateEnvironmentAround(pos);
-                TryApplyPostSpawnCooldown(spreadOrigin, requirements);
                 if (spreadOrigin != null)
                 {
                     WakeEcologyAround(spreadOrigin);
@@ -1994,7 +2014,6 @@ namespace WildFarming.Ecosystem
             }
 
             InvalidateEnvironmentAround(pos);
-            TryApplyPostSpawnCooldown(spreadOrigin, requirements);
             WakeEcologyAround(pos);
             if (spreadOrigin != null)
             {
@@ -2012,9 +2031,14 @@ namespace WildFarming.Ecosystem
 
             BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
+            BlockPos spreadOriginCopy = spreadOrigin.Copy();
 
             float chance = SpeciesSpread.EffectiveChance(api, spreadOrigin, cfg, entry.Requirements);
-            if (!skipChanceRoll && api.World.Rand.NextDouble() > chance) return;
+            if (!skipChanceRoll && api.World.Rand.NextDouble() > chance)
+            {
+                TryApplyFailedChanceRollCooldownOnce(spreadOriginCopy, entry.Requirements);
+                return;
+            }
 
             Block spreadBlock = api.World.GetBlock(entry.JuvenileBlockCode);
             if (spreadBlock == null)
@@ -2029,10 +2053,10 @@ namespace WildFarming.Ecosystem
             if (spreadBlock == null) return;
 
             bool logFailures = cfg.VerboseLogging && cfg.ReproduceDebug;
-            BlockPos spreadOriginCopy = spreadOrigin.Copy();
 
             int spawned;
             string failureReason;
+            bool backgroundQueued = false;
             if (cfg.EnableBackgroundSpreadSolve
                 && cfg.EnableTwoPhaseSpreadPlacement
                 && SpreadSolveBatchBuilder.CanBackgroundSolve(entry.Requirements)
@@ -2050,6 +2074,7 @@ namespace WildFarming.Ecosystem
             {
                 spawned = 0;
                 failureReason = null;
+                backgroundQueued = true;
             }
             else if (cfg.EnableTwoPhaseSpreadPlacement)
             {
@@ -2091,20 +2116,60 @@ namespace WildFarming.Ecosystem
             {
                 api.Logger.Notification("[ecosystemflora] No spread near {0}: {1}", entry.Origin, failureReason);
             }
+
+            if (!FlowerSpreadCooldownTiming.ShouldDeferCooldownToPlacement(backgroundQueued, spawned))
+            {
+                TryApplyPostSpreadAttemptCooldownOnce(spreadOriginCopy, entry.Requirements);
+            }
         }
 
-        void TryApplyPostSpawnCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
+        void ApplyFlowerSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            if (spreadOrigin == null || requirements == null) return;
+            TryApplyPostSpreadAttemptCooldownOnce(spreadOrigin, requirements);
+        }
+
+        void TryApplyPostSpreadAttemptCooldownOnce(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            if (spreadOrigin == null || !spreadCooldownOriginsScratch.Add(spreadOrigin)) return;
+            TryApplyPostSpreadAttemptCooldown(spreadOrigin, requirements);
+        }
+
+        void TryApplyPostSpreadAttemptCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
         {
             if (spreadOrigin == null || requirements == null || api == null) return;
-            if (requirements.Habitat != EcologyHabitat.Terrestrial) return;
-            if (!WildFlowerMaturation.TryGetProfile(requirements.Species, out _)) return;
-
             if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
 
-            double now = api.World.Calendar.TotalHours;
-            double cooldown = WildFlowerMaturation.PostSpawnCooldownHours(
-                api, parent.Origin, requirements, EcosystemConfig.Loaded);
-            parent.NextSpawnAllowedAtHours = now + cooldown;
+            WildFlowerMaturation.TryApplySpreadAttemptCooldown(
+                parent,
+                api.World.Calendar.TotalHours,
+                api,
+                parent.Origin,
+                requirements,
+                EcosystemConfig.Loaded,
+                failedChanceRoll: false);
+        }
+
+        void TryApplyFailedChanceRollCooldownOnce(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            if (spreadOrigin == null || !spreadCooldownOriginsScratch.Add(spreadOrigin)) return;
+            TryApplyFailedChanceRollCooldown(spreadOrigin, requirements);
+        }
+
+        void TryApplyFailedChanceRollCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            if (spreadOrigin == null || requirements == null || api == null) return;
+            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
+
+            WildFlowerMaturation.TryApplySpreadAttemptCooldown(
+                parent,
+                api.World.Calendar.TotalHours,
+                api,
+                parent.Origin,
+                requirements,
+                EcosystemConfig.Loaded,
+                failedChanceRoll: true);
         }
     }
 }
+

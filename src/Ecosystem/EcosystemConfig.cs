@@ -121,6 +121,12 @@ namespace WildFarming.Ecosystem
         /// <summary>Spread colonizer flowers as small juvenile blocks that mature before reproducing.</summary>
         public bool EnableFlowerSpreadMaturation { get; set; } = true;
 
+        /// <summary>Calendar pause on flower parents after each spread attempt (independent of juvenile maturation).</summary>
+        public bool EnableFlowerSpreadAttemptCooldown { get; set; } = true;
+
+        /// <summary>Scales per-species post-spread cooldown hours for meadow flowers (higher = shorter pause).</summary>
+        public float FlowerSpreadCooldownHoursMultiplier { get; set; } = 1f;
+
         /// <summary>Juvenile → mature checks per reproduce tick.</summary>
         public int MaxPendingFlowerMaturationChecksPerTick { get; set; } = 32;
 

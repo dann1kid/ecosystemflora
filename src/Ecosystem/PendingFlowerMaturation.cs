@@ -18,8 +18,6 @@ namespace WildFarming.Ecosystem
             public double MatureAtHours;
         }
 
-        const double TimeoutHours = 60 * 24;
-
         public void Add(BlockPos pos, AssetLocation matureCode, string species, double matureAtHours)
         {
             if (pos == null || matureCode == null || string.IsNullOrEmpty(species)) return;
@@ -56,6 +54,16 @@ namespace WildFarming.Ecosystem
             indexByPos.Remove(removed.Pos);
         }
 
+        public bool TryGetHoursUntilMature(BlockPos pos, double nowHours, out double hoursLeft)
+        {
+            hoursLeft = 0;
+            if (pos == null || !indexByPos.TryGetValue(pos, out int index)) return false;
+
+            hoursLeft = entries[index].MatureAtHours - nowHours;
+            if (hoursLeft < 0) hoursLeft = 0;
+            return true;
+        }
+
         public void Process(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
         {
             if (entries.Count == 0 || api == null || ecosystem == null || maxChecks <= 0) return;
@@ -68,12 +76,6 @@ namespace WildFarming.Ecosystem
             {
                 Entry entry = entries[i];
                 checkedCount++;
-
-                if (nowHours - entry.MatureAtHours > TimeoutHours)
-                {
-                    remove.Add(entry.Pos);
-                    continue;
-                }
 
                 if (nowHours < entry.MatureAtHours)
                 {

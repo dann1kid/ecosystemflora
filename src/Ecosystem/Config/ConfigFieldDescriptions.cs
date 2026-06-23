@@ -84,6 +84,14 @@ namespace WildFarming.Ecosystem.Config
                 "On: meadow colonizer flowers spread as small seedlings, then mature. Off: instant adult plant.",
                 "Вкл.: новый цветок маленький, потом взрослеет. Выкл.: сразу взрослый.");
 
+            D(nameof(EcosystemConfig.EnableFlowerSpreadAttemptCooldown),
+                "On: parent flower waits after each spread attempt before retry. Off: only calendar spread interval applies.",
+                "Вкл.: родитель ждёт после каждой попытки spread. Выкл.: только обычный интервал spread.");
+
+            D(nameof(EcosystemConfig.FlowerSpreadCooldownHoursMultiplier),
+                "Higher: shorter post-spread pause on parent flowers. Lower: longer cooldown between offspring.",
+                "Больше: короче пауза после spread. Меньше: дольше между попытками.");
+
             D(nameof(EcosystemConfig.MaxPendingFlowerMaturationChecksPerTick),
                 "Higher: more maturation checks per game tick. Lower: slower maturation queue.",
                 "Больше: быстрее очередь созревания. Меньше: медленнее.");

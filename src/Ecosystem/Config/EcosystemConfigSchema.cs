@@ -52,6 +52,8 @@ namespace WildFarming.Ecosystem.Config
             ("UseSpeciesSpreadRates", "spread"),
             ("GrowthHoursMultiplier", "spread"),
             ("EnableFlowerSpreadMaturation", "spread"),
+            ("EnableFlowerSpreadAttemptCooldown", "spread"),
+            ("FlowerSpreadCooldownHoursMultiplier", "spread"),
             ("MaxPendingFlowerMaturationChecksPerTick", "spread"),
             ("EnableTallgrassSpreadMaturation", "spread"),
             ("MaxPendingTallgrassPromotionChecksPerTick", "spread"),

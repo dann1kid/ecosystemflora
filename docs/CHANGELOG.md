@@ -3,9 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.16**
+**This release:** **3.9.20**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.20 — Flower spread maturation (all meadow flowers)
+
+- **Juvenile spread** for all 23 meadow flower species plus redtopgrass; maturation queue and inspect on establishing seedlings.
+- **Spread-attempt cooldown** on placement commit (not background queue); separate `EnableFlowerSpreadAttemptCooldown` and `FlowerSpreadCooldownHoursMultiplier`.
+- **Failed chance roll** applies a short parent pause (~3 h) to reduce event-wake spam.
+- **Assets:** croton/rafflesia juveniles use vanilla shapes; variant-aware maturation for lupine, croton, and rafflesia.
+- **Support:** one-time log when a juvenile blocktype is missing; `EcologyGrassColonizerSpecies` for redtopgrass; integration tests and doc updates.
 
 ---
 

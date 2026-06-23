@@ -1,46 +1,74 @@
-# Flower spread maturation (v3.9.6)
+# Flower spread maturation
 
-Colonizer meadow flowers spread as a **small juvenile block**, then mature into the vanilla parent after a calendar delay. This keeps cell competition and succession but avoids “instant adult meadow” after harvest or spring spread bursts.
+Meadow flowers spread as a **small juvenile block**, then mature into the vanilla parent after a calendar delay. Post-spread cooldown pauses the parent after each spread attempt (including failed chance rolls).
 
 ## Behaviour
 
 | Stage | Block | Reproduce registry |
 |-------|-------|-------------------|
 | Spread offspring | `ecosystemflora:juvenile-flower-{species}-free` | Not registered |
-| After maturation | `game:flower-{species}-free` | Registered like worldgen flora |
+| After maturation | Vanilla `game:flower-*` (or variant path) | Registered like worldgen flora |
 | Worldgen / chunk scan | Mature vanilla block | Registered immediately (unchanged) |
 | Player-placed | Mature vanilla block | Registered immediately (unchanged) |
 
-## Species (initial rollout)
+## Species coverage
 
-Fast colonizers + woad: `cowparsley`, `horsetail`, `mugwort`, `lupine`, `woad`, `redtopgrass`, `heather`, `westerngorse`.
+All **23** ecology flower species from `EcologyFlowerSpecies.All`, plus grass colonizer **`redtopgrass`** (`EcologyGrassColonizerSpecies` — uses `flower-*` paths but competes with tallgrass).
+
+Per-species maturation/cooldown hours: `WildFlowerMaturation.cs` (`BySpecies` overrides + tier defaults for unlisted flowers).
+
+**Variant-aware maturation:** lupine, croton, and rafflesia inherit the **parent block code** at maturation (color/size variant preserved). Fallback codes when parent is unknown:
+
+| Species | Default mature code |
+|---------|---------------------|
+| `rafflesiared` | `game:flower-rafflesia-red-free` |
+| `rafflesiabrown` | `game:flower-rafflesia-brown-free` |
+| `croton` | `game:flower-croton-small-crimson-green-free` |
+
+Juvenile assets for croton/rafflesia use vanilla **croton/rafflesia shapes** (not meadow `petal/*` textures).
 
 ## Timing
 
-- **Maturation:** `speciesBaseMaturationHours / GrowthHoursMultiplier`, scaled slightly by seasonal spread activity (spring faster).
-- **Post-spawn cooldown:** parent cannot spawn again until `postSpawnCooldownHours` after a **successful** offspring commit (in addition to normal spread interval).
-- **Event wake:** may pull `NextAttemptHours` forward to `now + 6` game hours when spawn cooldown has elapsed; wake never bypasses `NextSpawnAllowedAtHours`.
+- **Maturation:** `speciesBaseMaturationHours / GrowthHoursMultiplier` (min 6 game hours; season can shorten).
+- **Post-spread cooldown:** after a spread attempt that ran placement logic (sync, two-phase commit, or background no-winners). Applied on **commit**, not when a background job is queued.
+- **Failed chance roll cooldown:** ~3 game hours (capped at 4 h) when the spread **chance roll fails** before placement — soft anti-spam for event wake.
+- **Event wake:** may pull `NextAttemptHours` forward to `now + EventWakeRetryHours` when spawn cooldown has elapsed; wake never bypasses `NextSpawnAllowedAtHours`.
 
 ## Config
 
 | Key | Default | Purpose |
 |-----|---------|---------|
 | `EnableFlowerSpreadMaturation` | `true` | Juvenile spread + pending maturation queue |
-| `GrowthHoursMultiplier` | `1` | Higher = faster juvenile → mature |
+| `EnableFlowerSpreadAttemptCooldown` | `true` | Parent pause after spread attempts (independent of juvenile) |
+| `FlowerSpreadCooldownHoursMultiplier` | `1` | Higher = shorter post-spread and failed-roll pauses |
+| `GrowthHoursMultiplier` | `1` | Higher = faster juvenile → mature only |
 | `MaxPendingFlowerMaturationChecksPerTick` | `32` | Budget for maturation commits per reproduce tick |
+
+## Inspect (I)
+
+| Target | Lines |
+|--------|-------|
+| Juvenile seedling | Not registered; establishing; mature in ~X days (from maturation queue) |
+| Registered parent | Registered; next spread; optional **spread retry cooldown** when `NextSpawnAllowedAtHours` is active |
+
+Lang keys: `inspect-line-flower-establishing`, `inspect-line-flower-maturing`, `inspect-line-spawn-cooldown`.
 
 ## Assets
 
-Juvenile blocktypes under `assets/ecosystemflora/blocktypes/plant/` reuse **vanilla flower shapes** (`1patch-3faces-24x24`, `1patch-cross-24x24`, `3patches-3faces-24x24`, `lupine/one-plant`) and **petal/stem texture paths** from `game:blocktypes/plant/flower.json` — not per-species shape folders.
+Juvenile blocktypes under `assets/ecosystemflora/blocktypes/plant/`. Meadow flowers reuse vanilla flower shapes/textures from `game:blocktypes/plant/flower.json`. Regenerate batch assets: `tools/GenerateJuvenileFlowerBlocks.ps1`.
+
+Missing juvenile blocktype: one **Notification** per species per session (extra **Warning** when `VerboseLogging`).
 
 ## Code
 
 | Component | File |
 |-----------|------|
 | Species hours + cooldown table | `WildFlowerMaturation.cs` |
+| Grass colonizer list | `EcologyGrassColonizerSpecies.cs` |
 | Juvenile block codes | `FlowerJuvenileBlocks.cs` |
 | Maturation queue | `PendingFlowerMaturation.cs` |
 | Spread block resolution | `FlowerSpreadMaturation.cs` |
+| Cooldown deferral (background) | `FlowerSpreadCooldownTiming.cs` |
 | Parent cooldown field | `ReproducerEntry.NextSpawnAllowedAtHours` |
 
-See also: [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md) (meadow matrix), [`GAPS.md`](GAPS.md) §1, [`CONFIGURATION.md`](CONFIGURATION.md).
+See also: [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md), [`GAPS.md`](GAPS.md) §1, [`CONFIGURATION.md`](CONFIGURATION.md).

@@ -110,6 +110,11 @@ namespace WildFarming.Ecosystem
                         result.Origin);
                 }
             }
+
+            if (result.Winners.Count == 0)
+            {
+                eco.NotifySpreadSolveNoWinners(result.Origin, result.Requirements);
+            }
         }
     }
 }

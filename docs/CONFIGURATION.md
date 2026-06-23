@@ -72,7 +72,9 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `MinSpeciesReproduceIntervalHours` | double | 0 | Floor between attempts (legacy mode only) |
 | `MaxFailedSurvivalChecks` | int | 5 | Failed survival checks before stress removal |
 | `GrowthHoursMultiplier` | float | 1 | Juvenile flower → mature pace (higher = faster); see [`FLOWER_SPREAD_MATURATION.md`](FLOWER_SPREAD_MATURATION.md) |
-| `EnableFlowerSpreadMaturation` | bool | true | Colonizer spread uses small juvenile blocks before mature registration |
+| `EnableFlowerSpreadMaturation` | bool | true | Meadow flowers spread as small juvenile blocks before mature registration |
+| `EnableFlowerSpreadAttemptCooldown` | bool | true | Parent calendar pause after each flower spread attempt (even when maturation is off) |
+| `FlowerSpreadCooldownHoursMultiplier` | float | 1 | Scales post-spread and failed-roll cooldown hours (higher = shorter pause) |
 | `MaxPendingFlowerMaturationChecksPerTick` | int | 32 | Maturation commits per reproduce tick |
 | `EnableTallgrassSpreadMaturation` | bool | true | Tallgrass spread uses veryshort; registration waits for short+ height |
 | `MaxPendingTallgrassPromotionChecksPerTick` | int | 32 | Establishing tallgrass promotion checks per reproduce tick |

@@ -1,0 +1,22 @@
+﻿{
+  "code": "juvenile-flower-rafflesiabrown-free",
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "drawtype": "JSON",
+  "randomizeRotations": true,
+  "randomDrawOffset": true,
+  "randomizeAxes": "xz",
+  "shape": { "base": "game:block/plant/rafflesia/brown", "scale": 0.45 },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "materialDensity": 200,
+  "drops": []
+}
