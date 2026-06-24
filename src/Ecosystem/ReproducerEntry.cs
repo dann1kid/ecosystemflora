@@ -42,6 +42,14 @@ namespace WildFarming.Ecosystem
 
         internal int ChunkListIndex { get; set; } = -1;
 
+        internal MatSpreadCollectMode LastSpreadCollectMode { get; set; }
+
+        internal bool LastSpreadPlaced { get; set; }
+
+        internal string LastSpreadFailureReason { get; set; }
+
+        internal double LastSpreadAttemptAtHours { get; set; }
+
         public ReproducerEntry(
             BlockPos origin,
             AssetLocation juvenileBlockCode,

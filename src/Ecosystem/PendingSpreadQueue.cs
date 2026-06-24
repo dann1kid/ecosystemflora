@@ -32,7 +32,8 @@ namespace WildFarming.Ecosystem
             int maxCommits,
             long budgetTicks,
             Stopwatch budgetWatch,
-            bool logFailures)
+            bool logFailures,
+            Action<PendingSpreadIntent> onDropped = null)
         {
             LastCommitted = 0;
             if (api == null || cfg == null || pending.Count == 0 || maxCommits <= 0) return 0;
@@ -97,6 +98,7 @@ namespace WildFarming.Ecosystem
                     }
                     else
                     {
+                        onDropped?.Invoke(intent);
                         RemoveAt(index);
                         if (cursor > index) cursor--;
                     }

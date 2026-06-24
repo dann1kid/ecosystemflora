@@ -50,6 +50,7 @@ namespace WildFarming.Ecosystem
         internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
         readonly HashSet<BlockPos> spreadCooldownOriginsScratch = new HashSet<BlockPos>();
+        readonly Dictionary<BlockPos, MatSpreadCollectMode> spreadMatModeScratch = new Dictionary<BlockPos, MatSpreadCollectMode>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
         readonly PendingSpreadQueue pendingSpreadQueue = new PendingSpreadQueue();
         internal PendingSpreadQueue PendingSpreads => pendingSpreadQueue;
@@ -412,6 +413,16 @@ namespace WildFarming.Ecosystem
         {
             if (origin == null || requirements == null) return;
             TryApplyPostSpreadAttemptCooldownOnce(origin, requirements);
+
+            if (!registry.TryGetEntry(origin, out ReproducerEntry entry)) return;
+
+            spreadMatModeScratch.TryGetValue(origin, out MatSpreadCollectMode matMode);
+            SpreadAttemptInspect.Record(
+                api,
+                entry,
+                matMode,
+                placed: false,
+                failureReason: "No qualifying cells");
         }
 
         public void RelocateVineTip(BlockPos oldPos, BlockPos newPos)
@@ -1821,6 +1832,7 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
 
             spreadCooldownOriginsScratch.Clear();
+            spreadMatModeScratch.Clear();
 
             if (cfg.EnableBackgroundSpreadSolve)
             {
@@ -1941,7 +1953,8 @@ namespace WildFarming.Ecosystem
                     maxCommits,
                     spreadBudgetTicks,
                     tickBudgetWatch,
-                    cfg.VerboseLogging && cfg.ReproduceDebug);
+                    cfg.VerboseLogging && cfg.ReproduceDebug,
+                    onDropped: OnSpreadCommitDropped);
 
                 timings.SpreadCommitTicks = tickBudgetWatch.ElapsedTicks;
                 timings.PendingSpreadQueueSize = pendingSpreadQueue.Count;
@@ -1956,6 +1969,8 @@ namespace WildFarming.Ecosystem
 
         void OnSpreadPlaced(BlockPos pos, PlantRequirements requirements, bool displaced, BlockPos spreadOrigin)
         {
+            RecordSpreadAttempt(spreadOrigin, requirements, placed: true);
+
             if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
             {
                 pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
@@ -2032,10 +2047,14 @@ namespace WildFarming.Ecosystem
             BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
             BlockPos spreadOriginCopy = spreadOrigin.Copy();
+            MatSpreadCollectMode matMode = SpreadAttemptInspect.ResolveCollectMode(
+                entry.Requirements, api.World.Rand);
+            spreadMatModeScratch[spreadOriginCopy] = matMode;
 
             float chance = SpeciesSpread.EffectiveChance(api, spreadOrigin, cfg, entry.Requirements);
             if (!skipChanceRoll && api.World.Rand.NextDouble() > chance)
             {
+                RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "Chance roll failed");
                 TryApplyFailedChanceRollCooldownOnce(spreadOriginCopy, entry.Requirements);
                 return;
             }
@@ -2120,7 +2139,57 @@ namespace WildFarming.Ecosystem
             if (!FlowerSpreadCooldownTiming.ShouldDeferCooldownToPlacement(backgroundQueued, spawned))
             {
                 TryApplyPostSpreadAttemptCooldownOnce(spreadOriginCopy, entry.Requirements);
+                if (spawned == 0)
+                {
+                    RecordSpreadAttempt(
+                        spreadOriginCopy,
+                        entry,
+                        matMode,
+                        placed: false,
+                        failureReason ?? "No placement");
+                }
             }
+        }
+
+        void OnSpreadCommitDropped(PendingSpreadIntent intent)
+        {
+            if (intent?.ParentOrigin == null || intent.Requirements == null) return;
+
+            ApplyFlowerSpreadCooldownOnCommit(intent.ParentOrigin, intent.Requirements);
+
+            if (!registry.TryGetEntry(intent.ParentOrigin, out ReproducerEntry entry)) return;
+
+            spreadMatModeScratch.TryGetValue(intent.ParentOrigin, out MatSpreadCollectMode matMode);
+            SpreadAttemptInspect.Record(
+                api,
+                entry,
+                matMode,
+                placed: false,
+                failureReason: "Commit revalidation failed");
+        }
+
+        void RecordSpreadAttempt(
+            BlockPos spreadOrigin,
+            PlantRequirements requirements,
+            bool placed,
+            string failureReason = null)
+        {
+            if (spreadOrigin == null || requirements == null) return;
+            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry entry)) return;
+
+            spreadMatModeScratch.TryGetValue(spreadOrigin, out MatSpreadCollectMode matMode);
+            SpreadAttemptInspect.Record(api, entry, matMode, placed, failureReason);
+        }
+
+        void RecordSpreadAttempt(
+            BlockPos spreadOrigin,
+            ReproducerEntry entry,
+            MatSpreadCollectMode matMode,
+            bool placed,
+            string failureReason = null)
+        {
+            if (entry == null) return;
+            SpreadAttemptInspect.Record(api, entry, matMode, placed, failureReason);
         }
 
         void ApplyFlowerSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)

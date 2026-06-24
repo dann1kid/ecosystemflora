@@ -3,9 +3,17 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.20**
+**This release:** **3.9.22**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.22 — Spread inspect and two-phase cooldown fix
+
+- **Fix:** flower spread cooldown now applies when two-phase placement enqueues candidates but every commit fails revalidation.
+- **Inspect (I):** last spread channel on registered plants (rhizome mat / seed jump / radius / failure reason).
+- **Docs:** `GAPS.md` reframed — shallow-water colonization is natural; aquatic gaps are model/tempo consistency, not “slow down crowfoot”.
 
 ---
 

@@ -329,6 +329,8 @@ namespace WildFarming.Ecosystem
                             cooldownDays.ToString("0.#"));
                     }
                 }
+
+                AppendLastSpreadAttempt(entry, lines);
             }
             else
             {
@@ -389,6 +391,37 @@ namespace WildFarming.Ecosystem
             else
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-survival-ok");
+            }
+        }
+
+        static void AppendLastSpreadAttempt(ReproducerEntry entry, List<InspectLineLite> lines)
+        {
+            if (entry == null || entry.LastSpreadAttemptAtHours <= 0) return;
+
+            if (entry.LastSpreadPlaced)
+            {
+                switch (entry.LastSpreadCollectMode)
+                {
+                    case MatSpreadCollectMode.SeedDispersal:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-last-spread-seed");
+                        break;
+                    case MatSpreadCollectMode.MatEdge:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-last-spread-rhizome");
+                        break;
+                    default:
+                        AddInspectLine(lines, "ecosystemflora:inspect-line-last-spread-independent");
+                        break;
+                }
+
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(entry.LastSpreadFailureReason))
+            {
+                AddInspectLine(
+                    lines,
+                    "ecosystemflora:inspect-line-last-spread-failed",
+                    entry.LastSpreadFailureReason);
             }
         }
 
