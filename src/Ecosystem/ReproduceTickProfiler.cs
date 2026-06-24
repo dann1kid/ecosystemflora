@@ -7,6 +7,7 @@ namespace WildFarming.Ecosystem
     {
         public long SaplingsTicks;
         public long FlowerMaturationTicks;
+        public long FlowerPhenologyTicks;
         public long TallgrassPromotionTicks;
         public long FoliageTicks;
         public long TreeGrowthTicks;

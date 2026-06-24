@@ -3,9 +3,18 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.23**
+**This release:** **3.9.24**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 3.9.24 — Meadow flower phenology (simulation-first)
+
+- **Phases:** dormant → vegetative → bloom → dieback driven by `WildSpeciesSeason`, local temperature, and per-plant bloom energy. Spread and hand harvest only in **bloom**; inspect (I) shows phase, energy, and bloom ETA.
+- **Visuals:** 72 full-size `flowerphase-*` blocktypes (24 meadow species × 3 non-bloom phases) plus bloom = vanilla `flower-*`. Spread seedlings stay on small `juvenile-flower-*`.
+- **Assets:** `tools/GenerateFlowerPhaseBlocks.ps1` — petal textures with phase tint (fixes transparent dormant/dieback on heather and similar); dedicated rafflesia `inside`/`petals` overrides; block lang `block-flowerphase-*` / `block-juvenile-flower-*` in en/ru/de.
+- **Config:** `EnableFlowerPhenology` (default on) and bloom temperature/energy keys in settings UI. Docs: [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md).
 
 ---
 

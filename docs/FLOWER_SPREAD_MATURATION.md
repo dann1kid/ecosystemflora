@@ -7,7 +7,7 @@ Meadow flowers spread as a **small juvenile block**, then mature into the vanill
 | Stage | Block | Reproduce registry |
 |-------|-------|-------------------|
 | Spread offspring | `ecosystemflora:juvenile-flower-{species}-free` | Not registered |
-| After maturation | Vanilla `game:flower-*` (or variant path) | Registered like worldgen flora |
+| After maturation | Phenology **vegetative** phase block or vanilla bloom (see [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md)) | Registered |
 | Worldgen / chunk scan | Mature vanilla block | Registered immediately (unchanged) |
 | Player-placed | Mature vanilla block | Registered immediately (unchanged) |
 

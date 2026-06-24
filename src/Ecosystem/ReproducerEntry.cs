@@ -38,6 +38,15 @@ namespace WildFarming.Ecosystem
         /// <summary>Phased senescence after calendar lifespan (one stage per game year).</summary>
         public TreeSenescencePhase TreeSenescencePhase { get; set; }
 
+        /// <summary>Meadow flower phenology phase when <see cref="FlowerPhenology"/> is enabled.</summary>
+        public FlowerPhenologyPhase PhenologyPhase { get; set; }
+
+        /// <summary>Energy toward bloom (0..threshold+); depletes during bloom.</summary>
+        public float PhenologyEnergy { get; set; }
+
+        /// <summary>Last game-hour when phenology was advanced for this entry.</summary>
+        public double LastPhenologyUpdateHours { get; set; }
+
         internal int EntriesIndex { get; set; } = -1;
 
         internal int ChunkListIndex { get; set; } = -1;
@@ -77,5 +86,8 @@ namespace WildFarming.Ecosystem
             if (block.Code.Equals(MatureBlockCode)) return true;
             return PlantCodeHelper.SameEcologySpecies(block.Code, MatureBlockCode);
         }
+
+        /// <summary>Mature vanilla flower or phenology juvenile at the registered origin.</summary>
+        public bool IsRegisteredPlantBlock(Block block) => FlowerPhenology.IsRegisteredPlantBlock(this, block);
     }
 }

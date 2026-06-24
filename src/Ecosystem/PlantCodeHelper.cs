@@ -72,6 +72,7 @@ namespace WildFarming.Ecosystem
             if (block?.Code == null) return false;
             if (IsThirdPartyEcologyBlock(block)) return true;
             if (FlowerJuvenileBlocks.IsJuvenileBlock(block)) return true;
+            if (FlowerPhenologyBlocks.IsPhaseBlock(block)) return true;
             if (block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
@@ -98,6 +99,9 @@ namespace WildFarming.Ecosystem
 
             string juvenileSpecies = FlowerJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
             if (juvenileSpecies != null) return juvenileSpecies;
+
+            string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseCode(blockCode);
+            if (phaseSpecies != null) return phaseSpecies;
 
             if (path.StartsWith("flower-"))
             {
@@ -398,6 +402,13 @@ namespace WildFarming.Ecosystem
             if (WildVineHelper.IsEndBlock(block))
             {
                 return block.Code;
+            }
+
+            string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseBlock(block);
+            if (phaseSpecies != null)
+            {
+                AssetLocation mature = FlowerJuvenileBlocks.MatureVanillaCode(phaseSpecies);
+                return mature ?? block.Code;
             }
 
             if (!IsEcologyPlant(block)) return null;

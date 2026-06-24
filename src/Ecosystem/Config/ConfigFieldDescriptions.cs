@@ -96,6 +96,30 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more maturation checks per game tick. Lower: slower maturation queue.",
                 "Больше: быстрее очередь созревания. Меньше: медленнее.");
 
+            D(nameof(EcosystemConfig.EnableFlowerPhenology),
+                "On: meadow flowers follow simulated phases (dormant/vegetative/bloom/dieback). Spread and harvest only in bloom; block appearance follows phase.",
+                "Вкл.: фазы цветов (покой/вегетация/цветение/отмирание). Spread и сбор только в цветении; вид блока = фаза.");
+
+            D(nameof(EcosystemConfig.FlowerBloomMinTemperature),
+                "Higher: flowers need warmer weather to bloom (shorter bloom window). Lower: bloom in cooler cells.",
+                "Больше: цветение только в более тёплой погоде. Меньше: цветение в прохладнее.");
+
+            D(nameof(EcosystemConfig.FlowerBloomMaxTemperature),
+                "Higher: tolerate hotter summers before dieback. Lower: earlier heat dieback.",
+                "Больше: выдерживают более жаркое лето. Меньше: раньше отмирание от жары.");
+
+            D(nameof(EcosystemConfig.FlowerBloomEnergyThreshold),
+                "Higher: longer vegetative wait before bloom. Lower: faster bloom after season opens.",
+                "Больше: дольше вегетация до цветения. Меньше: быстрее вход в цветение.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologyEnergyGainPerDay),
+                "Higher: faster vegetative energy buildup. Lower: slower path to bloom.",
+                "Больше: быстрее накопление энергии. Меньше: медленнее путь к цветению.");
+
+            D(nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick),
+                "Higher: more flower phase updates per tick. Lower: slower phenology pacing.",
+                "Больше: больше обновлений фаз за тик. Меньше: медленнее фенология.");
+
             D(nameof(EcosystemConfig.EnableTallgrassSpreadMaturation),
                 "On: spread places very low grass; mod raises to short on a timer before spread. Off: height chosen at spread.",
                 "Вкл.: новая трава очень низкая, мод доращивает до низкой, потом размножается. Выкл.: высота сразу по месту.");

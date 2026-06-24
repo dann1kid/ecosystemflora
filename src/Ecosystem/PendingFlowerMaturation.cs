@@ -108,11 +108,37 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                acc.SetBlock(mature.BlockId, entry.Pos);
-                acc.MarkBlockDirty(entry.Pos);
+                EcosystemConfig cfg = EcosystemConfig.Loaded;
+                bool phenology = FlowerPhenology.UsesPhenology(
+                    cfg,
+                    new PlantRequirements { Species = entry.Species, Habitat = EcologyHabitat.Terrestrial });
 
-                if (EcosystemParticipant.TryFromBlock(acc.GetBlock(entry.Pos), out IEcosystemParticipant participant))
+                if (!phenology)
                 {
+                    acc.SetBlock(mature.BlockId, entry.Pos);
+                    acc.MarkBlockDirty(entry.Pos);
+                }
+
+                if (!EcosystemParticipant.TryFromBlock(mature, out IEcosystemParticipant participant))
+                {
+                    remove.Add(entry.Pos);
+                    continue;
+                }
+
+                if (phenology)
+                {
+                    ecosystem.RegisterReproducer(
+                        entry.Pos,
+                        participant.SpreadBlockCode,
+                        participant.MatureBlockCode,
+                        participant.Requirements,
+                        spawnBurst: false,
+                        flowerSpreadEstablished: true);
+                }
+                else
+                {
+                    acc.SetBlock(mature.BlockId, entry.Pos);
+                    acc.MarkBlockDirty(entry.Pos);
                     ecosystem.RegisterReproducer(entry.Pos, participant, spawnBurst: false);
                 }
 

@@ -41,6 +41,14 @@ namespace WildFarming.Ecosystem
             if (!DropsWholePlantBlock(brokenBlock))
                 return true;
 
+            if (EcosystemSystem.Instance != null
+                && EcosystemSystem.Instance.TryGetReproducer(pos, out ReproducerEntry entry)
+                && FlowerPhenology.UsesPhenology(EcosystemConfig.Loaded, entry.Requirements)
+                && !FlowerPhenology.AllowsFlowerBlockHarvest(entry))
+            {
+                return true;
+            }
+
             if (!TryResolveFlowerBlockDrop(brokenBlock, out ItemStack drop))
                 return false;
 

@@ -130,6 +130,24 @@ namespace WildFarming.Ecosystem
         /// <summary>Juvenile → mature checks per reproduce tick.</summary>
         public int MaxPendingFlowerMaturationChecksPerTick { get; set; } = 32;
 
+        /// <summary>Meadow flower phenology: energy, phases, bloom-gated spread, block sync.</summary>
+        public bool EnableFlowerPhenology { get; set; } = true;
+
+        /// <summary>Min local °C to enter or sustain bloom.</summary>
+        public float FlowerBloomMinTemperature { get; set; } = 5f;
+
+        /// <summary>Local °C above which flowers enter dieback.</summary>
+        public float FlowerBloomMaxTemperature { get; set; } = 32f;
+
+        /// <summary>Vegetative energy required before bloom (arbitrary units).</summary>
+        public float FlowerBloomEnergyThreshold { get; set; } = 1f;
+
+        /// <summary>Vegetative energy gained per game day at season activity 1.0.</summary>
+        public float FlowerPhenologyEnergyGainPerDay { get; set; } = 0.15f;
+
+        /// <summary>Phenology state advances per reproduce tick (round-robin).</summary>
+        public int MaxFlowerPhenologyChecksPerTick { get; set; } = 48;
+
         /// <summary>Spread tallgrass as veryshort; register for spread only after vanilla growth reaches short+.</summary>
         public bool EnableTallgrassSpreadMaturation { get; set; } = true;
 

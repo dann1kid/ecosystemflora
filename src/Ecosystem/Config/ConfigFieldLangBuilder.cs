@@ -318,6 +318,41 @@ namespace WildFarming.Ecosystem.Config
                     "Больше: почки только в более тёплых клетках (короче сезон). Меньше: почки в прохладнее.");
             }
 
+            if (name == nameof(EcosystemConfig.FlowerBloomMinTemperature))
+            {
+                return Numeric(title,
+                    "Higher: flowers need warmer weather to bloom (shorter bloom window). Lower: bloom in cooler cells.",
+                    "Больше: цветение только в более тёплой погоде. Меньше: цветение в прохладнее.");
+            }
+
+            if (name == nameof(EcosystemConfig.FlowerBloomMaxTemperature))
+            {
+                return Numeric(title,
+                    "Higher: tolerate hotter summers before dieback. Lower: earlier heat dieback.",
+                    "Больше: выдерживают более жаркое лето. Меньше: раньше отмирание от жары.");
+            }
+
+            if (name == nameof(EcosystemConfig.FlowerBloomEnergyThreshold))
+            {
+                return Numeric(title,
+                    "Higher: longer vegetative wait before bloom. Lower: faster bloom after season opens.",
+                    "Больше: дольше вегетация до цветения. Меньше: быстрее вход в цветение.");
+            }
+
+            if (name == nameof(EcosystemConfig.FlowerPhenologyEnergyGainPerDay))
+            {
+                return Numeric(title,
+                    "Higher: faster vegetative energy buildup. Lower: slower path to bloom.",
+                    "Больше: быстрее накопление энергии. Меньше: медленнее путь к цветению.");
+            }
+
+            if (name == nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick))
+            {
+                return Numeric(title,
+                    "Higher: more flower phase updates per tick. Lower: slower phenology pacing.",
+                    "Больше: больше обновлений фаз за тик. Меньше: медленнее фенология.");
+            }
+
             if (name == nameof(EcosystemConfig.CanopyLatitudeInfluence))
             {
                 return Numeric(title,

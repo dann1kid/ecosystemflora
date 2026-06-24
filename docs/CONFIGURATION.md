@@ -32,6 +32,7 @@ Use `"custom"` to keep your own spread values across restarts.
 | Slower spread everywhere | `"BalancePreset": "sparse"` or `custom` + lower `ReproduceAttemptsPerYear` / `ReproduceChance` |
 | Less “instant meadow” after harvest | Default maturation on; or `"GrowthHoursMultiplier": 0.5` for slower juvenile growth |
 | Instant mature spread (legacy feel) | `"EnableFlowerSpreadMaturation": false` |
+| Decorative-only flowers (no bloom gating) | `"EnableFlowerPhenology": false` |
 | Instant tallgrass height at spread | `"EnableTallgrassSpreadMaturation": false` |
 | No wild tree death | `"EnableTreeSenescence": false` (optionally `"EnableTreeAging": false` for no growth either) |
 | Treehouse-friendly | `"EnableTreeSenescence": false`; only natural `log-grown` trunks are in ecology — player `log-placed` builds are not |
@@ -76,6 +77,12 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `EnableFlowerSpreadAttemptCooldown` | bool | true | Parent calendar pause after each flower spread attempt (even when maturation is off) |
 | `FlowerSpreadCooldownHoursMultiplier` | float | 1 | Scales post-spread and failed-roll cooldown hours (higher = shorter pause) |
 | `MaxPendingFlowerMaturationChecksPerTick` | int | 32 | Maturation commits per reproduce tick |
+| `EnableFlowerPhenology` | bool | true | Meadow flower life phases; spread/harvest only in bloom; block sync — [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md) |
+| `FlowerBloomMinTemperature` | float | 5 | Min local °C to bloom |
+| `FlowerBloomMaxTemperature` | float | 32 | °C above which flowers enter dieback |
+| `FlowerBloomEnergyThreshold` | float | 1 | Vegetative energy required before bloom |
+| `FlowerPhenologyEnergyGainPerDay` | float | 0.15 | Energy gain per game day at season activity 1.0 |
+| `MaxFlowerPhenologyChecksPerTick` | int | 48 | Phenology updates per reproduce tick |
 | `EnableTallgrassSpreadMaturation` | bool | true | Tallgrass spread uses veryshort; registration waits for short+ height |
 | `MaxPendingTallgrassPromotionChecksPerTick` | int | 32 | Establishing tallgrass promotion checks per reproduce tick |
 | `EventWakeRetryHours` | double | 6 | Event wake may pull spread retry forward by this many game hours (not during spawn cooldown) |

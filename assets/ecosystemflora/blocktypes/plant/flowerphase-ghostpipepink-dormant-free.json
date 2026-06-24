@@ -1,0 +1,27 @@
+﻿{
+  "code": "flowerphase-ghostpipepink-dormant-free",
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "drawtype": "JSON",
+  "randomizeRotations": true,
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-16x16" },
+  "textures": {
+    "north1": { "base": "game:block/plant/flower/petal/ghostpipepink", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/petal/ghostpipepink", "tint": "#5c6b52" },
+    "south1": { "base": "game:block/plant/flower/petal/ghostpipepink", "tint": "#5c6b52" },
+    "southTinted1": { "base": "game:block/plant/flower/petal/ghostpipepink", "tint": "#5c6b52" }
+  },
+  "climateColorMap": "climatePlantTint",
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.49, "z2": 0.85 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "materialDensity": 200,
+  "drops": []
+}

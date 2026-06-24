@@ -255,7 +255,11 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos contextPos = ResolveInspectContextPos(acc, pos, block, req);
 
-            if (FlowerJuvenileBlocks.IsJuvenileBlock(block))
+            ReproducerEntry registryEntry = null;
+            bool inRegistry = EcosystemSystem.Instance != null
+                && EcosystemSystem.Instance.TryGetReproducer(pos, out registryEntry);
+
+            if (FlowerJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
                 AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
@@ -274,9 +278,9 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (EcosystemSystem.Instance != null
-                && EcosystemSystem.Instance.TryGetReproducer(pos, out ReproducerEntry entry))
+            if (inRegistry)
             {
+                ReproducerEntry entry = registryEntry;
                 AddInspectLine(lines, "ecosystemflora:inspect-line-registered");
 
                 if (cfg.EnableStressDeath && entry.FailedSurvivalChecks > 0)
@@ -331,6 +335,11 @@ namespace WildFarming.Ecosystem
                 }
 
                 AppendLastSpreadAttempt(entry, lines);
+
+                if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements))
+                {
+                    AppendFlowerPhenologyInspect(api, entry, cfg, lines);
+                }
             }
             else
             {
@@ -392,6 +401,68 @@ namespace WildFarming.Ecosystem
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-survival-ok");
             }
+        }
+
+        static void AppendFlowerPhenologyInspect(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            EcosystemConfig cfg,
+            List<InspectLineLite> lines)
+        {
+            if (entry == null || lines == null) return;
+
+            switch (entry.PhenologyPhase)
+            {
+                case FlowerPhenologyPhase.Dormant:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-flower-phase-dormant");
+                    break;
+                case FlowerPhenologyPhase.Vegetative:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-flower-phase-vegetative");
+                    break;
+                case FlowerPhenologyPhase.Bloom:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-flower-phase-bloom");
+                    break;
+                case FlowerPhenologyPhase.Dieback:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-flower-phase-dieback");
+                    break;
+            }
+
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-flower-energy",
+                (entry.PhenologyEnergy / Math.Max(0.01f, cfg.FlowerBloomEnergyThreshold)).ToString("0.##"));
+
+            if (entry.PhenologyPhase == FlowerPhenologyPhase.Vegetative && api?.World?.Calendar != null)
+            {
+                double hoursLeft = EstimateBloomHoursRemaining(api, entry, cfg);
+                if (hoursLeft > 0)
+                {
+                    double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
+                    AddInspectLine(
+                        lines,
+                        "ecosystemflora:inspect-line-flower-bloom-eta",
+                        daysLeft.ToString("0.#"));
+                }
+            }
+        }
+
+        static double EstimateBloomHoursRemaining(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            if (entry == null || cfg == null || api?.World?.Calendar == null) return 0;
+
+            WildSpeciesSeason.Profile profile = WildSpeciesSeason.Resolve(entry.Requirements.Species);
+            float yearProgress = api.World.Calendar.DayOfYearf / api.World.Calendar.DaysPerYear;
+            float season = profile.SpreadMultiplierInterpolated(yearProgress);
+            if (season < 0.05f) return 0;
+
+            float energyGap = cfg.FlowerBloomEnergyThreshold - entry.PhenologyEnergy;
+            if (energyGap <= 0) return 0;
+
+            float dailyGain = cfg.FlowerPhenologyEnergyGainPerDay * season;
+            if (dailyGain <= 0.001f) return 0;
+
+            double days = energyGap / dailyGain;
+            return days * api.World.Calendar.HoursPerDay;
         }
 
         static void AppendLastSpreadAttempt(ReproducerEntry entry, List<InspectLineLite> lines)

@@ -34,6 +34,7 @@ namespace WildFarming.Ecosystem
         readonly CyclicFloraScanner cyclicFloraScanner = new CyclicFloraScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
         readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
+        readonly FlowerPhenologyScheduler flowerPhenologyScheduler = new FlowerPhenologyScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         readonly FoliagePlayerVacancySuppressor foliagePlayerVacancies = new FoliagePlayerVacancySuppressor();
@@ -564,7 +565,8 @@ namespace WildFarming.Ecosystem
             AssetLocation matureBlockCode,
             PlantRequirements requirements,
             bool spawnBurst = false,
-            bool playerPlaced = false)
+            bool playerPlaced = false,
+            bool flowerSpreadEstablished = false)
         {
             if (api == null || api.Side != EnumAppSide.Server) return;
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
@@ -581,16 +583,20 @@ namespace WildFarming.Ecosystem
             try
             {
                 Block matureBlock = api.World.BlockAccessor.GetBlock(origin);
-                if (matureBlock == null || !EcosystemParticipant.TryFromBlock(matureBlock, out _))
+                if (!EcosystemParticipant.TryFromBlock(matureBlock, out _))
                 {
-                    if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                    Block codeBlock = api.World.GetBlock(matureBlockCode);
+                    if (codeBlock == null || !EcosystemParticipant.TryFromBlock(codeBlock, out _))
                     {
-                        api.Logger.Warning(
-                            "[ecosystemflora] Tree not registrable at {0}: block={1}",
-                            origin,
-                            matureBlock?.Code);
+                        if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
+                        {
+                            api.Logger.Warning(
+                                "[ecosystemflora] Tree not registrable at {0}: block={1}",
+                                origin,
+                                matureBlock?.Code);
+                        }
+                        return;
                     }
-                    return;
                 }
 
                 Block spreadBlock = api.World.GetBlock(spreadBlockCode);
@@ -635,6 +641,8 @@ namespace WildFarming.Ecosystem
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
                 if (!playerPlaced)
                     SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
+
+                FlowerPhenology.InitializeOnRegister(api, entry, cfg, flowerSpreadEstablished);
 
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
@@ -1797,6 +1805,10 @@ namespace WildFarming.Ecosystem
             timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
+            flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+            timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
             pendingTallgrassPromotion.Process(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
             timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
 
@@ -1880,7 +1892,7 @@ namespace WildFarming.Ecosystem
                         return true;
                     }
 
-                    if (block.Id == 0 || !entry.IsMatureBlock(block))
+                    if (block.Id == 0 || !entry.IsRegisteredPlantBlock(block))
                     {
                         return false;
                     }
@@ -1888,6 +1900,12 @@ namespace WildFarming.Ecosystem
                     if (entry.Requirements?.Species == "tallgrass"
                         && TallgrassSpreadMaturation.UsesMaturation(cfg)
                         && !TallgrassSpreadMaturation.CanReproduceFrom(block, api, entry.Origin))
+                    {
+                        return true;
+                    }
+
+                    if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements)
+                        && !FlowerPhenology.CanSpread(entry))
                     {
                         return true;
                     }
@@ -2043,6 +2061,11 @@ namespace WildFarming.Ecosystem
             if (entry.Requirements?.Habitat == EcologyHabitat.WildVine) return;
 
             if (TreeSenescence.SuppressesSpread(entry, cfg)) return;
+
+            if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements) && !FlowerPhenology.CanSpread(entry))
+            {
+                return;
+            }
 
             BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
