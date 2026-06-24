@@ -3,13 +3,18 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.22**
+**This release:** **3.9.23**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## 3.9.22 — Spread inspect and two-phase cooldown fix
+## 3.9.23 — Juvenile flower texture fix
+
+- **Fix:** spread seedlings for catmint, wild daisy, forget-me-not, edelweiss, heather, and western gorse now use vanilla texture paths (catmint has a single `petal/catmint` file; two-variant species no longer reference missing `*3` assets).
+- **Tooling:** `GenerateJuvenileFlowerBlocks.ps1` — `WildcardSingle24` and `TwoVariant16/24` helpers mirror vanilla `texturesByType` groups.
+
+---
 
 - **Fix:** flower spread cooldown now applies when two-phase placement enqueues candidates but every commit fails revalidation.
 - **Inspect (I):** last spread channel on registered plants (rhizome mat / seed jump / radius / failure reason).

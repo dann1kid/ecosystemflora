@@ -49,6 +49,48 @@ function ThreePatch24($species) {
     Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
 }
 
+# Vanilla default texturesByType uses petal/{flower}* — single file (catmint) or wildcard pick.
+function WildcardSingle24($species) {
+    $t = @{}
+    foreach ($n in 1,2,3) {
+        $t["north$n"] = "game:block/plant/flower/petal/$species"
+        $t["south$n"] = "game:block/plant/flower/petal/$species"
+        $t["northTinted$n"] = "game:block/plant/flower/stem/$species"
+        $t["southTinted$n"] = "game:block/plant/flower/stem/$species"
+    }
+    Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
+}
+
+function TwoVariant24($species) {
+    $t = @{}
+    foreach ($n in 1,2) {
+        $t["north$n"] = "game:block/plant/flower/petal/${species}$n"
+        $t["south$n"] = "game:block/plant/flower/petal/${species}$n"
+        $t["northTinted$n"] = "game:block/plant/flower/stem/${species}$n"
+        $t["southTinted$n"] = "game:block/plant/flower/stem/${species}$n"
+    }
+    $t["north3"] = "game:block/plant/flower/petal/${species}2"
+    $t["south3"] = "game:block/plant/flower/petal/${species}2"
+    $t["northTinted3"] = "game:block/plant/flower/stem/${species}2"
+    $t["southTinted3"] = "game:block/plant/flower/stem/${species}2"
+    Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
+}
+
+function TwoVariant16($species) {
+    $t = @{}
+    foreach ($n in 1,2) {
+        $t["north$n"] = "game:block/plant/flower/petal/${species}$n"
+        $t["south$n"] = "game:block/plant/flower/petal/${species}$n"
+        $t["northTinted$n"] = "game:block/plant/flower/stem/${species}$n"
+        $t["southTinted$n"] = "game:block/plant/flower/stem/${species}$n"
+    }
+    $t["north3"] = "game:block/plant/flower/petal/${species}2"
+    $t["south3"] = "game:block/plant/flower/petal/${species}2"
+    $t["northTinted3"] = "game:block/plant/flower/stem/${species}2"
+    $t["southTinted3"] = "game:block/plant/flower/stem/${species}2"
+    Write-Block $species "game:block/plant/flower/1patch-3faces-16x16" $t
+}
+
 function ThreePatch16($species) {
     $t = @{}
     foreach ($n in 1,2,3) {
@@ -157,11 +199,11 @@ function RafflesiaBlock($species, $color) {
 }
 
 $toGenerate = @{
-    catmint = { ThreePatch24 "catmint" }
+    catmint = { WildcardSingle24 "catmint" }
     cornflower = { ThreePatch24 "cornflower" }
-    wilddaisy = { ThreePatch24 "wilddaisy" }
-    forgetmenot = { ThreePatch16 "forgetmenot" }
-    edelweiss = { ThreePatch16 "edelweiss" }
+    wilddaisy = { TwoVariant24 "wilddaisy" }
+    forgetmenot = { TwoVariant16 "forgetmenot" }
+    edelweiss = { TwoVariant16 "edelweiss" }
     goldenpoppy = { ThreePatch24 "goldenpoppy" }
     bluebell = { LilyShape "bluebell" }
     daffodil = { LilyShape "daffodil" }
