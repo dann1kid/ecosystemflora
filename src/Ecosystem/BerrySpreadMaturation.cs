@@ -5,7 +5,8 @@ namespace WildFarming.Ecosystem
 {
     internal static class BerrySpreadMaturation
     {
-        const double DefaultMaturationHours = 96;
+        /// <summary>Base calendar hours before a spread berry bush enters the reproduce registry (~7 game-days at SpreadRate 0.5).</summary>
+        const double DefaultMaturationHours = 168;
 
         public static bool UsesMaturation(EcosystemConfig cfg) =>
             cfg != null && cfg.EnableBerrySpreadMaturation && cfg.EcosystemEnabled;

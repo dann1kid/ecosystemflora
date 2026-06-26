@@ -132,6 +132,10 @@ namespace WildFarming.Ecosystem.Config
                 "On: ground ferns spread one orthogonal step from patch edge (rhizome). Off: legacy radius spread.",
                 "Вкл.: папоротники ползут по краю клумбы (ризома). Выкл.: spread по радиусу.");
 
+            D(nameof(EcosystemConfig.EnableBerryColonySpread),
+                "On: wild berries spread one mat step from colony edge (rhizome, suckers, runners); seed jumps use RhizomeSeedDispersal settings. Off: legacy radius spread.",
+                "Вкл.: ягоды ползут с кромки колонии (ризома, поросль, усы); скачки семян — настройки RhizomeSeedDispersal. Выкл.: spread по радиусу.");
+
             D(nameof(EcosystemConfig.EnableFernSpreadMaturation),
                 "On: spread places small juvenile ferns that mature before reproducing. Off: instant adult.",
                 "Вкл.: spread ставит молодой папоротник, потом взрослеет. Выкл.: сразу взрослый.");

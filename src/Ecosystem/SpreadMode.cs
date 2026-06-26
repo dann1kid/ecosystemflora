@@ -17,5 +17,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Ground ferns: patch edge, one orthogonal rhizome step on soil.</summary>
         FernRhizomeMat = 4,
+
+        /// <summary>Wild berries: colony edge step (rhizome/runner mat) with optional seed jumps.</summary>
+        BerryColonyMat = 5,
     }
 }

@@ -607,6 +607,10 @@ namespace WildFarming.Ecosystem
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-fern-rhizome");
             }
+            else if (req.UsesBerryColonySpread)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-berry-colony");
+            }
             else if (req.UsesSurfaceMatSpread)
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-surfacemat");
@@ -621,7 +625,8 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesFernRhizomeSpread)
+            if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesFernRhizomeSpread
+                || req.UsesBerryColonySpread)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
                 bool frontier = MatSpreadDispatch.IsFrontier(acc, pos, req, verticalSearch: 0);
@@ -634,11 +639,13 @@ namespace WildFarming.Ecosystem
 
                 EcosystemConfig cfg = EcosystemConfig.Loaded;
                 if (cfg != null && cfg.RhizomeSeedDispersalEnabled
-                    && (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread))
+                    && (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesBerryColonySpread))
                 {
                     float seedChance = req.UsesRhizomeSpread
                         ? RhizomeSpread.EffectiveSeedDispersalChance(req)
-                        : SurfaceMatSpread.EffectiveSeedDispersalChance(req);
+                        : req.UsesBerryColonySpread
+                            ? BerryColonySpread.EffectiveSeedDispersalChance(req)
+                            : SurfaceMatSpread.EffectiveSeedDispersalChance(req);
 
                     if (seedChance > 0f)
                     {

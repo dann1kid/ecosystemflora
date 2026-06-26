@@ -62,6 +62,7 @@ namespace WildFarming.Ecosystem.Config
             ("EnableTallgrassSpreadMaturation", "spread"),
             ("MaxPendingTallgrassPromotionChecksPerTick", "spread"),
             ("EnableFernRhizomeSpread", "spread"),
+            ("EnableBerryColonySpread", "spread"),
             ("EnableFernSpreadMaturation", "spread"),
             ("EnableFernSpreadAttemptCooldown", "spread"),
             ("EnableFernSporulationGate", "spread"),

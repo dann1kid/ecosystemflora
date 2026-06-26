@@ -64,6 +64,18 @@ namespace WildFarming.Ecosystem
                 [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.1f),
                 [EcologyDesertSpecies.Barrelcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.0f),
                 [EcologyDesertSpecies.Silvertorchcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.05f),
+
+                // Wild berries — moisture/light niches
+                ["blackcurrant"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.22f),
+                ["redcurrant"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.2f),
+                ["whitecurrant"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.18f),
+                ["blueberry"] = new Profile(MoistureLevel.Mesic, LightLevel.Shade, 1.32f),
+                ["cranberry"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.28f),
+                ["strawberry"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.24f),
+                ["beautyberry"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.15f),
+                ["cloudberry"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.22f),
+                ["blackberry"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.26f),
+                ["raspberry"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.24f),
             };
         }
 

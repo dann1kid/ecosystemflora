@@ -12,6 +12,50 @@
 
 ---
 
+## 4.3.0 — ModDB update (short paste)
+
+```
+4.3.0 — berry colony ecology (since 4.2.0)
+
+• Wild berries spread as colonies — mat edge (rhizome, suckers, stolons) plus optional seed jumps (RhizomeSeedDispersal settings).
+
+• Per-species models: currants (edge clumps + seed), blueberry (forest rhizome), raspberry/blackberry (edge thickets), strawberry (runners + seed), cranberry/cloudberry (peat/bog mats), beautyberry (seed shrub, radius only).
+
+• Context and niche tuning; blueberry/cranberry no longer require tree symbiosis. EnableBerryColonySpread.
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
+Full notes: [docs/CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 4.2.0 — ModDB update (short paste)
+
+```
+4.2.0 — simulation visibility (since 4.1.5)
+
+• Fern phenology — dormant / sporulating / dieback phase blocks; orphan symbionts fade via dieback; spread off-season and in dieback. EnableFernPhenology.
+
+• Tallgrass phenology — winter dormant and stress dieback visuals; spread off in dormant/dieback. EnableTallgrassPhenology.
+
+• Berry spread maturation — spread offspring mature through cutting state; tuned density for blackberry, raspberry, currants.
+
+• Stump decay — senescent snag stumps remove after configurable game years (saved with the world). EnableStumpDecay, StumpDecayYears.
+
+• Inspect (I) — recent ecology events (dieback, stress death, spread) at the bottom of the report when EnableEcologyHistoryHint is on.
+
+• Handbook — fixed cross-page links (en/ru). New preset vanilla-minimal; optional JSON presets in ModConfig/ecosystemflora.presets/.
+
+• Default ApplyCrossHabitatSpacing true. Mycelium tree-cut is notify-only (gradual stress, not instant removal).
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
+Full notes: [docs/CHANGELOG.md](CHANGELOG.md).
+
+---
+
 ## 3.7.0 — ModDB update (short paste)
 
 ```

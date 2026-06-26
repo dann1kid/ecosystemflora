@@ -93,17 +93,17 @@ namespace WildFarming.Ecosystem
                 ["waterlily"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.88f),
                 ["watercrowfoot"] = new Profile(FloraContextAffinity.Open, 1f, 0.35f, 0.95f),
 
-                // Berries — edge; strawberry colonizes, blueberry holds
-                ["blueberry"] = Edge(2f, hold: 1.22f),
-                ["blackcurrant"] = Edge(1.6f, hold: 1.12f),
-                ["redcurrant"] = Edge(1.5f, hold: 1.08f),
-                ["whitecurrant"] = Edge(1.5f, hold: 1.08f),
-                ["cranberry"] = Edge(1.4f, hold: 1.08f),
-                ["strawberry"] = Open(1.2f, hold: 0.78f),
-                ["beautyberry"] = Edge(1.5f, hold: 1.1f),
-                ["cloudberry"] = Open(1f, 0.4f, 0.92f),
-                ["blackberry"] = Edge(1.7f, hold: 1.12f),
-                ["raspberry"] = Edge(1.6f, hold: 1.08f),
+                // Berries — woodland edge thickets and clumps
+                ["blueberry"] = Forest(1.45f, interiorPenalty: 0.72f, hold: 1.28f),
+                ["blackcurrant"] = Edge(1.35f, hold: 1.15f),
+                ["redcurrant"] = Edge(1.32f, hold: 1.12f),
+                ["whitecurrant"] = Edge(1.28f, hold: 1.1f),
+                ["cranberry"] = Open(1.25f, hold: 1.18f),
+                ["strawberry"] = Forest(1.4f, interiorPenalty: 0.55f, hold: 0.88f),
+                ["beautyberry"] = Edge(1.15f, hold: 1.05f),
+                ["cloudberry"] = Open(1.2f, hold: 1.08f),
+                ["blackberry"] = Edge(1.85f, hold: 1.02f),
+                ["raspberry"] = Edge(1.75f, hold: 1.0f),
             };
         }
 

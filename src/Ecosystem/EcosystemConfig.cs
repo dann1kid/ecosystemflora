@@ -185,6 +185,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Tallgrass phenology checks per reproduce tick.</summary>
         public int MaxTallgrassPhenologyChecksPerTick { get; set; } = 32;
 
+        /// <summary>Wild berry colony mat (rhizome/runner edge + optional seed jumps).</summary>
+        public bool EnableBerryColonySpread { get; set; } = true;
+
         /// <summary>Wild berry bushes reset to cutting state on spread; register when mature.</summary>
         public bool EnableBerrySpreadMaturation { get; set; } = true;
 

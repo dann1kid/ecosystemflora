@@ -51,6 +51,8 @@
   "ecosystemflora:config-field-EnableBackgroundRegistrationScan-desc": "On: classify columns on worker from main-thread snapshot. Off: sync scan on main thread only.",
   "ecosystemflora:config-field-EnableBackgroundSpreadSolve": "Background spread solve",
   "ecosystemflora:config-field-EnableBackgroundSpreadSolve-desc": "On: score spread candidates on worker from compact env snapshots; SetBlock stays on main thread. Requires two-phase spread. Terrestrial, mat, and water crowfoot.",
+  "ecosystemflora:config-field-EnableBerryColonySpread": "Berry colony mat spread",
+  "ecosystemflora:config-field-EnableBerryColonySpread-desc": "On: wild berries spread one mat step from colony edge (rhizome, suckers, runners); seed jumps use RhizomeSeedDispersal settings. Off: legacy radius spread.",
   "ecosystemflora:config-field-EnableBerrySpreadMaturation": "Berry spread maturation",
   "ecosystemflora:config-field-EnableBerrySpreadMaturation-desc": "On: spread berry bushes reset to cutting state and register when mature. Off: immediate registry.",
   "ecosystemflora:config-field-EnableBurstRegistrationNearPlayers": "Burst registration near players",

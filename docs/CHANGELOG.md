@@ -3,22 +3,101 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.2.0**
+**This release:** **4.3.0**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
+## 4.3.0 — Berry colony ecology
+
+**Since 4.2.0**
+
+### Species-specific spread
+
+- Wild berries now expand as **colonies**: one mat step from the patch edge (rhizome, root suckers, or stolons). Currants, strawberry, cloudberry, and others also use occasional **seed jumps** (reuses `RhizomeSeedDispersal*` settings).
+- **Blueberry** and **cranberry** — forest/bog rhizome mats; no tree-host symbiosis.
+- **Raspberry / blackberry** — aggressive edge thickets (blackberry uses eight-connected mat for tip rooting).
+- **Strawberry** — forest-clearing runners + seed.
+- **Beautyberry** — seed shrub; radius search, no mat.
+- Per-species **context** (Forest / Edge / Open) and **moisture/light niche** profiles updated.
+- Toggle: `EnableBerryColonySpread` (default on). **Inspect (I)** shows berry colony spread mode.
+
+---
+
 ## 4.2.0 — Simulation visibility and ecology parity
 
-- **Fern phenology:** dormant / sporulating / dieback phase blocks (`fernphase-*`); orphan symbionts sync to dieback under stress; spread gated off-season and in dieback.
-- **Tallgrass phenology:** winter dormant and stress dieback visuals; spread off in dormant/dieback.
-- **Berry spread maturation:** spread offspring reset via cutting state and register when calendar-mature; tuned density for blackberry, raspberry, and currants.
-- **Stump decay:** senescent snag stumps schedule removal after configurable game years (persisted save data).
-- **Ecology history in inspect:** recent events (orphan dieback, stress death, spread) appear at the bottom of the **I** inspect report when enabled; handbook cross-links use explicit `handbook://` URLs.
-- **Presets:** new `vanilla-minimal` bundle (disables juvenile spread + phenology); optional JSON presets in `ModConfig/ecosystemflora.presets/`.
-- **Defaults:** `ApplyCrossHabitatSpacing` now **true** (meadow and shore compete in spacing index).
-- **Mycelium:** tree removal is notify-only (gradual stress death, aligned with 4.1.5 flora symbiosis).
+**Since 4.1.5**
+
+### Fern phenology
+
+- Five fern species now follow **dormant → sporulating → dieback** phases (like meadow flowers), with new `fernphase-*` blocks for off-season and stressed visuals.
+- **Orphan symbionts** (host tree gone) sync to dieback under stress instead of vanishing instantly.
+- Spread is **gated** outside the sporulation season and while a fern is dormant or in dieback.
+- **Inspect (I)** shows fern phase and sporulation status.
+- Toggle: `EnableFernPhenology` (default on). Asset generator: `tools/GenerateFernPhaseBlocks.ps1`.
+
+### Tallgrass phenology
+
+- Tallgrass gets **winter dormant** and **stress dieback** phase blocks (`tallgrassphase-dormant-free`, `tallgrassphase-dieback-free`).
+- Spread stops in dormant and dieback, matching the flower/fern pipeline.
+- **Inspect (I)** shows tallgrass phase.
+- Toggle: `EnableTallgrassPhenology` (default on).
+
+### Berry spread maturation
+
+- Wild berry bushes spawned by spread now **reset through cutting state** and enter the registry only when calendar-mature (same maturation idea as flowers/ferns).
+- Density tuned for **blackberry, raspberry, and currants** so patches read more natural, not instant carpets.
+- Toggle: `EnableBerrySpreadMaturation` (default on).
+
+### Stump decay
+
+- After tree senescence, standing **snag stumps** can schedule removal after a configurable number of **game years** (persisted in save data).
+- Toggle: `EnableStumpDecay` (default on). Years: `StumpDecayYears` (default 10).
+
+### Ecology history in inspect
+
+- Recent ecology events for the aimed block — **orphan dieback**, **stress death**, **spread** — appear at the bottom of the **I** inspect report (up to three lines, ~14-day memory).
+- No separate hotkey; history is part of inspect when `EnableEcologyHistoryHint` is on (default).
+
+### Handbook
+
+- Cross-links between ecology handbook pages (Overview, Inspect, Trees, Canopy, Configuration) use explicit `handbook://` URLs so links work in **en** and **ru**.
+- Config key names in handbook text are plain bold labels, not broken pseudo-links.
+
+### Presets and defaults
+
+- New balance preset **`vanilla-minimal`** — disables juvenile spread maturation and phenology systems for a lighter “mostly vanilla” feel.
+- Optional custom JSON presets in `ModConfig/ecosystemflora.presets/*.json`.
+- **`ApplyCrossHabitatSpacing`** now defaults to **true** — meadow flowers/grass and shore/aquatic plants compete in the same spacing index where configured.
+
+### Mycelium (aligned with 4.1.5)
+
+- Felling a host tree **no longer instantly removes** linked mycelium. Tree removal is **notify-only**; anchors build stress and fade on the normal cadence, like ferns and berries.
+
+---
+
+**ModDB short paste**
+
+```
+4.2.0 — simulation visibility (since 4.1.5)
+
+• Fern phenology — dormant / sporulating / dieback phase blocks; orphan symbionts fade via dieback; spread off-season and in dieback. EnableFernPhenology.
+
+• Tallgrass phenology — winter dormant and stress dieback visuals; spread off in dormant/dieback. EnableTallgrassPhenology.
+
+• Berry spread maturation — spread offspring mature through cutting state; tuned density for blackberry, raspberry, currants.
+
+• Stump decay — senescent snag stumps remove after configurable game years (saved with the world). EnableStumpDecay, StumpDecayYears.
+
+• Inspect (I) — recent ecology events (dieback, stress death, spread) at the bottom of the report when EnableEcologyHistoryHint is on.
+
+• Handbook — fixed cross-page links (en/ru). New preset vanilla-minimal; optional JSON presets in ModConfig/ecosystemflora.presets/.
+
+• Default ApplyCrossHabitatSpacing true. Mycelium tree-cut is notify-only (gradual stress, not instant removal).
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
 
 ---
 

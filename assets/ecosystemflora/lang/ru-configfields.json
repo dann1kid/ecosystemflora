@@ -51,6 +51,8 @@
   "ecosystemflora:config-field-EnableBackgroundRegistrationScan-desc": "Вкл.: классификация колонок на worker из snapshot. Выкл.: только sync на main thread.",
   "ecosystemflora:config-field-EnableBackgroundSpreadSolve": "Фоновый solve spread",
   "ecosystemflora:config-field-EnableBackgroundSpreadSolve-desc": "Вкл.: scoring spread на worker из компактных snapshot; SetBlock на main thread. Нужен two-phase spread. Terrestrial, mat и water crowfoot.",
+  "ecosystemflora:config-field-EnableBerryColonySpread": "Колонии ягод (mat spread)",
+  "ecosystemflora:config-field-EnableBerryColonySpread-desc": "Вкл.: ягоды ползут с кромки колонии (ризома, поросль, усы); скачки семян — настройки RhizomeSeedDispersal. Выкл.: spread по радиусу.",
   "ecosystemflora:config-field-EnableBerrySpreadMaturation": "Созревание ягод при spread",
   "ecosystemflora:config-field-EnableBerrySpreadMaturation-desc": "Вкл.: spread ягод как черенок до созревания. Выкл.: сразу в реестр.",
   "ecosystemflora:config-field-EnableBurstRegistrationNearPlayers": "Burst-регистрация у игрока",

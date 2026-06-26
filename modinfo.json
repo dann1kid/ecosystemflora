@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flora on vanilla blocks. Chunk-fair spread, vines and mycelium, seasonal canopy, tree aging, meadow harvest, inspect (I). In-game settings UI (U, /ecoconfig).",
   "authors": ["-"],
-  "version": "4.2.0",
+  "version": "4.3.0",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

@@ -47,11 +47,9 @@ namespace WildFarming.Ecosystem
                 ["cinnamonfern"] = new Rule(new[] { TreeHostToken }, 2),
                 ["deerfern"] = new Rule(new[] { TreeHostToken }, 2),
                 ["tallfern"] = new Rule(new[] { TreeHostToken }, 2),
-                ["blueberry"] = new Rule(new[] { TreeHostToken }, 2),
                 ["blackcurrant"] = new Rule(new[] { TreeHostToken }, 4),
                 ["redcurrant"] = new Rule(new[] { TreeHostToken }, 4),
                 ["whitecurrant"] = new Rule(new[] { TreeHostToken }, 4),
-                ["cranberry"] = new Rule(new[] { TreeHostToken }, 3),
                 ["blackberry"] = new Rule(new[] { TreeHostToken }, 3),
                 ["raspberry"] = new Rule(new[] { TreeHostToken }, 3),
             };

@@ -85,6 +85,8 @@ namespace WildFarming.Ecosystem
 
         public bool UsesFernRhizomeSpread => SpreadMode == SpreadMode.FernRhizomeMat;
 
+        public bool UsesBerryColonySpread => SpreadMode == SpreadMode.BerryColonyMat;
+
         /// <summary>When true, never promote water-surface habitat to <see cref="SpreadMode.SurfaceMat"/>.</summary>
         public bool SuppressSurfaceMatSpread { get; set; }
 
@@ -166,6 +168,7 @@ namespace WildFarming.Ecosystem
             bool suppressSurfaceMatSpread = false;
             float seedDispersalChance = attrs != null ? attrs["ecologySeedDispersalChance"].AsFloat(0f) : 0f;
             int seedDispersalRadius = attrs != null ? attrs["ecologySeedDispersalRadius"].AsInt(0) : 0;
+            int spreadRadius = attrs != null ? attrs["ecologySpreadRadius"].AsInt(0) : 0;
 
             if (attrs != null)
             {
@@ -379,6 +382,11 @@ namespace WildFarming.Ecosystem
                 allowedSoils = berry.Soil.Allowed;
                 minGroundFertility = berry.Soil.MinBlockFertility;
                 maxGroundFertility = berry.Soil.MaxBlockFertility;
+                spreadMode = berry.SpreadMode;
+                seedDispersalChance = berry.SeedDispersalChance;
+                seedDispersalRadius = berry.SeedDispersalRadius;
+                if (berry.MatSpreadRadius > 0) spreadRadius = berry.MatSpreadRadius;
+                else if (berry.IndependentSpreadRadius > 0) spreadRadius = berry.IndependentSpreadRadius;
             }
             else if (!string.IsNullOrEmpty(species) && WildFerntreeEcology.IsSpecies(species))
             {
@@ -460,7 +468,6 @@ namespace WildFarming.Ecosystem
             if (float.IsNaN(maxForest)) maxForest = 1f;
             if (float.IsNaN(spreadRate)) spreadRate = 1f;
 
-            int spreadRadius = attrs != null ? attrs["ecologySpreadRadius"].AsInt(0) : 0;
             if (spreadRadius <= 0 && !string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeRadius))
             {
                 spreadRadius = treeRadius.SpreadRadius;
@@ -509,6 +516,7 @@ namespace WildFarming.Ecosystem
             RhizomeSpread.ApplyTo(requirements);
             SurfaceMatSpread.ApplyTo(requirements);
             FernRhizomeSpread.ApplyTo(requirements);
+            BerryColonySpread.ApplyTo(requirements);
             return requirements;
         }
     }

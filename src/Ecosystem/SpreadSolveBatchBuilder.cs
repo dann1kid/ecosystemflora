@@ -40,7 +40,8 @@ namespace WildFarming.Ecosystem
             requirements != null
             && (requirements.UsesRhizomeSpread
                 || requirements.UsesSurfaceMatSpread
-                || requirements.UsesFernRhizomeSpread);
+                || requirements.UsesFernRhizomeSpread
+                || requirements.UsesBerryColonySpread);
 
         internal static bool UsesCrowfootSpread(PlantRequirements requirements) =>
             requirements != null
@@ -55,7 +56,8 @@ namespace WildFarming.Ecosystem
             return requirements.Habitat == EcologyHabitat.Terrestrial
                 && !requirements.UsesRhizomeSpread
                 && !requirements.UsesSurfaceMatSpread
-                && !requirements.UsesFernRhizomeSpread;
+                && !requirements.UsesFernRhizomeSpread
+                && !requirements.UsesBerryColonySpread;
         }
 
         public static bool TryBuildRequest(
@@ -192,7 +194,8 @@ namespace WildFarming.Ecosystem
             request = null;
             if (api == null || origin == null || spreadBlock == null || requirements == null) return false;
             if (requirements.Habitat != EcologyHabitat.Terrestrial) return false;
-            if (requirements.UsesRhizomeSpread || requirements.UsesSurfaceMatSpread || requirements.UsesFernRhizomeSpread) return false;
+            if (requirements.UsesRhizomeSpread || requirements.UsesSurfaceMatSpread
+                || requirements.UsesFernRhizomeSpread || requirements.UsesBerryColonySpread) return false;
 
             int searchRadius = ReproducePlacement.ResolveSpreadSearchRadius(requirements, radius, rand, out MatSpreadCollectMode matMode);
             float seedFitnessScale = matMode == MatSpreadCollectMode.SeedDispersal
