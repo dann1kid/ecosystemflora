@@ -6,7 +6,10 @@ namespace WildFarming.Ecosystem
     /// <summary>Terrestrial fern patches spread one orthogonal step from the mat edge (underground rhizome).</summary>
     internal static class FernRhizomeSpread
     {
-        static readonly int[][] OrthogonalDirs = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+        static readonly MatEdgeTopology Topology = new MatEdgeTopology(
+            MatConnectivity.Orthogonal4,
+            (block, species) => block != null && block.Id != 0
+                && string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase));
 
         public static void ApplyTo(PlantRequirements req)
         {
@@ -19,34 +22,13 @@ namespace WildFarming.Ecosystem
 
         public static bool IsOrthogonalStep(int dx, int dz)
         {
-            return System.Math.Abs(dx) + System.Math.Abs(dz) == 1;
+            return Topology.IsStep(dx, dz);
         }
 
-        /// <summary>True when a horizontal neighbor lacks the same fern species.</summary>
+        /// <summary>True when a horizontal neighbor lacks the same fern species (single-Y patch).</summary>
         public static bool IsFrontier(IBlockAccessor acc, BlockPos origin, string species)
         {
-            if (acc == null || origin == null || string.IsNullOrEmpty(species)) return true;
-
-            for (int i = 0; i < OrthogonalDirs.Length; i++)
-            {
-                if (!NeighborHasSameSpecies(acc, origin, OrthogonalDirs[i][0], OrthogonalDirs[i][1], species))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool NeighborHasSameSpecies(IBlockAccessor acc, BlockPos origin, int dx, int dz, string species)
-        {
-            var checkPos = new BlockPos(origin.X + dx, origin.Y, origin.Z + dz, origin.dimension);
-            Block block = acc.GetBlock(checkPos);
-            if (block == null || block.Id == 0) return false;
-
-            string neighborSpecies = PlantCodeHelper.ResolveEcologySpecies(block);
-            return neighborSpecies != null
-                && string.Equals(neighborSpecies, species, System.StringComparison.OrdinalIgnoreCase);
+            return MatEdgeSpread.IsFrontier(acc, origin, species, verticalReach: 0, Topology);
         }
     }
 }

@@ -7,23 +7,7 @@ namespace WildFarming.Ecosystem
     {
         public static MatSpreadCollectMode ResolveCollectMode(PlantRequirements requirements, System.Random rand)
         {
-            if (requirements == null || rand == null) return MatSpreadCollectMode.NotApplicable;
-            if (requirements.UsesRhizomeSpread)
-            {
-                return RhizomeSpread.ResolveCollectMode(requirements, rand);
-            }
-
-            if (requirements.UsesFernRhizomeSpread)
-            {
-                return MatSpreadCollectMode.MatEdge;
-            }
-
-            if (requirements.UsesSurfaceMatSpread)
-            {
-                return SurfaceMatSpread.ResolveCollectMode(requirements, rand);
-            }
-
-            return MatSpreadCollectMode.NotApplicable;
+            return MatSpreadDispatch.ResolveCollectMode(requirements, rand);
         }
 
         public static void Record(

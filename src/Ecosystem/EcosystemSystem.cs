@@ -8,7 +8,7 @@ using Vintagestory.API.Server;
 
 namespace WildFarming.Ecosystem
 {
-    public class EcosystemSystem
+    public partial class EcosystemSystem
     {
         public static EcosystemSystem Instance { get; private set; }
 
@@ -27,10 +27,7 @@ namespace WildFarming.Ecosystem
         long chunkScanListenerId;
         ChunkColumnLoadedDelegate chunkLoadedHandler;
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
-        readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
-        readonly PendingFlowerMaturation pendingFlowerMaturation = new PendingFlowerMaturation();
-        readonly PendingFernMaturation pendingFernMaturation = new PendingFernMaturation();
-        readonly PendingTallgrassPromotion pendingTallgrassPromotion = new PendingTallgrassPromotion();
+        readonly MaturationQueueSet maturationQueues = new MaturationQueueSet();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
         readonly CyclicFloraScanner cyclicFloraScanner = new CyclicFloraScanner();
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
@@ -51,7 +48,7 @@ namespace WildFarming.Ecosystem
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
-        readonly HashSet<BlockPos> spreadCooldownOriginsScratch = new HashSet<BlockPos>();
+        SpreadCooldownService spreadCooldown;
         readonly Dictionary<BlockPos, MatSpreadCollectMode> spreadMatModeScratch = new Dictionary<BlockPos, MatSpreadCollectMode>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
         readonly PendingSpreadQueue pendingSpreadQueue = new PendingSpreadQueue();
@@ -87,6 +84,7 @@ namespace WildFarming.Ecosystem
             SpacingIndex = new EcologySpacingIndex();
             ColumnCache = new EnvironmentalColumnCache();
             EcologyColumns = new EcologyColumnState();
+            spreadCooldown = new SpreadCooldownService(api, registry);
 
             EcosystemConfig tickCfg = EcosystemConfig.Loaded;
             if (tickCfg.EnableBackgroundRegistrationScan)
@@ -405,7 +403,7 @@ namespace WildFarming.Ecosystem
         {
             hoursLeft = 0;
             if (api?.World?.Calendar == null || pos == null) return false;
-            return pendingFlowerMaturation.TryGetHoursUntilMature(
+            return maturationQueues.TryGetFlowerHoursLeft(
                 pos,
                 api.World.Calendar.TotalHours,
                 out hoursLeft);
@@ -415,7 +413,7 @@ namespace WildFarming.Ecosystem
         {
             hoursLeft = 0;
             if (api?.World?.Calendar == null || pos == null) return false;
-            return pendingFernMaturation.TryGetHoursUntilMature(
+            return maturationQueues.TryGetFernHoursLeft(
                 pos,
                 api.World.Calendar.TotalHours,
                 out hoursLeft);
@@ -424,7 +422,7 @@ namespace WildFarming.Ecosystem
         internal void NotifySpreadSolveNoWinners(BlockPos origin, PlantRequirements requirements)
         {
             if (origin == null || requirements == null) return;
-            TryApplyPostSpreadAttemptCooldownOnce(origin, requirements);
+            spreadCooldown.ApplyPostSpreadAttemptOnce(origin, requirements);
 
             if (!registry.TryGetEntry(origin, out ReproducerEntry entry)) return;
 
@@ -899,7 +897,7 @@ namespace WildFarming.Ecosystem
                 string wood = PlantCodeHelper.GetTreeWood(block);
                 if (!string.IsNullOrEmpty(wood))
                 {
-                    pendingTreeSaplings.Add(pos, wood, api.World.Calendar.TotalHours);
+                    maturationQueues.AddTreeSapling(pos, wood, api.World.Calendar.TotalHours);
                 }
 
                 return;
@@ -909,7 +907,7 @@ namespace WildFarming.Ecosystem
             {
                 if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block), api, pos))
                 {
-                    pendingTallgrassPromotion.Add(api, pos);
+                    maturationQueues.AddTallgrassPromotion(api, pos);
                 }
 
                 return;
@@ -1017,9 +1015,7 @@ namespace WildFarming.Ecosystem
                 InvalidateEnvironmentAround(pos);
             }
 
-            pendingFlowerMaturation.Remove(pos);
-            pendingFernMaturation.Remove(pos);
-            pendingTallgrassPromotion.Remove(pos);
+            maturationQueues.Remove(pos);
 
             if (wakeNeighbors)
             {
@@ -1279,7 +1275,7 @@ namespace WildFarming.Ecosystem
                         if (TallgrassSpreadMaturation.ShouldQueuePromotion(
                             block, PlantRequirements.FromBlock(block), api, item.Pos))
                         {
-                            pendingTallgrassPromotion.Add(api, item.Pos);
+                            maturationQueues.AddTallgrassPromotion(api, item.Pos);
                             return true;
                         }
 
@@ -1431,7 +1427,7 @@ namespace WildFarming.Ecosystem
                 {
                     ChunkFlowerHit hit = pass.EstablishingTallgrassHits[i];
                     if (hit.Pos == null) continue;
-                    pendingTallgrassPromotion.Add(api, hit.Pos);
+                    maturationQueues.AddTallgrassPromotion(api, hit.Pos);
                 }
             }
 
@@ -1451,151 +1447,6 @@ namespace WildFarming.Ecosystem
             if (backgroundRegistration.IsBusy(chunkCoord)) return false;
             if (pendingRegistrations.HasPending(chunkCoord)) return false;
             return pendingRegistrations.IsScanCompleted(chunkCoord);
-        }
-
-        internal void PollBackgroundRegistration(EcosystemConfig cfg)
-        {
-            if (cfg.EnableBackgroundRegistrationScan)
-            {
-                backgroundRegistration.PollCompleted(this, cfg);
-            }
-        }
-
-        internal bool TryAdvanceBackgroundScan(
-            Vec2i chunkCoord,
-            IBlockAccessor acc,
-            EcosystemConfig cfg,
-            bool highPriority,
-            long deadlineTicks,
-            out bool needsRequeue)
-        {
-            var job = new PendingChunkScan(chunkCoord);
-            return backgroundRegistration.TryAdvance(
-                this,
-                acc,
-                cfg,
-                job,
-                highPriority,
-                deadlineTicks,
-                out needsRequeue);
-        }
-
-        internal bool TryRunRegistrationPass(
-            PendingChunkScan job,
-            IBlockAccessor acc,
-            EcosystemConfig cfg,
-            ref int registrationsLeft,
-            long passDeadline,
-            bool syncFoliage,
-            int seasonKey,
-            FoliageCellIndex foliageIndex,
-            out ChunkEcologyColumnPass.Result pass,
-            out bool completed)
-        {
-            completed = false;
-            pass = default;
-
-            if (acc == null)
-            {
-                return false;
-            }
-
-            Vec2i chunkCoord = job.ChunkCoord;
-            int maxHits = PendingRegistrationQueue.MaxHitsPerPass;
-
-            pass = ChunkEcologyColumnPass.Run(
-                api,
-                acc,
-                chunkCoord,
-                new ChunkEcologyColumnPass.Request
-                {
-                    MaxFlowerHits = maxHits,
-                    MaxTreeHits = maxHits,
-                    MaxVineHits = cfg.EnableWildVineEcology ? maxHits : 0,
-                    SyncFoliage = syncFoliage,
-                    FoliageIndex = foliageIndex,
-                },
-                job.NextLx,
-                job.NextLz,
-                job.NextY,
-                (basePos, wood) =>
-                {
-                    Block trunk = acc.GetBlock(basePos);
-                    if (trunk?.Code == null) return false;
-                    return pendingRegistrations.TryEnqueueTree(chunkCoord, basePos, trunk.Code, registry);
-                },
-                passDeadline);
-
-            EnqueueRegistrationScanHits(chunkCoord, pass);
-
-            if (syncFoliage)
-            {
-                foliageCells.ApplyEcologyPassResult(chunkCoord, pass, seasonKey);
-
-                if (pass.FoliageChanged > 0)
-                {
-                    int cs = GlobalConstants.ChunkSize;
-                    var invalidateAt = new BlockPos(
-                        chunkCoord.X * cs + 8,
-                        64,
-                        chunkCoord.Y * cs + 8);
-                    FloraContext?.InvalidateAround(invalidateAt, 3);
-                    InvalidateEnvironmentAround(invalidateAt);
-                }
-            }
-
-            completed = pass.Completed;
-            return true;
-        }
-
-        bool TryRegisterDiscoveredTree(IBlockAccessor acc, BlockPos basePos, ref int registrationsLeft)
-        {
-            if (registrationsLeft <= 0 || basePos == null) return false;
-            if (registry.Contains(basePos)) return false;
-
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            Block block = acc.GetBlock(basePos);
-            if (PlantCodeHelper.IsFerntreeTrunkBlock(block) && !cfg.EnableFerntreeEcology) return false;
-
-            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
-
-            RegisterReproducer(basePos, participant, spawnBurst: false);
-            registrationsLeft--;
-            return true;
-        }
-
-        bool TryRegisterDiscoveredFlora(
-            IBlockAccessor acc,
-            BlockPos pos,
-            Block block,
-            bool needsEstablishment,
-            ref int registrationsLeft)
-        {
-            if (registrationsLeft <= 0 || pos == null || block == null) return false;
-
-            BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, pos, block.Code);
-            if (registry.Contains(anchor) || registry.Contains(pos)) return false;
-
-            if (needsEstablishment)
-            {
-                pendingTallgrassPromotion.Add(api, pos);
-                registrationsLeft--;
-                return true;
-            }
-
-            if (TallgrassSpreadMaturation.ShouldQueuePromotion(
-                    block, PlantRequirements.FromBlock(block), api, pos))
-            {
-                pendingTallgrassPromotion.Add(api, pos);
-                registrationsLeft--;
-                return true;
-            }
-
-            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
-
-            RegisterReproducer(anchor, participant, spawnBurst: false);
-            registrationsLeft--;
-            return true;
         }
 
         readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
@@ -1809,22 +1660,22 @@ namespace WildFarming.Ecosystem
             backgroundSpread.BeginReproduceTick();
 
             tickBudgetWatch.Restart();
-            pendingTreeSaplings.Process(api, this, now, cfg.MaxPendingTreeChecksPerTick);
+            maturationQueues.ProcessTreeSaplings(api, this, now, cfg.MaxPendingTreeChecksPerTick);
             timings.SaplingsTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
-            pendingFlowerMaturation.Process(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
+            maturationQueues.ProcessFlower(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
             timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
-            pendingFernMaturation.Process(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
+            maturationQueues.ProcessFern(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
 
             tickBudgetWatch.Restart();
             flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
             timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
-            pendingTallgrassPromotion.Process(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
+            maturationQueues.ProcessTallgrass(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
             timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
@@ -1856,148 +1707,7 @@ namespace WildFarming.Ecosystem
                 CompleteTreeSenescenceRemoval);
             timings.FerntreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
 
-            IBlockAccessor acc = api.World.BlockAccessor;
-
-            spreadCooldownOriginsScratch.Clear();
-            spreadMatModeScratch.Clear();
-
-            if (cfg.EnableBackgroundSpreadSolve)
-            {
-                backgroundSpread.PollCompleted(
-                    this,
-                    cfg.VerboseLogging && cfg.ReproduceDebug);
-            }
-
-            if (spreadActiveChunks == null || spreadActiveChunks.Count > 0)
-            {
-                tickBudgetWatch.Restart();
-
-                System.Func<ReproducerEntry, bool> trySpread = entry =>
-                {
-                    Block block = acc.GetBlock(entry.Origin);
-                    if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
-                    {
-                        if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
-                        {
-                            return false;
-                        }
-
-                        if (cfg.EnableMyceliumNetworkSpread)
-                        {
-                            MyceliumNetworkSpread.TrySpread(
-                                this,
-                                entry,
-                                cfg.VerboseLogging && cfg.ReproduceDebug);
-                        }
-
-                        return true;
-                    }
-
-                    if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
-                    {
-                        if (!cfg.EnableWildVineEcology || !WildVineHelper.IsEndBlock(block))
-                        {
-                            return false;
-                        }
-
-                        float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, entry.Requirements);
-                        if (api.World.Rand.NextDouble() > vineChance) return true;
-
-                        WildVineSpread.TrySpread(this, entry, api, cfg);
-                        return true;
-                    }
-
-                    if (block.Id == 0 || !entry.IsRegisteredPlantBlock(block))
-                    {
-                        return false;
-                    }
-
-                    if (entry.Requirements?.Species == "tallgrass"
-                        && TallgrassSpreadMaturation.UsesMaturation(cfg)
-                        && !TallgrassSpreadMaturation.CanReproduceFrom(block, api, entry.Origin))
-                    {
-                        return true;
-                    }
-
-                    if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements)
-                        && !FlowerPhenology.CanSpread(entry))
-                    {
-                        return true;
-                    }
-
-                    if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements)
-                        && !WildFernSpread.CanSpread(api, entry, cfg))
-                    {
-                        return true;
-                    }
-
-                    TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
-                    return true;
-                };
-
-                if (cfg.EnableChunkFairSpread)
-                {
-                    timings.SpreadProcessed = registry.ProcessDueChunkFair(
-                        cfg,
-                        now,
-                        cfg.MaxReproduceAttemptsPerTick,
-                        spreadActiveChunks,
-                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
-                        trySpread,
-                        spreadBudgetTicks,
-                        tickBudgetWatch);
-                }
-                else
-                {
-                    timings.SpreadProcessed = registry.ProcessDue(
-                        now,
-                        cfg.MaxReproduceAttemptsPerTick,
-                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
-                        trySpread,
-                        spreadActiveChunks,
-                        spreadBudgetTicks,
-                        tickBudgetWatch,
-                        cfg.EnableEventDrivenSpread);
-                }
-
-                timings.CollectDueTicks = registry.LastCollectDueTicks;
-                timings.SpreadProcessTicks = registry.LastProcessDueTicks;
-                timings.DueQueueSize = registry.LastDueQueueSize;
-                timings.SpreadChunksVisited = registry.LastSpreadChunksVisited;
-                timings.SpreadMaxAttemptsInChunk = registry.LastSpreadMaxAttemptsInChunk;
-                timings.WakeDrivenAttempts = registry.LastWakeDrivenAttempts;
-                timings.CalendarDrivenAttempts = registry.LastCalendarDrivenAttempts;
-            }
-
-            if (cfg.EnableTwoPhaseSpreadPlacement && pendingSpreadQueue.Count > 0)
-            {
-                tickBudgetWatch.Restart();
-
-                int maxCommits = cfg.MaxSpreadCommitsPerTick > 0
-                    ? cfg.MaxSpreadCommitsPerTick
-                    : cfg.MaxReproduceAttemptsPerTick;
-
-                timings.SpreadCommitted = pendingSpreadQueue.ProcessCommit(
-                    api,
-                    cfg,
-                    intent => OnSpreadPlaced(
-                        intent.TargetPos,
-                        intent.Requirements,
-                        intent.Displacing,
-                        intent.ParentOrigin),
-                    maxCommits,
-                    spreadBudgetTicks,
-                    tickBudgetWatch,
-                    cfg.VerboseLogging && cfg.ReproduceDebug,
-                    onDropped: OnSpreadCommitDropped);
-
-                timings.SpreadCommitTicks = tickBudgetWatch.ElapsedTicks;
-                timings.PendingSpreadQueueSize = pendingSpreadQueue.Count;
-            }
+            RunSpreadAndCommitPhase(cfg, now, spreadActiveChunks, spreadBudgetTicks, ref timings);
 
             timings.TotalTicks = Stopwatch.GetTimestamp() - tickStart;
             timings.SpreadSolveQueued = backgroundSpread.LastTickSolveQueued;
@@ -2006,344 +1716,6 @@ namespace WildFarming.Ecosystem
             ReproduceTickProfiler.MaybeLog(api, cfg, registry, timings, EcologyColumns);
         }
 
-        void OnSpreadPlaced(BlockPos pos, PlantRequirements requirements, bool displaced, BlockPos spreadOrigin)
-        {
-            RecordSpreadAttempt(spreadOrigin, requirements, placed: true);
-
-            if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
-            {
-                pendingTreeSaplings.Add(pos, requirements.Species, api.World.Calendar.TotalHours);
-                return;
-            }
-
-            if (requirements.Habitat == EcologyHabitat.Ferntree)
-            {
-                BlockPos basePos = FerntreeStructure.GetTrunkBase(api.World.BlockAccessor, pos);
-                Block trunkBlock = api.World.BlockAccessor.GetBlock(basePos);
-                if (EcosystemParticipant.TryFromBlock(trunkBlock, out IEcosystemParticipant ferntreeParticipant))
-                {
-                    RegisterReproducer(basePos, ferntreeParticipant, spawnBurst: false);
-                }
-
-                InvalidateEnvironmentAround(basePos);
-                return;
-            }
-
-            ApplyTerrestrialSpreadCooldownOnCommit(spreadOrigin, requirements);
-
-            Block placed = api.World.BlockAccessor.GetBlock(pos);
-            if (FernSpreadMaturation.ShouldQueueMaturation(placed, requirements))
-            {
-                double nowHours = api.World.Calendar.TotalHours;
-                AssetLocation matureCode = FernJuvenileBlocks.ResolveMatureCode(
-                    api, spreadOrigin, requirements.Species);
-                double matureAt = nowHours + WildFernSpread.MaturationHours(
-                    api, pos, requirements.Species, EcosystemConfig.Loaded);
-                pendingFernMaturation.Add(pos, matureCode, requirements.Species, matureAt);
-                InvalidateEnvironmentAround(pos);
-                if (spreadOrigin != null)
-                {
-                    WakeEcologyAround(spreadOrigin);
-                }
-
-                return;
-            }
-
-            if (FlowerSpreadMaturation.ShouldQueueMaturation(placed, requirements))
-            {
-                double nowHours = api.World.Calendar.TotalHours;
-                AssetLocation matureCode = FlowerJuvenileBlocks.ResolveMatureCode(
-                    api, spreadOrigin, requirements.Species);
-                double matureAt = nowHours + WildFlowerMaturation.MaturationHours(
-                    api, pos, requirements.Species, EcosystemConfig.Loaded);
-                pendingFlowerMaturation.Add(pos, matureCode, requirements.Species, matureAt);
-                InvalidateEnvironmentAround(pos);
-                if (spreadOrigin != null)
-                {
-                    WakeEcologyAround(spreadOrigin);
-                }
-
-                return;
-            }
-
-            if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements, api, pos))
-            {
-                pendingTallgrassPromotion.Add(api, pos);
-                InvalidateEnvironmentAround(pos);
-                WakeEcologyAround(pos);
-                if (spreadOrigin != null)
-                {
-                    WakeEcologyAround(spreadOrigin);
-                }
-
-                return;
-            }
-
-            if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
-            {
-                RegisterReproducer(pos, participant, spawnBurst: false);
-            }
-
-            InvalidateEnvironmentAround(pos);
-            WakeEcologyAround(pos);
-            if (spreadOrigin != null)
-            {
-                WakeEcologyAround(spreadOrigin);
-            }
-        }
-
-        void TrySpawnOffspring(ReproducerEntry entry, bool skipChanceRoll, int maxSpawns)
-        {
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-
-            if (entry.Requirements?.Habitat == EcologyHabitat.WildVine) return;
-
-            if (TreeSenescence.SuppressesSpread(entry, cfg)) return;
-
-            if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements) && !FlowerPhenology.CanSpread(entry))
-            {
-                return;
-            }
-
-            if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements)
-                && !WildFernSpread.CanSpread(api, entry, cfg))
-            {
-                return;
-            }
-
-            BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
-                api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
-            BlockPos spreadOriginCopy = spreadOrigin.Copy();
-            MatSpreadCollectMode matMode = SpreadAttemptInspect.ResolveCollectMode(
-                entry.Requirements, api.World.Rand);
-            spreadMatModeScratch[spreadOriginCopy] = matMode;
-
-            if (!string.IsNullOrEmpty(entry.Requirements?.Species)
-                && !FloraSymbiosis.CanSpread(api.World.BlockAccessor, spreadOrigin, entry.Requirements.Species))
-            {
-                RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "No symbiosis host");
-                return;
-            }
-
-            float chance = SpeciesSpread.EffectiveChance(api, spreadOrigin, cfg, entry.Requirements);
-            if (!skipChanceRoll && api.World.Rand.NextDouble() > chance)
-            {
-                RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "Chance roll failed");
-                TryApplyFailedChanceRollCooldownOnce(spreadOriginCopy, entry.Requirements);
-                return;
-            }
-
-            Block spreadBlock = api.World.GetBlock(entry.JuvenileBlockCode);
-            if (spreadBlock == null)
-            {
-                if (EcosystemConfig.Loaded.VerboseLogging)
-                    api.Logger.Warning("[ecosystemflora] Spread block not found: {0}", entry.JuvenileBlockCode);
-                return;
-            }
-
-            spreadBlock = FernSpreadMaturation.ResolveSpreadBlock(
-                api, spreadOrigin, entry.Requirements, spreadBlock);
-            spreadBlock = FlowerSpreadMaturation.ResolveSpreadBlock(
-                api, spreadOrigin, entry.Requirements, spreadBlock);
-            if (spreadBlock == null) return;
-
-            bool logFailures = cfg.VerboseLogging && cfg.ReproduceDebug;
-
-            int spawned;
-            string failureReason;
-            bool backgroundQueued = false;
-            if (cfg.EnableBackgroundSpreadSolve
-                && cfg.EnableTwoPhaseSpreadPlacement
-                && SpreadSolveBatchBuilder.CanBackgroundSolve(entry.Requirements)
-                && backgroundSpread.TryQueueSolve(
-                    api,
-                    spreadOrigin,
-                    spreadBlock,
-                    entry.Requirements,
-                    cfg.MinFitness,
-                    cfg.HarshWildPlants,
-                    cfg.ReproduceRadius,
-                    cfg.ReproduceVerticalSearch,
-                    maxSpawns,
-                    api.World.Rand))
-            {
-                spawned = 0;
-                failureReason = null;
-                backgroundQueued = true;
-            }
-            else if (cfg.EnableTwoPhaseSpreadPlacement)
-            {
-                spawned = ReproducePlacement.TryEnqueueSpreadAmongNeighbors(
-                    api,
-                    spreadOrigin,
-                    spreadBlock,
-                    entry.Requirements,
-                    cfg.MinFitness,
-                    cfg.HarshWildPlants,
-                    cfg.ReproduceRadius,
-                    cfg.ReproduceVerticalSearch,
-                    maxSpawns,
-                    api.World.Rand,
-                    pendingSpreadQueue,
-                    logFailures,
-                    out failureReason);
-            }
-            else
-            {
-                spawned = ReproducePlacement.TryPlaceSpreadAmongNeighbors(
-                    api,
-                    spreadOrigin,
-                    spreadBlock,
-                    entry.Requirements,
-                    cfg.MinFitness,
-                    cfg.HarshWildPlants,
-                    cfg.ReproduceRadius,
-                    cfg.ReproduceVerticalSearch,
-                    maxSpawns,
-                    api.World.Rand,
-                    logFailures,
-                    out failureReason,
-                    onPlaced: (pos, requirements, displaced) =>
-                        OnSpreadPlaced(pos, requirements, displaced, spreadOriginCopy));
-            }
-
-            if (logFailures && spawned == 0 && failureReason != null)
-            {
-                api.Logger.Notification("[ecosystemflora] No spread near {0}: {1}", entry.Origin, failureReason);
-            }
-
-            if (!FlowerSpreadCooldownTiming.ShouldDeferCooldownToPlacement(backgroundQueued, spawned))
-            {
-                TryApplyPostSpreadAttemptCooldownOnce(spreadOriginCopy, entry.Requirements);
-                if (spawned == 0)
-                {
-                    RecordSpreadAttempt(
-                        spreadOriginCopy,
-                        entry,
-                        matMode,
-                        placed: false,
-                        failureReason ?? "No placement");
-                }
-            }
-        }
-
-        void OnSpreadCommitDropped(PendingSpreadIntent intent)
-        {
-            if (intent?.ParentOrigin == null || intent.Requirements == null) return;
-
-            ApplyTerrestrialSpreadCooldownOnCommit(intent.ParentOrigin, intent.Requirements);
-
-            if (!registry.TryGetEntry(intent.ParentOrigin, out ReproducerEntry entry)) return;
-
-            spreadMatModeScratch.TryGetValue(intent.ParentOrigin, out MatSpreadCollectMode matMode);
-            SpreadAttemptInspect.Record(
-                api,
-                entry,
-                matMode,
-                placed: false,
-                failureReason: "Commit revalidation failed");
-        }
-
-        void RecordSpreadAttempt(
-            BlockPos spreadOrigin,
-            PlantRequirements requirements,
-            bool placed,
-            string failureReason = null)
-        {
-            if (spreadOrigin == null || requirements == null) return;
-            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry entry)) return;
-
-            spreadMatModeScratch.TryGetValue(spreadOrigin, out MatSpreadCollectMode matMode);
-            SpreadAttemptInspect.Record(api, entry, matMode, placed, failureReason);
-        }
-
-        void RecordSpreadAttempt(
-            BlockPos spreadOrigin,
-            ReproducerEntry entry,
-            MatSpreadCollectMode matMode,
-            bool placed,
-            string failureReason = null)
-        {
-            if (entry == null) return;
-            SpreadAttemptInspect.Record(api, entry, matMode, placed, failureReason);
-        }
-
-        void ApplyTerrestrialSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            if (spreadOrigin == null || requirements == null) return;
-            TryApplyPostSpreadAttemptCooldownOnce(spreadOrigin, requirements);
-        }
-
-        void ApplyFlowerSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            ApplyTerrestrialSpreadCooldownOnCommit(spreadOrigin, requirements);
-        }
-
-        void TryApplyPostSpreadAttemptCooldownOnce(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            if (spreadOrigin == null || !spreadCooldownOriginsScratch.Add(spreadOrigin)) return;
-            TryApplyPostSpreadAttemptCooldown(spreadOrigin, requirements);
-        }
-
-        void TryApplyPostSpreadAttemptCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            if (spreadOrigin == null || requirements == null || api == null) return;
-            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
-
-            if (WildFernSpread.TryApplySpreadAttemptCooldown(
-                parent,
-                api.World.Calendar.TotalHours,
-                api,
-                parent.Origin,
-                requirements,
-                EcosystemConfig.Loaded,
-                failedChanceRoll: false))
-            {
-                return;
-            }
-
-            WildFlowerMaturation.TryApplySpreadAttemptCooldown(
-                parent,
-                api.World.Calendar.TotalHours,
-                api,
-                parent.Origin,
-                requirements,
-                EcosystemConfig.Loaded,
-                failedChanceRoll: false);
-        }
-
-        void TryApplyFailedChanceRollCooldownOnce(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            if (spreadOrigin == null || !spreadCooldownOriginsScratch.Add(spreadOrigin)) return;
-            TryApplyFailedChanceRollCooldown(spreadOrigin, requirements);
-        }
-
-        void TryApplyFailedChanceRollCooldown(BlockPos spreadOrigin, PlantRequirements requirements)
-        {
-            if (spreadOrigin == null || requirements == null || api == null) return;
-            if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
-
-            if (WildFernSpread.TryApplySpreadAttemptCooldown(
-                parent,
-                api.World.Calendar.TotalHours,
-                api,
-                parent.Origin,
-                requirements,
-                EcosystemConfig.Loaded,
-                failedChanceRoll: true))
-            {
-                return;
-            }
-
-            WildFlowerMaturation.TryApplySpreadAttemptCooldown(
-                parent,
-                api.World.Calendar.TotalHours,
-                api,
-                parent.Origin,
-                requirements,
-                EcosystemConfig.Loaded,
-                failedChanceRoll: true);
-        }
     }
 }
 

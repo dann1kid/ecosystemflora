@@ -42,17 +42,44 @@ namespace WildFarming.Ecosystem
                 ["forgetmenot"] = DefaultSteady,
             };
 
+        internal static readonly SpreadMaturationPolicy Policy = new SpreadMaturationPolicy(
+            maturationEnabled: cfg => cfg.EnableFlowerSpreadMaturation,
+            cooldownEnabled: cfg => cfg.EnableFlowerSpreadAttemptCooldown,
+            cooldownMultiplier: cfg => cfg.FlowerSpreadCooldownHoursMultiplier,
+            isMember: IsFlowerSpreadSpecies,
+            tryGetBaseHours: TryGetBaseHours,
+            maturationFallbackHours: DefaultColonizer.MaturationHours,
+            cooldownFallbackHours: DefaultSteady.PostSpreadAttemptCooldownHours,
+            maturationFloor: 6,
+            cooldownFloor: 1,
+            failedBaseHours: 3,
+            failedFloor: 1,
+            failedCap: 4,
+            requiresTerrestrialForCooldown: true);
+
         public static bool UsesMaturation(EcosystemConfig cfg, string species)
         {
-            if (cfg == null || !cfg.EnableFlowerSpreadMaturation) return false;
-            return IsFlowerSpreadSpecies(species);
+            return Policy.UsesMaturation(cfg, species);
         }
 
         /// <summary>Post-spread cooldown applies even when juvenile maturation is disabled.</summary>
         public static bool UsesPostSpreadAttemptCooldown(EcosystemConfig cfg, string species)
         {
-            if (cfg == null || !cfg.EnableFlowerSpreadAttemptCooldown) return false;
-            return IsFlowerSpreadSpecies(species);
+            return Policy.UsesPostSpreadAttemptCooldown(cfg, species);
+        }
+
+        static bool TryGetBaseHours(string species, out double maturationHours, out double cooldownHours)
+        {
+            if (TryGetProfile(species, out Profile profile))
+            {
+                maturationHours = profile.MaturationHours;
+                cooldownHours = profile.PostSpreadAttemptCooldownHours;
+                return true;
+            }
+
+            maturationHours = 0;
+            cooldownHours = 0;
+            return false;
         }
 
         static bool IsFlowerSpreadSpecies(string species)
@@ -105,29 +132,7 @@ namespace WildFarming.Ecosystem
 
         public static double MaturationHours(ICoreAPI api, BlockPos pos, string species, EcosystemConfig cfg)
         {
-            if (!TryGetProfile(species, out Profile profile))
-            {
-                profile = DefaultColonizer;
-            }
-
-            double hours = profile.MaturationHours;
-            if (cfg != null && cfg.GrowthHoursMultiplier > 0.05f)
-            {
-                hours /= cfg.GrowthHoursMultiplier;
-            }
-
-            if (cfg != null && cfg.UseSeasonalEcology && api != null && pos != null)
-            {
-                var req = new PlantRequirements { Species = species };
-                float season = SeasonEcology.SpreadActivityMultiplier(api, pos, req);
-                if (season > 0.05f)
-                {
-                    hours /= System.Math.Min(season, 2f);
-                }
-            }
-
-            if (hours < 6) hours = 6;
-            return hours;
+            return Policy.MaturationHours(api, pos, species, cfg);
         }
 
         public static double PostSpreadAttemptCooldownHours(
@@ -136,29 +141,7 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             EcosystemConfig cfg)
         {
-            string species = requirements?.Species;
-            if (!TryGetProfile(species, out Profile profile))
-            {
-                profile = DefaultSteady;
-            }
-
-            double hours = profile.PostSpreadAttemptCooldownHours;
-            if (cfg != null && cfg.FlowerSpreadCooldownHoursMultiplier > 0.05f)
-            {
-                hours /= cfg.FlowerSpreadCooldownHoursMultiplier;
-            }
-
-            if (cfg != null && cfg.UseSeasonalEcology && api != null && pos != null && requirements != null)
-            {
-                float season = SeasonEcology.SpreadActivityMultiplier(api, pos, requirements);
-                if (season > 1.05f)
-                {
-                    hours /= System.Math.Min(season, 2f);
-                }
-            }
-
-            if (hours < 1) hours = 1;
-            return hours;
+            return Policy.PostSpreadAttemptCooldownHours(api, pos, requirements, cfg);
         }
 
         /// <summary>Short anti-spam pause when the spread chance roll fails (no placement attempt).</summary>
@@ -168,25 +151,7 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements,
             EcosystemConfig cfg)
         {
-            const double baseHours = 3;
-            double hours = baseHours;
-            if (cfg != null && cfg.FlowerSpreadCooldownHoursMultiplier > 0.05f)
-            {
-                hours /= cfg.FlowerSpreadCooldownHoursMultiplier;
-            }
-
-            if (cfg != null && cfg.UseSeasonalEcology && api != null && pos != null && requirements != null)
-            {
-                float season = SeasonEcology.SpreadActivityMultiplier(api, pos, requirements);
-                if (season > 1.05f)
-                {
-                    hours /= System.Math.Min(season, 2f);
-                }
-            }
-
-            if (hours < 1) hours = 1;
-            if (hours > 4) hours = 4;
-            return hours;
+            return Policy.FailedSpreadAttemptCooldownHours(api, pos, requirements, cfg);
         }
 
         /// <returns>True when cooldown was applied to the parent entry.</returns>
@@ -199,15 +164,7 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg,
             bool failedChanceRoll)
         {
-            if (parent == null || requirements == null || cfg == null) return false;
-            if (requirements.Habitat != EcologyHabitat.Terrestrial) return false;
-            if (!UsesPostSpreadAttemptCooldown(cfg, requirements.Species)) return false;
-
-            double cooldown = failedChanceRoll
-                ? FailedSpreadAttemptCooldownHours(api, pos, requirements, cfg)
-                : PostSpreadAttemptCooldownHours(api, pos, requirements, cfg);
-            parent.NextSpawnAllowedAtHours = nowHours + cooldown;
-            return true;
+            return Policy.TryApplySpreadAttemptCooldown(parent, nowHours, api, pos, requirements, cfg, failedChanceRoll);
         }
     }
 }

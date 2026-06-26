@@ -376,35 +376,10 @@ namespace WildFarming.Ecosystem
             int verticalSearch = request.VerticalSearch;
             MatSpreadCollectMode matMode = request.MatMode;
 
-            if (matMode == MatSpreadCollectMode.MatEdge)
+            if (matMode == MatSpreadCollectMode.MatEdge
+                && !MatSpreadDispatch.IsFrontier(acc, origin, requirements, verticalSearch))
             {
-                int verticalReach = verticalSearch > 0
-                    ? System.Math.Min(verticalSearch, 3)
-                    : RhizomeSpread.DefaultVerticalReach;
-
-                if (requirements.UsesRhizomeSpread
-                    && !RhizomeSpread.IsFrontier(acc, origin, requirements.Species, verticalReach))
-                {
-                    return;
-                }
-
-                if (requirements.UsesSurfaceMatSpread
-                    && !SurfaceMatSpread.IsFrontier(
-                        acc,
-                        origin,
-                        requirements.Species,
-                        verticalSearch > 0
-                            ? System.Math.Min(verticalSearch, 2)
-                            : SurfaceMatSpread.DefaultVerticalReach))
-                {
-                    return;
-                }
-
-                if (requirements.UsesFernRhizomeSpread
-                    && !FernRhizomeSpread.IsFrontier(acc, origin, requirements.Species))
-                {
-                    return;
-                }
+                return;
             }
 
             for (int dx = -radius; dx <= radius; dx++)
@@ -413,12 +388,8 @@ namespace WildFarming.Ecosystem
                 {
                     if (dx == 0 && dz == 0) continue;
 
-                    if (matMode == MatSpreadCollectMode.MatEdge)
-                    {
-                        if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
-                        if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
-                        if (requirements.UsesFernRhizomeSpread && !FernRhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
-                    }
+                    if (matMode == MatSpreadCollectMode.MatEdge
+                        && !MatSpreadDispatch.IsStep(dx, dz, requirements)) continue;
 
                     if (!WaterPlacement.TryFindPlantPos(
                             acc, origin, dx, dz, verticalSearch, requirements, out BlockPos plantPos, out _))

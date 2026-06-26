@@ -10,7 +10,10 @@ namespace WildFarming.Ecosystem
         internal const float DefaultSeedDispersalChance = 0.08f;
         internal const int DefaultSeedDispersalRadius = 5;
 
-        static readonly int[][] OrthogonalDirs = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+        static readonly MatEdgeTopology Topology = new MatEdgeTopology(
+            MatConnectivity.Orthogonal4,
+            (block, species) => PlantCodeHelper.IsReedBlock(block)
+                && PlantCodeHelper.ResolveEcologySpecies(block) == species);
 
         public static void ApplyTo(PlantRequirements req)
         {
@@ -89,47 +92,13 @@ namespace WildFarming.Ecosystem
 
         public static bool IsOrthogonalStep(int dx, int dz)
         {
-            return System.Math.Abs(dx) + System.Math.Abs(dz) == 1;
+            return Topology.IsStep(dx, dz);
         }
 
         /// <summary>True when at least one horizontal neighbor column lacks same-species reed.</summary>
         public static bool IsFrontier(IBlockAccessor acc, BlockPos origin, string species, int verticalReach = DefaultVerticalReach)
         {
-            if (acc == null || origin == null || string.IsNullOrEmpty(species)) return true;
-
-            if (verticalReach < 0) verticalReach = 0;
-
-            for (int i = 0; i < OrthogonalDirs.Length; i++)
-            {
-                if (!NeighborColumnHasSameSpecies(acc, origin, OrthogonalDirs[i][0], OrthogonalDirs[i][1], species, verticalReach))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool NeighborColumnHasSameSpecies(
-            IBlockAccessor acc,
-            BlockPos origin,
-            int dx,
-            int dz,
-            string species,
-            int verticalReach)
-        {
-            int nx = origin.X + dx;
-            int nz = origin.Z + dz;
-
-            for (int y = origin.Y - verticalReach; y <= origin.Y + verticalReach; y++)
-            {
-                var checkPos = new BlockPos(nx, y, nz, origin.dimension);
-                Block block = acc.GetBlock(checkPos);
-                if (!PlantCodeHelper.IsReedBlock(block)) continue;
-                if (PlantCodeHelper.ResolveEcologySpecies(block) == species) return true;
-            }
-
-            return false;
+            return MatEdgeSpread.IsFrontier(acc, origin, species, verticalReach, Topology);
         }
     }
 }

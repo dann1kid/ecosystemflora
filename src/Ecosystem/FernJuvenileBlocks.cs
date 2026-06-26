@@ -6,14 +6,11 @@ namespace WildFarming.Ecosystem
     /// <summary>Juvenile spread blocks (ecosystemflora) maturing into vanilla <c>fern-*</c> / <c>tallfern</c>.</summary>
     internal static class FernJuvenileBlocks
     {
-        const string Domain = "ecosystemflora";
         const string Prefix = "juvenile-fern-";
-        const string Suffix = "-free";
 
         public static AssetLocation CodeForSpecies(string species)
         {
-            if (string.IsNullOrEmpty(species)) return null;
-            return new AssetLocation(Domain, Prefix + species + Suffix);
+            return JuvenileBlockNaming.CodeForSpecies(Prefix, species);
         }
 
         public static AssetLocation MatureVanillaCode(string species)
@@ -56,12 +53,7 @@ namespace WildFarming.Ecosystem
 
         public static string SpeciesFromJuvenileCode(AssetLocation code)
         {
-            if (code == null) return null;
-            if (!Domain.Equals(code.Domain, System.StringComparison.OrdinalIgnoreCase)) return null;
-            string path = code.Path ?? "";
-            if (!path.StartsWith(Prefix) || !path.EndsWith(Suffix)) return null;
-            string inner = path.Substring(Prefix.Length, path.Length - Prefix.Length - Suffix.Length);
-            return inner.Length > 0 ? inner : null;
+            return JuvenileBlockNaming.SpeciesFromCode(Prefix, code);
         }
 
         public static string SpeciesFromJuvenile(Block block)

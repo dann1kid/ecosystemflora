@@ -314,31 +314,10 @@ namespace WildFarming.Ecosystem
                 && requirements?.Habitat == EcologyHabitat.Terrestrial
                 && phase != SpreadCollectPhase.All;
 
-            if (matMode == MatSpreadCollectMode.MatEdge)
+            if (matMode == MatSpreadCollectMode.MatEdge
+                && !MatSpreadDispatch.IsFrontier(acc, origin, requirements, verticalSearch))
             {
-                int verticalReach = verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : RhizomeSpread.DefaultVerticalReach;
-
-                if (requirements.UsesRhizomeSpread
-                    && !RhizomeSpread.IsFrontier(acc, origin, requirements.Species, verticalReach))
-                {
-                    return scratchCandidates;
-                }
-
-                if (requirements.UsesSurfaceMatSpread
-                    && !SurfaceMatSpread.IsFrontier(
-                        acc,
-                        origin,
-                        requirements.Species,
-                        verticalSearch > 0 ? System.Math.Min(verticalSearch, 2) : SurfaceMatSpread.DefaultVerticalReach))
-                {
-                    return scratchCandidates;
-                }
-
-                if (requirements.UsesFernRhizomeSpread
-                    && !FernRhizomeSpread.IsFrontier(acc, origin, requirements.Species))
-                {
-                    return scratchCandidates;
-                }
+                return scratchCandidates;
             }
 
             float seedFitnessScale = matMode == MatSpreadCollectMode.SeedDispersal
@@ -355,12 +334,8 @@ namespace WildFarming.Ecosystem
                 {
                     if (dx == 0 && dz == 0) continue;
 
-                    if (matMode == MatSpreadCollectMode.MatEdge)
-                    {
-                        if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
-                        if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
-                        if (requirements.UsesFernRhizomeSpread && !FernRhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
-                    }
+                    if (matMode == MatSpreadCollectMode.MatEdge
+                        && !MatSpreadDispatch.IsStep(dx, dz, requirements)) continue;
 
                     int worldX = origin.X + dx;
                     int worldZ = origin.Z + dz;

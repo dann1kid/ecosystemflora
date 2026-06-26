@@ -8,11 +8,9 @@ namespace WildFarming.Ecosystem
     {
         internal const int DefaultVerticalReach = 1;
 
-        static readonly int[][] Neighbor8 =
-        {
-            new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 },
-            new[] { 1, 1 }, new[] { 1, -1 }, new[] { -1, 1 }, new[] { -1, -1 },
-        };
+        static readonly MatEdgeTopology Topology = new MatEdgeTopology(
+            MatConnectivity.Chebyshev8,
+            IsSameSurfaceSpecies);
 
         public static void ApplyTo(PlantRequirements req)
         {
@@ -88,46 +86,12 @@ namespace WildFarming.Ecosystem
         /// <summary>Chebyshev distance 1 — pad touches including diagonals.</summary>
         public static bool IsMatStep(int dx, int dz)
         {
-            return System.Math.Max(System.Math.Abs(dx), System.Math.Abs(dz)) == 1;
+            return Topology.IsStep(dx, dz);
         }
 
         public static bool IsFrontier(IBlockAccessor acc, BlockPos origin, string species, int verticalReach = DefaultVerticalReach)
         {
-            if (acc == null || origin == null || string.IsNullOrEmpty(species)) return true;
-
-            if (verticalReach < 0) verticalReach = 0;
-
-            for (int i = 0; i < Neighbor8.Length; i++)
-            {
-                if (!NeighborHasSameSpecies(acc, origin, Neighbor8[i][0], Neighbor8[i][1], species, verticalReach))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool NeighborHasSameSpecies(
-            IBlockAccessor acc,
-            BlockPos origin,
-            int dx,
-            int dz,
-            string species,
-            int verticalReach)
-        {
-            int nx = origin.X + dx;
-            int nz = origin.Z + dz;
-
-            for (int y = origin.Y - verticalReach; y <= origin.Y + verticalReach; y++)
-            {
-                var checkPos = new BlockPos(nx, y, nz, origin.dimension);
-                Block block = acc.GetBlock(checkPos);
-                if (!IsSameSurfaceSpecies(block, species)) continue;
-                return true;
-            }
-
-            return false;
+            return MatEdgeSpread.IsFrontier(acc, origin, species, verticalReach, Topology);
         }
 
         static bool IsSameSurfaceSpecies(Block block, string species)

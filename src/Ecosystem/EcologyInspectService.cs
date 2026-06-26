@@ -558,21 +558,7 @@ namespace WildFarming.Ecosystem
             if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesFernRhizomeSpread)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
-                bool frontier;
-                if (req.UsesFernRhizomeSpread)
-                {
-                    frontier = FernRhizomeSpread.IsFrontier(acc, pos, req.Species);
-                }
-                else
-                {
-                    int verticalReach = req.UsesRhizomeSpread
-                        ? RhizomeSpread.DefaultVerticalReach
-                        : SurfaceMatSpread.DefaultVerticalReach;
-
-                    frontier = req.UsesRhizomeSpread
-                        ? RhizomeSpread.IsFrontier(acc, pos, req.Species, verticalReach)
-                        : SurfaceMatSpread.IsFrontier(acc, pos, req.Species, verticalReach);
-                }
+                bool frontier = MatSpreadDispatch.IsFrontier(acc, pos, req, verticalSearch: 0);
 
                 AddInspectLine(
                     lines,
