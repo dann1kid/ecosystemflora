@@ -13,6 +13,7 @@ namespace WildFarming.Ecosystem
     {
         readonly List<Vec2i> roundRobin = new List<Vec2i>();
         readonly Dictionary<long, Vec2i> columnResume = new Dictionary<long, Vec2i>();
+        readonly List<long> stale = new List<long>();
         int roundRobinIndex;
         long activeChunkFingerprint;
 
@@ -102,7 +103,7 @@ namespace WildFarming.Ecosystem
 
         void RefreshChunkList(HashSet<long> activeChunkKeys)
         {
-            long fingerprint = 0;
+            long fingerprint = activeChunkKeys.Count;
             foreach (long key in activeChunkKeys)
             {
                 fingerprint ^= key;
@@ -112,8 +113,6 @@ namespace WildFarming.Ecosystem
 
             activeChunkFingerprint = fingerprint;
             roundRobin.Clear();
-            roundRobinIndex = 0;
-            columnResume.Clear();
 
             foreach (long key in activeChunkKeys)
             {
@@ -121,6 +120,29 @@ namespace WildFarming.Ecosystem
                 int cz = (int)(key & 0xFFFFFFFF);
                 roundRobin.Add(new Vec2i(cx, cz));
             }
+
+            roundRobin.Sort(CompareChunkCoord);
+            if (roundRobinIndex >= roundRobin.Count) roundRobinIndex = 0;
+
+            // Preserve in-progress column cursors for chunks that stayed active. Previously this wiped
+            // every cursor whenever the active set changed (e.g. the player crossed a chunk boundary),
+            // restarting every chunk from column 0 and starving large rescans. Only drop stale chunks.
+            stale.Clear();
+            foreach (long key in columnResume.Keys)
+            {
+                if (!activeChunkKeys.Contains(key)) stale.Add(key);
+            }
+
+            for (int i = 0; i < stale.Count; i++)
+            {
+                columnResume.Remove(stale[i]);
+            }
+        }
+
+        static int CompareChunkCoord(Vec2i a, Vec2i b)
+        {
+            int cmp = a.X.CompareTo(b.X);
+            return cmp != 0 ? cmp : a.Y.CompareTo(b.Y);
         }
 
         static long ChunkKey(int cx, int cz) => ((long)cx << 32) | (uint)cz;

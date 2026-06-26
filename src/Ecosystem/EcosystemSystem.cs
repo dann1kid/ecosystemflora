@@ -22,6 +22,17 @@ namespace WildFarming.Ecosystem
         /// <summary>Cap inactive-chunk rotations per tick (avoids O(queue) spin when queue is huge).</summary>
         const int MaxChunkScanDequeAttemptsPerTick = 128;
 
+        /// <summary>
+        /// Cadence for re-enqueuing each player's immediate chunks into the (fast) background
+        /// registration scan. The load-time scan marks a chunk complete and nothing re-runs the fast
+        /// pass afterwards, so flora added without a <c>DidPlaceBlock</c> event (worldedit / fill /
+        /// other mods) used to wait for the slow cyclic column crawler to round-robin back to it —
+        /// minutes at default activation radius. This bounded re-enqueue keeps near-player edits
+        /// registering within a couple seconds. Idempotent: already-registered flora is skipped on drain.
+        /// </summary>
+        const int PlayerVicinityRescanIntervalMs = 2500;
+        long nextPlayerVicinityRescanMs;
+
         long reproduceListenerId;
         long stressListenerId;
         long chunkScanListenerId;
@@ -216,6 +227,47 @@ namespace WildFarming.Ecosystem
                 var coord = new Vec2i(cx, cz);
                 EnqueueChunkScan(coord, highPriority: cfg.EnablePlayerPriorityRegistration);
                 foliageCells.ScheduleChunkSync(api, coord);
+            }
+        }
+
+        /// <summary>
+        /// Throttled re-enqueue of the chunks immediately around each online player into the fast
+        /// background registration scan. Catches flora that appeared after a chunk's load-time scan
+        /// completed but bypassed <c>OnDidPlaceBlock</c> (bulk/worldedit placement). Scoped to the
+        /// player-priority radius (a 3×3-ish chunk window at defaults) and gated by
+        /// <see cref="PlayerVicinityRescanIntervalMs"/> so it cannot outrun scan completion. The fresh
+        /// re-enqueue is deduped by <see cref="RegistrationScanQueue"/> until the prior scan finishes.
+        /// </summary>
+        void RescanPlayerVicinity(EcosystemConfig cfg, IBlockAccessor acc)
+        {
+            if (acc == null || !cfg.EnableCyclicFloraDiscovery) return;
+            if (!(api is ICoreServerAPI sapi)) return;
+
+            long nowMs = api.World.ElapsedMilliseconds;
+            if (nowMs < nextPlayerVicinityRescanMs) return;
+            nextPlayerVicinityRescanMs = nowMs + PlayerVicinityRescanIntervalMs;
+
+            int cs = GlobalConstants.ChunkSize;
+            int chunkRadius = cfg.PlayerRegistrationPriorityRadiusBlocks / cs + 1;
+            bool highPriority = cfg.EnablePlayerPriorityRegistration;
+
+            foreach (IPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                var ppos = player?.Entity?.Pos;
+                if (ppos == null) continue;
+
+                int pcx = (int)ppos.X / cs;
+                int pcz = (int)ppos.Z / cs;
+                for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
+                {
+                    for (int dz = -chunkRadius; dz <= chunkRadius; dz++)
+                    {
+                        int cx = pcx + dx;
+                        int cz = pcz + dz;
+                        if (acc.GetMapChunk(cx, cz) == null) continue;
+                        EnqueueChunkScan(new Vec2i(cx, cz), highPriority: highPriority);
+                    }
+                }
             }
         }
 
@@ -1063,6 +1115,8 @@ namespace WildFarming.Ecosystem
                     }
                 }
             }
+
+            RescanPlayerVicinity(cfg, acc);
 
             bool syncFoliage = cfg.EnableSeasonalFoliage && FoliageSyncModeHelper.UsesChunkSync(cfg);
             FoliageCellIndex foliageIndex = FoliageSyncModeHelper.UsesRandomTick(cfg)

@@ -3,9 +3,16 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.1.3**
+**This release:** **4.1.4**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.1.4 — Fast registration for flora placed near players
+
+- **Fix (registration):** flora added to an already-scanned chunk without a normal place event (worldedit / fill / other mods) no longer takes minutes to enter the registry. A chunk's load-time scan marked it complete and nothing re-ran the fast scan afterwards, so discovery fell to the slow cyclic column crawler round-robining every active chunk (≈225 at default radius) at 32 columns/tick. The chunks immediately around each player are now re-enqueued into the fast background scan on a short cadence, so near-player edits register within a couple seconds. Hand-placed blocks were always instant (place event) and are unchanged.
+- **Fix (rescan):** the cyclic flora rescanner no longer discards all per-chunk column progress whenever the active-chunk set changes (e.g. the player walks across a chunk border); it keeps cursors for chunks that stayed active, matching the tree rescanner.
 
 ---
 
