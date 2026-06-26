@@ -4,14 +4,17 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Symbionts die when required host vanishes nearby.</summary>
+    /// <summary>
+    /// Symbionts need a host to spread and survive. When a host vanishes, cache entries are
+    /// dropped and nearby ecology is woken; orphaned symbionts fade via the stress tick
+    /// (<see cref="EcosystemSystem"/> FailedSurvivalChecks), not instant removal.
+    /// </summary>
     internal static class FloraSymbiosis
     {
         public const string TreeHostToken = "tree";
 
         /// <summary>Ground symbionts can sit many blocks below canopy logs.</summary>
         const int TreeHostVerticalSearchUp = 16;
-        const int TreeCascadeVerticalSearchDown = 16;
         const int NonTreeVerticalSearch = 2;
 
         public readonly struct Rule
@@ -94,42 +97,17 @@ namespace WildFarming.Ecosystem
             return found != null;
         }
 
-        public static void CascadeOnHostRemoved(ICoreAPI api, BlockPos hostPos, Block hostBlock)
+        /// <summary>
+        /// Call when a host block is removed (tree felled, spread parent broken, etc.).
+        /// Does not remove symbionts — stress death handles orphans on the normal recheck cadence.
+        /// </summary>
+        public static void NotifyHostRemoved(ICoreAPI api, BlockPos hostPos, Block hostBlock)
         {
             if (api == null || hostPos == null || !EcosystemConfig.Loaded.EnableSymbiosis) return;
 
-            EcosystemSystem eco = EcosystemSystem.Instance;
-            if (eco == null) return;
-
             int radius = EcosystemConfig.Loaded.SymbiosisCascadeRadius;
             InvalidateHostCacheAround(hostPos, radius);
-            IBlockAccessor acc = api.World.BlockAccessor;
-            bool treeHost = PlantCodeHelper.IsArborealHostBlock(hostBlock);
-            int scanDown = treeHost ? TreeCascadeVerticalSearchDown : NonTreeVerticalSearch;
-            int scanUp = NonTreeVerticalSearch;
-            var scanPos = new BlockPos(0);
-
-            for (int dx = -radius; dx <= radius; dx++)
-            {
-                for (int dz = -radius; dz <= radius; dz++)
-                {
-                    for (int dy = -scanDown; dy <= scanUp; dy++)
-                    {
-                        scanPos.Set(hostPos.X + dx, hostPos.Y + dy, hostPos.Z + dz);
-                        if (scanPos.Equals(hostPos)) continue;
-
-                        Block block = acc.GetBlock(scanPos);
-                        if (!PlantCodeHelper.IsEcologySpreadParent(block)) continue;
-
-                        string symbiontSpecies = PlantCodeHelper.ResolveEcologySpecies(block);
-                        if (!TryGetRule(symbiontSpecies, out Rule rule)) continue;
-
-                        if (!SymbiontLinkedToRemovedHost(rule, hostBlock, hostPos, scanPos)) continue;
-
-                        eco.RemoveEcologyPlant(scanPos, cascadeSymbiosis: false, reason: "symbiosis");
-                    }
-                }
-            }
+            EcosystemSystem.Instance?.WakeEcologyAround(hostPos);
         }
 
         static bool SymbiontLinkedToRemovedHost(Rule rule, Block hostBlock, BlockPos hostPos, BlockPos symbiontPos)

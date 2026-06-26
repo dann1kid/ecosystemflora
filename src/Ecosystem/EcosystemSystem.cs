@@ -578,7 +578,7 @@ namespace WildFarming.Ecosystem
 
             if (cascadeSymbiosis && EcosystemConfig.Loaded.EnableSymbiosis)
             {
-                FloraSymbiosis.CascadeOnHostRemoved(api, pos, block);
+                FloraSymbiosis.NotifyHostRemoved(api, pos, block);
             }
 
             string species = PlantCodeHelper.ResolveEcologySpecies(block);
@@ -1010,7 +1010,7 @@ namespace WildFarming.Ecosystem
 
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {
-                FloraSymbiosis.CascadeOnHostRemoved(api, pos, oldBlock);
+                FloraSymbiosis.NotifyHostRemoved(api, pos, oldBlock);
             }
 
             if (PlantCodeHelper.IsTreeLogGrownBlock(oldBlock))

@@ -269,12 +269,12 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше проверок стресса за тик. Меньше: мягче темп.");
 
             D(nameof(EcosystemConfig.EnableSymbiosis),
-                "On: forest symbionts need tree hosts; cascade on host loss. Off: symbiosis rules off.",
-                "Вкл.: симбионты леса требуют дерево-хозяина; каскад при потере. Выкл.: симбиоз выключен.");
+                "On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off.",
+                "Вкл.: симбионты леса требуют дерево-хозяина; без хозяина угасают через стресс. Выкл.: симбиоз выключен.");
 
             D(nameof(EcosystemConfig.SymbiosisCascadeRadius),
-                "Higher: wider radius when host tree removed triggers symbiont stress. Lower: tighter cascade.",
-                "Больше: шире каскад при удалении дерева-хозяина. Меньше: уже зона каскада.");
+                "Horizontal radius (blocks) to invalidate host cache and wake ecology when a symbiosis host is removed.",
+                "Горизонтальный радиус (блоки) сброса кэша хозяина и пробуждения экологии при удалении хозяина.");
 
             D(nameof(EcosystemConfig.UseSeasonalEcology),
                 "On: monthly spread multipliers from WildSpeciesSeason profiles. Off: uniform spread year-round.",

@@ -443,6 +443,7 @@ namespace WildFarming.Ecosystem
 
         public bool EnableSymbiosis { get; set; } = true;
 
+        /// <summary>Radius for host-cache invalidation and ecology wake when a symbiosis host is removed.</summary>
         public int SymbiosisCascadeRadius { get; set; } = 4;
 
         // --- Local niche (v2.2) ---

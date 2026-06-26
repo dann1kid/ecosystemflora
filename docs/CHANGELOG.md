@@ -3,9 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.1.4**
+**This release:** **4.1.5**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.1.5 — Symbiosis orphans fade via stress, not instant cascade
+
+- **Fix (symbiosis):** removing a tree or other symbiosis host no longer mass-kills linked understory plants in one frame. Host removal only invalidates the host cache and wakes nearby ecology; orphaned symbionts (ferns, bluebells, berries, …) accumulate failed stress checks on the normal recheck cadence (~3–4 game days at defaults) and then die with the usual Death soil impulse. Aligns with impulse-only simulation — no ambient soil pass, no instant script cascade.
 
 ---
 
