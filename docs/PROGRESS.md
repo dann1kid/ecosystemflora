@@ -1,11 +1,11 @@
 # Прогресс разработки
 
-**Текущая стадия:** `Ecosystem v3.9.24` — meadow flower phenology (simulation-first phases + phase blocks).  
-**Версия мода:** `3.9.24` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**493**)  
+**Текущая стадия:** `Ecosystem v4.2.0` — simulation visibility: fern/tallgrass phenology, berry maturation, stump decay, history hint, vanilla-minimal preset.  
+**Версия мода:** `4.2.0` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**580+**)  
 
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-06-24 (код **3.9.24**, flower phenology, [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md), [`CHANGELOG.md`](CHANGELOG.md)).
+Последнее обновление документации: 2026-06-26 (код **4.2.0**, simulation visibility roadmap, [`CHANGELOG.md`](CHANGELOG.md)).
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [CHANGELOG.md](CHANGELOG.md) (релизные заметки), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки), [GAPS.md](GAPS.md) (пробелы идеи), [FLOWER_PHENOLOGY.md](FLOWER_PHENOLOGY.md) (фенология луговых цветов), [CANOPY_PHENOLOGY.md](CANOPY_PHENOLOGY.md) (сезонная листва), [CANOPY_AMBIENCE.md](CANOPY_AMBIENCE.md) (частицы кроны), [TREE_AGING.md](TREE_AGING.md) (зрелость диких деревьев), [FERNTREE.md](FERNTREE.md) (древовидный папоротник), [WILD_VINE.md](WILD_VINE.md) (дикие лианы).
 

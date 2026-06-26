@@ -58,6 +58,11 @@ namespace WildFarming.Ecosystem
 
                     acc.SetBlock(stumpBlock.BlockId, pos);
                     acc.MarkBlockDirty(pos);
+                    if (cfg.EnableStumpDecay)
+                    {
+                        EcosystemSystem.Instance?.StumpDecay.Enqueue(api, pos, wood);
+                    }
+
                     changed++;
                     continue;
                 }

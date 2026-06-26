@@ -14,6 +14,7 @@ namespace WildFarming.Ecosystem
         readonly PendingFlowerMaturation flowerMaturation = new PendingFlowerMaturation();
         readonly PendingFernMaturation fernMaturation = new PendingFernMaturation();
         readonly PendingTallgrassPromotion tallgrassPromotion = new PendingTallgrassPromotion();
+        readonly PendingBerryMaturation berryMaturation = new PendingBerryMaturation();
 
         public void AddTreeSapling(BlockPos pos, string species, double nowHours)
             => treeSaplings.Add(pos, species, nowHours);
@@ -27,6 +28,9 @@ namespace WildFarming.Ecosystem
         public void AddTallgrassPromotion(ICoreAPI api, BlockPos pos)
             => tallgrassPromotion.Add(api, pos);
 
+        public void AddBerry(BlockPos pos, string species, double matureAtHours)
+            => berryMaturation.Add(pos, species, matureAtHours);
+
         /// <summary>Drop a position from every queue whose entries are invalidated when a block changes.
         /// Tree saplings are intentionally not cleared here (matches prior behavior).</summary>
         public void Remove(BlockPos pos)
@@ -34,6 +38,7 @@ namespace WildFarming.Ecosystem
             flowerMaturation.Remove(pos);
             fernMaturation.Remove(pos);
             tallgrassPromotion.Remove(pos);
+            berryMaturation.Remove(pos);
         }
 
         public bool TryGetFlowerHoursLeft(BlockPos pos, double nowHours, out double hoursLeft)
@@ -53,5 +58,8 @@ namespace WildFarming.Ecosystem
 
         public void ProcessTallgrass(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
             => tallgrassPromotion.Process(api, ecosystem, nowHours, maxChecks);
+
+        public void ProcessBerry(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
+            => berryMaturation.Process(api, ecosystem, nowHours, maxChecks);
     }
 }

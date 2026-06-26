@@ -130,6 +130,8 @@ namespace WildFarming.Ecosystem
                 AppendAreaScan(inspectLines, radius, scanSpecies, scanCounts, scanTotal);
             }
 
+            AppendRecentHistory(api, pos, cfg, inspectLines);
+
             report = new EcologyInspectReportPacket
             {
                 X = pos.X,
@@ -159,6 +161,17 @@ namespace WildFarming.Ecosystem
         static void MarkCooldown(IPlayer player)
         {
             lastInspectUtcMs[player.PlayerUID] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+
+        static void AppendRecentHistory(ICoreAPI api, BlockPos pos, EcosystemConfig cfg, List<InspectLineLite> lines)
+        {
+            if (!cfg.EnableEcologyHistoryHint) return;
+
+            var history = new List<InspectLineLite>();
+            if (!EcologyHistoryRecorder.TryBuildHintLines(api, pos, history, maxLines: 3)) return;
+
+            AddInspectLine(lines, "ecosystemflora:inspect-line-history-header");
+            lines.AddRange(history);
         }
 
         static void AddInspectLine(List<InspectLineLite> list, string key, params string[] args)
@@ -360,6 +373,14 @@ namespace WildFarming.Ecosystem
                 {
                     AppendFlowerPhenologyInspect(api, entry, cfg, lines);
                 }
+                else if (FernPhenology.UsesPhenology(cfg, entry.Requirements))
+                {
+                    AppendFernPhenologyInspect(api, entry, cfg, lines);
+                }
+                else if (TallgrassPhenology.UsesPhenology(cfg, entry.Requirements))
+                {
+                    AppendTallgrassPhenologyInspect(entry, lines);
+                }
                 else if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements))
                 {
                     bool sporulating = WildFernSpread.CanSpread(api, entry, cfg);
@@ -472,6 +493,51 @@ namespace WildFarming.Ecosystem
                         "ecosystemflora:inspect-line-flower-bloom-eta",
                         daysLeft.ToString("0.#"));
                 }
+            }
+        }
+
+        static void AppendFernPhenologyInspect(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            EcosystemConfig cfg,
+            List<InspectLineLite> lines)
+        {
+            if (entry == null || lines == null) return;
+
+            switch (entry.FernPhenologyPhase)
+            {
+                case FernPhenologyPhase.Dormant:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-fern-phase-dormant");
+                    break;
+                case FernPhenologyPhase.Sporulating:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-fern-phase-sporulating");
+                    break;
+                case FernPhenologyPhase.Dieback:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-fern-phase-dieback");
+                    break;
+            }
+
+            if (FernPhenology.ShouldUseDieback(api.World.BlockAccessor, entry, cfg))
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-symbiosis-missing");
+            }
+        }
+
+        static void AppendTallgrassPhenologyInspect(ReproducerEntry entry, List<InspectLineLite> lines)
+        {
+            if (entry == null || lines == null) return;
+
+            switch (entry.TallgrassPhenologyPhase)
+            {
+                case TallgrassPhenologyPhase.Dormant:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-phase-dormant");
+                    break;
+                case TallgrassPhenologyPhase.Active:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-phase-active");
+                    break;
+                case TallgrassPhenologyPhase.Dieback:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-phase-dieback");
+                    break;
             }
         }
 
@@ -611,6 +677,7 @@ namespace WildFarming.Ecosystem
             var lines = new List<InspectLineLite>();
             AddInspectLine(lines, "ecosystemflora:inspect-line-mycelium-no-be");
             AppendMyceliumCapState(api, ground, capReq, lines, hasAnchorBe: false);
+            AppendRecentHistory(api, pos, cfg, lines);
 
             report = new EcologyInspectReportPacket
             {
@@ -637,6 +704,7 @@ namespace WildFarming.Ecosystem
 
             var lines = new List<InspectLineLite>();
             AppendMyceliumCapState(api, anchorPos, anchorReq, lines, hasAnchorBe: true);
+            AppendRecentHistory(api, anchorPos, cfg, lines);
 
             report = new EcologyInspectReportPacket
             {

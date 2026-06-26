@@ -3,9 +3,22 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.1.5**
+**This release:** **4.2.0**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.2.0 — Simulation visibility and ecology parity
+
+- **Fern phenology:** dormant / sporulating / dieback phase blocks (`fernphase-*`); orphan symbionts sync to dieback under stress; spread gated off-season and in dieback.
+- **Tallgrass phenology:** winter dormant and stress dieback visuals; spread off in dormant/dieback.
+- **Berry spread maturation:** spread offspring reset via cutting state and register when calendar-mature; tuned density for blackberry, raspberry, and currants.
+- **Stump decay:** senescent snag stumps schedule removal after configurable game years (persisted save data).
+- **Ecology history in inspect:** recent events (orphan dieback, stress death, spread) appear at the bottom of the **I** inspect report when enabled; handbook cross-links use explicit `handbook://` URLs.
+- **Presets:** new `vanilla-minimal` bundle (disables juvenile spread + phenology); optional JSON presets in `ModConfig/ecosystemflora.presets/`.
+- **Defaults:** `ApplyCrossHabitatSpacing` now **true** (meadow and shore compete in spacing index).
+- **Mycelium:** tree removal is notify-only (gradual stress death, aligned with 4.1.5 flora symbiosis).
 
 ---
 

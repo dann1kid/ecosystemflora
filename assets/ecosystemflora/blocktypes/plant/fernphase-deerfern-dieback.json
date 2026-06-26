@@ -1,0 +1,81 @@
+﻿{
+    "code":  "fernphase-deerfern-dieback",
+    "class":  "BlockPlant",
+    "enabled":  true,
+    "renderpass":  "OpaqueNoCull",
+    "blockmaterial":  "Plant",
+    "drawtype":  "JSON",
+    "randomizeRotations":  true,
+    "shape":  {
+                  "base":  "game:block/plant/fern/cross",
+                  "scale":  1
+              },
+    "textures":  {
+                     "east":  {
+                                  "base":  "game:block/plant/fern/deerfern",
+                                  "alpha":  255,
+                                  "overlays":  [
+
+                                               ],
+                                  "tiles":  [
+
+                                            ],
+                                  "tilesWidth":  0,
+                                  "tilesHeight":  0,
+                                  "windMode":  0,
+                                  "windData":  0,
+                                  "rotation":  0,
+                                  "autoTile":  false,
+                                  "alternates":  [
+
+                                                 ],
+                                  "tint":  "#8b7355"
+                              },
+                     "west":  {
+                                  "base":  "game:block/plant/fern/deerfern",
+                                  "alpha":  255,
+                                  "overlays":  [
+
+                                               ],
+                                  "tiles":  [
+
+                                            ],
+                                  "tilesWidth":  0,
+                                  "tilesHeight":  0,
+                                  "windMode":  0,
+                                  "windData":  0,
+                                  "rotation":  0,
+                                  "autoTile":  false,
+                                  "alternates":  [
+
+                                                 ],
+                                  "tint":  "#8b7355"
+                              }
+                 },
+    "sideopaque":  {
+                       "all":  false
+                   },
+    "sidesolid":  {
+                      "all":  false
+                  },
+    "replaceable":  3000,
+    "resistance":  0.5,
+    "lightAbsorption":  0,
+    "collisionbox":  null,
+    "selectionbox":  {
+                         "x1":  0.25,
+                         "y1":  0,
+                         "z1":  0.25,
+                         "x2":  0.75,
+                         "y2":  0.672,
+                         "z2":  0.75
+                     },
+    "sounds":  {
+                   "place":  "game:block/plant",
+                   "break":  "game:block/plant"
+               },
+    "materialDensity":  200,
+    "drops":  [
+
+              ]
+}

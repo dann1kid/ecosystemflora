@@ -152,6 +152,46 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more fern maturation checks per tick. Lower: slower juvenile queue.",
                 "Больше: быстрее очередь созревания папоротников. Меньше: медленнее.");
 
+            D(nameof(EcosystemConfig.EnableFernPhenology),
+                "On: fern dormant/sporulating/dieback phase blocks and spread gates. Off: text-only sporulation gate.",
+                "Вкл.: фазы папоротника (dormant/sporulating/dieback) и блоки. Выкл.: только текст sporulation.");
+
+            D(nameof(EcosystemConfig.MaxFernPhenologyChecksPerTick),
+                "Higher: more fern phenology updates per tick. Lower: slower phase sync.",
+                "Больше: быстрее синхронизация фаз папоротника. Меньше: медленнее.");
+
+            D(nameof(EcosystemConfig.EnableTallgrassPhenology),
+                "On: tallgrass winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla height only.",
+                "Вкл.: зимний покой и dieback tallgrass, spread по сезону. Выкл.: только ванильная высота.");
+
+            D(nameof(EcosystemConfig.MaxTallgrassPhenologyChecksPerTick),
+                "Higher: more tallgrass phenology updates per tick. Lower: slower phase sync.",
+                "Больше: быстрее синхронизация фаз tallgrass. Меньше: медленнее.");
+
+            D(nameof(EcosystemConfig.EnableBerrySpreadMaturation),
+                "On: spread berry bushes reset to cutting state and register when mature. Off: immediate registry.",
+                "Вкл.: spread ягод как черенок до созревания. Выкл.: сразу в реестр.");
+
+            D(nameof(EcosystemConfig.MaxPendingBerryMaturationChecksPerTick),
+                "Higher: more berry maturation checks per tick. Lower: slower spread bush queue.",
+                "Больше: быстрее очередь созревания ягод. Меньше: медленнее.");
+
+            D(nameof(EcosystemConfig.EnableStumpDecay),
+                "On: senescent snag stumps decay and remove after calendar years. Off: stumps persist.",
+                "Вкл.: пни после старости исчезают через N лет. Выкл.: пни остаются.");
+
+            D(nameof(EcosystemConfig.StumpDecayYears),
+                "Higher: stumps linger longer. Lower: faster stump removal.",
+                "Больше: пни дольше стоят. Меньше: быстрее исчезают.");
+
+            D(nameof(EcosystemConfig.MaxStumpDecayChecksPerTick),
+                "Higher: more stump decay checks per tick. Lower: slower stump queue.",
+                "Больше: быстрее обработка очереди пней. Меньше: медленнее.");
+
+            D(nameof(EcosystemConfig.EnableEcologyHistoryHint),
+                "On: inspect (I) includes recent ecology events at the bottom of the report. Off: no history lines.",
+                "Вкл.: осмотр (I) показывает недавние события экологии внизу отчёта. Выкл.: без строк истории.");
+
             D(nameof(EcosystemConfig.EventWakeRetryHours),
                 "Higher: event wake pulls spread retry farther forward (after spawn cooldown). Lower: subtler wake nudge.",
                 "Больше: event wake сильнее сдвигает retry spread (после cooldown). Меньше: слабее пробуждение.");
@@ -273,8 +313,8 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: симбионты леса требуют дерево-хозяина; без хозяина угасают через стресс. Выкл.: симбиоз выключен.");
 
             D(nameof(EcosystemConfig.SymbiosisCascadeRadius),
-                "Horizontal radius (blocks) to invalidate host cache and wake ecology when a symbiosis host is removed.",
-                "Горизонтальный радиус (блоки) сброса кэша хозяина и пробуждения экологии при удалении хозяина.");
+                "Higher: wider host-cache invalidation and ecology wake when a symbiosis host is removed. Lower: tighter radius.",
+                "Больше: шире сброс кэша хозяина и пробуждение экологии. Меньше: уже радиус.");
 
             D(nameof(EcosystemConfig.UseSeasonalEcology),
                 "On: monthly spread multipliers from WildSpeciesSeason profiles. Off: uniform spread year-round.",

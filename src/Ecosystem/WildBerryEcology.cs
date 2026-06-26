@@ -50,11 +50,11 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Profile> ByType = new Dictionary<string, Profile>
         {
-            ["blackcurrant"] = Entry(-2, 23, 0.3f, 0.7f, 0f, 0.5f, 0.55f, 3, 2,
+            ["blackcurrant"] = Entry(-2, 23, 0.3f, 0.7f, 0f, 0.5f, 0.48f, 4, 2,
                 new WildPlantSoil.Profile(SoilKind.LowFert | SoilKind.MediumFert, 100, 200)),
-            ["redcurrant"] = Entry(-3, 22, 0.3f, 0.7f, 0f, 0.4f, 0.55f, 3, 2,
+            ["redcurrant"] = Entry(-3, 22, 0.3f, 0.7f, 0f, 0.4f, 0.48f, 4, 2,
                 new WildPlantSoil.Profile(SoilKind.LowFert | SoilKind.MediumFert, 100, 200)),
-            ["whitecurrant"] = Entry(0, 24, 0.3f, 0.7f, 0f, 0.4f, 0.45f, 3, 2,
+            ["whitecurrant"] = Entry(0, 24, 0.3f, 0.7f, 0f, 0.4f, 0.4f, 4, 2,
                 new WildPlantSoil.Profile(SoilKind.LowFert | SoilKind.MediumFert, 100, 200)),
             ["blueberry"] = Entry(-2, 18, 0.3f, 0.7f, 0.5f, 1f, 0.65f, 2, 2,
                 new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.LowFert, 80, 180)),
@@ -66,9 +66,9 @@ namespace WildFarming.Ecosystem
                 new WildPlantSoil.Profile(SoilKindSets.Meadow, 80, 0)),
             ["cloudberry"] = Entry(-20, -3, 0.5f, 1f, 0f, 0.7f, 0.35f, 3, 2,
                 new WildPlantSoil.Profile(SoilKind.Peat | SoilKind.LowFert | SoilKind.ForestFloor, 50, 180)),
-            ["blackberry"] = Entry(-2, 23, 0.35f, 1f, 0.5f, 1f, 0.65f, 2, 2,
+            ["blackberry"] = Entry(-2, 23, 0.35f, 1f, 0.5f, 1f, 0.45f, 3, 2,
                 new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.MediumFert, 80, 260)),
-            ["raspberry"] = Entry(-15, 10, 0.3f, 1f, 0f, 0.4f, 0.6f, 3, 2,
+            ["raspberry"] = Entry(-15, 10, 0.3f, 1f, 0f, 0.4f, 0.45f, 4, 2,
                 new WildPlantSoil.Profile(SoilKind.MediumFert | SoilKind.LowFert | SoilKind.HighFert, 180, 0)),
         };
 

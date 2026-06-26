@@ -229,6 +229,21 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            if (BerrySpreadMaturation.ShouldQueueMaturation(placed, requirements, api, pos))
+            {
+                double nowHours = api.World.Calendar.TotalHours;
+                double matureAt = nowHours + BerrySpreadMaturation.MaturationHours(
+                    api, pos, requirements.Species, EcosystemConfig.Loaded);
+                maturationQueues.AddBerry(pos, requirements.Species, matureAt);
+                InvalidateEnvironmentAround(pos);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
+                return;
+            }
+
             if (EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant))
             {
                 RegisterReproducer(pos, participant, spawnBurst: false);

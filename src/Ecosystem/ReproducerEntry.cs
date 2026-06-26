@@ -47,6 +47,18 @@ namespace WildFarming.Ecosystem
         /// <summary>Last game-hour when phenology was advanced for this entry.</summary>
         public double LastPhenologyUpdateHours { get; set; }
 
+        /// <summary>Last game-hour when fern phenology was advanced for this entry.</summary>
+        public double LastFernPhenologyUpdateHours { get; set; }
+
+        /// <summary>Ground fern phenology phase when <see cref="FernPhenology"/> is enabled.</summary>
+        public FernPhenologyPhase FernPhenologyPhase { get; set; }
+
+        /// <summary>Last game-hour when tallgrass phenology was advanced for this entry.</summary>
+        public double LastTallgrassPhenologyUpdateHours { get; set; }
+
+        /// <summary>Tallgrass phenology phase when <see cref="TallgrassPhenology"/> is enabled.</summary>
+        public TallgrassPhenologyPhase TallgrassPhenologyPhase { get; set; }
+
         internal int EntriesIndex { get; set; } = -1;
 
         internal int ChunkListIndex { get; set; } = -1;
@@ -91,6 +103,8 @@ namespace WildFarming.Ecosystem
         public bool IsRegisteredPlantBlock(Block block)
         {
             if (FlowerPhenology.IsRegisteredPlantBlock(this, block)) return true;
+            if (FernPhenology.IsRegisteredPlantBlock(this, block)) return true;
+            if (TallgrassPhenology.IsRegisteredPlantBlock(this, block)) return true;
             if (FernJuvenileBlocks.MatchesJuvenileBlock(block, Requirements)) return true;
             return IsMatureBlock(block);
         }

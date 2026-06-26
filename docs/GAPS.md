@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **3.9.20+**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **4.2.0+**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -17,7 +17,7 @@
 | **Древовидный папоротник** | [`FERNTREE.md`](FERNTREE.md) | playtest spread/senescence в тропиках |
 | **Дикие лианы** | [`WILD_VINE.md`](WILD_VINE.md) | playtest на зданиях/стволах; нет stress/climate gate на tip |
 | **Грибница** | network spread + chunk load anchors | нет своих блоков; баланс mat vs vanilla regrowth — playtest |
-| **Ягоды** | Spread + trait clone | нет стадий куста при spread |
+| **Ягоды** | Spread + trait clone + **calendar maturation** (4.2) | density tuned blackberry/raspberry/currant |
 
 **Вывод:** ядро — **конкуренция клеток и ниша**, не ботаническая модель. «Экосистема» для игрока = паттерны на карте + inspect, не полный life cycle.
 
@@ -45,9 +45,9 @@
 | Тема | Статус |
 |------|--------|
 | Displacement луг ↔ луг | ✅ сильная сторона |
-| Symbiosis дерево ↔ understory | ✅; каскад при рубке |
+| Symbiosis дерево ↔ understory | ✅; **gradual stress death** (4.1.5+) — no instant cascade |
 | Niche moisture/light | ✅ MVP; **лес у воды** — редко проверялся |
-| Cross-habitat spacing | Default **off** — reed и flower не «видят» друг друга; включить `ApplyCrossHabitatSpacing: true` для более плотного meadow–shore interplay (опционально) |
+| Cross-habitat spacing | Default **on** (`ApplyCrossHabitatSpacing: true`, 4.2) — meadow and shore compete in spacing index |
 | Aquatic ↔ terrestrial displacement | Нет — разные vacancy rules |
 | Dominant species **без I** | Backlog (HUD / chunk hint) |
 

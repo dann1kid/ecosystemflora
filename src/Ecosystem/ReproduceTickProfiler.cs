@@ -8,7 +8,11 @@ namespace WildFarming.Ecosystem
         public long SaplingsTicks;
         public long FlowerMaturationTicks;
         public long FlowerPhenologyTicks;
+        public long FernPhenologyTicks;
+        public long TallgrassPhenologyTicks;
         public long TallgrassPromotionTicks;
+        public long BerryMaturationTicks;
+        public long StumpDecayTicks;
         public long FoliageTicks;
         public long TreeGrowthTicks;
         public long FerntreeGrowthTicks;

@@ -26,12 +26,28 @@ namespace WildFarming.Ecosystem
         }
     }
 
-    /// <summary>Ferns only spread during the seasonal sporulation window.</summary>
-    internal sealed class SporulationGate : ISpreadGate
+    /// <summary>Ferns only spread during active phenology/sporulation windows.</summary>
+    internal sealed class FernSpreadGate : ISpreadGate
     {
         public bool BlocksSpread(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
         {
-            return WildFernSpread.UsesSporulationGate(cfg, entry.Requirements) && !WildFernSpread.CanSpread(api, entry, cfg);
+            if (FernPhenology.UsesPhenology(cfg, entry.Requirements))
+            {
+                return !FernPhenology.CanSpread(api, entry, cfg);
+            }
+
+            return WildFernSpread.UsesSporulationGate(cfg, entry.Requirements)
+                && !WildFernSpread.CanSpread(api, entry, cfg);
+        }
+    }
+
+    /// <summary>Tallgrass phenology suppresses spread in dormant/dieback.</summary>
+    internal sealed class TallgrassPhenologyGate : ISpreadGate
+    {
+        public bool BlocksSpread(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            return TallgrassPhenology.UsesPhenology(cfg, entry.Requirements)
+                && !TallgrassPhenology.CanSpread(entry, cfg);
         }
     }
 
@@ -51,7 +67,8 @@ namespace WildFarming.Ecosystem
         public static readonly SpreadGateChain PreSpawn = new SpreadGateChain(
             new SenescenceGate(),
             new PhenologyGate(),
-            new SporulationGate());
+            new FernSpreadGate(),
+            new TallgrassPhenologyGate());
 
         readonly ISpreadGate[] gates;
 

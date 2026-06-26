@@ -44,6 +44,9 @@ namespace WildFarming.Ecosystem
         readonly TreeGrowthScheduler treeGrowthScheduler = new TreeGrowthScheduler();
         readonly FerntreeGrowthScheduler ferntreeGrowthScheduler = new FerntreeGrowthScheduler();
         readonly FlowerPhenologyScheduler flowerPhenologyScheduler = new FlowerPhenologyScheduler();
+        readonly FernPhenologyScheduler fernPhenologyScheduler = new FernPhenologyScheduler();
+        readonly TallgrassPhenologyScheduler tallgrassPhenologyScheduler = new TallgrassPhenologyScheduler();
+        readonly StumpDecayScheduler stumpDecayScheduler = new StumpDecayScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         readonly FoliagePlayerVacancySuppressor foliagePlayerVacancies = new FoliagePlayerVacancySuppressor();
@@ -52,6 +55,7 @@ namespace WildFarming.Ecosystem
         int foliageBootstrapPasses;
         bool foliageStartupLogged;
         internal FoliageCellScheduler FoliageCells => foliageCells;
+        internal StumpDecayScheduler StumpDecay => stumpDecayScheduler;
         internal FoliagePlayerVacancySuppressor FoliagePlayerVacancies => foliagePlayerVacancies;
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
@@ -141,6 +145,7 @@ namespace WildFarming.Ecosystem
                 sapi.Event.PlayerJoin += playerJoinHandler;
 
                 treeCalendarAgeStore.Bind(sapi, registry);
+                stumpDecayScheduler.Bind(sapi);
             }
 
             WildFlowerClimate.LogMissingSpecies(api);
@@ -342,6 +347,7 @@ namespace WildFarming.Ecosystem
             {
                 treeCalendarAgeStore.Unbind(sapi);
                 treeCalendarAgeStore.Clear();
+                stumpDecayScheduler.Unbind(sapi);
 
                 if (chunkLoadedHandler != null) sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
                 if (chunkUnloadedHandler != null) sapi.Event.ChunkColumnUnloaded -= chunkUnloadedHandler;
@@ -704,6 +710,8 @@ namespace WildFarming.Ecosystem
                     SoilSuccessionApplier.Apply(api, origin, requirements.Species, SoilSuccessionEvent.Spread);
 
                 FlowerPhenology.InitializeOnRegister(api, entry, cfg, flowerSpreadEstablished);
+                FernPhenology.InitializeOnRegister(api, entry, cfg);
+                TallgrassPhenology.InitializeOnRegister(api, entry, cfg);
 
                 if (requirements.Habitat == EcologyHabitat.TerrestrialTree
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
@@ -1068,6 +1076,8 @@ namespace WildFarming.Ecosystem
             }
 
             maturationQueues.Remove(pos);
+            stumpDecayScheduler.Remove(pos);
+            EcologyHistoryRecorder.Remove(pos);
 
             if (wakeNeighbors)
             {
@@ -1626,6 +1636,14 @@ namespace WildFarming.Ecosystem
                     }
 
                     bool trampled = trampledScratch.Remove(pos);
+                    string species = TryGetReproducer(pos, out ReproducerEntry dying)
+                        ? dying.Requirements?.Species
+                        : PlantCodeHelper.ResolveEcologySpecies(api.World.BlockAccessor.GetBlock(pos));
+                    if (!trampled && !string.IsNullOrEmpty(species))
+                    {
+                        EcologyHistoryRecorder.RecordStressDeath(api, pos, species);
+                    }
+
                     RemoveEcologyPlant(pos, cascadeSymbiosis: true,
                         reason: trampled ? "trampled" : "stress",
                         soilEvent: trampled && cfg.TramplingSoilDegradation
@@ -1729,8 +1747,24 @@ namespace WildFarming.Ecosystem
             timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
+            fernPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+            timings.FernPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
+            tallgrassPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+            timings.TallgrassPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
             maturationQueues.ProcessTallgrass(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
             timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
+            maturationQueues.ProcessBerry(api, this, now, cfg.MaxPendingBerryMaturationChecksPerTick);
+            timings.BerryMaturationTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
+            stumpDecayScheduler.Process(api, cfg, cfg.MaxStumpDecayChecksPerTick);
+            timings.StumpDecayTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
 

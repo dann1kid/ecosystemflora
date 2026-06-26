@@ -40,6 +40,7 @@ namespace WildFarming.Ecosystem
                 Loaded = new EcosystemConfig();
             }
 
+            EcosystemBalancePresets.TryLoadFilePresets(api);
             ApplyBalancePreset(Loaded);
 
             if (ShouldPersistConfig(createDefaultIfMissing, fromDisk != null))
@@ -171,6 +172,36 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Juvenile fern → mature checks per reproduce tick.</summary>
         public int MaxPendingFernMaturationChecksPerTick { get; set; } = 24;
+
+        /// <summary>Ground fern phenology: dormant/sporulating/dieback blocks and spread gates.</summary>
+        public bool EnableFernPhenology { get; set; } = true;
+
+        /// <summary>Fern phenology state advances per reproduce tick (round-robin).</summary>
+        public int MaxFernPhenologyChecksPerTick { get; set; } = 32;
+
+        /// <summary>Tallgrass phenology: winter dormant and stress dieback visuals.</summary>
+        public bool EnableTallgrassPhenology { get; set; } = true;
+
+        /// <summary>Tallgrass phenology checks per reproduce tick.</summary>
+        public int MaxTallgrassPhenologyChecksPerTick { get; set; } = 32;
+
+        /// <summary>Wild berry bushes reset to cutting state on spread; register when mature.</summary>
+        public bool EnableBerrySpreadMaturation { get; set; } = true;
+
+        /// <summary>Pending berry maturation checks per reproduce tick.</summary>
+        public int MaxPendingBerryMaturationChecksPerTick { get; set; } = 24;
+
+        /// <summary>Vanilla stumps from senescent snag collapse decay after calendar years.</summary>
+        public bool EnableStumpDecay { get; set; } = true;
+
+        /// <summary>Game years before a scheduled stump block is removed.</summary>
+        public double StumpDecayYears { get; set; } = 10;
+
+        /// <summary>Stump decay checks per reproduce tick.</summary>
+        public int MaxStumpDecayChecksPerTick { get; set; } = 16;
+
+        /// <summary>Lightweight history hint (H key / throttled look-at).</summary>
+        public bool EnableEcologyHistoryHint { get; set; } = true;
 
         /// <summary>Event wake pulls NextAttemptHours forward by at most this many game hours (after spawn cooldown).</summary>
         public double EventWakeRetryHours { get; set; } = 6;
@@ -339,7 +370,7 @@ namespace WildFarming.Ecosystem
         /// When false (default), aquatic and terrestrial plants do not enforce spacing against each other
         /// (shore flowers no longer block reed/lily spread toward valid muddy cells).
         /// </summary>
-        public bool ApplyCrossHabitatSpacing { get; set; } = false;
+        public bool ApplyCrossHabitatSpacing { get; set; } = true;
 
         /// <summary>Used when species table has SameSpeciesSpacing 0.</summary>
         public int DefaultSameSpeciesSpacing { get; set; } = 1;

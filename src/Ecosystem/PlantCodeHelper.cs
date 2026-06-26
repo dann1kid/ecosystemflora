@@ -106,6 +106,16 @@ namespace WildFarming.Ecosystem
             string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseCode(blockCode);
             if (phaseSpecies != null) return phaseSpecies;
 
+            phaseSpecies = FernPhenologyBlocks.SpeciesFromPhaseCode(blockCode);
+            if (phaseSpecies != null) return phaseSpecies;
+
+            if (blockCode?.Domain == "ecosystemflora"
+                && blockCode.Path != null
+                && blockCode.Path.StartsWith("tallgrassphase-"))
+            {
+                return "tallgrass";
+            }
+
             if (path.StartsWith("flower-"))
             {
                 string rest = path.Substring("flower-".Length);

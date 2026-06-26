@@ -24,6 +24,8 @@
 - v3.1.10: meadow harvest (flowers → world drop, tallgrass clear); fix inspect (I) dialog; client config load.
 - v3.1.11: tree spread — ice/snow footing rejected; TerrestrialTree uses terrestrial preflight; winter spread mult = 0.
 - v3.1.12: mycelium — soft niche (`MyceliumZone`), stress/death on vanilla BE, network spread, inspect (I) on cap + soil; meadow coexistence; config auto-merge (`StoreModConfig` after load).
+- v4.2.0: **Simulation visibility** — fern/tallgrass phenology phase blocks; berry spread maturation + density tune; stump decay scheduler; ecology history hint (H); `vanilla-minimal` preset + optional JSON presets; `ApplyCrossHabitatSpacing` default true.
+- v4.1.5: symbiosis **gradual stress death** (no instant cascade); mycelium notify-only on tree loss.
 - v3.9.24: **Flower phenology** — dormant/vegetative/bloom/dieback; spread + harvest bloom-only; `flowerphase-*` blocks; docs [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md).
 - v3.5.0: **Canopy ambience** — client crown particles / flutter; docs [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
 - v3.6: **Wild tree maturation** — calendar age (persisted), grown-block growth, **phased senescence** (leaves → skeleton → snag → stump/logs); inspect (I); `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`; docs [`TREE_AGING.md`](TREE_AGING.md).
@@ -43,7 +45,7 @@ Habitat:
 Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs; Mycelium*.cs; Phase 6 — SpreadChunkScheduler, PendingSpreadQueue, BackgroundRegistrationPipeline, RegistrationScanQueue, PendingRegistrationQueue, FoliageCellScheduler).
-Тесты: 332 (xUnit). Версия: 3.8.0.
+Тесты: 580+ (xUnit). Версия: 4.2.0.
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).
