@@ -3,9 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.0.2**
+**This release:** **4.1.3**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.1.3 — Fix runaway tallgrass spread
+
+- **Fix (spread):** a single planted clump no longer carpets everything around it within a minute. Spreaders without a maturation cooldown (tallgrass especially, with its zero spacing and high spread rate) were re-triggered every reproduce tick by the event-wake path, which bypasses the calendar interval and was gated only by a spawn cooldown they never set. They now floor that cooldown to their own calendar interval, so event-wake can never spread faster than the scheduled cadence. Flowers and ferns are unchanged (their policies already set the cooldown).
 
 ---
 

@@ -62,6 +62,13 @@ namespace WildFarming.Ecosystem
                     return;
                 }
             }
+
+            // No policy owns this species' cooldown. Without one, event-wake would re-fire every tick
+            // (it bypasses the calendar interval and is gated only by NextSpawnAllowedAtHours), letting a
+            // single clump carpet its surroundings in seconds. Floor the next wake-eligible spread to the
+            // species' own calendar interval so wake cannot outpace the scheduled cadence.
+            double interval = SpeciesSpread.EffectiveIntervalHours(api, parent.Origin, cfg, requirements);
+            SpreadWakeThrottle.ApplyCalendarCadenceFloor(parent, nowHours, interval);
         }
     }
 }
