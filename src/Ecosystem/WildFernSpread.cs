@@ -43,13 +43,14 @@ namespace WildFarming.Ecosystem
             cooldownMultiplier: cfg => cfg.FernSpreadCooldownHoursMultiplier,
             isMember: IsFernSpecies,
             tryGetBaseHours: TryGetBaseHours,
-            maturationFallbackHours: DefaultForest.MaturationHours,
-            cooldownFallbackHours: DefaultForest.PostSpreadAttemptCooldownHours,
-            maturationFloor: 8,
-            cooldownFloor: 2,
-            failedBaseHours: 4,
-            failedFloor: 2,
-            failedCap: 6,
+            clamps: new SpreadMaturationPolicy.Clamps(
+                maturationFallbackHours: DefaultForest.MaturationHours,
+                cooldownFallbackHours: DefaultForest.PostSpreadAttemptCooldownHours,
+                maturationFloor: 8,
+                cooldownFloor: 2,
+                failedBaseHours: 4,
+                failedFloor: 2,
+                failedCap: 6),
             requiresTerrestrialForCooldown: false);
 
         public static bool IsFernSpecies(string species)

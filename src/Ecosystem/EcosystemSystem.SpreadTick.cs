@@ -257,10 +257,8 @@ namespace WildFarming.Ecosystem
                 entry.Requirements, api.World.Rand);
             spreadMatModeScratch[spreadOriginCopy] = matMode;
 
-            if (!string.IsNullOrEmpty(entry.Requirements?.Species)
-                && !FloraSymbiosis.CanSpread(api.World.BlockAccessor, spreadOrigin, entry.Requirements.Species))
+            if (SpawnBlockedBySymbiosis(entry, spreadOrigin, spreadOriginCopy, matMode))
             {
-                RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "No symbiosis host");
                 return;
             }
 
@@ -364,6 +362,27 @@ namespace WildFarming.Ecosystem
                         failureReason ?? "No placement");
                 }
             }
+        }
+
+        /// <summary>
+        /// Spawn-site symbiosis gate. Unlike the position-independent <see cref="SpreadGateChain.PreSpawn"/>
+        /// gates (which run on <c>entry.Origin</c> before anything is resolved), this gate is evaluated only
+        /// after the reproduce anchor is known and records a "No symbiosis host" attempt when it vetoes.
+        /// Those two traits (anchor dependency + side-effecting record) are why it lives here rather than in
+        /// the pre-spawn chain. Returns true when spread must be aborted.
+        /// </summary>
+        bool SpawnBlockedBySymbiosis(
+            ReproducerEntry entry,
+            BlockPos spreadOrigin,
+            BlockPos spreadOriginCopy,
+            MatSpreadCollectMode matMode)
+        {
+            string species = entry.Requirements?.Species;
+            if (string.IsNullOrEmpty(species)) return false;
+            if (FloraSymbiosis.CanSpread(api.World.BlockAccessor, spreadOrigin, species)) return false;
+
+            RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "No symbiosis host");
+            return true;
         }
 
         void OnSpreadCommitDropped(PendingSpreadIntent intent)

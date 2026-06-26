@@ -40,6 +40,11 @@ namespace WildFarming.Ecosystem
     /// were duplicated in both the spread tick callback and <c>TrySpawnOffspring</c>; senescence sat
     /// only in the latter. Evaluating the shared chain at both sites is behavior-preserving: the gates
     /// are side-effect free, and senescence already short-circuited the same entries with no spawn.
+    ///
+    /// These are <em>position-independent</em> gates: each decides purely from the entry + config, so it
+    /// can run on <c>entry.Origin</c> before the reproduce anchor is resolved. The symbiosis check is the
+    /// one veto that does not belong here — it needs the resolved spawn anchor and records a failed
+    /// attempt when it blocks, so it lives as a spawn-site gate in <c>EcosystemSystem.SpawnBlockedBySymbiosis</c>.
     /// </summary>
     internal sealed class SpreadGateChain
     {

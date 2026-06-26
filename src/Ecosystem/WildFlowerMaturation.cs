@@ -48,13 +48,14 @@ namespace WildFarming.Ecosystem
             cooldownMultiplier: cfg => cfg.FlowerSpreadCooldownHoursMultiplier,
             isMember: IsFlowerSpreadSpecies,
             tryGetBaseHours: TryGetBaseHours,
-            maturationFallbackHours: DefaultColonizer.MaturationHours,
-            cooldownFallbackHours: DefaultSteady.PostSpreadAttemptCooldownHours,
-            maturationFloor: 6,
-            cooldownFloor: 1,
-            failedBaseHours: 3,
-            failedFloor: 1,
-            failedCap: 4,
+            clamps: new SpreadMaturationPolicy.Clamps(
+                maturationFallbackHours: DefaultColonizer.MaturationHours,
+                cooldownFallbackHours: DefaultSteady.PostSpreadAttemptCooldownHours,
+                maturationFloor: 6,
+                cooldownFloor: 1,
+                failedBaseHours: 3,
+                failedFloor: 1,
+                failedCap: 4),
             requiresTerrestrialForCooldown: true);
 
         public static bool UsesMaturation(EcosystemConfig cfg, string species)

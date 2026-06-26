@@ -14,18 +14,47 @@ namespace WildFarming.Ecosystem
         /// <summary>Resolve a species' base maturation/cooldown hours; false routes to fallbacks.</summary>
         public delegate bool TryGetBaseHoursDelegate(string species, out double maturationHours, out double cooldownHours);
 
+        /// <summary>
+        /// Pure numeric tuning for a plant family: the fallback hours used when a species has no profile,
+        /// the floors applied to the successful maturation/cooldown values, and the base/floor/cap clamps
+        /// for the failed-roll cooldown. Grouping these here keeps the policy constructor about behavior
+        /// (the enable flags, membership test, and hours resolver) rather than a long list of magic numbers.
+        /// </summary>
+        public readonly struct Clamps
+        {
+            public readonly double MaturationFallbackHours;
+            public readonly double CooldownFallbackHours;
+            public readonly double MaturationFloor;
+            public readonly double CooldownFloor;
+            public readonly double FailedBaseHours;
+            public readonly double FailedFloor;
+            public readonly double FailedCap;
+
+            public Clamps(
+                double maturationFallbackHours,
+                double cooldownFallbackHours,
+                double maturationFloor,
+                double cooldownFloor,
+                double failedBaseHours,
+                double failedFloor,
+                double failedCap)
+            {
+                MaturationFallbackHours = maturationFallbackHours;
+                CooldownFallbackHours = cooldownFallbackHours;
+                MaturationFloor = maturationFloor;
+                CooldownFloor = cooldownFloor;
+                FailedBaseHours = failedBaseHours;
+                FailedFloor = failedFloor;
+                FailedCap = failedCap;
+            }
+        }
+
         readonly System.Func<EcosystemConfig, bool> maturationEnabled;
         readonly System.Func<EcosystemConfig, bool> cooldownEnabled;
         readonly System.Func<EcosystemConfig, float> cooldownMultiplier;
         readonly System.Func<string, bool> isMember;
         readonly TryGetBaseHoursDelegate tryGetBaseHours;
-        readonly double maturationFallbackHours;
-        readonly double cooldownFallbackHours;
-        readonly double maturationFloor;
-        readonly double cooldownFloor;
-        readonly double failedBaseHours;
-        readonly double failedFloor;
-        readonly double failedCap;
+        readonly Clamps clamps;
         readonly bool requiresTerrestrialForCooldown;
 
         public SpreadMaturationPolicy(
@@ -34,13 +63,7 @@ namespace WildFarming.Ecosystem
             System.Func<EcosystemConfig, float> cooldownMultiplier,
             System.Func<string, bool> isMember,
             TryGetBaseHoursDelegate tryGetBaseHours,
-            double maturationFallbackHours,
-            double cooldownFallbackHours,
-            double maturationFloor,
-            double cooldownFloor,
-            double failedBaseHours,
-            double failedFloor,
-            double failedCap,
+            Clamps clamps,
             bool requiresTerrestrialForCooldown)
         {
             this.maturationEnabled = maturationEnabled;
@@ -48,13 +71,7 @@ namespace WildFarming.Ecosystem
             this.cooldownMultiplier = cooldownMultiplier;
             this.isMember = isMember;
             this.tryGetBaseHours = tryGetBaseHours;
-            this.maturationFallbackHours = maturationFallbackHours;
-            this.cooldownFallbackHours = cooldownFallbackHours;
-            this.maturationFloor = maturationFloor;
-            this.cooldownFloor = cooldownFloor;
-            this.failedBaseHours = failedBaseHours;
-            this.failedFloor = failedFloor;
-            this.failedCap = failedCap;
+            this.clamps = clamps;
             this.requiresTerrestrialForCooldown = requiresTerrestrialForCooldown;
         }
 
@@ -74,7 +91,7 @@ namespace WildFarming.Ecosystem
 
         public double MaturationHours(ICoreAPI api, BlockPos pos, string species, EcosystemConfig cfg)
         {
-            double hours = tryGetBaseHours(species, out double m, out _) ? m : maturationFallbackHours;
+            double hours = tryGetBaseHours(species, out double m, out _) ? m : clamps.MaturationFallbackHours;
 
             if (cfg != null && cfg.GrowthHoursMultiplier > 0.05f)
             {
@@ -91,14 +108,14 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            if (hours < maturationFloor) hours = maturationFloor;
+            if (hours < clamps.MaturationFloor) hours = clamps.MaturationFloor;
             return hours;
         }
 
         public double PostSpreadAttemptCooldownHours(ICoreAPI api, BlockPos pos, PlantRequirements requirements, EcosystemConfig cfg)
         {
             string species = requirements?.Species;
-            double hours = tryGetBaseHours(species, out _, out double c) ? c : cooldownFallbackHours;
+            double hours = tryGetBaseHours(species, out _, out double c) ? c : clamps.CooldownFallbackHours;
 
             float mult = cfg != null ? cooldownMultiplier(cfg) : 0f;
             if (cfg != null && mult > 0.05f)
@@ -115,13 +132,13 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            if (hours < cooldownFloor) hours = cooldownFloor;
+            if (hours < clamps.CooldownFloor) hours = clamps.CooldownFloor;
             return hours;
         }
 
         public double FailedSpreadAttemptCooldownHours(ICoreAPI api, BlockPos pos, PlantRequirements requirements, EcosystemConfig cfg)
         {
-            double hours = failedBaseHours;
+            double hours = clamps.FailedBaseHours;
 
             float mult = cfg != null ? cooldownMultiplier(cfg) : 0f;
             if (cfg != null && mult > 0.05f)
@@ -138,8 +155,8 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            if (hours < failedFloor) hours = failedFloor;
-            if (hours > failedCap) hours = failedCap;
+            if (hours < clamps.FailedFloor) hours = clamps.FailedFloor;
+            if (hours > clamps.FailedCap) hours = clamps.FailedCap;
             return hours;
         }
 
