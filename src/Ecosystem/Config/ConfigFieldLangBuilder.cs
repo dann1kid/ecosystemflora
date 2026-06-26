@@ -480,7 +480,7 @@ namespace WildFarming.Ecosystem.Config
             if (name.EndsWith("AttemptsPerYear", StringComparison.Ordinal) || name.EndsWith("PerYear", StringComparison.Ordinal))
             {
                 return Numeric(title, "Higher: more attempts each in-game year (denser flora). Lower: sparser spread.",
-                    "Больше: больше попыток за игровой год (густее). Меньше: реже spread.");
+                    "Больше: больше попыток за игровой год (густее). Меньше: реже распространение.");
             }
 
             if (name.EndsWith("Threshold", StringComparison.Ordinal) || name.EndsWith("Margin", StringComparison.Ordinal))
@@ -505,7 +505,7 @@ namespace WildFarming.Ecosystem.Config
                     return new ConfigFieldLangText
                     {
                         DescEn = "Select mode or preset. Each value changes the algorithm — see handbook.",
-                        DescRu = "Выбор режима или пресета. Каждое значение меняет алгоритм — см. handbook.",
+                        DescRu = "Выбор режима или пресета. Каждое значение меняет алгоритм — см. справочник.",
                     };
                 default:
                     return Numeric(title, "Higher: stronger or more frequent. Lower: weaker or more limited.",
@@ -525,7 +525,7 @@ namespace WildFarming.Ecosystem.Config
                 dict[$"ecosystemflora:config-field-{field.Name}-desc"] = ru ? text.DescRu : text.DescEn;
             }
 
-            dict["ecosystemflora:config-field-FoliageSyncMode-val-chunk"] = ru ? "Синхронизация чанков" : "Chunk sync";
+            dict["ecosystemflora:config-field-FoliageSyncMode-val-chunk"] = ru ? "Синхронизация участков" : "Chunk sync";
             dict["ecosystemflora:config-field-FoliageSyncMode-val-hybrid"] = ru ? "Гибрид" : "Hybrid";
             dict["ecosystemflora:config-field-FoliageSyncMode-val-random"] = ru ? "Случайный тик" : "Random tick";
             return dict;

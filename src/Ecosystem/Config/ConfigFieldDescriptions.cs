@@ -18,11 +18,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.BalancePreset),
                 "natural/lush/sparse apply bundled spread values on each server start. custom keeps your manual spread tuning.",
-                "natural/lush/sparse задают набор spread при каждом старте сервера. custom сохраняет ваши ручные значения.");
+                "natural/lush/sparse задают набор параметров распространения при каждом старте сервера. custom сохраняет ваши ручные значения.");
 
             D(nameof(EcosystemConfig.EcosystemEnabled),
                 "On: spread, competition, stress, and most ecology ticks run. Off: mod ecology idle.",
-                "Вкл.: spread, конкуренция, стресс и тики работают. Выкл.: экология мода простаивает.");
+                "Вкл.: распространение, конкуренция, стресс и тики работают. Выкл.: экология мода простаивает.");
 
             D(nameof(EcosystemConfig.HarshWildPlants),
                 "On: species climate and soil bounds apply (wrong niche builds stress). Off: softer survival checks.",
@@ -30,11 +30,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.ApplyWorldgenRainForest),
                 "On: spread fitness uses worldgen rainfall map. Off: rainfall gate ignored (forest cover still uses neighbor trees).",
-                "Вкл.: fitness spread учитывает карту worldgen-осадков. Выкл.: осадки игнорируются (лесность — по соседним деревьям).");
+                "Вкл.: пригодность распространения учитывает карту осадков генерации мира. Выкл.: осадки игнорируются (лесность — по соседним деревьям).");
 
             D(nameof(EcosystemConfig.ReproduceRadius),
                 "Higher: wider horizontal search for spread targets. Lower: tighter, more local colonization.",
-                "Больше: шире горизонтальный поиск клеток для spread. Меньше: локальнее колонизация.");
+                "Больше: шире горизонтальный поиск клеток для распространения. Меньше: локальнее колонизация.");
 
             D(nameof(EcosystemConfig.ReproduceVerticalSearch),
                 "Higher: search farther above/below for valid surface. Lower: narrower vertical placement window.",
@@ -42,7 +42,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.ReproduceChance),
                 "Higher (toward 1): more spread attempts succeed. Lower (toward 0): rarer successful placement.",
-                "Больше (к 1): чаще успешный spread. Меньше (к 0): реже успешное размещение.");
+                "Больше (к 1): чаще успешное распространение. Меньше (к 0): реже успешное размещение.");
 
             D(nameof(EcosystemConfig.MinFitness),
                 "Higher: pickier offspring placement (fewer marginal sites). Lower: colonizes weaker cells more often.",
@@ -50,19 +50,19 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.ReproduceIntervalHours),
                 "Higher: longer wait between spread attempts (legacy mode). Lower: more frequent attempts.",
-                "Больше: длиннее пауза между попытками (legacy). Меньше: чаще попытки.");
+                "Больше: длиннее пауза между попытками (прежний режим). Меньше: чаще попытки.");
 
             D(nameof(EcosystemConfig.ReproduceAttemptsPerYear),
                 "Higher: more spread tries per in-game year at species rate 1 (denser flora). Lower: sparser spread.",
-                "Больше: больше попыток spread за игровой год при rate 1 (густее). Меньше: реже spread.");
+                "Больше: больше попыток распространения за игровой год при скорости 1 (густее). Меньше: реже распространение.");
 
             D(nameof(EcosystemConfig.UseCalendarScaledSpread),
                 "On: intervals scale from DaysPerYear/HoursPerDay. Off: use ReproduceIntervalHours only.",
-                "Вкл.: интервалы от DaysPerYear/HoursPerDay. Выкл.: только ReproduceIntervalHours.");
+                "Вкл.: интервалы от календаря мира. Выкл.: только интервал в часах.");
 
             D(nameof(EcosystemConfig.UseSpeciesSpreadRates),
                 "On: per-species SpreadRate scales interval and chance. Off: uniform spread pacing.",
-                "Вкл.: SpreadRate вида масштабирует интервал и шанс. Выкл.: единый темп spread.");
+                "Вкл.: скорость вида масштабирует интервал и шанс. Выкл.: единый темп распространения.");
 
             D(nameof(EcosystemConfig.MinSpeciesReproduceIntervalDays),
                 "Higher: minimum days between attempts per species (calendar mode). 0 = no floor.",
@@ -70,7 +70,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.MinSpeciesReproduceIntervalHours),
                 "Higher: minimum hours between attempts (legacy mode only). 0 = no floor.",
-                "Больше: минимум часов между попытками (только legacy). 0 = без нижней границы.");
+                "Больше: минимум часов между попытками (только прежний режим). 0 = без нижней границы.");
 
             D(nameof(EcosystemConfig.MaxFailedSurvivalChecks),
                 "Higher: more failed checks tolerated before stress removal. Lower: plants die sooner from stress.",
@@ -86,11 +86,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableFlowerSpreadAttemptCooldown),
                 "On: parent flower waits after each spread attempt before retry. Off: only calendar spread interval applies.",
-                "Вкл.: родитель ждёт после каждой попытки spread. Выкл.: только обычный интервал spread.");
+                "Вкл.: родитель ждёт после каждой попытки распространения. Выкл.: только обычный интервал распространения.");
 
             D(nameof(EcosystemConfig.FlowerSpreadCooldownHoursMultiplier),
                 "Higher: shorter post-spread pause on parent flowers. Lower: longer cooldown between offspring.",
-                "Больше: короче пауза после spread. Меньше: дольше между попытками.");
+                "Больше: короче пауза после распространения. Меньше: дольше между попытками.");
 
             D(nameof(EcosystemConfig.MaxPendingFlowerMaturationChecksPerTick),
                 "Higher: more maturation checks per game tick. Lower: slower maturation queue.",
@@ -98,7 +98,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableFlowerPhenology),
                 "On: meadow flowers follow simulated phases (dormant/vegetative/bloom/dieback). Spread and harvest only in bloom; block appearance follows phase.",
-                "Вкл.: фазы цветов (покой/вегетация/цветение/отмирание). Spread и сбор только в цветении; вид блока = фаза.");
+                "Вкл.: фазы цветов (покой/вегетация/цветение/отмирание). Распространение и сбор только в цветении; вид блока = фаза.");
 
             D(nameof(EcosystemConfig.FlowerBloomMinTemperature),
                 "Higher: flowers need warmer weather to bloom (shorter bloom window). Lower: bloom in cooler cells.",
@@ -130,27 +130,27 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableFernRhizomeSpread),
                 "On: ground ferns spread one orthogonal step from patch edge (rhizome). Off: legacy radius spread.",
-                "Вкл.: папоротники ползут по краю клумбы (ризома). Выкл.: spread по радиусу.");
+                "Вкл.: папоротники ползут по краю клумбы (ризома). Выкл.: распространение по радиусу.");
 
             D(nameof(EcosystemConfig.EnableBerryColonySpread),
                 "On: wild berries spread one mat step from colony edge (rhizome, suckers, runners); seed jumps use RhizomeSeedDispersal settings. Off: legacy radius spread.",
-                "Вкл.: ягоды ползут с кромки колонии (ризома, поросль, усы); скачки семян — настройки RhizomeSeedDispersal. Выкл.: spread по радиусу.");
+                "Вкл.: ягоды ползут с кромки колонии (ризома, поросль, усы); скачки семян — настройки скачки семян ризомы. Выкл.: распространение по радиусу.");
 
             D(nameof(EcosystemConfig.EnableFernSpreadMaturation),
                 "On: spread places small juvenile ferns that mature before reproducing. Off: instant adult.",
-                "Вкл.: spread ставит молодой папоротник, потом взрослеет. Выкл.: сразу взрослый.");
+                "Вкл.: распространение ставит молодой папоротник, потом взрослеет. Выкл.: сразу взрослый.");
 
             D(nameof(EcosystemConfig.EnableFernSpreadAttemptCooldown),
                 "On: parent fern waits after each spread attempt. Off: only calendar interval applies.",
-                "Вкл.: пауза родителя после каждой попытки spread. Выкл.: только календарный интервал.");
+                "Вкл.: пауза родителя после каждой попытки распространения. Выкл.: только календарный интервал.");
 
             D(nameof(EcosystemConfig.FernSpreadCooldownHoursMultiplier),
                 "Higher: shorter post-spread pause on parent ferns. Lower: longer cooldown.",
-                "Больше: короче пауза после spread. Меньше: дольше между попытками.");
+                "Больше: короче пауза после распространения. Меньше: дольше между попытками.");
 
             D(nameof(EcosystemConfig.EnableFernSporulationGate),
                 "On: ferns spread only during active sporulation season (FernSeason curve). Off: year-round when fitness allows.",
-                "Вкл.: spread только в сезон споруляции. Выкл.: круглый год при подходящем fitness.");
+                "Вкл.: распространение только в сезон споруляции. Выкл.: круглый год при подходящей пригодности.");
 
             D(nameof(EcosystemConfig.MaxPendingFernMaturationChecksPerTick),
                 "Higher: more fern maturation checks per tick. Lower: slower juvenile queue.",
@@ -158,7 +158,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableFernPhenology),
                 "On: fern dormant/sporulating/dieback phase blocks and spread gates. Off: text-only sporulation gate.",
-                "Вкл.: фазы папоротника (dormant/sporulating/dieback) и блоки. Выкл.: только текст sporulation.");
+                "Вкл.: фазы папоротника (покой/споруляция/отмирание) и блоки. Выкл.: только текстовая споруляция.");
 
             D(nameof(EcosystemConfig.MaxFernPhenologyChecksPerTick),
                 "Higher: more fern phenology updates per tick. Lower: slower phase sync.",
@@ -166,15 +166,15 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableTallgrassPhenology),
                 "On: tallgrass winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla height only.",
-                "Вкл.: зимний покой и dieback tallgrass, spread по сезону. Выкл.: только ванильная высота.");
+                "Вкл.: зимний покой и отмирание высокой травы, распространение по сезону. Выкл.: только ванильная высота.");
 
             D(nameof(EcosystemConfig.MaxTallgrassPhenologyChecksPerTick),
                 "Higher: more tallgrass phenology updates per tick. Lower: slower phase sync.",
-                "Больше: быстрее синхронизация фаз tallgrass. Меньше: медленнее.");
+                "Больше: быстрее синхронизация фаз высокой травы. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EnableBerrySpreadMaturation),
                 "On: spread berry bushes reset to cutting state and register when mature. Off: immediate registry.",
-                "Вкл.: spread ягод как черенок до созревания. Выкл.: сразу в реестр.");
+                "Вкл.: распространение ягод как черенок до созревания. Выкл.: сразу в реестр.");
 
             D(nameof(EcosystemConfig.MaxPendingBerryMaturationChecksPerTick),
                 "Higher: more berry maturation checks per tick. Lower: slower spread bush queue.",
@@ -198,7 +198,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EventWakeRetryHours),
                 "Higher: event wake pulls spread retry farther forward (after spawn cooldown). Lower: subtler wake nudge.",
-                "Больше: event wake сильнее сдвигает retry spread (после cooldown). Меньше: слабее пробуждение.");
+                "Больше: пробуждение по событиям сильнее сдвигает повтор распространения (после паузы). Меньше: слабее пробуждение.");
 
             D(nameof(EcosystemConfig.StaggerReproduceAttempts),
                 "On: random initial delay on registration spreads tick load. Off: all plants tick together.",
@@ -206,31 +206,31 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.UseRhizomeSpreadForReeds),
                 "On: cattail/tule/papyrus use mat-edge rhizome spread. Off: legacy radius spread.",
-                "Вкл.: тростник/папирус — spread по краю mat. Выкл.: legacy spread по радиусу.");
+                "Вкл.: тростник/папирус — распространение с кромки ковра. Выкл.: прежнее распространение по радиусу.");
 
             D(nameof(EcosystemConfig.RhizomeSeedDispersalEnabled),
                 "On: rare seed/fragment jumps for reed and lily mats. Off: mat-edge spread only.",
-                "Вкл.: редкие прыжки семян/фрагментов у тростника и кувшинки. Выкл.: только mat-edge.");
+                "Вкл.: редкие прыжки семян/фрагментов у тростника и кувшинки. Выкл.: только с кромки ковра.");
 
             D(nameof(EcosystemConfig.RhizomeSeedDispersalChanceScale),
                 "Higher: more frequent distant seed jumps. Lower: rarer jumps. 1.0 is default.",
-                "Больше: чаще дальние прыжки семян. Меньше: реже. 1.0 — дефолт.");
+                "Больше: чаще дальние прыжки семян. Меньше: реже. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.RhizomeSeedDispersalFitnessScale),
                 "Higher: stricter fitness for distant seed landing. Lower: jumps accept weaker sites.",
-                "Больше: строже fitness для дальних прыжков. Меньше: слабее клетки допускаются.");
+                "Больше: строже пригодность для дальних прыжков. Меньше: слабее клетки допускаются.");
 
             D(nameof(EcosystemConfig.UseSurfaceMatSpreadForLilies),
                 "On: water lily uses floating pad mat spread. Off: legacy radius spread.",
-                "Вкл.: кувшинка — spread по плавучему mat. Выкл.: legacy spread по радиусу.");
+                "Вкл.: кувшинка — распространение по плавучему ковру. Выкл.: прежнее распространение по радиусу.");
 
             D(nameof(EcosystemConfig.PlantSpacingEnabled),
                 "On: enforce Chebyshev spacing between spread plants. Off: spacing rules ignored.",
-                "Вкл.: Chebyshev spacing между растениями. Выкл.: spacing не проверяется.");
+                "Вкл.: дистанция по метрике Чебышёва между растениями. Выкл.: дистанция не проверяется.");
 
             D(nameof(EcosystemConfig.ApplyCrossHabitatSpacing),
                 "On: terrestrial and aquatic plants share spacing rules. Off: spacing only within same habitat.",
-                "Вкл.: наземные и водные учитывают spacing друг друга. Выкл.: spacing только внутри среды.");
+                "Вкл.: наземные и водные учитывают дистанцию друг друга. Выкл.: дистанция только внутри среды.");
 
             D(nameof(EcosystemConfig.DefaultSameSpeciesSpacing),
                 "Higher: same species must stay farther apart (patchier). Lower: denser same-species stands.",
@@ -238,11 +238,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.DefaultOtherSpeciesSpacing),
                 "Higher: different species need more distance. Lower: mixed stands can be denser.",
-                "Больше: больше дистанция между разными видами. Меньше: плотнее смешанные группы.");
+                "Больше: растения разных видов дальше друг от друга. Меньше: плотнее смешанные группы.");
 
             D(nameof(EcosystemConfig.SpacingVerticalSearch),
                 "Higher: check spacing conflicts farther above/below. Lower: tighter vertical spacing scan.",
-                "Больше: шире вертикальная проверка spacing. Меньше: уже скан по Y.");
+                "Больше: шире вертикальная проверка дистанции. Меньше: уже обход по Y.");
 
             D(nameof(EcosystemConfig.UseCellDisplacement),
                 "On: stronger species can displace weaker occupants. Off: no displacement on occupied cells.",
@@ -254,7 +254,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.PreferSpreadToEmptyCells),
                 "On: weight empty cells higher when spreading. Off: empty and occupied more even.",
-                "Вкл.: при spread выше вес пустых клеток. Выкл.: пустые и занятые ближе по весу.");
+                "Вкл.: при распространении выше вес пустых клеток. Выкл.: пустые и занятые ближе по весу.");
 
             D(nameof(EcosystemConfig.EnableEmptyFirstSpreadCollect),
                 "On: collect empty-cell candidates before displacement pass. Off: single combined pass.",
@@ -262,7 +262,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableSpreadColumnOccupancyHint),
                 "On: skip columns known occupied on empty-first pass (faster). Off: scan all columns.",
-                "Вкл.: пропуск занятых колонок на empty-first (быстрее). Выкл.: скан всех колонок.");
+                "Вкл.: пропуск занятых колонок на сначала пустые (быстрее). Выкл.: обход всех колонок.");
 
             D(nameof(EcosystemConfig.EmptySpreadFitnessMultiplier),
                 "Higher: empty cells much more attractive when prefer-empty is on. Lower: weaker empty bias.",
@@ -270,7 +270,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.UseFloraContext),
                 "On: neighbor trees/logs/leaves affect spread fitness. Off: ignore forest edge/interior context.",
-                "Вкл.: соседние деревья/листва влияют на fitness. Выкл.: контекст леса игнорируется.");
+                "Вкл.: соседние деревья/листва влияют на пригодность. Выкл.: контекст леса игнорируется.");
 
             D(nameof(EcosystemConfig.FloraContextNeighborRadius),
                 "Higher: count trees farther away for forest context. Lower: more local edge/interior signal.",
@@ -278,7 +278,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.FloraContextInteriorThreshold),
                 "Higher: harder to count as forest interior (needs more neighbors). Lower: easier interior label.",
-                "Больше: труднее считаться чащей (нужно больше соседей). Меньше: легче «interior».");
+                "Больше: труднее считаться чащей (нужно больше соседей). Меньше: легче «чаща».");
 
             D(nameof(EcosystemConfig.FloraOpenInteriorPenalty),
                 "Higher: open-field species penalized more in forest interior. Lower: milder edge effect.",
@@ -286,11 +286,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.FloraContextCacheHours),
                 "Higher: longer cache for local forest cover (less CPU). Lower: fresher context updates.",
-                "Больше: дольше кэш лесности (меньше CPU). Меньше: чаще пересчёт контекста.");
+                "Больше: дольше кэш лесности (меньше процессор). Меньше: чаще пересчёт контекста.");
 
             D(nameof(EcosystemConfig.UseNicheContext),
                 "On: local moisture/light niche multipliers on spread fitness. Off: ignore niche layer.",
-                "Вкл.: влага/свет локальной ниши в fitness. Выкл.: слой ниши игнорируется.");
+                "Вкл.: влага/свет локальной ниши на пригодность. Выкл.: слой ниши игнорируется.");
 
             D(nameof(EcosystemConfig.NicheCacheHours),
                 "Higher: longer per-cell niche cache. Lower: more frequent niche refresh.",
@@ -322,7 +322,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.UseSeasonalEcology),
                 "On: monthly spread multipliers from WildSpeciesSeason profiles. Off: uniform spread year-round.",
-                "Вкл.: месячные множители spread по сезонным профилям. Выкл.: равномерный spread круглый год.");
+                "Вкл.: месячные множители распространения по сезонным профилям. Выкл.: равномерное распространение круглый год.");
 
             D(nameof(EcosystemConfig.SeasonalStressEnabled),
                 "On: seasonal stress die-off rolls for terrestrial plants. Off: no extra seasonal die-off.",
@@ -330,31 +330,31 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.UseSoilSuccession),
                 "On: spread and death can change soil tier blocks. Off: soil blocks unchanged by ecology.",
-                "Вкл.: spread и гибель меняют tier почвы. Выкл.: почва не меняется экологией.");
+                "Вкл.: распространение и гибель меняют уровень почвы. Выкл.: почва не меняется экологией.");
 
             D(nameof(EcosystemConfig.SoilSuccessionStrength),
                 "Higher: stronger soil tier shifts on spread/death. Lower: subtler succession. 1.0 = default.",
-                "Больше: сильнее смена tier почвы. Меньше: слабее succession. 1.0 — дефолт.");
+                "Больше: сильнее смена уровень почвы. Меньше: слабее смена почвы. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.SoilSuccessionSkipWhenBuiltAbove),
                 "On: skip soil swaps when slabs/builds occupy column above ground. Off: succession always runs.",
-                "Вкл.: не менять почву под постройками/плитами. Выкл.: succession всегда.");
+                "Вкл.: не менять почву под постройками/плитами. Выкл.: смена почвы всегда.");
 
             D(nameof(EcosystemConfig.UseFarmlandNutrientBridge),
                 "On: tilling adds N/P/K from dominant wild plant role. Off: vanilla till nutrients only.",
-                "Вкл.: вспашка добавляет N/P/K от диких растений. Выкл.: только ванильные питательные.");
+                "Вкл.: вспашка добавляет азот, фосфор и калий от диких растений. Выкл.: только ванильные питательные.");
 
             D(nameof(EcosystemConfig.FarmlandNutrientBridgeStrength),
                 "Higher: stronger till nutrient bonus from wild plants. Lower: weaker bridge. 1.0 = default.",
-                "Больше: сильнее бонус при вспашке. Меньше: слабее мост. 1.0 — дефолт.");
+                "Больше: сильнее бонус при вспашке. Меньше: слабее мост. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.EnableFallowRestoration),
                 "On: empty farmland near wild plants slowly regains nutrients. Off: no fallow restoration.",
-                "Вкл.: пустые поля у диких растений медленно восстанавливают N/P/K. Выкл.: без восстановления.");
+                "Вкл.: пустые поля у диких растений медленно восстанавливают азот, фосфор и калий. Выкл.: без восстановления.");
 
             D(nameof(EcosystemConfig.FallowRestorationStrength),
                 "Higher: faster nutrient recovery on fallow fields. Lower: slower restoration. 1.0 = default.",
-                "Больше: быстрее восстановление питательных на пару. Меньше: медленнее. 1.0 — дефолт.");
+                "Больше: быстрее восстановление питательных на пару. Меньше: медленнее. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.RespectLandClaims),
                 "On: block spread, displacement, stress, and tree changes inside protected claims. Off: claims ignored.",
@@ -362,27 +362,27 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.MaxPendingTreeChecksPerTick),
                 "Higher: more mod-placed saplings polled per tick until log-grown appears. Lower: slower sapling watch.",
-                "Больше: больше саженцев проверяется за тик. Меньше: медленнее ожидание log-grown.");
+                "Больше: больше саженцев проверяется за тик. Меньше: медленнее ожидание выросших стволов.");
 
             D(nameof(EcosystemConfig.EnableCyclicTreeDiscovery),
                 "On: round-robin scan for new log-grown trunks after load. Off: no background tree discovery.",
-                "Вкл.: циклический поиск новых log-grown после загрузки. Выкл.: без фонового поиска.");
+                "Вкл.: циклический поиск новых выросших стволов после загрузки. Выкл.: без фонового поиска.");
 
             D(nameof(EcosystemConfig.MaxTreeRescanColumnsPerTick),
                 "Higher: more columns scanned per tick for tree discovery. Lower: slower discovery, less CPU.",
-                "Больше: больше колонок перескана за тик. Меньше: медленнее поиск, меньше CPU.");
+                "Больше: больше колонок повторного обхода за тик. Меньше: медленнее поиск, меньше нагрузка на процессор.");
 
             D(nameof(EcosystemConfig.EnableCyclicFloraDiscovery),
                 "On: round-robin live scan registers flowers/tallgrass after chunk load. Off: one-shot scan only.",
-                "Вкл.: циклический live-скан регистрирует цветы/траву после загрузки. Выкл.: только одноразовый scan.");
+                "Вкл.: циклический повторный обход регистрирует цветы/траву после загрузки. Выкл.: только одноразовый обход.");
 
             D(nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick),
                 "Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU.",
-                "Больше: больше колонок flora-скана за тик. Меньше: медленнее заполнение луга, меньше CPU.");
+                "Больше: больше колонок обхода флоры за тик. Меньше: медленнее заполнение луга, меньше нагрузка на процессор.");
 
             D(nameof(EcosystemConfig.EnableTreeAging),
                 "On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this).",
-                "Вкл.: календарный возраст и рост структуры диких деревьев. Выкл.: без роста (senescence требует вкл.).");
+                "Вкл.: календарный возраст и рост структуры диких деревьев. Выкл.: без роста (старение требует вкл.).");
 
             D(nameof(EcosystemConfig.MaxTreeGrowthAttemptsPerTick),
                 "Higher: more trees advanced per reproduce tick. Lower: slower aging, less CPU.",
@@ -390,7 +390,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.TreeGrowthActivityScale),
                 "Higher: faster wild tree growth vs reference size. Lower: slower growth. 1.0 = default.",
-                "Больше: быстрее рост диких деревьев. Меньше: медленнее. 1.0 — дефолт.");
+                "Больше: быстрее рост диких деревьев. Меньше: медленнее. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.EnableTreeSenescence),
                 "On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age.",
@@ -398,7 +398,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.TreeSenescenceSnagBlocks),
                 "Higher: more log-grown blocks left as snag during death phase. Lower: shorter snag stage.",
-                "Больше: выше сухостой из log-grown блоков. Меньше: короче фаза сухостоя.");
+                "Больше: выше сухостой из блоков выросших стволов. Меньше: короче фаза сухостоя.");
 
             D(nameof(EcosystemConfig.EnableTreeSenescenceRemains),
                 "On: final year spawns vanilla stump and fallen logs. Off: snag removed without remains.",
@@ -410,7 +410,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableFerntreeEcology),
                 "On: ferntree-normal blocks register, spread, age, and senesce. Off: vanilla ferntree only.",
-                "Вкл.: папоротниковое дерево в экологии (spread, возраст, senescence). Выкл.: только ваниль.");
+                "Вкл.: папоротниковое дерево в экологии (распространение, возраст, старение). Выкл.: только ваниль.");
 
             D(nameof(EcosystemConfig.FerntreeSenescenceSnagSegments),
                 "Higher: more trunk segments during ferntree snag phase. Lower: shorter snag.",
@@ -426,7 +426,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.WildVineWallCaptureHeight),
                 "Higher: taller vertical span for wall capture. Lower: shorter vine wall reach.",
-                "Больше: выше вертикальный захват стен. Меньше: короче reach лиан.");
+                "Больше: выше вертикальный захват стен. Меньше: короче дальность лиан по стене.");
 
             D(nameof(EcosystemConfig.EnableMyceliumNiche),
                 "On: meadow spread penalty and forest bonus near mycelium anchors. Off: no mycelium niche tuning.",
@@ -446,7 +446,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.MyceliumSkipSoilSuccession),
                 "On: no soil succession on mycelium anchor cells. Off: anchors participate in succession.",
-                "Вкл.: смена почвы на якорях отключена. Выкл.: якоря участвуют в succession.");
+                "Вкл.: смена почвы на якорях отключена. Выкл.: якоря участвуют в смена почвы.");
 
             D(nameof(EcosystemConfig.EnableMyceliumEcology),
                 "On: register anchors; niche stress and death on mycelium. Off: vanilla mycelium only.",
@@ -466,11 +466,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableMyceliumNetworkSpread),
                 "On: slow orthogonal network spread from mat edge between anchors. Off: no network colonization.",
-                "Вкл.: медленный сетевой spread от края mat между якорями. Выкл.: без сети.");
+                "Вкл.: медленное сетевое распространение с кромки ковра между якорями. Выкл.: без сети.");
 
             D(nameof(EcosystemConfig.MyceliumSpreadRate),
                 "Higher: faster mycelium network spread interval scale. Lower: slower colonization.",
-                "Больше: быстрее сетевой spread грибницы. Меньше: медленнее колонизация.");
+                "Больше: быстрее сетевое распространение грибницы. Меньше: медленнее колонизация.");
 
             D(nameof(EcosystemConfig.MyceliumSpreadAttemptsPerYear),
                 "Higher: more network spread attempts per in-game year. Lower: sparser mycelium network.",
@@ -482,47 +482,47 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableSeasonalFoliage),
                 "On: deciduous autumn strip and spring bud on log-grown skeleton. Off: static vanilla crowns.",
-                "Вкл.: осенний strip и весенние почки на log-grown. Выкл.: статичные ванильные кроны.");
+                "Вкл.: осеннее снятие листвы и весенние почки на выросших стволах. Выкл.: статичные ванильные кроны.");
 
             D(nameof(EcosystemConfig.FoliageSyncMode),
                 "chunk = sync on chunk load (default). hybrid = chunk plus random tick. random = legacy random only.",
-                "chunk = при загрузке чанка (по умолчанию). hybrid = chunk плюс random tick. random = только legacy.");
+                "при загрузке участка (по умолчанию). гибридный = участок плюс случайный тик. случайный = только прежний режим.");
 
             D(nameof(EcosystemConfig.MaxFoliageCellsTickedPerTick),
                 "Higher: more random foliage cells per reproduce tick (hybrid/random). 0 = off.",
-                "Больше: больше случайных клеток листвы за тик (hybrid/random). 0 = выкл.");
+                "Больше: больше случайных клеток листвы за тик (гибридный/случайный). 0 = выкл.");
 
             D(nameof(EcosystemConfig.FoliageBudgetMs),
                 "Higher: more ms for foliage random tick (smoother, more CPU). 0 = linked/unlimited alias.",
-                "Больше: больше мс на random tick листвы. 0 = связанный бюджет или без лимита.");
+                "Больше: больше мс на случайный тик листвы. 0 = связанный бюджет или без лимита.");
 
             D(nameof(EcosystemConfig.FoliageChunkSyncBudgetMs),
                 "Higher: more ms per chunk foliage sync pass. Lower: faster passes, less work per chunk.",
-                "Больше: больше мс на sync листвы чанка. Меньше: быстрее проход, меньше работы.");
+                "Больше: больше мс на синхронизация листвы участока. Меньше: быстрее проход, меньше работы.");
 
             D(nameof(EcosystemConfig.FoliageChunkWorkPerTick),
                 "Higher: more chunks resumed per chunk-scan tick. Lower: slower foliage catch-up.",
-                "Больше: больше чанков листвы за тик скана. Меньше: медленнее догонка.");
+                "Больше: больше участоков листвы за тик обхода. Меньше: медленнее догонка.");
 
             D(nameof(EcosystemConfig.FoliageCatchUpOnChunkLoad),
                 "On: sync foliage to current season when chunk loads. Off: foliage may lag until random tick.",
-                "Вкл.: листва догоняет сезон при загрузке чанка. Выкл.: может отставать до random tick.");
+                "Вкл.: листва догоняет сезон при загрузке участка. Выкл.: может отставать до случайного тика.");
 
             D(nameof(EcosystemConfig.MaxFoliageCatchUpPerChunk),
                 "Higher: more strip+bud ops per chunk per pass (0 = unlimited). Lower: slower seasonal catch-up.",
-                "Больше: больше операций догонки на чанк (0 = без лимита). Меньше: медленнее догонка.");
+                "Больше: больше операций догонки на участок (0 = без лимита). Меньше: медленнее догонка.");
 
             D(nameof(EcosystemConfig.FoliageColumnScanHeightAboveSurface),
                 "Higher: scan fewer blocks above surface (less work). 0 = full column height.",
-                "Больше: уже скан над поверхностью (меньше работы). 0 = вся колонка.");
+                "Больше: уже обход над поверхностью (меньше работы). 0 = вся колонка.");
 
             D(nameof(EcosystemConfig.FoliagePeakAutumnBranchyStripActivity),
                 "Higher: strip more branchy foliage in peak autumn (0 = keep all branchy). Lower: gentler strip.",
-                "Больше: сильнее strip branchy осенью (0 = оставить всё). Меньше: мягче strip.");
+                "Больше: сильнее снятие ветвистой листвы осенью (0 = оставить всё). Меньше: мягче снятие.");
 
             D(nameof(EcosystemConfig.EnableCanopyFallenSticks),
-                "On: drop loosestick-free when branchy foliage strips in autumn. Off: no stick drops.",
-                "Вкл.: палки loosestick-free при осеннем strip branchy. Выкл.: без палок.");
+                "On: drop ванильные палки when branchy foliage strips in autumn. Off: no stick drops.",
+                "Вкл.: выпадают ванильные палки при осеннем снятии ветвистой листвы. Выкл.: без палок.");
 
             D(nameof(EcosystemConfig.CanopyFallenStickChance),
                 "Higher (toward 1): more stick drops at peak autumn. Lower (toward 0): rarer sticks.",
@@ -530,23 +530,23 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableSpringBranchyAgeBoost),
                 "On: spring branchy buds scale with tree calendar age. Off: uniform spring bud strength.",
-                "Вкл.: весенние branchy почки зависят от возраста дерева. Выкл.: равномерная сила почек.");
+                "Вкл.: весенние ветвистой листвы почки зависят от возраста дерева. Выкл.: равномерная сила почек.");
 
             D(nameof(EcosystemConfig.SpringBranchyAgeBoostYearsToMax),
                 "Higher: older trees needed for max spring branchy boost. Lower: young trees reach max sooner.",
-                "Больше: для max boost нужны более старые деревья. Меньше: молодые быстрее получают max.");
+                "Больше: для максимальный бонус нужны более старые деревья. Меньше: молодые быстрее получают максимум.");
 
             D(nameof(EcosystemConfig.SpringBranchyAgeBoostMax),
                 "Higher: stronger max spring branchy multiplier from age. Lower: subtler age effect.",
-                "Больше: сильнее max множитель branchy от возраста. Меньше: слабее эффект возраста.");
+                "Больше: сильнее максимум множитель ветвистой листвы от возраста. Меньше: слабее эффект возраста.");
 
             D(nameof(EcosystemConfig.FoliageRestoreBareSkeleton),
                 "On: winter repair adds branchy leaves on bare log-grown pillars. Off: bare crowns stay bare.",
-                "Вкл.: зимой branchy на голых log-grown. Выкл.: голые кроны остаются голыми.");
+                "Вкл.: зимой восстанавливается ветвистая листва на голых выросших стволах. Выкл.: голые кроны остаются голыми.");
 
             D(nameof(EcosystemConfig.CanopyActivityScale),
                 "Higher: faster seasonal defoliation and budding curves. Lower: subtler canopy seasons. 1.0 = default.",
-                "Больше: быстрее сезонные кривые defol/bud. Меньше: слабее сезоны кроны. 1.0 — дефолт.");
+                "Больше: быстрее сезонные кривые сброс листвы/почки. Меньше: слабее сезоны кроны. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.CanopyBudMinTemperature),
                 "Higher: spring buds need warmer cells (shorter bud season). Lower: buds in cooler weather.",
@@ -562,19 +562,19 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.CanopyAmbienceMinHeightBlocks),
                 "Higher: particles only under taller foliage above feet. Lower: ambience in shorter crowns.",
-                "Больше: частицы только под более высокой листвой. Меньше: ambience и в низкой кроне.");
+                "Больше: частицы только под более высокой листвой. Меньше: атмосфера и в низкой кроне.");
 
             D(nameof(EcosystemConfig.CanopyAmbienceMoteRate),
                 "Higher: denser green mote spawn under canopy. Lower: fewer motes. 1.0 = default.",
-                "Больше: гуще зелёные частицы под кроной. Меньше: реже. 1.0 — дефолт.");
+                "Больше: гуще зелёные частицы под кроной. Меньше: реже. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.CanopyAmbienceLeafDriftRate),
                 "Higher: more autumn leaf drift particles. Lower: sparser drift. 1.0 = default.",
-                "Больше: больше осенних листьев. Меньше: реже drift. 1.0 — дефолт.");
+                "Больше: больше осенних листьев. Меньше: реже падение листьев. 1.0 — по умолчанию.");
 
             D(nameof(EcosystemConfig.CanopyAmbienceSampleIntervalSeconds),
                 "Higher: less frequent canopy density re-sample (less CPU). Lower: more responsive ambience.",
-                "Больше: реже пересчёт плотности кроны. Меньше: отзывчивее ambience.");
+                "Больше: реже пересчёт плотности кроны. Меньше: отзывчивее атмосфера.");
 
             D(nameof(EcosystemConfig.CanopyAmbienceSuppressInRain),
                 "On: suppress canopy particles during heavy rain. Off: particles still spawn in rain.",
@@ -582,15 +582,15 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableChunkFairSpread),
                 "On: round-robin spread attempts across registry chunks (fair pacing). Off: less fair chunk order.",
-                "Вкл.: round-robin spread по чанкам реестра. Выкл.: менее равномерный порядок.");
+                "Вкл.: распространение по очереди по участкам реестра. Выкл.: менее равномерный порядок.");
 
             D(nameof(EcosystemConfig.MaxSpreadAttemptsPerChunkPerTick),
                 "Higher: more spread attempts per chunk per reproduce tick. Lower: slower per-chunk spread.",
-                "Больше: больше spread-попыток на чанк за тик. Меньше: медленнее spread в чанке.");
+                "Больше: больше попыток распространения на участок за тик. Меньше: медленнее распространения в участоке.");
 
             D(nameof(EcosystemConfig.MaxSpreadChunksVisitedPerTick),
                 "Higher: visit more registry chunks per reproduce tick. Lower: slower global spread sweep.",
-                "Больше: больше чанков spread за тик. Меньше: медленнее обход реестра.");
+                "Больше: больше участоков распространения за тик. Меньше: медленнее обход реестра.");
 
             D(nameof(EcosystemConfig.EnableEventDrivenSpread),
                 "On: wake neighbor ecology when relevant blocks change. Off: spread only on scheduled ticks.",
@@ -598,59 +598,59 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableSeasonCoarseWake),
                 "On: wake seasonal species once per in-game month. Off: no monthly coarse wake.",
-                "Вкл.: месячное пробуждение сезонных видов. Выкл.: без месячного wake.");
+                "Вкл.: месячное пробуждение сезонных видов. Выкл.: без месячного пробуждения.");
 
             D(nameof(EcosystemConfig.EcologyWakeRadiusBlocks),
                 "0 = auto from spread radius and spacing. Higher: wake more neighbors on block changes.",
-                "0 = авто от радиуса spread и spacing. Больше: больше соседей просыпается при изменениях.");
+                "0 = авто от распространения и дистанции. Больше: больше соседей просыпается при изменениях.");
 
             D(nameof(EcosystemConfig.EnableEcologyColumnCache),
                 "On: cache spread column snapshots (faster repeat attempts). Off: rescan columns each time.",
-                "Вкл.: кэш снимков колонок spread (быстрее повторы). Выкл.: скан каждый раз.");
+                "Вкл.: кэш снимков колонок распространения (быстрее повторы). Выкл.: обход каждый раз.");
 
             D(nameof(EcosystemConfig.EnableTwoPhaseSpreadPlacement),
                 "On: evaluate spread then commit SetBlock in fair pass. Off: immediate placement on success.",
-                "Вкл.: оценка spread, затем commit в fair pass. Выкл.: немедленная установка блока.");
+                "Вкл.: оценка распространения, затем применение в честном проходе. Выкл.: немедленная установка блока.");
 
             D(nameof(EcosystemConfig.MaxSpreadCommitsPerTick),
                 "Higher: more spread block commits per tick (0 = MaxReproduceAttemptsPerTick). Lower: slower commits.",
-                "Больше: больше commit spread за тик (0 = MaxReproduceAttemptsPerTick). Меньше: медленнее commit.");
+                "Больше: больше применений распространения за тик (0 = лимит попыток за тик). Меньше: медленнее применение.");
 
             D(nameof(EcosystemConfig.MaxSpreadCommitChunksVisitedPerTick),
                 "Higher: more chunks in commit pass (0 = MaxSpreadChunksVisitedPerTick). Lower: narrower commit sweep.",
-                "Больше: больше чанков в commit pass (0 = MaxSpreadChunksVisitedPerTick). Меньше: уже обход.");
+                "Больше: больше участков в проходе применения (0 = лимит участков за тик). Меньше: более узкий обход.");
 
             D(nameof(EcosystemConfig.MaxSpreadCommitsPerChunkPerTick),
                 "Higher: more commits per chunk per tick (0 = MaxSpreadAttemptsPerChunkPerTick). Lower: slower local commits.",
-                "Больше: больше commit на чанк (0 = MaxSpreadAttemptsPerChunkPerTick). Меньше: медленнее локально.");
+                "Больше: больше применений на участок (0 = лимит попыток на участок). Меньше: медленнее локально.");
 
             D(nameof(EcosystemConfig.MaxReproduceAttemptsPerTick),
                 "Higher: more spread evaluations per reproduce tick (faster sim, more CPU). Lower: gentler spread pacing.",
-                "Больше: больше оценок spread за тик (быстрее, выше CPU). Меньше: мягче темп spread.");
+                "Больше: больше оценок распространения за тик (быстрее, выше процессор). Меньше: мягче темп распространения.");
 
             D(nameof(EcosystemConfig.MaxChunkColumnsScannedPerTick),
                 "Higher: more sync column scans when background scan off. Lower: slower registration catch-up.",
-                "Больше: больше sync-сканов колонок без фонового скана. Меньше: медленнее догонка.");
+                "Больше: больше синхронных обходов колонок без фонового обхода. Меньше: медленнее догонка.");
 
             D(nameof(EcosystemConfig.MaxRegistrationsPerTick),
                 "Higher: more sync registrations when background scan off. Lower: slower registry fill.",
-                "Больше: больше sync-регистраций без фонового скана. Меньше: медленнее заполнение реестра.");
+                "Больше: больше синхронизация-регистраций без фонового обхода. Меньше: медленнее заполнение реестра.");
 
             D(nameof(EcosystemConfig.EnablePlayerPriorityRegistration),
                 "On: drain player-vicinity chunks before background registration queue. Off: uniform queue order.",
-                "Вкл.: сначала чанки у игрока, потом фон. Выкл.: единая очередь.");
+                "Вкл.: сначала участки у игрока, потом фон. Выкл.: единая очередь.");
 
             D(nameof(EcosystemConfig.EnableBurstRegistrationNearPlayers),
                 "On: finish nearby chunk registration on load within ms budget. Off: no burst completion.",
-                "Вкл.: burst-дoregistration чанков у игрока при загрузке. Выкл.: без burst.");
+                "Вкл.: пакетная регистрация участков у игрока при загрузке. Выкл.: без пакетного режима.");
 
             D(nameof(EcosystemConfig.PlayerRegistrationPriorityRadiusBlocks),
                 "Higher: wider player-vicinity priority and burst registration. Lower: tighter priority zone.",
-                "Больше: шире зона приоритетной/burst регистрации. Меньше: уже зона.");
+                "Больше: шире зона приоритетной/пакетный регистрации. Меньше: уже зона.");
 
             D(nameof(EcosystemConfig.MaxPriorityChunkScansPerTick),
                 "Higher: more priority queue passes per chunk-scan tick. Lower: slower player-vicinity registration.",
-                "Больше: больше приоритетных проходов за тик скана. Меньше: медленнее регистрация у игрока.");
+                "Больше: больше приоритетных проходов за тик обхода. Меньше: медленнее регистрация у игрока.");
 
             D(nameof(EcosystemConfig.MaxPriorityRegistrationsPerTick),
                 "Higher: more registrations from priority queue per tick. Lower: slower near-player fill.",
@@ -662,63 +662,63 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.BurstRegistrationBudgetMs),
                 "Higher: more ms to finish one burst chunk on load. Lower: smaller burst completion slice.",
-                "Больше: больше мс на завершение burst-чанка. Меньше: меньший slice.");
+                "Больше: больше мс на завершение пакетного участка. Меньше: меньшая доля.");
 
             D(nameof(EcosystemConfig.MaxBurstRegistrationsPerChunk),
                 "Higher: allow more registrations when finishing one burst chunk. Lower: cap burst chunk size.",
-                "Больше: больше регистраций при завершении burst-чанка. Меньше: ниже cap.");
+                "Больше: больше регистраций при завершении пакетного участка. Меньше: ниже лимит.");
 
             D(nameof(EcosystemConfig.MaxRegistryAppliesPerTick),
                 "Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing.",
-                "Больше: больше RegisterReproducer за тик скана. Меньше: медленнее pacing.");
+                "Больше: больше регистрация за тик обхода. Меньше: медленнее темп.");
 
             D(nameof(EcosystemConfig.MaxRegistryAppliesPerChunkPerTick),
                 "Higher: more registry inserts from one chunk per drain pass. Lower: fairer but slower single-chunk meadows.",
-                "Больше: больше insert из одного чанка за drain. Меньше: честнее round-robin, но медленнее луга.");
+                "Больше: больше вставки из одного участока за проход очереди. Меньше: честнее по очереди, но медленнее луга.");
 
             D(nameof(EcosystemConfig.RegistrationWorkerCount),
                 "Higher: more background column-classification threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
-                "Больше: больше потоков классификации (max 8). 0 = половина ядер. Snapshot и SetBlock — на main thread.");
+                "Больше: больше потоков классификации (макс. 8). 0 = половина ядер. Снимок и установка блока — в основном потоке.");
 
             D(nameof(EcosystemConfig.MaxPriorityRegistryAppliesPerTick),
                 "Higher: more extra applies for player-vicinity chunks. Lower: slower near-player registry.",
-                "Больше: больше apply у игрока за тик. Меньше: медленнее реестр у игрока.");
+                "Больше: больше приоритетных вставок у игрока за тик. Меньше: медленнее реестр у игрока.");
 
             D(nameof(EcosystemConfig.EnableBackgroundRegistrationScan),
                 "On: classify columns on worker from main-thread snapshot. Off: sync scan on main thread only.",
-                "Вкл.: классификация колонок на worker из snapshot. Выкл.: только sync на main thread.");
+                "Вкл.: классификация колонок во фоновом потоке из снимка. Выкл.: только синхронизация в основном потоке.");
 
             D(nameof(EcosystemConfig.EnableBackgroundSpreadSolve),
                 "On: score spread candidates on worker from compact env snapshots; SetBlock stays on main thread. Requires two-phase spread. Terrestrial, mat, and water crowfoot.",
-                "Вкл.: scoring spread на worker из компактных snapshot; SetBlock на main thread. Нужен two-phase spread. Terrestrial, mat и water crowfoot.");
+                "Вкл.: оценка распространения во фоновом потоке из компактных снимок; установка блока в основном потоке. Нужно двухфазное распространение. Наземные, ковёр и водяной лютик.");
 
             D(nameof(EcosystemConfig.SpreadWorkerCount),
                 "Higher: more background spread-scoring threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
-                "Больше: больше потоков spread-scoring (max 8). 0 = половина ядер. Snapshot и SetBlock — на main thread.");
+                "Больше: больше потоков оценки распространения (макс. 8). 0 = половина ядер. Снимок и установка блока — в основном потоке.");
 
             D(nameof(EcosystemConfig.MaxRegistrationSnapshotCellsPerTick),
                 "Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed.",
-                "Больше: больше block id в snapshot за тик. Меньше: медленнее feed фонового скана.");
+                "Больше: больше идентификаторов блоков в снимок за тик. Меньше: медленнее подача данных фоновому обходу.");
 
             D(nameof(EcosystemConfig.TickBudgetMs),
                 "Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited.",
-                "Больше: больше мс за reproduce-тик. 0 = без лимита.");
+                "Больше: больше мс за размножение-тик. 0 = без лимита.");
 
             D(nameof(EcosystemConfig.SpreadBudgetMs),
                 "Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap.",
-                "Больше: больше мс на spread (0 = TickBudgetMs). Меньше: жёстче cap spread.");
+                "Больше: больше мс на распространение (0 = бюджет тика). Меньше: жёстче лимит распространения.");
 
             D(nameof(EcosystemConfig.RegistrationBudgetMs),
                 "Higher: more ms for chunk-scan phase (0 = TickBudgetMs). Lower: tighter registration cap.",
-                "Больше: больше мс на chunk-scan (0 = TickBudgetMs). Меньше: жёстче cap регистрации.");
+                "Больше: больше мс на обход участков (0 = бюджет тика). Меньше: жёстче лимит регистрации.");
 
             D(nameof(EcosystemConfig.StressBudgetMs),
                 "Higher: more ms for stress phase (0 = TickBudgetMs). Lower: tighter stress cap.",
-                "Больше: больше мс на стресс (0 = TickBudgetMs). Меньше: жёстче cap стресса.");
+                "Больше: больше мс на стресс (0 = бюджет тика). Меньше: жёстче лимит стресса.");
 
             D(nameof(EcosystemConfig.EnableReproduceTickProfiling),
                 "On: log reproduce phase timings when registry is large. Off: no profiling logs.",
-                "Вкл.: лог фаз reproduce при большом реестре. Выкл.: без профилирования.");
+                "Вкл.: лог фаз размножения при большом реестре. Выкл.: без профилирования.");
 
             D(nameof(EcosystemConfig.ReproduceTickProfilingMinRegistry),
                 "Higher: profiling logs only when registry is larger. Lower: logs on smaller registries.",
@@ -730,39 +730,39 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.StressTickIntervalMs),
                 "Higher: less frequent stress ticks (less CPU). Lower: more frequent stress updates.",
-                "Больше: реже тики стресса (меньше CPU). Меньше: чаще обновления стресса.");
+                "Больше: реже тики стресса (меньше процессор). Меньше: чаще обновления стресса.");
 
             D(nameof(EcosystemConfig.ReproduceTickIntervalMs),
                 "Higher: less frequent spread/foliage/tree ticks. Lower: more frequent spread updates.",
-                "Больше: реже тики spread/листва/деревьев. Меньше: чаще обновления spread.");
+                "Больше: реже тики распространения/листва/деревьев. Меньше: чаще обновления распространения.");
 
             D(nameof(EcosystemConfig.ChunkScanTickIntervalMs),
                 "Higher: less frequent registration and foliage chunk sync. Lower: faster registry/foliage sync.",
-                "Больше: реже chunk-scan (регистрация/sync листвы). Меньше: быстрее sync.");
+                "Больше: реже обход участков (регистрация/синхронизация листвы). Меньше: быстрее синхронизация.");
 
             D(nameof(EcosystemConfig.OnlyActivateNearPlayers),
                 "On: spread, stress, trees, and chunk scans only within player radius (~192 blocks). Off: all loaded chunks.",
-                "Вкл.: spread, стресс, деревья и сканы только в радиусе игрока (~192 блока). Выкл.: все загруженные чанки.");
+                "Вкл.: распространение, стресс, деревья и обходы только в радиусе игрока (~192 блока). Выкл.: все загруженные участки.");
 
             D(nameof(EcosystemConfig.LimitSpreadNearPlayers),
                 "On: spread, stress, and tree aging only near players; chunk registration unchanged. Off: full simulation.",
-                "Вкл.: spread, стресс и деревья у игроков; регистрация без изменений. Выкл.: полная симуляция.");
+                "Вкл.: распространение, стресс и деревья у игроков; регистрация без изменений. Выкл.: полная симуляция.");
 
             D(nameof(EcosystemConfig.PlayerActivationRadiusBlocks),
                 "Higher: wider radius for OnlyActivateNearPlayers and LimitSpreadNearPlayers. Lower: tighter playtest zone.",
-                "Больше: шире радиус для флагов «только у игроков». Меньше: уже зона playtest.");
+                "Больше: шире радиус для флагов «только у игроков». Меньше: уже зона для тестирования.");
 
             D(nameof(EcosystemConfig.VerboseLogging),
                 "On: extra notification and warning logs (CPU cost). Off: errors and startup only.",
-                "Вкл.: больше notification/warning (нагрузка на CPU). Выкл.: только ошибки и старт.");
+                "Вкл.: больше уведомлений и предупреждений (нагрузка на процессор). Выкл.: только ошибки и старт.");
 
             D(nameof(EcosystemConfig.ReproduceDebug),
                 "On: log spread attempts (pair with VerboseLogging). Off: silent spread path.",
-                "Вкл.: логировать попытки spread (вместе с VerboseLogging). Выкл.: без лога spread.");
+                "Вкл.: логировать попытки распространения (вместе с «Подробные логи»). Выкл.: без лога распространения.");
 
             D(nameof(EcosystemConfig.EnableTrampling),
                 "On: player proximity accumulates trampling stress on plants. Off: no trampling stress.",
-                "Вкл.: близость игрока накапливает стресс протаптывания. Выкл.: без trampling.");
+                "Вкл.: близость игрока накапливает стресс протаптывания. Выкл.: без протаптывания.");
 
             D(nameof(EcosystemConfig.TramplingRadius),
                 "Higher: players affect plants farther away. Lower: must stand closer to trample.",
@@ -782,11 +782,11 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.EnableEcologyInspect),
                 "On: allow ecology inspect hotkey (default I). Off: inspect disabled.",
-                "Вкл.: осмотр экологии по hotkey (по умолчанию I). Выкл.: осмотр отключён.");
+                "Вкл.: осмотр экологии по клавише (по умолчанию I). Выкл.: осмотр отключён.");
 
             D(nameof(EcosystemConfig.EcologyInspectCooldownSeconds),
                 "Higher: longer wait between inspect requests per player. Lower: more frequent inspects.",
-                "Больше: длиннее кулдаун осмотра на игрока. Меньше: чаще осмотр.");
+                "Больше: длиннее пауза осмотра на игрока. Меньше: чаще осмотр.");
 
             D(nameof(EcosystemConfig.EcologyInspectScanRadius),
                 "Higher: wider nearby-species tally in inspect report. Lower: more local species list.",
@@ -798,15 +798,15 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.CloneBerryTraits),
                 "On: spread copies parent bush genetic traits. Off: vanilla random wild traits on new bushes.",
-                "Вкл.: spread копирует генетические черты куста. Выкл.: ванильные случайные черты.");
+                "Вкл.: распространение копирует генетические черты куста. Выкл.: ванильные случайные черты.");
 
             D(nameof(EcosystemConfig.BerryTraitMutationChance),
                 "Higher: offspring more often lose one random trait on spread. 0 = no mutations.",
-                "Больше: чаще теряется случайная черта при spread. 0 = без мутаций.");
+                "Больше: чаще теряется случайная черта при распространении. 0 = без мутаций.");
 
             D(nameof(EcosystemConfig.EnableThirdPartyParticipants),
                 "On: blocks with ecologyParticipant JSON from other mods join ecology. Off: vanilla blocks only.",
-                "Вкл.: блоки с ecologyParticipant из других модов (напр. Wildgrass). Выкл.: только ваниль.");
+                "Вкл.: блоки с меткой участника экологии из других модов (например, Wildgrass). Выкл.: только ваниль.");
 
             return m;
         }

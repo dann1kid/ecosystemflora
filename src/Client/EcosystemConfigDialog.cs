@@ -128,6 +128,7 @@ namespace WildFarming.Client
             try
             {
                 SingleComposer = composer.Compose();
+                ApplyHoverTextAutoWidth();
                 ApplyControlValues();
                 return true;
             }
@@ -165,6 +166,13 @@ namespace WildFarming.Client
                 ElementBounds.Fixed(pad + labelW, y, controlW, 25),
                 "cfg-preset");
 
+            composer.AddAutoSizeHoverText(
+                string.Format(CultureInfo.InvariantCulture, L("config-ui-preset-desc"), nameof(EcosystemConfig.BalancePreset)),
+                CairoFont.WhiteSmallText(),
+                380,
+                ElementBounds.Fixed(pad, y, labelW + controlW, 25).FlatCopy(),
+                "cfg-preset-tip");
+
             y += 28;
 
             composer.AddStaticText(
@@ -184,6 +192,13 @@ namespace WildFarming.Client
                 OnCategorySelected,
                 ElementBounds.Fixed(pad + labelW, y, controlW, 25),
                 "cfg-category");
+
+            composer.AddAutoSizeHoverText(
+                L("config-ui-category-desc"),
+                CairoFont.WhiteSmallText(),
+                380,
+                ElementBounds.Fixed(pad, y, labelW + controlW, 25).FlatCopy(),
+                "cfg-category-tip");
 
             y += 26;
 
@@ -274,15 +289,15 @@ namespace WildFarming.Client
                 ? L("config-ui-scope-client")
                 : L("config-ui-scope-server");
 
-            double textHeight = MeasureHelpTextHeight(title, scopeHint, desc, labelWidth);
+            double textHeight = MeasureHelpTextHeight(title, scopeHint, field.Name, desc, labelWidth);
             double innerHeight = Math.Max(textHeight, ControlHeight + 2);
             return new FieldRowLayout(field, innerHeight + RowGap);
         }
 
         /// <summary>Measures help block height at the left-column width (control column excluded).</summary>
-        double MeasureHelpTextHeight(string title, string scopeHint, string desc, double labelWidth)
+        double MeasureHelpTextHeight(string title, string scopeHint, string jsonKey, string desc, double labelWidth)
         {
-            string plain = BuildFieldHelpPlainText(title, scopeHint, desc);
+            string plain = BuildFieldHelpPlainText(title, scopeHint, jsonKey, desc);
             double scaledHeight = textMeasure.GetMultilineTextHeight(
                 helpFont,
                 plain,
@@ -294,11 +309,16 @@ namespace WildFarming.Client
             return height + TextPadPx;
         }
 
-        static string BuildFieldHelpPlainText(string title, string scopeHint, string desc)
+        static string BuildFieldHelpPlainText(string title, string scopeHint, string jsonKey, string desc)
         {
             var sb = new StringBuilder();
             sb.Append(title);
             sb.Append('\n').Append(scopeHint);
+            if (!string.IsNullOrWhiteSpace(jsonKey))
+            {
+                sb.Append('\n').Append(FormatJsonKey(jsonKey));
+            }
+
             if (!string.IsNullOrWhiteSpace(desc))
             {
                 sb.Append('\n').Append(desc);
@@ -324,7 +344,7 @@ namespace WildFarming.Client
             double bodyHeight = rowLayout.Height - RowGap;
 
             composer.AddRichtext(
-                BuildFieldHelpText(title, scopeHint, desc),
+                BuildFieldHelpText(title, scopeHint, field.Name, desc),
                 helpFont,
                 ElementBounds.Fixed(x, y, labelWidth, bodyHeight),
                 code + "-help");
@@ -363,6 +383,32 @@ namespace WildFarming.Client
                         code);
                     break;
             }
+
+            string tooltip = BuildFieldHelpPlainText(title, scopeHint, field.Name, desc);
+            composer.AddAutoSizeHoverText(
+                tooltip,
+                CairoFont.WhiteSmallText(),
+                380,
+                ElementBounds.Fixed(x, y, width, bodyHeight).FlatCopy(),
+                code + "-tip");
+        }
+
+        void ApplyHoverTextAutoWidth()
+        {
+            if (SingleComposer == null) return;
+
+            SetHoverAutoWidth("cfg-preset-tip");
+            SetHoverAutoWidth("cfg-category-tip");
+
+            foreach (FieldRowLayout row in currentPageRows)
+            {
+                SetHoverAutoWidth("cfg-" + row.Field.Name + "-tip");
+            }
+        }
+
+        void SetHoverAutoWidth(string key)
+        {
+            SingleComposer.GetHoverText(key)?.SetAutoWidth(true);
         }
 
         void AddFooter(GuiComposer composer, double pad, double y, double height)
@@ -557,11 +603,16 @@ namespace WildFarming.Client
 
         public event Action<EcosystemConfig> OnApplyRequested;
 
-        static string BuildFieldHelpText(string title, string scopeHint, string desc)
+        static string BuildFieldHelpText(string title, string scopeHint, string jsonKey, string desc)
         {
             var sb = new StringBuilder();
             sb.Append("<strong>").Append(EscapeRichText(title)).Append("</strong><br/>");
             sb.Append("<i>").Append(EscapeRichText(scopeHint)).Append("</i>");
+
+            if (!string.IsNullOrWhiteSpace(jsonKey))
+            {
+                sb.Append("<br/><strong>").Append(EscapeRichText(FormatJsonKey(jsonKey))).Append("</strong>");
+            }
 
             if (!string.IsNullOrWhiteSpace(desc))
             {
@@ -570,6 +621,9 @@ namespace WildFarming.Client
 
             return sb.ToString();
         }
+
+        static string FormatJsonKey(string propertyName) =>
+            string.Format(CultureInfo.InvariantCulture, L("config-ui-json-key"), propertyName);
 
         static string EscapeRichText(string text)
         {
