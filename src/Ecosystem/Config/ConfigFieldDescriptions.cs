@@ -128,6 +128,30 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more grass establishment checks per game tick. Lower: slower promotion queue.",
                 "Больше: быстрее ждёт рост. Меньше: медленнее.");
 
+            D(nameof(EcosystemConfig.EnableFernRhizomeSpread),
+                "On: ground ferns spread one orthogonal step from patch edge (rhizome). Off: legacy radius spread.",
+                "Вкл.: папоротники ползут по краю клумбы (ризома). Выкл.: spread по радиусу.");
+
+            D(nameof(EcosystemConfig.EnableFernSpreadMaturation),
+                "On: spread places small juvenile ferns that mature before reproducing. Off: instant adult.",
+                "Вкл.: spread ставит молодой папоротник, потом взрослеет. Выкл.: сразу взрослый.");
+
+            D(nameof(EcosystemConfig.EnableFernSpreadAttemptCooldown),
+                "On: parent fern waits after each spread attempt. Off: only calendar interval applies.",
+                "Вкл.: пауза родителя после каждой попытки spread. Выкл.: только календарный интервал.");
+
+            D(nameof(EcosystemConfig.FernSpreadCooldownHoursMultiplier),
+                "Higher: shorter post-spread pause on parent ferns. Lower: longer cooldown.",
+                "Больше: короче пауза после spread. Меньше: дольше между попытками.");
+
+            D(nameof(EcosystemConfig.EnableFernSporulationGate),
+                "On: ferns spread only during active sporulation season (FernSeason curve). Off: year-round when fitness allows.",
+                "Вкл.: spread только в сезон споруляции. Выкл.: круглый год при подходящем fitness.");
+
+            D(nameof(EcosystemConfig.MaxPendingFernMaturationChecksPerTick),
+                "Higher: more fern maturation checks per tick. Lower: slower juvenile queue.",
+                "Больше: быстрее очередь созревания папоротников. Меньше: медленнее.");
+
             D(nameof(EcosystemConfig.EventWakeRetryHours),
                 "Higher: event wake pulls spread retry farther forward (after spawn cooldown). Lower: subtler wake nudge.",
                 "Больше: event wake сильнее сдвигает retry spread (после cooldown). Меньше: слабее пробуждение.");

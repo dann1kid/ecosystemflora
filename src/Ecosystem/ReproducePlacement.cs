@@ -232,6 +232,11 @@ namespace WildFarming.Ecosystem
                 matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
                 searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
             }
+            else if (requirements != null && requirements.UsesFernRhizomeSpread)
+            {
+                matMode = MatSpreadCollectMode.MatEdge;
+                searchRadius = requirements.SpreadRadius > 0 ? requirements.SpreadRadius : 1;
+            }
             else if (requirements != null && requirements.UsesSurfaceMatSpread)
             {
                 matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);
@@ -328,6 +333,12 @@ namespace WildFarming.Ecosystem
                 {
                     return scratchCandidates;
                 }
+
+                if (requirements.UsesFernRhizomeSpread
+                    && !FernRhizomeSpread.IsFrontier(acc, origin, requirements.Species))
+                {
+                    return scratchCandidates;
+                }
             }
 
             float seedFitnessScale = matMode == MatSpreadCollectMode.SeedDispersal
@@ -348,6 +359,7 @@ namespace WildFarming.Ecosystem
                     {
                         if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
                         if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
+                        if (requirements.UsesFernRhizomeSpread && !FernRhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
                     }
 
                     int worldX = origin.X + dx;

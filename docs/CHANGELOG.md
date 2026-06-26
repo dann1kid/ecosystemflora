@@ -3,9 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **3.9.24**
+**This release:** **4.0.2**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.0.2 — Soil succession + flower parity
+
+- **Fix (soil):** meadow and understory spread no longer creates `forestfloor-*` from `soil-*`. Litter layer stays on existing forest floor (worldgen / canopy); plants only shift soil fertility and moisture tiers.
+- **Hart's-tongue:** wetland herb role (not forest understory); no tree-symbiosis gate — open wet meadows only, no podzol conversion. Wetland spread raises soil moisture only (no peat creation).
+- **Catmint / redtopgrass:** same spread-maturation and phenology pipeline as other meadow flowers; texture paths aligned with vanilla (`petal/catmint`, `redtopgrass1/2/3`).
+- **Ferns:** rhizome mat spread (patch edge step), seasonal sporulation gate, juvenile spread maturation + post-attempt cooldown; inspect shows frontier / sporulation / maturing seedling. Species differentiated by temperature/rain envelopes, niche, and season curves (eagle/cinnamon/deer/tall/hartstongue).
+- **Tests:** `WildSoilBlockMapperTests`, `FlowerSpreadAssetParityTests`, `FernSpreadTests` guard regressions.
 
 ---
 

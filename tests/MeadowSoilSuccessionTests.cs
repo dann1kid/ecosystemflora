@@ -37,5 +37,15 @@ namespace WildFarming.Tests
             Assert.True(role.IsMeadowRole());
             Assert.False(role.IsForestRole());
         }
+
+        [Theory]
+        [InlineData("hartstongue")]
+        [InlineData("horsetail")]
+        public void WetMeadowSpecies_UseWetlandRole_NotForest(string species)
+        {
+            Assert.True(WildSpeciesSoilSuccession.TryGetRole(species, out PlantSoilRole role), species);
+            Assert.Equal(PlantSoilRole.WetlandHerb, role);
+            Assert.False(role.IsForestRole(), species + " → " + role);
+        }
     }
 }

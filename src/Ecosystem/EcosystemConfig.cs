@@ -154,6 +154,24 @@ namespace WildFarming.Ecosystem
         /// <summary>Establishing tallgrass promotion checks per reproduce tick.</summary>
         public int MaxPendingTallgrassPromotionChecksPerTick { get; set; } = 32;
 
+        /// <summary>Ground ferns spread one orthogonal step from patch edge (rhizome mat).</summary>
+        public bool EnableFernRhizomeSpread { get; set; } = true;
+
+        /// <summary>Spread ferns as small juvenile blocks that mature before reproducing.</summary>
+        public bool EnableFernSpreadMaturation { get; set; } = true;
+
+        /// <summary>Calendar pause on fern parents after each spread attempt.</summary>
+        public bool EnableFernSpreadAttemptCooldown { get; set; } = true;
+
+        /// <summary>Scales per-species post-spread cooldown hours for ferns.</summary>
+        public float FernSpreadCooldownHoursMultiplier { get; set; } = 1f;
+
+        /// <summary>Fern spread only during active sporulation season (season curve threshold).</summary>
+        public bool EnableFernSporulationGate { get; set; } = true;
+
+        /// <summary>Juvenile fern → mature checks per reproduce tick.</summary>
+        public int MaxPendingFernMaturationChecksPerTick { get; set; } = 24;
+
         /// <summary>Event wake pulls NextAttemptHours forward by at most this many game hours (after spawn cooldown).</summary>
         public double EventWakeRetryHours { get; set; } = 6;
 

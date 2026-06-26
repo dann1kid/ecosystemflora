@@ -73,12 +73,12 @@ namespace WildFarming.Ecosystem
                 ["ghostpipered"] = Forest(1.2f, 0.5f, 1.15f),
                 ["orangemallow"] = Open(1f, 0.4f, 1.12f),
 
-                // Ferns — edge/forest, hold ground under canopy
-                ["eaglefern"] = Edge(2.5f, hold: 1.18f),
-                ["cinnamonfern"] = Edge(2.2f, hold: 1.12f),
-                ["deerfern"] = Edge(2.2f, hold: 1.12f),
-                ["hartstongue"] = Edge(1.8f, hold: 1.08f),
-                ["tallfern"] = Edge(2f, hold: 1.12f),
+                // Ferns — context affinity matches habitat (forest interior vs edge)
+                ["eaglefern"] = Edge(2.6f, hold: 1.2f),
+                ["cinnamonfern"] = Forest(2.1f, interiorPenalty: 0.48f, hold: 1.16f),
+                ["deerfern"] = Edge(2.35f, hold: 1.1f),
+                ["hartstongue"] = Edge(1.75f, hold: 1.08f),
+                ["tallfern"] = Edge(2.45f, hold: 1.13f),
 
                 // Grass matrix — weak hold so flowers and colonizers can replace turf
                 ["tallgrass"] = new Profile(FloraContextAffinity.Open, 1.1f, 0.4f, 0.58f),

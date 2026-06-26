@@ -163,6 +163,21 @@ namespace WildFarming.Ecosystem
             new float[] { 0f, 0.05f, 0.5f, 1.4f, 1.8f, 1.5f, 0.8f, 0.5f, 0.3f, 0.1f, 0f, 0f },
             new float[] { 0.65f, 0.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.15f, 0.4f, 0.6f });
 
+        // Cold-wet forest: cinnamonfern — early spring sporulation, winter-hardy (boggy understory).
+        static readonly Profile ColdWetFern = new Profile(
+            new float[] { 0.05f, 0.12f, 0.95f, 1.65f, 1.35f, 0.85f, 0.45f, 0.25f, 0.12f, 0.04f, 0.02f, 0.02f },
+            new float[] { 0.8f, 0.65f, 0.1f, 0f, 0f, 0f, 0f, 0f, 0.15f, 0.35f, 0.55f, 0.75f });
+
+        // Temperate wet forest: deerfern — mid/late summer peak, less cold-hardy than cinnamon.
+        static readonly Profile TemperateWetFern = new Profile(
+            new float[] { 0.02f, 0.05f, 0.28f, 0.75f, 1.35f, 1.55f, 1.45f, 1.05f, 0.48f, 0.14f, 0.05f, 0.02f },
+            new float[] { 0.55f, 0.4f, 0f, 0f, 0f, 0f, 0f, 0f, 0.1f, 0.25f, 0.4f, 0.55f });
+
+        // Boreal/cool: eaglefern — short cool-season window, survives harsh winters.
+        static readonly Profile EagleFernCold = new Profile(
+            new float[] { 0.02f, 0.06f, 0.42f, 0.95f, 1.15f, 1.05f, 0.65f, 0.35f, 0.12f, 0.04f, 0.02f, 0.01f },
+            new float[] { 0.85f, 0.72f, 0.15f, 0f, 0f, 0f, 0f, 0f, 0.18f, 0.38f, 0.58f, 0.82f });
+
         // Ferns: broad season under shade (May-Sep), fairly hardy
         static readonly Profile FernSeason = new Profile(
             new float[] { 0.05f, 0.1f, 0.3f, 0.7f, 1.3f, 1.5f, 1.5f, 1.3f, 0.9f, 0.4f, 0.1f, 0.05f },
@@ -239,10 +254,10 @@ namespace WildFarming.Ecosystem
                 ["ghostpipepink"] = ForestSpring,
                 ["ghostpipered"] = ForestSpring,
 
-                // Ferns
-                ["eaglefern"] = FernSeason,
-                ["cinnamonfern"] = FernSeason,
-                ["deerfern"] = FernSeason,
+                // Ferns — temperature-differentiated sporulation windows
+                ["eaglefern"] = EagleFernCold,
+                ["cinnamonfern"] = ColdWetFern,
+                ["deerfern"] = TemperateWetFern,
                 ["hartstongue"] = FernSeason,
                 ["tallfern"] = EdgeSummer,
 

@@ -87,15 +87,13 @@ namespace WildFarming.Ecosystem
                 [PlantSoilRole.ForestUnderstory] = new RoleProfile(
                     spread: new SoilImpact
                     {
-                        MoistureDelta = 8f,
-                        FertilityTierDelta = 0.08f,
-                        IsForestFloor = true,
+                        MoistureDelta = 6f,
+                        FertilityTierDelta = 0.10f,
                     },
                     death: new SoilImpact
                     {
-                        MoistureDelta = 5f,
-                        FertilityTierDelta = 0.25f,
-                        IsForestFloor = true,
+                        MoistureDelta = 4f,
+                        FertilityTierDelta = 0.22f,
                     }),
 
                 [PlantSoilRole.WetlandHerb] = new RoleProfile(
@@ -163,7 +161,7 @@ namespace WildFarming.Ecosystem
                 ["eaglefern"] = PlantSoilRole.ForestUnderstory,
                 ["cinnamonfern"] = PlantSoilRole.ForestUnderstory,
                 ["deerfern"] = PlantSoilRole.ForestUnderstory,
-                ["hartstongue"] = PlantSoilRole.ForestUnderstory,
+                ["hartstongue"] = PlantSoilRole.WetlandHerb,
                 ["tallfern"] = PlantSoilRole.ForestEdge,
                 ["tallgrass"] = PlantSoilRole.GrassMatrix,
                 [EcologyGrassColonizerSpecies.Redtopgrass] = PlantSoilRole.GrassColonizer,
@@ -185,12 +183,6 @@ namespace WildFarming.Ecosystem
             }
 
             if (SpeciesRole.TryGetValue(species, out role)) return true;
-
-            if (WildFernEcology.TryGet(species, out _))
-            {
-                role = PlantSoilRole.ForestUnderstory;
-                return true;
-            }
 
             if (WildFerntreeEcology.IsSpecies(species))
             {

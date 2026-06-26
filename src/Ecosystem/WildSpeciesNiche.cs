@@ -50,12 +50,12 @@ namespace WildFarming.Ecosystem
                 ["edelweiss"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.25f),
                 ["cowparsley"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.1f),
 
-                // Ferns
-                ["eaglefern"] = new Profile(MoistureLevel.Wet, LightLevel.Shade, 1.35f),
-                ["cinnamonfern"] = new Profile(MoistureLevel.Wet, LightLevel.Shade, 1.3f),
-                ["deerfern"] = new Profile(MoistureLevel.Wet, LightLevel.Shade, 1.3f),
+                // Ferns — moisture/light proxies for local microclimate
+                ["eaglefern"] = new Profile(MoistureLevel.Mesic, LightLevel.Shade, 1.32f),
+                ["cinnamonfern"] = new Profile(MoistureLevel.Wet, LightLevel.DeepShade, 1.34f),
+                ["deerfern"] = new Profile(MoistureLevel.Wet, LightLevel.Shade, 1.28f),
                 ["hartstongue"] = new Profile(MoistureLevel.Mesic, LightLevel.Shade, 1.2f),
-                ["tallfern"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.15f),
+                ["tallfern"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.18f),
                 [WildFerntreeEcology.Species] = new Profile(MoistureLevel.Wet, LightLevel.Partial, 1.2f),
 
                 ["croton"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.2f),

@@ -38,7 +38,9 @@ namespace WildFarming.Ecosystem
 
         internal static bool UsesMatSpread(PlantRequirements requirements) =>
             requirements != null
-            && (requirements.UsesRhizomeSpread || requirements.UsesSurfaceMatSpread);
+            && (requirements.UsesRhizomeSpread
+                || requirements.UsesSurfaceMatSpread
+                || requirements.UsesFernRhizomeSpread);
 
         internal static bool UsesCrowfootSpread(PlantRequirements requirements) =>
             requirements != null
@@ -52,7 +54,8 @@ namespace WildFarming.Ecosystem
             if (UsesCrowfootSpread(requirements)) return true;
             return requirements.Habitat == EcologyHabitat.Terrestrial
                 && !requirements.UsesRhizomeSpread
-                && !requirements.UsesSurfaceMatSpread;
+                && !requirements.UsesSurfaceMatSpread
+                && !requirements.UsesFernRhizomeSpread;
         }
 
         public static bool TryBuildRequest(
@@ -189,7 +192,7 @@ namespace WildFarming.Ecosystem
             request = null;
             if (api == null || origin == null || spreadBlock == null || requirements == null) return false;
             if (requirements.Habitat != EcologyHabitat.Terrestrial) return false;
-            if (requirements.UsesRhizomeSpread || requirements.UsesSurfaceMatSpread) return false;
+            if (requirements.UsesRhizomeSpread || requirements.UsesSurfaceMatSpread || requirements.UsesFernRhizomeSpread) return false;
 
             int searchRadius = ReproducePlacement.ResolveSpreadSearchRadius(requirements, radius, rand, out MatSpreadCollectMode matMode);
             float seedFitnessScale = matMode == MatSpreadCollectMode.SeedDispersal
@@ -396,6 +399,12 @@ namespace WildFarming.Ecosystem
                 {
                     return;
                 }
+
+                if (requirements.UsesFernRhizomeSpread
+                    && !FernRhizomeSpread.IsFrontier(acc, origin, requirements.Species))
+                {
+                    return;
+                }
             }
 
             for (int dx = -radius; dx <= radius; dx++)
@@ -408,6 +417,7 @@ namespace WildFarming.Ecosystem
                     {
                         if (requirements.UsesRhizomeSpread && !RhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
                         if (requirements.UsesSurfaceMatSpread && !SurfaceMatSpread.IsMatStep(dx, dz)) continue;
+                        if (requirements.UsesFernRhizomeSpread && !FernRhizomeSpread.IsOrthogonalStep(dx, dz)) continue;
                     }
 
                     if (!WaterPlacement.TryFindPlantPos(

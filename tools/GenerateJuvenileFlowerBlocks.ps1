@@ -1,9 +1,11 @@
-# Generates juvenile flower blocktypes mirroring vanilla flower.json shape/texture groups.
+# Vanilla uses a single petal/stem file (wildcard {flower}* group), not numbered variants.
+$wildcardSingle24 = @("catmint")
+
 $ErrorActionPreference = "Stop"
 $outDir = Join-Path $PSScriptRoot "..\assets\ecosystemflora\blocktypes\plant"
 
 $existing = @(
-    "cowparsley","horsetail","mugwort","lupine","woad","redtopgrass","heather","westerngorse"
+    "cowparsley","horsetail","mugwort","lupine","woad","heather","westerngorse"
 )
 
 function Write-Block($species, $shape, $textures) {
@@ -47,6 +49,16 @@ function ThreePatch24($species) {
         $t["southTinted$n"] = "game:block/plant/flower/stem/${species}$n"
     }
     Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
+}
+
+function CrossNumbered24($species) {
+    $t = @{
+        north1 = "game:block/plant/flower/petal/${species}1"
+        south1 = "game:block/plant/flower/petal/${species}1"
+        northTinted1 = "game:block/plant/flower/stem/${species}1"
+        southTinted1 = "game:block/plant/flower/stem/${species}1"
+    }
+    Write-Block $species "game:block/plant/flower/1patch-cross-24x24" $t
 }
 
 # Vanilla default texturesByType uses petal/{flower}* — single file (catmint) or wildcard pick.
@@ -215,6 +227,7 @@ $toGenerate = @{
     croton = { CrotonBlock }
     rafflesiabrown = { RafflesiaBlock "rafflesiabrown" "brown" }
     rafflesiared = { RafflesiaBlock "rafflesiared" "red" }
+    redtopgrass = { CrossNumbered24 "redtopgrass" }
 }
 
 foreach ($kv in $toGenerate.GetEnumerator()) {

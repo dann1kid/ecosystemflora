@@ -100,6 +100,9 @@ namespace WildFarming.Ecosystem
             string juvenileSpecies = FlowerJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
             if (juvenileSpecies != null) return juvenileSpecies;
 
+            juvenileSpecies = FernJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
+            if (juvenileSpecies != null) return juvenileSpecies;
+
             string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseCode(blockCode);
             if (phaseSpecies != null) return phaseSpecies;
 
@@ -149,6 +152,8 @@ namespace WildFarming.Ecosystem
             if (path.StartsWith("fern-"))
             {
                 string fernType = path.Substring("fern-".Length);
+                if (fernType.EndsWith("-free")) fernType = fernType.Substring(0, fernType.Length - "-free".Length);
+                else if (fernType.EndsWith("-snow")) fernType = fernType.Substring(0, fernType.Length - "-snow".Length);
                 if (WildFernEcology.TryGet(fernType, out _)) return fernType;
             }
 

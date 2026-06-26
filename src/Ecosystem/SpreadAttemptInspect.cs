@@ -13,6 +13,11 @@ namespace WildFarming.Ecosystem
                 return RhizomeSpread.ResolveCollectMode(requirements, rand);
             }
 
+            if (requirements.UsesFernRhizomeSpread)
+            {
+                return MatSpreadCollectMode.MatEdge;
+            }
+
             if (requirements.UsesSurfaceMatSpread)
             {
                 return SurfaceMatSpread.ResolveCollectMode(requirements, rand);

@@ -1,4 +1,4 @@
-﻿{
+{
   "code": "flowerphase-redtopgrass-dieback-free",
   "class": "BlockPlant",
   "enabled": true,
@@ -8,10 +8,10 @@
   "randomizeRotations": true,
   "shape": { "base": "game:block/plant/flower/1patch-cross-24x24" },
   "textures": {
-    "north1": { "base": "game:block/plant/flower/petal/redtopgrass", "tint": "#8b7355" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass", "tint": "#8b7355" },
-    "south1": { "base": "game:block/plant/flower/petal/redtopgrass", "tint": "#8b7355" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass", "tint": "#8b7355" }
+    "north1": { "base": "game:block/plant/flower/petal/redtopgrass1", "tint": "#8b7355" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1", "tint": "#8b7355" },
+    "south1": { "base": "game:block/plant/flower/petal/redtopgrass1", "tint": "#8b7355" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1", "tint": "#8b7355" }
   },
   "climateColorMap": "climatePlantTint",
   "frostable": true,

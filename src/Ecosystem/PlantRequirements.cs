@@ -85,6 +85,8 @@ namespace WildFarming.Ecosystem
 
         public bool UsesMyceliumNetworkSpread => SpreadMode == SpreadMode.MyceliumNetwork;
 
+        public bool UsesFernRhizomeSpread => SpreadMode == SpreadMode.FernRhizomeMat;
+
         /// <summary>When true, never promote water-surface habitat to <see cref="SpreadMode.SurfaceMat"/>.</summary>
         public bool SuppressSurfaceMatSpread { get; set; }
 
@@ -508,6 +510,7 @@ namespace WildFarming.Ecosystem
             WildSpeciesNiche.ApplyTo(requirements);
             RhizomeSpread.ApplyTo(requirements);
             SurfaceMatSpread.ApplyTo(requirements);
+            FernRhizomeSpread.ApplyTo(requirements);
             return requirements;
         }
     }

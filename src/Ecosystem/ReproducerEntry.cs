@@ -87,7 +87,12 @@ namespace WildFarming.Ecosystem
             return PlantCodeHelper.SameEcologySpecies(block.Code, MatureBlockCode);
         }
 
-        /// <summary>Mature vanilla flower or phenology juvenile at the registered origin.</summary>
-        public bool IsRegisteredPlantBlock(Block block) => FlowerPhenology.IsRegisteredPlantBlock(this, block);
+        /// <summary>Mature vanilla flower/fern, phenology phase, or spread juvenile at the registered origin.</summary>
+        public bool IsRegisteredPlantBlock(Block block)
+        {
+            if (FlowerPhenology.IsRegisteredPlantBlock(this, block)) return true;
+            if (FernJuvenileBlocks.MatchesJuvenileBlock(block, Requirements)) return true;
+            return IsMatureBlock(block);
+        }
     }
 }

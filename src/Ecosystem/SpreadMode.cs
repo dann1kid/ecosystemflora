@@ -14,5 +14,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Vanilla mycelium anchor: mat edge, one orthogonal step on soil.</summary>
         MyceliumNetwork = 3,
+
+        /// <summary>Ground ferns: patch edge, one orthogonal rhizome step on soil.</summary>
+        FernRhizomeMat = 4,
     }
 }

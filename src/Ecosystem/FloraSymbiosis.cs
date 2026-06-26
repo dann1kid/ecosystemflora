@@ -43,7 +43,6 @@ namespace WildFarming.Ecosystem
                 ["eaglefern"] = new Rule(new[] { TreeHostToken }, 2),
                 ["cinnamonfern"] = new Rule(new[] { TreeHostToken }, 2),
                 ["deerfern"] = new Rule(new[] { TreeHostToken }, 2),
-                ["hartstongue"] = new Rule(new[] { TreeHostToken }, 2),
                 ["tallfern"] = new Rule(new[] { TreeHostToken }, 2),
                 ["blueberry"] = new Rule(new[] { TreeHostToken }, 2),
                 ["blackcurrant"] = new Rule(new[] { TreeHostToken }, 4),
@@ -60,6 +59,13 @@ namespace WildFarming.Ecosystem
             rule = default;
             if (string.IsNullOrEmpty(symbiontSpecies)) return false;
             return SymbiontRules.TryGetValue(symbiontSpecies, out rule);
+        }
+
+        public static bool CanSpread(IBlockAccessor acc, BlockPos symbiontPos, string symbiontSpecies)
+        {
+            if (!EcosystemConfig.Loaded.EnableSymbiosis) return true;
+            if (!TryGetRule(symbiontSpecies, out _)) return true;
+            return HasRequiredHost(acc, symbiontPos, symbiontSpecies);
         }
 
         public static bool HasRequiredHost(IBlockAccessor acc, BlockPos symbiontPos, string symbiontSpecies)

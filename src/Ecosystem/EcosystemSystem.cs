@@ -29,6 +29,7 @@ namespace WildFarming.Ecosystem
         ChunkColumnUnloadDelegate chunkUnloadedHandler;
         readonly PendingTreeSaplings pendingTreeSaplings = new PendingTreeSaplings();
         readonly PendingFlowerMaturation pendingFlowerMaturation = new PendingFlowerMaturation();
+        readonly PendingFernMaturation pendingFernMaturation = new PendingFernMaturation();
         readonly PendingTallgrassPromotion pendingTallgrassPromotion = new PendingTallgrassPromotion();
         readonly CyclicTreeTrunkScanner cyclicTreeScanner = new CyclicTreeTrunkScanner();
         readonly CyclicFloraScanner cyclicFloraScanner = new CyclicFloraScanner();
@@ -405,6 +406,16 @@ namespace WildFarming.Ecosystem
             hoursLeft = 0;
             if (api?.World?.Calendar == null || pos == null) return false;
             return pendingFlowerMaturation.TryGetHoursUntilMature(
+                pos,
+                api.World.Calendar.TotalHours,
+                out hoursLeft);
+        }
+
+        public bool TryGetFernMaturationHoursLeft(BlockPos pos, out double hoursLeft)
+        {
+            hoursLeft = 0;
+            if (api?.World?.Calendar == null || pos == null) return false;
+            return pendingFernMaturation.TryGetHoursUntilMature(
                 pos,
                 api.World.Calendar.TotalHours,
                 out hoursLeft);
@@ -1007,6 +1018,7 @@ namespace WildFarming.Ecosystem
             }
 
             pendingFlowerMaturation.Remove(pos);
+            pendingFernMaturation.Remove(pos);
             pendingTallgrassPromotion.Remove(pos);
 
             if (wakeNeighbors)
@@ -1805,6 +1817,9 @@ namespace WildFarming.Ecosystem
             timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
+            pendingFernMaturation.Process(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
+
+            tickBudgetWatch.Restart();
             flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
             timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
 
@@ -1910,6 +1925,12 @@ namespace WildFarming.Ecosystem
                         return true;
                     }
 
+                    if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements)
+                        && !WildFernSpread.CanSpread(api, entry, cfg))
+                    {
+                        return true;
+                    }
+
                     TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
                     return true;
                 };
@@ -2008,9 +2029,26 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            ApplyFlowerSpreadCooldownOnCommit(spreadOrigin, requirements);
+            ApplyTerrestrialSpreadCooldownOnCommit(spreadOrigin, requirements);
 
             Block placed = api.World.BlockAccessor.GetBlock(pos);
+            if (FernSpreadMaturation.ShouldQueueMaturation(placed, requirements))
+            {
+                double nowHours = api.World.Calendar.TotalHours;
+                AssetLocation matureCode = FernJuvenileBlocks.ResolveMatureCode(
+                    api, spreadOrigin, requirements.Species);
+                double matureAt = nowHours + WildFernSpread.MaturationHours(
+                    api, pos, requirements.Species, EcosystemConfig.Loaded);
+                pendingFernMaturation.Add(pos, matureCode, requirements.Species, matureAt);
+                InvalidateEnvironmentAround(pos);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
+                return;
+            }
+
             if (FlowerSpreadMaturation.ShouldQueueMaturation(placed, requirements))
             {
                 double nowHours = api.World.Calendar.TotalHours;
@@ -2067,12 +2105,25 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements)
+                && !WildFernSpread.CanSpread(api, entry, cfg))
+            {
+                return;
+            }
+
             BlockPos spreadOrigin = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, entry.Origin, entry.MatureBlockCode);
             BlockPos spreadOriginCopy = spreadOrigin.Copy();
             MatSpreadCollectMode matMode = SpreadAttemptInspect.ResolveCollectMode(
                 entry.Requirements, api.World.Rand);
             spreadMatModeScratch[spreadOriginCopy] = matMode;
+
+            if (!string.IsNullOrEmpty(entry.Requirements?.Species)
+                && !FloraSymbiosis.CanSpread(api.World.BlockAccessor, spreadOrigin, entry.Requirements.Species))
+            {
+                RecordSpreadAttempt(spreadOriginCopy, entry, matMode, placed: false, "No symbiosis host");
+                return;
+            }
 
             float chance = SpeciesSpread.EffectiveChance(api, spreadOrigin, cfg, entry.Requirements);
             if (!skipChanceRoll && api.World.Rand.NextDouble() > chance)
@@ -2090,6 +2141,8 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            spreadBlock = FernSpreadMaturation.ResolveSpreadBlock(
+                api, spreadOrigin, entry.Requirements, spreadBlock);
             spreadBlock = FlowerSpreadMaturation.ResolveSpreadBlock(
                 api, spreadOrigin, entry.Requirements, spreadBlock);
             if (spreadBlock == null) return;
@@ -2178,7 +2231,7 @@ namespace WildFarming.Ecosystem
         {
             if (intent?.ParentOrigin == null || intent.Requirements == null) return;
 
-            ApplyFlowerSpreadCooldownOnCommit(intent.ParentOrigin, intent.Requirements);
+            ApplyTerrestrialSpreadCooldownOnCommit(intent.ParentOrigin, intent.Requirements);
 
             if (!registry.TryGetEntry(intent.ParentOrigin, out ReproducerEntry entry)) return;
 
@@ -2215,10 +2268,15 @@ namespace WildFarming.Ecosystem
             SpreadAttemptInspect.Record(api, entry, matMode, placed, failureReason);
         }
 
-        void ApplyFlowerSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
+        void ApplyTerrestrialSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
         {
             if (spreadOrigin == null || requirements == null) return;
             TryApplyPostSpreadAttemptCooldownOnce(spreadOrigin, requirements);
+        }
+
+        void ApplyFlowerSpreadCooldownOnCommit(BlockPos spreadOrigin, PlantRequirements requirements)
+        {
+            ApplyTerrestrialSpreadCooldownOnCommit(spreadOrigin, requirements);
         }
 
         void TryApplyPostSpreadAttemptCooldownOnce(BlockPos spreadOrigin, PlantRequirements requirements)
@@ -2231,6 +2289,18 @@ namespace WildFarming.Ecosystem
         {
             if (spreadOrigin == null || requirements == null || api == null) return;
             if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
+
+            if (WildFernSpread.TryApplySpreadAttemptCooldown(
+                parent,
+                api.World.Calendar.TotalHours,
+                api,
+                parent.Origin,
+                requirements,
+                EcosystemConfig.Loaded,
+                failedChanceRoll: false))
+            {
+                return;
+            }
 
             WildFlowerMaturation.TryApplySpreadAttemptCooldown(
                 parent,
@@ -2252,6 +2322,18 @@ namespace WildFarming.Ecosystem
         {
             if (spreadOrigin == null || requirements == null || api == null) return;
             if (!registry.TryGetEntry(spreadOrigin, out ReproducerEntry parent)) return;
+
+            if (WildFernSpread.TryApplySpreadAttemptCooldown(
+                parent,
+                api.World.Calendar.TotalHours,
+                api,
+                parent.Origin,
+                requirements,
+                EcosystemConfig.Loaded,
+                failedChanceRoll: true))
+            {
+                return;
+            }
 
             WildFlowerMaturation.TryApplySpreadAttemptCooldown(
                 parent,

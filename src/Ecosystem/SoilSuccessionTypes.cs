@@ -27,6 +27,7 @@ namespace WildFarming.Ecosystem
     {
         public float MoistureDelta;
         public float FertilityTierDelta;
+        /// <summary>Forest litter layer — canopy / needles only; not set by understory spread.</summary>
         public bool IsForestFloor;
 
         public static SoilImpact Combine(SoilImpact a, SoilImpact b)

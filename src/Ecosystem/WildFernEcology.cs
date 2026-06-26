@@ -44,16 +44,25 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, EcologyEntry> BySpecies = new Dictionary<string, EcologyEntry>
         {
-            ["tallfern"] = new EcologyEntry(22, 50, 0.7f, 1f, 0.5f, 1f, 1.8f, 0, 1,
-                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.MediumFert, 80, 0)),
-            ["eaglefern"] = new EcologyEntry(-12, 10, 0.4f, 1f, 0.5f, 1f, 1.4f, 0, 1,
-                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.LowFert, 80, 220)),
-            ["cinnamonfern"] = new EcologyEntry(-3, 15, 0.75f, 1f, 0.5f, 1f, 1.3f, 0, 1,
-                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.Peat | SoilKind.LowFert, 80, 0)),
-            ["deerfern"] = new EcologyEntry(2, 20, 0.75f, 1f, 0.5f, 1f, 1.3f, 0, 1,
-                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.Peat | SoilKind.LowFert, 80, 0)),
-            ["hartstongue"] = new EcologyEntry(15, 40, 0.75f, 1f, 0f, 0.6f, 1.1f, 1, 1,
+            // Boreal/cool, tolerates drier shade — short warm window
+            ["eaglefern"] = new EcologyEntry(-14, 8, 0.35f, 1f, 0.5f, 1f, 1.0f, 1, 2,
+                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.LowFert, 80, 200)),
+
+            // Cold wet peat/forest — needs rain, early-season colonizer
+            ["cinnamonfern"] = new EcologyEntry(-10, 14, 0.82f, 1f, 0.5f, 1f, 0.92f, 1, 2,
+                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.Peat | SoilKind.LowFert, 80, 180)),
+
+            // Cool–warm wet forest — broader temp, summer spread
+            ["deerfern"] = new EcologyEntry(5, 24, 0.62f, 1f, 0.5f, 1f, 1.18f, 1, 1,
+                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.MediumFert | SoilKind.LowFert, 80, 0)),
+
+            // Warm shady meadow/rock — open-wet edge, no tree symbiosis
+            ["hartstongue"] = new EcologyEntry(12, 38, 0.72f, 1f, 0f, 0.5f, 0.82f, 2, 1,
                 new WildPlantSoil.Profile(SoilKindSets.Meadow | SoilKind.ForestFloor | SoilKind.MediumFert, 80, 0)),
+
+            // Warm forest edge — partial sun, not deep interior
+            ["tallfern"] = new EcologyEntry(18, 48, 0.68f, 1f, 0.45f, 0.88f, 1.28f, 1, 1,
+                new WildPlantSoil.Profile(SoilKindSets.ForestUnderstory | SoilKind.MediumFert, 80, 0)),
         };
 
         public static bool TryGet(string species, out EcologyEntry entry)

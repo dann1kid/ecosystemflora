@@ -278,6 +278,25 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            if (FernJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
+                AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
+
+                if (api.World?.Calendar != null
+                    && EcosystemSystem.Instance != null
+                    && EcosystemSystem.Instance.TryGetFernMaturationHoursLeft(pos, out double hoursLeft))
+                {
+                    double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
+                    AddInspectLine(
+                        lines,
+                        "ecosystemflora:inspect-line-flower-maturing",
+                        daysLeft.ToString("0.#"));
+                }
+
+                return;
+            }
+
             if (inRegistry)
             {
                 ReproducerEntry entry = registryEntry;
@@ -324,7 +343,8 @@ namespace WildFarming.Ecosystem
                     AddInspectLine(lines, "ecosystemflora:inspect-line-next-spread", daysLeft.ToString("0.#"));
 
                     if (spawnCooldownLeft > 0
-                        && WildFlowerMaturation.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species))
+                        && (WildFlowerMaturation.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species)
+                            || WildFernSpread.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species)))
                     {
                         double cooldownDays = spawnCooldownLeft / api.World.Calendar.HoursPerDay;
                         AddInspectLine(
@@ -339,6 +359,15 @@ namespace WildFarming.Ecosystem
                 if (FlowerPhenology.UsesPhenology(cfg, entry.Requirements))
                 {
                     AppendFlowerPhenologyInspect(api, entry, cfg, lines);
+                }
+                else if (WildFernSpread.UsesSporulationGate(cfg, entry.Requirements))
+                {
+                    bool sporulating = WildFernSpread.CanSpread(api, entry, cfg);
+                    AddInspectLine(
+                        lines,
+                        sporulating
+                            ? "ecosystemflora:inspect-line-fern-sporulating"
+                            : "ecosystemflora:inspect-line-fern-dormant");
                 }
             }
             else
@@ -508,6 +537,10 @@ namespace WildFarming.Ecosystem
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-rhizome");
             }
+            else if (req.UsesFernRhizomeSpread)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-fern-rhizome");
+            }
             else if (req.UsesSurfaceMatSpread)
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-surfacemat");
@@ -522,16 +555,24 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread)
+            if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesFernRhizomeSpread)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
-                int verticalReach = req.UsesRhizomeSpread
-                    ? RhizomeSpread.DefaultVerticalReach
-                    : SurfaceMatSpread.DefaultVerticalReach;
+                bool frontier;
+                if (req.UsesFernRhizomeSpread)
+                {
+                    frontier = FernRhizomeSpread.IsFrontier(acc, pos, req.Species);
+                }
+                else
+                {
+                    int verticalReach = req.UsesRhizomeSpread
+                        ? RhizomeSpread.DefaultVerticalReach
+                        : SurfaceMatSpread.DefaultVerticalReach;
 
-                bool frontier = req.UsesRhizomeSpread
-                    ? RhizomeSpread.IsFrontier(acc, pos, req.Species, verticalReach)
-                    : SurfaceMatSpread.IsFrontier(acc, pos, req.Species, verticalReach);
+                    frontier = req.UsesRhizomeSpread
+                        ? RhizomeSpread.IsFrontier(acc, pos, req.Species, verticalReach)
+                        : SurfaceMatSpread.IsFrontier(acc, pos, req.Species, verticalReach);
+                }
 
                 AddInspectLine(
                     lines,
@@ -540,7 +581,8 @@ namespace WildFarming.Ecosystem
                         : "ecosystemflora:inspect-line-mat-frontier-no");
 
                 EcosystemConfig cfg = EcosystemConfig.Loaded;
-                if (cfg != null && cfg.RhizomeSeedDispersalEnabled)
+                if (cfg != null && cfg.RhizomeSeedDispersalEnabled
+                    && (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread))
                 {
                     float seedChance = req.UsesRhizomeSpread
                         ? RhizomeSpread.EffectiveSeedDispersalChance(req)
