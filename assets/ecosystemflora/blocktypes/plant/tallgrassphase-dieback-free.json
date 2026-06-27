@@ -4,21 +4,29 @@
   "enabled": true,
   "renderpass": "OpaqueNoCull",
   "blockmaterial": "Plant",
-  "drawtype": "JSON",
+  "drawtype": "cross",
+  "randomDrawOffset": true,
   "randomizeRotations": true,
-  "shape": { "base": "game:block/plant/grass/tall/veryshort", "scale": 0.65 },
+  "shape": { "base": "game:block/basic/cross" },
   "textures": {
-    "north": { "base": "game:block/plant/grass/tall/veryshort", "tint": "#8b7355" },
-    "south": { "base": "game:block/plant/grass/tall/veryshort", "tint": "#8b7355" }
+    "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "#8b7355" },
+    "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "#8b7355" }
+  },
+  "climateColorMap": "climatePlantTint",
+  "seasonColorMap": "seasonalGrass",
+  "vertexFlags": {
+    "windMode": "NormalWind",
+    "windData": 2
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
-  "replaceable": 3000,
+  "replaceable": 6000,
   "resistance": 0.5,
   "lightAbsorption": 0,
   "collisionbox": null,
-  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.22, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "selectionbox": { "x1": 0.1, "y1": 0, "z1": 0.1, "x2": 0.9, "y2": 0.22, "z2": 0.9 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
   "materialDensity": 200,
   "drops": []
 }

@@ -139,6 +139,8 @@
   "ecosystemflora:config-field-EnableTreeSenescence-desc": "Вкл.: естественная гибель по возрасту (сухостой → пень/брёвна). Выкл.: деревья не стареют.",
   "ecosystemflora:config-field-EnableTreeSenescenceRemains": "Пень и брёвна при гибели",
   "ecosystemflora:config-field-EnableTreeSenescenceRemains-desc": "Вкл.: в финале — пень и брёвна. Выкл.: сухостой исчезает без останков.",
+  "ecosystemflora:config-field-EnableTreeSeralSuccession": "Сукцессия леса (пионеры → древостой)",
+  "ecosystemflora:config-field-EnableTreeSeralSuccession-desc": "Вкл.: пионеры на открытых клетках, древостой — в зрелом лесу. Выкл.: только min/max лесности.",
   "ecosystemflora:config-field-EnableTwoPhaseSpreadPlacement": "Двухфазное распространение",
   "ecosystemflora:config-field-EnableTwoPhaseSpreadPlacement-desc": "Вкл.: оценка распространения, затем применение в честном проходе. Выкл.: немедленная установка блока.",
   "ecosystemflora:config-field-EnableWildVineEcology": "Экология диких лиан",

@@ -429,7 +429,7 @@ namespace WildFarming.Ecosystem
                 if (float.IsNaN(spreadRate)) spreadRate = tree.SpreadRate;
                 sameSpacing = tree.SameSpeciesSpacing;
                 otherSpacing = tree.OtherSpeciesSpacing;
-                minSunlight = 11;
+                minSunlight = tree.SaplingMinSunlight;
             }
             else if (!string.IsNullOrEmpty(species) && WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry ecology))
             {

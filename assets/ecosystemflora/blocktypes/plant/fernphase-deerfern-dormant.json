@@ -1,81 +1,27 @@
-﻿{
-    "code":  "fernphase-deerfern-dormant",
-    "class":  "BlockPlant",
-    "enabled":  true,
-    "renderpass":  "OpaqueNoCull",
-    "blockmaterial":  "Plant",
-    "drawtype":  "JSON",
-    "randomizeRotations":  true,
-    "shape":  {
-                  "base":  "game:block/plant/fern/cross",
-                  "scale":  1
-              },
-    "textures":  {
-                     "east":  {
-                                  "base":  "game:block/plant/fern/deerfern",
-                                  "alpha":  255,
-                                  "overlays":  [
-
-                                               ],
-                                  "tiles":  [
-
-                                            ],
-                                  "tilesWidth":  0,
-                                  "tilesHeight":  0,
-                                  "windMode":  0,
-                                  "windData":  0,
-                                  "rotation":  0,
-                                  "autoTile":  false,
-                                  "alternates":  [
-
-                                                 ],
-                                  "tint":  "#5c6b52"
-                              },
-                     "west":  {
-                                  "base":  "game:block/plant/fern/deerfern",
-                                  "alpha":  255,
-                                  "overlays":  [
-
-                                               ],
-                                  "tiles":  [
-
-                                            ],
-                                  "tilesWidth":  0,
-                                  "tilesHeight":  0,
-                                  "windMode":  0,
-                                  "windData":  0,
-                                  "rotation":  0,
-                                  "autoTile":  false,
-                                  "alternates":  [
-
-                                                 ],
-                                  "tint":  "#5c6b52"
-                              }
-                 },
-    "sideopaque":  {
-                       "all":  false
-                   },
-    "sidesolid":  {
-                      "all":  false
-                  },
-    "replaceable":  3000,
-    "resistance":  0.5,
-    "lightAbsorption":  0,
-    "collisionbox":  null,
-    "selectionbox":  {
-                         "x1":  0.25,
-                         "y1":  0,
-                         "z1":  0.25,
-                         "x2":  0.75,
-                         "y2":  0.672,
-                         "z2":  0.75
-                     },
-    "sounds":  {
-                   "place":  "game:block/plant",
-                   "break":  "game:block/plant"
-               },
-    "materialDensity":  200,
-    "drops":  [
-
-              ]
+{
+  "code": "fernphase-deerfern-dormant",
+  "class": "BlockFern",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "drawtype": "JSON",
+  "randomizeRotations": true,
+  "shape": { "base": "game:block/plant/fern/deerfern/var*", "scale": 1.0 },
+  "textures": {
+    "tall1": { "base": "game:block/plant/fern/deerfern/tall1", "tint": "#5c6b52" },
+    "tall2": { "base": "game:block/plant/fern/deerfern/tall2", "tint": "#5c6b52" },
+    "tall3": { "base": "game:block/plant/fern/deerfern/tall3", "tint": "#5c6b52" },
+    "center1": { "base": "game:block/plant/fern/deerfern/center1", "tint": "#5c6b52" }
+  },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.6, "z2": 0.875 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
 }

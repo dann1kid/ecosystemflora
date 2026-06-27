@@ -1,4 +1,4 @@
-﻿{
+{
   "code": "juvenile-fern-tallfern-free",
   "class": "BlockPlant",
   "enabled": true,
@@ -6,10 +6,9 @@
   "blockmaterial": "Plant",
   "drawtype": "JSON",
   "randomizeRotations": true,
-  "shape": { "base": "game:block/plant/fern/cross", "scale": 0.42 },
+  "shape": { "base": "game:block/plant/fern/tallfern/var1", "scale": 0.42 },
   "textures": {
-    "east": { "base": "game:block/plant/fern/tallfern" },
-    "west": { "base": "game:block/plant/fern/tallfern" }
+    "all": { "base": "game:block/plant/fern/tallfern/fern*" }
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
@@ -18,7 +17,8 @@
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 0.28, "z2": 0.75 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
   "materialDensity": 200,
   "drops": []
 }

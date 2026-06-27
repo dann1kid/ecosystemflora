@@ -1,0 +1,19 @@
+{
+    "block-juvenile-fern-cinnamonfern-free":  "Коричный папоротник (всход)",
+    "block-juvenile-fern-deerfern-free":  "Олений папоротник (всход)",
+    "block-juvenile-fern-eaglefern-free":  "Орляк (всход)",
+    "block-juvenile-fern-hartstongue-free":  "Листовник (всход)",
+    "block-juvenile-fern-tallfern-free":  "Высокий папоротник (всход)",
+    "block-fernphase-cinnamonfern-dieback":  "Коричный папоротник (отмирание)",
+    "block-fernphase-cinnamonfern-dormant":  "Коричный папоротник (покой)",
+    "block-fernphase-deerfern-dieback":  "Олений папоротник (отмирание)",
+    "block-fernphase-deerfern-dormant":  "Олений папоротник (покой)",
+    "block-fernphase-eaglefern-dieback":  "Орляк (отмирание)",
+    "block-fernphase-eaglefern-dormant":  "Орляк (покой)",
+    "block-fernphase-hartstongue-dieback":  "Листовник (отмирание)",
+    "block-fernphase-hartstongue-dormant":  "Листовник (покой)",
+    "block-fernphase-tallfern-dieback":  "Высокий папоротник (отмирание)",
+    "block-fernphase-tallfern-dormant":  "Высокий папоротник (покой)",
+    "block-tallgrassphase-dormant-free":  "Высокая трава (покой)",
+    "block-tallgrassphase-dieback-free":  "Высокая трава (отмирание)"
+}

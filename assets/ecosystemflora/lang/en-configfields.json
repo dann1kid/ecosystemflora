@@ -139,6 +139,8 @@
   "ecosystemflora:config-field-EnableTreeSenescence-desc": "On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age.",
   "ecosystemflora:config-field-EnableTreeSenescenceRemains": "Senescence stump and logs",
   "ecosystemflora:config-field-EnableTreeSenescenceRemains-desc": "On: final year spawns vanilla stump and fallen logs. Off: snag removed without remains.",
+  "ecosystemflora:config-field-EnableTreeSeralSuccession": "Forest seral succession",
+  "ecosystemflora:config-field-EnableTreeSeralSuccession-desc": "On: pioneer trees prefer open cells; climax trees prefer mature forest cover. Off: forest cover gates only.",
   "ecosystemflora:config-field-EnableTwoPhaseSpreadPlacement": "Two-phase spread placement",
   "ecosystemflora:config-field-EnableTwoPhaseSpreadPlacement-desc": "On: evaluate spread then commit SetBlock in fair pass. Off: immediate placement on success.",
   "ecosystemflora:config-field-EnableWildVineEcology": "Wild vine ecology",

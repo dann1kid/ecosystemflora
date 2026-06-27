@@ -396,6 +396,10 @@ namespace WildFarming.Ecosystem.Config
                 "On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age.",
                 "Вкл.: естественная гибель по возрасту (сухостой → пень/брёвна). Выкл.: деревья не стареют.");
 
+            D(nameof(EcosystemConfig.EnableTreeSeralSuccession),
+                "On: pioneer trees prefer open cells; climax trees prefer mature forest cover. Off: forest cover gates only.",
+                "Вкл.: пионеры на открытых клетках, древостой — в зрелом лесу. Выкл.: только min/max лесности.");
+
             D(nameof(EcosystemConfig.TreeSenescenceSnagBlocks),
                 "Higher: more log-grown blocks left as snag during death phase. Lower: shorter snag stage.",
                 "Больше: выше сухостой из блоков выросших стволов. Меньше: короче фаза сухостоя.");

@@ -413,6 +413,9 @@ namespace WildFarming.Ecosystem
         /// <summary>When calendar age reaches species senescence horizon, phased natural death begins.</summary>
         public bool EnableTreeSenescence { get; set; } = true;
 
+        /// <summary>Pioneer/mid/climax spread curves vs local forest cover at sapling cells.</summary>
+        public bool EnableTreeSeralSuccession { get; set; } = true;
+
         /// <summary>Log-grown blocks left standing during snag phase (final year collapses to remains or air).</summary>
         public int TreeSenescenceSnagBlocks { get; set; } = 3;
 

@@ -1,4 +1,4 @@
-﻿{
+{
   "code": "flowerphase-cowparsley-vegetative-free",
   "class": "BlockPlant",
   "enabled": true,
@@ -28,7 +28,7 @@
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.49, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }

@@ -214,6 +214,15 @@ namespace WildFarming.Ecosystem
             }
 
             score = CombineFitness(score, RangeFitness(ctx.LocalForestCover, req.MinForest, req.MaxForest));
+
+            if (req.Habitat == EcologyHabitat.TerrestrialTree
+                && !string.IsNullOrEmpty(req.Species))
+            {
+                score = CombineFitness(
+                    score,
+                    WildTreeEcology.SeralSpreadMultiplier(req.Species, ctx.LocalForestCover));
+            }
+
             return score;
         }
 

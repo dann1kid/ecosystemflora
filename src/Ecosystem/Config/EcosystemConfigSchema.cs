@@ -109,6 +109,7 @@ namespace WildFarming.Ecosystem.Config
             ("Trampling", "stress"),
             ("EnableTree", "trees"),
             ("Tree", "trees"),
+            ("EnableTreeSeralSuccession", "trees"),
             ("MaxPendingTreeChecks", "trees"),
             ("EnableCyclicTreeDiscovery", "trees"),
             ("MaxTreeRescanColumns", "trees"),

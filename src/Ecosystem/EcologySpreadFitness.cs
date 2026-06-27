@@ -12,7 +12,8 @@ namespace WildFarming.Ecosystem
             float baseFitness)
         {
             if (req == null || baseFitness <= 0f) return baseFitness;
-            if (req.Habitat != EcologyHabitat.Terrestrial) return baseFitness;
+            if (req.Habitat != EcologyHabitat.Terrestrial
+                && req.Habitat != EcologyHabitat.TerrestrialTree) return baseFitness;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.UseFloraContext || api == null) return baseFitness;

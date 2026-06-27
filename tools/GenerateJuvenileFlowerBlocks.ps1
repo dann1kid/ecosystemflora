@@ -33,7 +33,7 @@ $texJson
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }
@@ -175,7 +175,7 @@ function CrotonBlock() {
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }
@@ -203,7 +203,7 @@ function RafflesiaBlock($species, $color) {
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }

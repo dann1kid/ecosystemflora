@@ -153,7 +153,7 @@ $texJson
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": $y2, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }
@@ -214,7 +214,7 @@ $petalsLine
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.25, "z2": 0.875 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }
@@ -259,7 +259,7 @@ function Write-ShapeOnlyPhases($species, $shape, $selectionY2 = 0.55) {
   "lightAbsorption": 0,
   "collisionbox": null,
   "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": $selectionY2, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant" },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "materialDensity": 200,
   "drops": []
 }

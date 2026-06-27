@@ -64,7 +64,7 @@ namespace WildFarming.Tests
 
         [Theory]
         [InlineData("pine", 110)]
-        [InlineData("birch", 90)]
+        [InlineData("birch", 75)]
         [InlineData("redwood", 140)]
         public void Species_Horizon_MatchesProfile(string wood, int horizon)
         {

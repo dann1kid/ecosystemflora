@@ -19,8 +19,7 @@ namespace WildFarming.Ecosystem
             foreach (Block block in api.World.Blocks)
             {
                 if (block?.Code == null) continue;
-                if (!block.Code.Domain.Equals("game")) continue;
-                if (!block.Code.Path.StartsWith("flower-")) continue;
+                if (!ShouldPatchFlowerBreakDrops(block.Code)) continue;
 
                 BlockDropItemStack knifeDrygrass = CreateDrygrassDrop(EnumTool.Knife);
                 BlockDropItemStack scytheDrygrass = CreateDrygrassDrop(EnumTool.Scythe);
@@ -36,6 +35,19 @@ namespace WildFarming.Ecosystem
                     "[ecosystemflora] FlowerDrygrassDrops: patched {0} flower blocks",
                     patched);
             }
+        }
+
+        static bool ShouldPatchFlowerBreakDrops(AssetLocation code)
+        {
+            if (code.Domain.Equals("game") && code.Path.StartsWith("flower-"))
+            {
+                return true;
+            }
+
+            if (!code.Domain.Equals(JuvenileBlockNaming.Domain)) return false;
+
+            return code.Path.StartsWith("juvenile-flower-")
+                || code.Path.StartsWith("flowerphase-");
         }
 
         static BlockDropItemStack CreateDrygrassDrop(EnumTool tool)

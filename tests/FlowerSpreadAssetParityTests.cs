@@ -154,6 +154,66 @@ namespace WildFarming.Tests
             Assert.Equal(SpreadMode.FernRhizomeMat, BuildFernRequirements(species).SpreadMode);
         }
 
+        [Fact]
+        public void Eaglefern_PhaseBlock_UsesVanillaFernShape_NotCross()
+        {
+            string path = Path.Combine(PlantAssetDir, "fernphase-eaglefern-dieback.json");
+            string json = File.ReadAllText(path);
+            Assert.Contains("game:block/plant/fern/eaglefern/var*", json);
+            Assert.DoesNotContain("fern/cross", json);
+            Assert.Contains("\"break\": \"game:block/plant\"", json);
+        }
+
+        [Fact]
+        public void Cinnamonfern_PhaseBlock_DefinesAllShapeTextureKeys()
+        {
+            string path = Path.Combine(PlantAssetDir, "fernphase-cinnamonfern-dieback.json");
+            string json = File.ReadAllText(path);
+            Assert.Contains("game:block/plant/fern/cinnamonfern/var*", json);
+            Assert.Contains("\"center1\"", json);
+            Assert.Contains("\"center2\"", json);
+            Assert.Contains("\"short\"", json);
+        }
+
+        [Fact]
+        public void JuvenileFernSpreadBlocks_ReferenceGameDomainShapes()
+        {
+            foreach (string species in new[] { "eaglefern", "cinnamonfern", "deerfern", "hartstongue", "tallfern" })
+            {
+                string path = Path.Combine(PlantAssetDir, $"juvenile-fern-{species}-free.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains($"game:block/plant/fern/{species}", json);
+            }
+        }
+
+        [Fact]
+        public void JuvenileFlowerSpreadBlocks_UseGameDomainPlantSounds()
+        {
+            foreach (string species in EcologyFlowerSpecies.All)
+            {
+                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}-free.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains("\"break\": \"game:block/plant\"", json);
+                Assert.Contains("\"hit\": \"game:block/plant\"", json);
+                Assert.DoesNotMatch("\"break\": \"block/plant\"", json);
+            }
+        }
+
+        [Fact]
+        public void TallgrassPhaseBlocks_UseVanillaCrossAndTallgrassTextures()
+        {
+            foreach (string phase in new[] { "dormant", "dieback" })
+            {
+                string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-free.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains("\"drawtype\": \"cross\"", json);
+                Assert.Contains("game:block/basic/cross", json);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", json);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", json);
+                Assert.DoesNotContain("plant/grass/tall/veryshort", json);
+            }
+        }
+
         static PlantRequirements BuildFernRequirements(string species)
         {
             return PlantRequirements.FromBlock(new Vintagestory.API.Common.Block

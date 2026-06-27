@@ -210,7 +210,16 @@ namespace WildFarming.Ecosystem
             else if (WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berry))
                 spreadRate = berry.SpreadRate;
             else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
+            {
                 spreadRate = tree.SpreadRate;
+                switch (tree.SeralRole)
+                {
+                    case TreeSeralRole.Pioneer:
+                        return "ecosystemflora:dominance-colonizer";
+                    case TreeSeralRole.Climax:
+                        return "ecosystemflora:dominance-climax";
+                }
+            }
             else if (WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
                 spreadRate = aquatic.SpreadRate;
             else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
@@ -829,6 +838,17 @@ namespace WildFarming.Ecosystem
                 api.World.BlockAccessor,
                 entry.Origin,
                 wood);
+
+            if (WildTreeEcology.TryGet(wood, out WildTreeEcology.Profile treeProfile))
+            {
+                string roleKey = treeProfile.SeralRole switch
+                {
+                    TreeSeralRole.Pioneer => "ecosystemflora:inspect-line-tree-seral-pioneer",
+                    TreeSeralRole.Mid => "ecosystemflora:inspect-line-tree-seral-mid",
+                    _ => "ecosystemflora:inspect-line-tree-seral-climax",
+                };
+                AddInspectLine(lines, roleKey);
+            }
 
             int sizePct = TreeGrowthTargets.SizeIndexPercent(
                 metrics.TrunkHeight,

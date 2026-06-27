@@ -1,0 +1,19 @@
+{
+    "block-juvenile-fern-cinnamonfern-free":  "Zimtfarn (Setzling)",
+    "block-juvenile-fern-deerfern-free":  "Hirschfarn (Setzling)",
+    "block-juvenile-fern-eaglefern-free":  "Adlerfarn (Setzling)",
+    "block-juvenile-fern-hartstongue-free":  "Hirschzungenfarn (Setzling)",
+    "block-juvenile-fern-tallfern-free":  "Hoher Farn (Setzling)",
+    "block-fernphase-cinnamonfern-dieback":  "Zimtfarn (Absterben)",
+    "block-fernphase-cinnamonfern-dormant":  "Zimtfarn (Ruhephase)",
+    "block-fernphase-deerfern-dieback":  "Hirschfarn (Absterben)",
+    "block-fernphase-deerfern-dormant":  "Hirschfarn (Ruhephase)",
+    "block-fernphase-eaglefern-dieback":  "Adlerfarn (Absterben)",
+    "block-fernphase-eaglefern-dormant":  "Adlerfarn (Ruhephase)",
+    "block-fernphase-hartstongue-dieback":  "Hirschzungenfarn (Absterben)",
+    "block-fernphase-hartstongue-dormant":  "Hirschzungenfarn (Ruhephase)",
+    "block-fernphase-tallfern-dieback":  "Hoher Farn (Absterben)",
+    "block-fernphase-tallfern-dormant":  "Hoher Farn (Ruhephase)",
+    "block-tallgrassphase-dormant-free":  "Hohes Gras (Ruhephase)",
+    "block-tallgrassphase-dieback-free":  "Hohes Gras (Absterben)"
+}
