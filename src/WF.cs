@@ -2,6 +2,7 @@
 using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
 using WildFarming.Ecosystem.SpeciesEcology;
+using WildFarming.Blocks;
 using WildFarming.Handbook;
 
 namespace WildFarming
@@ -14,6 +15,7 @@ namespace WildFarming
         {
             base.StartPre(api);
             LegacyBlockEntityMigration.Register(api);
+            api.RegisterBlockClass("BlockReedsSafe", typeof(BlockReedsSafe));
             api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);

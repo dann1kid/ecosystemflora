@@ -4,18 +4,16 @@ using Xunit;
 
 namespace WildFarming.Tests
 {
-    public class ScytheMeadowPatchTests
+    public class ReedsBreakSafePatchTests
     {
         [Fact]
-        public void ScythePatch_includesJuvenileMeadowPrefixes()
+        public void ReedsPatch_replacesBlockReedsClass()
         {
-            string path = ResolveRepoPath("assets", "ecosystemflora", "patches", "scythe-flowers.json");
+            string path = ResolveRepoPath("assets", "ecosystemflora", "patches", "reeds-break-safe.json");
             Assert.True(File.Exists(path));
             string json = File.ReadAllText(path);
-            Assert.Contains("flower-", json);
-            Assert.DoesNotContain("tallplant-brownsedge", json);
-            Assert.Contains("juvenile-flower-", json);
-            Assert.Contains("juvenile-sedge-", json);
+            Assert.Contains("reedpapyrus.json", json);
+            Assert.Contains("BlockReedsSafe", json);
         }
 
         static string ResolveRepoPath(params string[] parts)

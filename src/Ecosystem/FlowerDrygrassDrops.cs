@@ -41,11 +41,11 @@ namespace WildFarming.Ecosystem
         {
             if (code == null) return false;
 
-            if (code.Domain.Equals("game"))
-            {
-                if (code.Path.StartsWith("flower-")) return true;
-                if (code.Path.StartsWith("tallplant-brownsedge")) return true;
-            }
+            if (code.Domain.Equals("game") && code.Path.StartsWith("flower-"))
+                return true;
+
+            // Mature brownsedge is vanilla BlockReeds (knife → harvested state, reed drops).
+            // Replacing its drops breaks client OnGettingBroken — patch juvenile spread blocks only.
 
             if (!code.Domain.Equals(JuvenileBlockNaming.Domain)) return false;
 

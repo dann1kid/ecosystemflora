@@ -11,13 +11,6 @@
 		"side": "server",
 		"op": "add",
 		"path": "/attributes/codePrefixes/-",
-		"value": "tallplant-brownsedge"
-	},
-	{
-		"file": "game:itemtypes/tool/scythe.json",
-		"side": "server",
-		"op": "add",
-		"path": "/attributes/codePrefixes/-",
 		"value": "juvenile-flower-"
 	},
 	{

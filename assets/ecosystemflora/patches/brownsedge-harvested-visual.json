@@ -1,0 +1,31 @@
+[
+	{
+		"comment": "Harvested brown sedge root: vanilla uses full-height sedge shape with a tiny selection box — break cracks/particles look oversized.",
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"op": "addmerge",
+		"path": "/shapeByType",
+		"value": {
+			"tallplant-brownsedge-land-harvested-*": {
+				"base": "ecosystemflora:block/plant/reedpapyrus/sedge-harvested"
+			}
+		}
+	},
+	{
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"op": "addmerge",
+		"path": "/lod2shapeByType",
+		"value": {
+			"tallplant-brownsedge-land-harvested-*": {
+				"base": "ecosystemflora:block/plant/reedpapyrus/sedge-harvested"
+			}
+		}
+	},
+	{
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"op": "addmerge",
+		"path": "/collisionboxByType",
+		"value": {
+			"tallplant-brownsedge-land-harvested-*": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 0.25, "z2": 0.75 }
+		}
+	}
+]

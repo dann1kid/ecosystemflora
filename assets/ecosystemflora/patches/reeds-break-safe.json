@@ -1,0 +1,9 @@
+[
+	{
+		"comment": "Vanilla BlockReeds.OnGettingBroken NREs on knife harvest when itemslot or sounds are null (1.22.3).",
+		"file": "game:blocktypes/plant/reedpapyrus.json",
+		"op": "replace",
+		"path": "/class",
+		"value": "BlockReedsSafe"
+	}
+]

@@ -8,7 +8,7 @@ namespace WildFarming.Tests
     {
         [Theory]
         [InlineData("game:flower-cornflower-free", true)]
-        [InlineData("game:tallplant-brownsedge-land-normal-free", true)]
+        [InlineData("game:tallplant-brownsedge-land-normal-free", false)]
         [InlineData("game:tallplant-coopersreed-land-normal-free", false)]
         [InlineData("ecosystemflora:juvenile-sedge-brownsedge-free", true)]
         [InlineData("ecosystemflora:juvenile-flower-catmint-free", true)]

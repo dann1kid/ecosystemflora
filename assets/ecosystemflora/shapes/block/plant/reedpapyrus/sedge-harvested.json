@@ -1,0 +1,41 @@
+{
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textures": {
+    "leaves": "game:block/plant/reeds/brownsedge-harvested"
+  },
+  "elements": [
+    {
+      "name": "root-a",
+      "from": [ 7.5, 0.0, 4.0 ],
+      "to": [ 8.5, 4.0, 12.0 ],
+      "shade": false,
+      "rotationOrigin": [ 8.0, 0.0, 8.0 ],
+      "faces": {
+        "east": { "texture": "#leaves", "uv": [ 0.0, 12.0, 16.0, 16.0 ] }
+      }
+    },
+    {
+      "name": "root-b",
+      "from": [ 7.5, 0.0, 4.0 ],
+      "to": [ 8.5, 4.0, 12.0 ],
+      "shade": false,
+      "rotationOrigin": [ 8.0, 0.0, 8.0 ],
+      "rotationY": 60.0,
+      "faces": {
+        "east": { "texture": "#leaves", "uv": [ 0.0, 12.0, 16.0, 16.0 ] }
+      }
+    },
+    {
+      "name": "root-c",
+      "from": [ 7.5, 0.0, 4.0 ],
+      "to": [ 8.5, 4.0, 12.0 ],
+      "shade": false,
+      "rotationOrigin": [ 8.0, 0.0, 8.0 ],
+      "rotationY": -60.0,
+      "faces": {
+        "east": { "texture": "#leaves", "uv": [ 0.0, 12.0, 16.0, 16.0 ] }
+      }
+    }
+  ]
+}
