@@ -53,6 +53,8 @@ namespace WildFarming.Ecosystem
         readonly System.Func<EcosystemConfig, bool> cooldownEnabled;
         readonly System.Func<EcosystemConfig, float> cooldownMultiplier;
         readonly System.Func<string, bool> isMember;
+        readonly System.Func<string, bool> isMaturationMember;
+        readonly System.Func<string, bool> isCooldownMember;
         readonly TryGetBaseHoursDelegate tryGetBaseHours;
         readonly Clamps clamps;
         readonly bool requiresTerrestrialForCooldown;
@@ -64,12 +66,16 @@ namespace WildFarming.Ecosystem
             System.Func<string, bool> isMember,
             TryGetBaseHoursDelegate tryGetBaseHours,
             Clamps clamps,
-            bool requiresTerrestrialForCooldown)
+            bool requiresTerrestrialForCooldown,
+            System.Func<string, bool> isMaturationMember = null,
+            System.Func<string, bool> isCooldownMember = null)
         {
             this.maturationEnabled = maturationEnabled;
             this.cooldownEnabled = cooldownEnabled;
             this.cooldownMultiplier = cooldownMultiplier;
             this.isMember = isMember;
+            this.isMaturationMember = isMaturationMember ?? isMember;
+            this.isCooldownMember = isCooldownMember ?? isMember;
             this.tryGetBaseHours = tryGetBaseHours;
             this.clamps = clamps;
             this.requiresTerrestrialForCooldown = requiresTerrestrialForCooldown;
@@ -80,13 +86,13 @@ namespace WildFarming.Ecosystem
         public bool UsesMaturation(EcosystemConfig cfg, string species)
         {
             if (cfg == null || !maturationEnabled(cfg)) return false;
-            return isMember(species);
+            return isMaturationMember(species);
         }
 
         public bool UsesPostSpreadAttemptCooldown(EcosystemConfig cfg, string species)
         {
             if (cfg == null || !cooldownEnabled(cfg)) return false;
-            return isMember(species);
+            return isCooldownMember(species);
         }
 
         public double MaturationHours(ICoreAPI api, BlockPos pos, string species, EcosystemConfig cfg)

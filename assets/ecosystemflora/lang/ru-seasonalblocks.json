@@ -14,6 +14,8 @@
     "block-fernphase-hartstongue-dormant":  "Листовник (покой)",
     "block-fernphase-tallfern-dieback":  "Высокий папоротник (отмирание)",
     "block-fernphase-tallfern-dormant":  "Высокий папоротник (покой)",
+    "block-tallgrassphase-dieback-free":  "Высокая трава (отмирание)",
+    "block-tallgrassphase-dieback-snow":  "Высокая трава (отмирание)",
     "block-tallgrassphase-dormant-free":  "Высокая трава (покой)",
-    "block-tallgrassphase-dieback-free":  "Высокая трава (отмирание)"
+    "block-tallgrassphase-dormant-snow":  "Высокая трава (покой)"
 }

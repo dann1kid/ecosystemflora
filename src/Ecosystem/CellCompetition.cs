@@ -24,9 +24,10 @@ namespace WildFarming.Ecosystem
             PlantRequirements challenger,
             BlockPos targetPos,
             bool harshClimate,
-            EnvironmentalContext ctx)
+            EnvironmentalContext ctx,
+            bool occupied = false)
         {
-            if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied: false))
+            if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied))
             {
                 return 0f;
             }
@@ -121,7 +122,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            challengerScore = SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx);
+            challengerScore = SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx, occupied: true);
             challengerScore = MeadowTurfCompetition.AdjustChallengerSpreadScore(
                 challengerScore,
                 challenger.Species,
@@ -172,7 +173,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            challengerScore = SpreadScoreFromContext(null, challenger, targetPos, harshClimate, ctx);
+            challengerScore = SpreadScoreFromContext(null, challenger, targetPos, harshClimate, ctx, occupied: true);
             if (cfg.UseFloraContext)
             {
                 challengerScore *= EcologySpreadFitness.ContextMultiplierFor(challenger, cell.FloraContext);

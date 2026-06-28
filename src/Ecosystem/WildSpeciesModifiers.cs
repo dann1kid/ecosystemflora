@@ -57,8 +57,8 @@ namespace WildFarming.Ecosystem
                 ["rafflesiabrown"] = Open(1f, 0.4f, 1.2f),
                 ["rafflesiared"] = Open(1f, 0.4f, 1.2f),
 
-                // Shore sedges — wetland turf invaders
-                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(FloraContextAffinity.Open, 1.1f, 0.35f, 0.80f),
+                // Shore sedges — slow wetland clumps, strong hold, no turf invasion
+                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(FloraContextAffinity.Open, 1.0f, 0.35f, 1.2f),
 
                 // Desert cacti — slow spread, strong hold
                 [EcologyDesertSpecies.Barrelcactus] = Open(1f, 0.25f, 1.18f),

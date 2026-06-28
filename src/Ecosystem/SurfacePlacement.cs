@@ -133,6 +133,11 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
+            if (PlantCodeHelper.IsEcologySpreadParent(space))
+            {
+                return true;
+            }
+
             int rep = space.Replaceable;
             int minRep = SuitabilityEvaluator.ReproduceMinReplaceable;
             string path = space.Code?.Path ?? ("id=" + space.Id);

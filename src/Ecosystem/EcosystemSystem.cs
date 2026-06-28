@@ -477,6 +477,16 @@ namespace WildFarming.Ecosystem
                 out hoursLeft);
         }
 
+        public bool TryGetShoreSedgeMaturationHoursLeft(BlockPos pos, out double hoursLeft)
+        {
+            hoursLeft = 0;
+            if (api?.World?.Calendar == null || pos == null) return false;
+            return maturationQueues.TryGetShoreSedgeHoursLeft(
+                pos,
+                api.World.Calendar.TotalHours,
+                out hoursLeft);
+        }
+
         internal void NotifySpreadSolveNoWinners(BlockPos origin, PlantRequirements requirements)
         {
             if (origin == null || requirements == null) return;
@@ -1741,6 +1751,8 @@ namespace WildFarming.Ecosystem
 
             tickBudgetWatch.Restart();
             maturationQueues.ProcessFern(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
+
+            maturationQueues.ProcessShoreSedge(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
 
             tickBudgetWatch.Restart();
             flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);

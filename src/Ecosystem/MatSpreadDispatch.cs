@@ -38,6 +38,11 @@ namespace WildFarming.Ecosystem
                 return BerryColonySpread.IsFrontier(acc, origin, req.Species);
             }
 
+            if (req.UsesShoreSedgeMatSpread)
+            {
+                return ShoreSedgeMatSpread.IsFrontier(acc, origin, req.Species);
+            }
+
             return true;
         }
 
@@ -48,6 +53,7 @@ namespace WildFarming.Ecosystem
             if (req.UsesSurfaceMatSpread) return SurfaceMatSpread.IsMatStep(dx, dz);
             if (req.UsesFernRhizomeSpread) return FernRhizomeSpread.IsOrthogonalStep(dx, dz);
             if (req.UsesBerryColonySpread) return BerryColonySpread.IsStep(dx, dz, req.Species);
+            if (req.UsesShoreSedgeMatSpread) return ShoreSedgeMatSpread.IsOrthogonalStep(dx, dz);
             return true;
         }
 
@@ -56,6 +62,7 @@ namespace WildFarming.Ecosystem
             if (req == null || rand == null) return MatSpreadCollectMode.NotApplicable;
             if (req.UsesRhizomeSpread) return RhizomeSpread.ResolveCollectMode(req, rand);
             if (req.UsesBerryColonySpread) return BerryColonySpread.ResolveCollectMode(req, rand);
+            if (req.UsesShoreSedgeMatSpread) return ShoreSedgeMatSpread.ResolveCollectMode(req, rand);
             if (req.UsesFernRhizomeSpread) return MatSpreadCollectMode.MatEdge;
             if (req.UsesSurfaceMatSpread) return SurfaceMatSpread.ResolveCollectMode(req, rand);
             return MatSpreadCollectMode.NotApplicable;

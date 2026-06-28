@@ -1,45 +1,87 @@
-# Tallgrass phenology phase blocks — vanilla cross + tallgrass textures.
+# Tallgrass phenology phase blocks — vanilla cross shape + tallgrass textures.
 $ErrorActionPreference = "Stop"
 $outDir = Join-Path $PSScriptRoot "..\assets\ecosystemflora\blocktypes\plant"
 $plantSounds = '"place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant"'
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+function Write-BlockJson($path, $content) {
+    [System.IO.File]::WriteAllText($path, $content, $utf8NoBom)
+}
 
 $phases = @{
     dormant = @{
         Tint = "#5c6b52"
         SelectionY2 = 0.35
-        Texture = "veryshort"
     }
     dieback = @{
         Tint = "#8b7355"
         SelectionY2 = 0.22
-        Texture = "veryshort"
+    }
+}
+
+$covers = @{
+    free = @{
+        Suffix = "-free"
+        Drawtype = "JSON"
+        TextureCover = "free"
+        BlockMaterial = "Plant"
+        FaceCullMode = "Default"
+        ClimateMaps = @"
+  "climateColorMap": "climatePlantTint",
+  "seasonColorMap": "seasonalGrass",
+"@
+        VertexFlags = @"
+  "vertexFlags": {
+    "windMode": "NormalWind",
+    "windData": 2
+  },
+"@
+    }
+    snow = @{
+        Suffix = "-snow"
+        Drawtype = "crossandsnowlayer"
+        TextureCover = "snow"
+        BlockMaterial = "Snow"
+        FaceCullMode = "MergeSnowLayer"
+        ClimateMaps = ""
+        VertexFlags = @"
+  "vertexFlags": {
+    "zOffset": 3,
+    "windMode": "ExtraWeakWind",
+    "windData": 2
+  },
+"@
     }
 }
 
 foreach ($phase in $phases.Keys) {
     $cfg = $phases[$phase]
-    $dest = Join-Path $outDir "tallgrassphase-$phase-free.json"
-    @"
+    foreach ($coverKey in $covers.Keys) {
+        $cover = $covers[$coverKey]
+        $dest = Join-Path $outDir "tallgrassphase-$phase$($cover.Suffix).json"
+        @"
 {
-  "code": "tallgrassphase-$phase-free",
+  "code": "tallgrassphase-$phase$($cover.Suffix)",
   "class": "BlockPlant",
   "enabled": true,
   "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "cross",
+  "blockmaterial": "$($cover.BlockMaterial)",
+  "drawtype": "$($cover.Drawtype)",
   "randomDrawOffset": true,
   "randomizeRotations": true,
   "shape": { "base": "game:block/basic/cross" },
+  "attributes": {
+    "drawnHeight": 8,
+    "overrideRandomDrawOffset": 2,
+    "allowOverlays": false,
+    "allowStepWhenStuck": true
+  },
   "textures": {
-    "north": { "base": "game:block/plant/tallgrass/free/$($cfg.Texture)-north", "tint": "$($cfg.Tint)" },
-    "south": { "base": "game:block/plant/tallgrass/free/$($cfg.Texture)-south", "tint": "$($cfg.Tint)" }
+    "north": { "base": "game:block/plant/tallgrass/$($cover.TextureCover)/veryshort-north", "tint": "$($cfg.Tint)" },
+    "south": { "base": "game:block/plant/tallgrass/$($cover.TextureCover)/veryshort-south", "tint": "$($cfg.Tint)" }
   },
-  "climateColorMap": "climatePlantTint",
-  "seasonColorMap": "seasonalGrass",
-  "vertexFlags": {
-    "windMode": "NormalWind",
-    "windData": 2
-  },
+$($cover.ClimateMaps)$($cover.VertexFlags)
+  "faceCullMode": "$($cover.FaceCullMode)",
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 6000,
@@ -52,8 +94,9 @@ foreach ($phase in $phases.Keys) {
   "materialDensity": 200,
   "drops": []
 }
-"@ | Set-Content -Encoding UTF8 $dest
-    Write-Host "Wrote $dest"
+"@ | ForEach-Object { Write-BlockJson $dest $_ }
+        Write-Host "Wrote $dest"
+    }
 }
 
 $seasonalLang = Join-Path $PSScriptRoot "GenerateSeasonalBlockLang.ps1"

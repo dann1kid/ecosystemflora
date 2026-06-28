@@ -43,11 +43,12 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void Redtopgrass_Juvenile_UsesNumberedCrossTextures()
+        public void Redtopgrass_Juvenile_UsesWildcardCrossTextures()
         {
             string path = Path.Combine(PlantAssetDir, "juvenile-flower-redtopgrass-free.json");
             string json = File.ReadAllText(path);
-            Assert.Contains("petal/redtopgrass1", json);
+            Assert.Contains("petal/redtopgrass*", json);
+            Assert.DoesNotContain("petal/redtopgrass1", json);
         }
 
         [Fact]
@@ -204,13 +205,46 @@ namespace WildFarming.Tests
         {
             foreach (string phase in new[] { "dormant", "dieback" })
             {
-                string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-free.json");
-                string json = File.ReadAllText(path);
-                Assert.Contains("\"drawtype\": \"cross\"", json);
-                Assert.Contains("game:block/basic/cross", json);
-                Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", json);
-                Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", json);
-                Assert.DoesNotContain("plant/grass/tall/veryshort", json);
+                string freePath = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-free.json");
+                string freeJson = File.ReadAllText(freePath);
+                Assert.Contains("\"drawtype\": \"JSON\"", freeJson);
+                Assert.Contains("game:block/basic/cross", freeJson);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", freeJson);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", freeJson);
+                Assert.Contains("\"drawnHeight\": 8", freeJson);
+                Assert.DoesNotContain("plant/grass/tall/veryshort", freeJson);
+
+                string snowPath = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-snow.json");
+                Assert.True(File.Exists(snowPath), snowPath);
+                string snowJson = File.ReadAllText(snowPath);
+                Assert.Contains("\"drawtype\": \"crossandsnowlayer\"", snowJson);
+                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-north", snowJson);
+                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-south", snowJson);
+            }
+        }
+
+        [Fact]
+        public void SeasonalPhaseBlocks_UseGameDomainTexturePaths()
+        {
+            string[] badPatterns =
+            {
+                "\"base\": \"block/",
+                "plant/grass/tall/",
+                "\"break\": \"block/plant\"",
+            };
+
+            foreach (string file in Directory.GetFiles(PlantAssetDir, "*phase*.json"))
+            {
+                string json = File.ReadAllText(file);
+                foreach (string bad in badPatterns)
+                {
+                    Assert.DoesNotContain(bad, json);
+                }
+
+                if (json.Contains("\"textures\""))
+                {
+                    Assert.Matches(@"""base"":\s*""game:", json);
+                }
             }
         }
 

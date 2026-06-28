@@ -242,6 +242,11 @@ namespace WildFarming.Ecosystem
                 matMode = BerryColonySpread.ResolveCollectMode(requirements, rand);
                 searchRadius = BerryColonySpread.ResolveSearchRadius(requirements, matMode, radius);
             }
+            else if (requirements != null && requirements.UsesShoreSedgeMatSpread)
+            {
+                matMode = ShoreSedgeMatSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = ShoreSedgeMatSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
             else if (requirements != null && requirements.UsesSurfaceMatSpread)
             {
                 matMode = SurfaceMatSpread.ResolveCollectMode(requirements, rand);

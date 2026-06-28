@@ -204,6 +204,11 @@ namespace WildFarming.Ecosystem
             new float[] { 0f, 0f, 0.3f, 0.8f, 1.5f, 2.0f, 2.0f, 1.2f, 0.5f, 0.1f, 0f, 0f },
             new float[] { 0.9f, 0.7f, 0f, 0f, 0f, 0f, 0f, 0f, 0.2f, 0.4f, 0.7f, 0.9f });
 
+        // Slow wetland clumps: decorative Carex-like sedges — spring/summer edge growth only, cold-sensitive.
+        static readonly Profile SlowWetlandClump = new Profile(
+            new float[] { 0f, 0f, 0.06f, 0.22f, 0.42f, 0.5f, 0.35f, 0.15f, 0.05f, 0.02f, 0f, 0f },
+            new float[] { 1.0f, 0.95f, 0.55f, 0.25f, 0.05f, 0f, 0f, 0f, 0.12f, 0.35f, 0.7f, 0.92f });
+
         static readonly Profile DefaultProfile = MeadowPerennial;
 
         static readonly Dictionary<string, Profile> BySpecies = Build();
@@ -233,7 +238,7 @@ namespace WildFarming.Ecosystem
                 ["mugwort"] = Colonizer,
                 ["horsetail"] = Colonizer,
                 ["redtopgrass"] = Colonizer,
-                [EcologyShoreSedgeSpecies.Brownsedge] = Colonizer,
+                [EcologyShoreSedgeSpecies.Brownsedge] = SlowWetlandClump,
 
                 // Perennials
                 ["cowparsley"] = MeadowPerennial,

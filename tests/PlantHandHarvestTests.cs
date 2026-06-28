@@ -13,6 +13,8 @@ namespace WildFarming.Tests
         [InlineData("game:tallgrass-fern-veryshort-free", true)]
         [InlineData("game:tallgrass-eaten-fern-free", false)]
         [InlineData("game:frostedtallgrass-fern-free", true)]
+        [InlineData("game:tallplant-brownsedge-land-normal-free", true)]
+        [InlineData("ecosystemflora:juvenile-sedge-brownsedge-free", true)]
         [InlineData("game:fern-cinnamon-free", false)]
         public void IsMeadowPlant_matches_flowers_and_tallgrass(string code, bool expected)
         {

@@ -85,7 +85,12 @@ namespace WildFarming.Ecosystem
 
         internal static bool IsMeadowPlant(Block block)
         {
-            if (block?.Code == null || !block.Code.Domain.Equals("game"))
+            if (block?.Code == null) return false;
+
+            if (FlowerJuvenileBlocks.IsJuvenileBlock(block) || ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block))
+                return true;
+
+            if (!block.Code.Domain.Equals("game"))
                 return false;
 
             string path = block.Code.Path;
@@ -94,6 +99,9 @@ namespace WildFarming.Ecosystem
 
             if (path.StartsWith("tallgrass-"))
                 return !path.Contains("-eaten-");
+
+            if (path.StartsWith("tallplant-brownsedge"))
+                return true;
 
             return path.StartsWith("frostedtallgrass-") && !path.Contains("-eaten-");
         }

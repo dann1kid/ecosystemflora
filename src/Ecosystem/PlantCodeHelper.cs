@@ -72,6 +72,8 @@ namespace WildFarming.Ecosystem
             if (block?.Code == null) return false;
             if (IsThirdPartyEcologyBlock(block)) return true;
             if (FlowerJuvenileBlocks.IsJuvenileBlock(block)) return true;
+            if (FernJuvenileBlocks.IsJuvenileBlock(block)) return true;
+            if (ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (FlowerPhenologyBlocks.IsPhaseBlock(block)) return true;
             if (block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
@@ -101,6 +103,9 @@ namespace WildFarming.Ecosystem
             if (juvenileSpecies != null) return juvenileSpecies;
 
             juvenileSpecies = FernJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
+            if (juvenileSpecies != null) return juvenileSpecies;
+
+            juvenileSpecies = ShoreSedgeJuvenileBlocks.SpeciesFromJuvenileCode(blockCode);
             if (juvenileSpecies != null) return juvenileSpecies;
 
             string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseCode(blockCode);

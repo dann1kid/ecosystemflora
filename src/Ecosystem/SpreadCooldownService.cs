@@ -52,15 +52,11 @@ namespace WildFarming.Ecosystem
 
             double nowHours = api.World.Calendar.TotalHours;
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            SpreadMaturationPolicy[] policies = SpreadMaturationPolicies.All;
 
-            for (int i = 0; i < policies.Length; i++)
+            if (SpreadMaturationPolicies.TryApplySpreadAttemptCooldown(
+                    parent, nowHours, api, parent.Origin, requirements, cfg, failedChanceRoll))
             {
-                if (policies[i].TryApplySpreadAttemptCooldown(
-                        parent, nowHours, api, parent.Origin, requirements, cfg, failedChanceRoll))
-                {
-                    return;
-                }
+                return;
             }
 
             // No policy owns this species' cooldown. Without one, event-wake would re-fire every tick

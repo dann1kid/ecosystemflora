@@ -29,7 +29,7 @@ namespace WildFarming.Ecosystem
                 return DefaultMaturationHours * (cfg?.GrowthHoursMultiplier ?? 1f);
             }
 
-            double baseHours = DefaultMaturationHours / System.Math.Max(0.25f, profile.SpreadRate);
+            double baseHours = DefaultMaturationHours / System.Math.Max(0.25f, WildSpreadBalance.ScaleSpeciesSpreadRate(species, profile.SpreadRate));
             return baseHours * (cfg?.GrowthHoursMultiplier ?? 1f);
         }
     }

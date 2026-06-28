@@ -21,13 +21,34 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void Brownsedge_UsesShoreSedgeEcology_AndTurfColonizerSpread()
+        public void Brownsedge_UsesShoreSedgeEcology_AsSlowWetlandClump()
         {
             const string species = EcologyShoreSedgeSpecies.Brownsedge;
-            Assert.True(WildShoreSedgeEcology.TryGet(species, out _));
+            Assert.True(WildShoreSedgeEcology.TryGet(species, out var entry));
             Assert.False(WildFlowerClimate.TryGet(species, out _));
-            Assert.True(TurfColonizerSpread.PrefersOccupiedTurf(species));
+            Assert.False(TurfColonizerSpread.PrefersOccupiedTurf(species));
             Assert.Equal(PlantSoilRole.WetlandHerb, ResolveRole(species));
+            Assert.Equal(0.35f, entry.SpreadRate);
+            Assert.Equal(0.78f, entry.MinRain);
+            Assert.Equal(0f, entry.SeedDispersalChance);
+            Assert.Equal(0, entry.SeedDispersalRadius);
+            Assert.Equal(1, entry.SameSpeciesSpacing);
+
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableShoreSedgeMatSpread = true };
+            var req = new PlantRequirements { Species = species, Habitat = EcologyHabitat.Terrestrial };
+            ShoreSedgeMatSpread.ApplyTo(req);
+            Assert.True(req.UsesShoreSedgeMatSpread);
+        }
+
+        [Fact]
+        public void Brownsedge_UsesPostSpreadAttemptCooldown_NotJuvenileMaturation()
+        {
+            var cfg = new EcosystemConfig { EnableFlowerSpreadMaturation = false };
+            const string species = EcologyShoreSedgeSpecies.Brownsedge;
+            Assert.False(WildFlowerMaturation.UsesMaturation(cfg, species));
+            Assert.True(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, species));
+            Assert.True(WildFlowerMaturation.TryGetProfile(species, out var profile));
+            Assert.Equal(48, profile.PostSpreadAttemptCooldownHours);
         }
 
         [Fact]

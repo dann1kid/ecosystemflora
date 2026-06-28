@@ -3,7 +3,10 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Per-species spread maturation and post-spread-attempt cooldown for meadow flowers.</summary>
+    /// <summary>
+    /// Meadow flower / grass-colonizer spread maturation and post-spread cooldown.
+    /// Cooldown-only members (no juvenile maturation) use the same config flags and profile table.
+    /// </summary>
     internal static class WildFlowerMaturation
     {
         public readonly struct Profile
@@ -34,6 +37,7 @@ namespace WildFarming.Ecosystem
                 ["lupine"] = new Profile(40, 18),
                 ["woad"] = DefaultBiennial,
                 ["redtopgrass"] = new Profile(36, 16),
+                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(120, 48),
                 ["heather"] = new Profile(40, 18),
                 ["westerngorse"] = new Profile(40, 18),
                 ["catmint"] = DefaultSteady,
@@ -46,7 +50,7 @@ namespace WildFarming.Ecosystem
             maturationEnabled: cfg => cfg.EnableFlowerSpreadMaturation,
             cooldownEnabled: cfg => cfg.EnableFlowerSpreadAttemptCooldown,
             cooldownMultiplier: cfg => cfg.FlowerSpreadCooldownHoursMultiplier,
-            isMember: IsFlowerSpreadSpecies,
+            isMember: UsesSpreadCooldown,
             tryGetBaseHours: TryGetBaseHours,
             clamps: new SpreadMaturationPolicy.Clamps(
                 maturationFallbackHours: DefaultColonizer.MaturationHours,
@@ -56,7 +60,9 @@ namespace WildFarming.Ecosystem
                 failedBaseHours: 3,
                 failedFloor: 1,
                 failedCap: 4),
-            requiresTerrestrialForCooldown: true);
+            requiresTerrestrialForCooldown: true,
+            isMaturationMember: UsesJuvenileSpreadMaturation,
+            isCooldownMember: UsesSpreadCooldown);
 
         public static bool UsesMaturation(EcosystemConfig cfg, string species)
         {
@@ -83,11 +89,18 @@ namespace WildFarming.Ecosystem
             return false;
         }
 
-        static bool IsFlowerSpreadSpecies(string species)
+        static bool UsesJuvenileSpreadMaturation(string species)
         {
             if (string.IsNullOrEmpty(species)) return false;
+            if (WildShoreSedgeEcology.IsSpecies(species)) return true;
             if (EcologyFlowerSpecies.IsKnownFlower(species)) return true;
             return EcologyGrassColonizerSpecies.IsKnown(species);
+        }
+
+        static bool UsesSpreadCooldown(string species)
+        {
+            if (UsesJuvenileSpreadMaturation(species)) return true;
+            return WildShoreSedgeEcology.IsSpecies(species);
         }
 
         public static bool TryGetProfile(string species, out Profile profile)

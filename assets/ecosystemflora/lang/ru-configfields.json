@@ -115,6 +115,8 @@
   "ecosystemflora:config-field-EnableSeasonCoarseWake-desc": "Вкл.: месячное пробуждение сезонных видов. Выкл.: без месячного пробуждения.",
   "ecosystemflora:config-field-EnableSeasonalFoliage": "Сезонная листва кроны",
   "ecosystemflora:config-field-EnableSeasonalFoliage-desc": "Вкл.: осеннее снятие листвы и весенние почки на выросших стволах. Выкл.: статичные ванильные кроны.",
+  "ecosystemflora:config-field-EnableShoreSedgeMatSpread": "Ковёр осоки",
+  "ecosystemflora:config-field-EnableShoreSedgeMatSpread-desc": "Вкл.: осока — 1 клетка с кромки куртины (медленное корневище). Выкл.: радиус. Без прыжков семян.",
   "ecosystemflora:config-field-EnableSpreadColumnOccupancyHint": "Подсказка занятости колонки",
   "ecosystemflora:config-field-EnableSpreadColumnOccupancyHint-desc": "Вкл.: пропуск занятых колонок на сначала пустые (быстрее). Выкл.: обход всех колонок.",
   "ecosystemflora:config-field-EnableSpringBranchyAgeBoost": "Весенний бонус ветвистой листвы по возрасту",

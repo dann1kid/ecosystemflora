@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "juvenile-flower-redtopgrass-free",
   "class": "BlockPlant",
   "enabled": true,
@@ -8,10 +8,10 @@
   "randomizeRotations": true,
   "shape": { "base": "game:block/plant/flower/1patch-cross-24x24", "scale": 0.45 },
   "textures": {
-    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1" },
-    "north1": { "base": "game:block/plant/flower/petal/redtopgrass1" },
-    "south1": { "base": "game:block/plant/flower/petal/redtopgrass1" }
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+    "north1": { "base": "game:block/plant/flower/petal/redtopgrass*" },
+    "south1": { "base": "game:block/plant/flower/petal/redtopgrass*" }
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },

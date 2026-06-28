@@ -20,5 +20,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Wild berries: colony edge step (rhizome/runner mat) with optional seed jumps.</summary>
         BerryColonyMat = 5,
+
+        /// <summary>Shore sedges: turf mat edge (vegetative) with optional seed jumps.</summary>
+        ShoreSedgeMat = 6,
     }
 }

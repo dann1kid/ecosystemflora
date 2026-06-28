@@ -52,11 +52,12 @@ function ThreePatch24($species) {
 }
 
 function CrossNumbered24($species) {
+    # Vanilla flower-redtopgrass uses petal/{flower}* — redtopgrass1 alone is pale/white.
     $t = @{
-        north1 = "game:block/plant/flower/petal/${species}1"
-        south1 = "game:block/plant/flower/petal/${species}1"
-        northTinted1 = "game:block/plant/flower/stem/${species}1"
-        southTinted1 = "game:block/plant/flower/stem/${species}1"
+        north1 = "game:block/plant/flower/petal/${species}*"
+        south1 = "game:block/plant/flower/petal/${species}*"
+        northTinted1 = "game:block/plant/flower/stem/${species}*"
+        southTinted1 = "game:block/plant/flower/stem/${species}*"
     }
     Write-Block $species "game:block/plant/flower/1patch-cross-24x24" $t
 }

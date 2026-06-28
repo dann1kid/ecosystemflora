@@ -5,8 +5,7 @@ namespace WildFarming.Ecosystem
     {
         public static bool PrefersOccupiedTurf(string species)
         {
-            return WildGrassColonizerEcology.IsSpecies(species)
-                || WildShoreSedgeEcology.IsSpecies(species);
+            return WildGrassColonizerEcology.IsSpecies(species);
         }
     }
 }

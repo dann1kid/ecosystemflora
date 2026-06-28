@@ -115,6 +115,8 @@
   "ecosystemflora:config-field-EnableSeasonCoarseWake-desc": "On: wake seasonal species once per in-game month. Off: no monthly coarse wake.",
   "ecosystemflora:config-field-EnableSeasonalFoliage": "Seasonal canopy foliage",
   "ecosystemflora:config-field-EnableSeasonalFoliage-desc": "On: deciduous autumn strip and spring bud on log-grown skeleton. Off: static vanilla crowns.",
+  "ecosystemflora:config-field-EnableShoreSedgeMatSpread": "Shore sedge mat spread",
+  "ecosystemflora:config-field-EnableShoreSedgeMatSpread-desc": "On: brown sedge spreads one block at mat edge (slow clump rhizome). Off: legacy radius spread. No seed jumps by default.",
   "ecosystemflora:config-field-EnableSpreadColumnOccupancyHint": "Spread column occupancy hint",
   "ecosystemflora:config-field-EnableSpreadColumnOccupancyHint-desc": "On: skip columns known occupied on empty-first pass (faster). Off: scan all columns.",
   "ecosystemflora:config-field-EnableSpringBranchyAgeBoost": "Spring branchy age boost",

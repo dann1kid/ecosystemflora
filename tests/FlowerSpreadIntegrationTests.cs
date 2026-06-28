@@ -20,6 +20,31 @@ namespace WildFarming.Tests
             };
         }
 
+        static ReproducerEntry MakeBrownsedgeEntry(double nextAttemptHours, double spawnAllowedAt = 0)
+        {
+            return new ReproducerEntry(
+                new BlockPos(8, 64, 8),
+                new AssetLocation("game", "tallplant-brownsedge-land-normal-free"),
+                new AssetLocation("game", "tallplant-brownsedge-land-normal-free"),
+                new PlantRequirements { Species = EcologyShoreSedgeSpecies.Brownsedge, Habitat = EcologyHabitat.Terrestrial },
+                nextAttemptHours)
+            {
+                NextSpawnAllowedAtHours = spawnAllowedAt,
+            };
+        }
+
+        [Fact]
+        public void ClassifyDueReason_BlocksWakeDuringPostSpreadCooldown_Brownsedge()
+        {
+            var entry = MakeBrownsedgeEntry(nextAttemptHours: 0, spawnAllowedAt: 100);
+            entry.WakeGeneration = 3;
+            entry.LastProcessedWakeGeneration = 0;
+
+            Assert.Equal(
+                ReproducerRegistry.SpreadDueReason.None,
+                ReproducerRegistry.ClassifyDueReason(entry, now: 10, eventDriven: true));
+        }
+
         [Theory]
         [InlineData("catmint")]
         [InlineData("redtopgrass")]
@@ -57,6 +82,31 @@ namespace WildFarming.Tests
                 failedChanceRoll: false));
 
             Assert.Equal(50 + expectedCooldownHours, entry.NextSpawnAllowedAtHours);
+        }
+
+        [Fact]
+        public void TryApplySpreadAttemptCooldown_Brownsedge_UsesUnifiedPolicyRegistry()
+        {
+            var cfg = new EcosystemConfig
+            {
+                EnableFlowerSpreadMaturation = false,
+                EnableFlowerSpreadAttemptCooldown = true,
+                UseSeasonalEcology = false,
+            };
+            var entry = MakeBrownsedgeEntry(nextAttemptHours: 0);
+            var req = entry.Requirements;
+
+            Assert.False(WildFlowerMaturation.UsesMaturation(cfg, req.Species));
+            Assert.True(SpreadMaturationPolicies.TryApplySpreadAttemptCooldown(
+                entry,
+                nowHours: 50,
+                api: null,
+                entry.Origin,
+                req,
+                cfg,
+                failedChanceRoll: false));
+
+            Assert.Equal(98, entry.NextSpawnAllowedAtHours);
         }
 
         [Fact]

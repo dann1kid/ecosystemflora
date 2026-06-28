@@ -87,6 +87,8 @@ namespace WildFarming.Ecosystem
 
         public bool UsesBerryColonySpread => SpreadMode == SpreadMode.BerryColonyMat;
 
+        public bool UsesShoreSedgeMatSpread => SpreadMode == SpreadMode.ShoreSedgeMat;
+
         /// <summary>When true, never promote water-surface habitat to <see cref="SpreadMode.SurfaceMat"/>.</summary>
         public bool SuppressSurfaceMatSpread { get; set; }
 
@@ -314,6 +316,9 @@ namespace WildFarming.Ecosystem
                 allowedSoils = shoreSedge.Soil.Allowed;
                 minGroundFertility = shoreSedge.Soil.MinBlockFertility;
                 maxGroundFertility = shoreSedge.Soil.MaxBlockFertility;
+                if (seedDispersalChance <= 0f) seedDispersalChance = shoreSedge.SeedDispersalChance;
+                if (seedDispersalRadius <= 0) seedDispersalRadius = shoreSedge.SeedDispersalRadius;
+                if (spreadRadius <= 0 && shoreSedge.MatSpreadRadius > 0) spreadRadius = shoreSedge.MatSpreadRadius;
             }
             else if (!string.IsNullOrEmpty(species) && WildDesertEcology.TryGet(species, out WildDesertEcology.EcologyEntry desert))
             {
@@ -517,6 +522,7 @@ namespace WildFarming.Ecosystem
             SurfaceMatSpread.ApplyTo(requirements);
             FernRhizomeSpread.ApplyTo(requirements);
             BerryColonySpread.ApplyTo(requirements);
+            ShoreSedgeMatSpread.ApplyTo(requirements);
             return requirements;
         }
     }

@@ -216,6 +216,23 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            if (ShoreSedgeSpreadMaturation.ShouldQueueMaturation(placed, requirements))
+            {
+                double nowHours = api.World.Calendar.TotalHours;
+                AssetLocation matureCode = ShoreSedgeJuvenileBlocks.ResolveMatureCode(
+                    api, spreadOrigin, requirements.Species);
+                double matureAt = nowHours + WildFlowerMaturation.MaturationHours(
+                    api, pos, requirements.Species, EcosystemConfig.Loaded);
+                maturationQueues.AddShoreSedge(pos, matureCode, requirements.Species, matureAt);
+                InvalidateEnvironmentAround(pos);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
+                return;
+            }
+
             if (TallgrassSpreadMaturation.ShouldQueuePromotion(placed, requirements, api, pos))
             {
                 maturationQueues.AddTallgrassPromotion(api, pos);
@@ -296,6 +313,8 @@ namespace WildFarming.Ecosystem
             spreadBlock = FernSpreadMaturation.ResolveSpreadBlock(
                 api, spreadOrigin, entry.Requirements, spreadBlock);
             spreadBlock = FlowerSpreadMaturation.ResolveSpreadBlock(
+                api, spreadOrigin, entry.Requirements, spreadBlock);
+            spreadBlock = ShoreSedgeSpreadMaturation.ResolveSpreadBlock(
                 api, spreadOrigin, entry.Requirements, spreadBlock);
             if (spreadBlock == null) return;
 

@@ -60,9 +60,10 @@ namespace WildFarming.Ecosystem
             double baseHours = cfg.ReproduceIntervalHours > 0 ? cfg.ReproduceIntervalHours : 24;
 
             double interval = baseHours;
-            if (cfg.UseSpeciesSpreadRates && requirements.SpreadRate > 0f)
+            float spreadRate = EffectiveSpreadRate(cfg, requirements);
+            if (cfg.UseSpeciesSpreadRates && spreadRate > 0f)
             {
-                interval = baseHours / requirements.SpreadRate;
+                interval = baseHours / spreadRate;
             }
 
             if (cfg.MinSpeciesReproduceIntervalHours > 0)
@@ -80,13 +81,14 @@ namespace WildFarming.Ecosystem
             if (cfg == null || requirements == null) return 0.25f;
 
             float chance;
-            if (!cfg.UseSpeciesSpreadRates || requirements.SpreadRate <= 0f)
+            float spreadRate = EffectiveSpreadRate(cfg, requirements);
+            if (!cfg.UseSpeciesSpreadRates || spreadRate <= 0f)
             {
                 chance = cfg.ReproduceChance;
             }
             else
             {
-                chance = cfg.ReproduceChance * requirements.SpreadRate;
+                chance = cfg.ReproduceChance * spreadRate;
             }
 
             if (api != null && pos != null)
@@ -97,10 +99,16 @@ namespace WildFarming.Ecosystem
             return System.Math.Min(1f, chance);
         }
 
+        static float EffectiveSpreadRate(EcosystemConfig cfg, PlantRequirements requirements)
+        {
+            if (requirements == null || requirements.SpreadRate <= 0f) return requirements?.SpreadRate ?? 0f;
+            return WildSpreadBalance.ScaleSpeciesSpreadRate(requirements.Species, requirements.SpreadRate);
+        }
+
         static float SpreadMultiplier(EcosystemConfig cfg, PlantRequirements requirements)
         {
             if (!cfg.UseSpeciesSpreadRates || requirements.SpreadRate <= 0f) return 1f;
-            return requirements.SpreadRate;
+            return EffectiveSpreadRate(cfg, requirements);
         }
     }
 }

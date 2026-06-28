@@ -188,6 +188,9 @@ namespace WildFarming.Ecosystem
         /// <summary>Wild berry colony mat (rhizome/runner edge + optional seed jumps).</summary>
         public bool EnableBerryColonySpread { get; set; } = true;
 
+        /// <summary>Shore sedges spread from mat edge with optional seed jumps (vegetative + seed mix).</summary>
+        public bool EnableShoreSedgeMatSpread { get; set; } = true;
+
         /// <summary>Wild berry bushes reset to cutting state on spread; register when mature.</summary>
         public bool EnableBerrySpreadMaturation { get; set; } = true;
 
@@ -716,5 +719,48 @@ namespace WildFarming.Ecosystem
         /// without matching hardcoded vanilla <c>game:</c> paths.
         /// </summary>
         public bool EnableThirdPartyParticipants { get; set; } = true;
+
+        /// <summary>Deterministic, synchronous settings for in-process integration tests.</summary>
+        public static EcosystemConfig ForIntegrationTests()
+        {
+            return new EcosystemConfig
+            {
+                EcosystemEnabled = true,
+                UseSeasonalEcology = false,
+                RespectLandClaims = false,
+                OnlyActivateNearPlayers = false,
+                LimitSpreadNearPlayers = false,
+                EnablePlayerPriorityRegistration = false,
+                EnableBurstRegistrationNearPlayers = false,
+                EnableBackgroundRegistrationScan = false,
+                EnableBackgroundSpreadSolve = false,
+                EnableSeasonalFoliage = false,
+                EnableCyclicFloraDiscovery = false,
+                EnableFlowerPhenology = false,
+                EnableFernPhenology = false,
+                EnableSymbiosis = false,
+                ApplyWorldgenRainForest = false,
+                StaggerReproduceAttempts = false,
+                ReproduceChance = 1f,
+                MinFitness = 0.1f,
+                HarshWildPlants = false,
+                EnableFlowerSpreadMaturation = true,
+                EnableTallgrassSpreadMaturation = true,
+                EnableFlowerSpreadAttemptCooldown = true,
+                EnableTwoPhaseSpreadPlacement = true,
+                EnableEventDrivenSpread = false,
+                MaxRegistrationsPerTick = 9999,
+                MaxRegistryAppliesPerTick = 9999,
+                MaxRegistryAppliesPerChunkPerTick = 9999,
+                MaxReproduceAttemptsPerTick = 9999,
+                MaxSpreadCommitsPerTick = 9999,
+                MaxChunkColumnsScannedPerTick = 9999,
+                TickBudgetMs = 0,
+                RegistrationBudgetMs = 0,
+                SpreadBudgetMs = 0,
+                VerboseLogging = false,
+                ReproduceDebug = false,
+            };
+        }
     }
 }

@@ -4,20 +4,26 @@
   "enabled": true,
   "renderpass": "OpaqueNoCull",
   "blockmaterial": "Plant",
-  "drawtype": "cross",
+  "drawtype": "JSON",
   "randomDrawOffset": true,
   "randomizeRotations": true,
   "shape": { "base": "game:block/basic/cross" },
+  "attributes": {
+    "drawnHeight": 8,
+    "overrideRandomDrawOffset": 2,
+    "allowOverlays": false,
+    "allowStepWhenStuck": true
+  },
   "textures": {
     "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "#5c6b52" },
     "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "#5c6b52" }
   },
   "climateColorMap": "climatePlantTint",
-  "seasonColorMap": "seasonalGrass",
-  "vertexFlags": {
+  "seasonColorMap": "seasonalGrass",  "vertexFlags": {
     "windMode": "NormalWind",
     "windData": 2
   },
+  "faceCullMode": "Default",
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 6000,

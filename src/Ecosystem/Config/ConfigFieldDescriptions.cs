@@ -136,6 +136,10 @@ namespace WildFarming.Ecosystem.Config
                 "On: wild berries spread one mat step from colony edge (rhizome, suckers, runners); seed jumps use RhizomeSeedDispersal settings. Off: legacy radius spread.",
                 "Вкл.: ягоды ползут с кромки колонии (ризома, поросль, усы); скачки семян — настройки скачки семян ризомы. Выкл.: распространение по радиусу.");
 
+            D(nameof(EcosystemConfig.EnableShoreSedgeMatSpread),
+                "On: brown sedge spreads one block at mat edge (slow clump rhizome). Off: legacy radius spread. No seed jumps by default.",
+                "Вкл.: осока — 1 клетка с кромки куртины (медленное корневище). Выкл.: радиус. Без прыжков семян.");
+
             D(nameof(EcosystemConfig.EnableFernSpreadMaturation),
                 "On: spread places small juvenile ferns that mature before reproducing. Off: instant adult.",
                 "Вкл.: распространение ставит молодой папоротник, потом взрослеет. Выкл.: сразу взрослый.");

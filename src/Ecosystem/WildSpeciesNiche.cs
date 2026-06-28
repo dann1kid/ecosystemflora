@@ -61,7 +61,7 @@ namespace WildFarming.Ecosystem
                 ["croton"] = new Profile(MoistureLevel.Mesic, LightLevel.Partial, 1.2f),
                 ["rafflesiabrown"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.0f),
                 ["rafflesiared"] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.0f),
-                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.1f),
+                [EcologyShoreSedgeSpecies.Brownsedge] = new Profile(MoistureLevel.Wet, LightLevel.Open, 1.5f),
                 [EcologyDesertSpecies.Barrelcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.0f),
                 [EcologyDesertSpecies.Silvertorchcactus] = new Profile(MoistureLevel.Dry, LightLevel.Open, 1.05f),
 

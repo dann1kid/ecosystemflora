@@ -19,6 +19,11 @@ namespace WildFarming.Ecosystem
         public void AddTreeSapling(BlockPos pos, string species, double nowHours)
             => treeSaplings.Add(pos, species, nowHours);
 
+        readonly PendingShoreSedgeMaturation shoreSedgeMaturation = new PendingShoreSedgeMaturation();
+
+        public void AddShoreSedge(BlockPos pos, AssetLocation matureCode, string species, double matureAtHours)
+            => shoreSedgeMaturation.Add(pos, matureCode, species, matureAtHours);
+
         public void AddFern(BlockPos pos, AssetLocation matureCode, string species, double matureAtHours)
             => fernMaturation.Add(pos, matureCode, species, matureAtHours);
 
@@ -37,6 +42,7 @@ namespace WildFarming.Ecosystem
         {
             flowerMaturation.Remove(pos);
             fernMaturation.Remove(pos);
+            shoreSedgeMaturation.Remove(pos);
             tallgrassPromotion.Remove(pos);
             berryMaturation.Remove(pos);
         }
@@ -47,6 +53,9 @@ namespace WildFarming.Ecosystem
         public bool TryGetFernHoursLeft(BlockPos pos, double nowHours, out double hoursLeft)
             => fernMaturation.TryGetHoursUntilMature(pos, nowHours, out hoursLeft);
 
+        public bool TryGetShoreSedgeHoursLeft(BlockPos pos, double nowHours, out double hoursLeft)
+            => shoreSedgeMaturation.TryGetHoursUntilMature(pos, nowHours, out hoursLeft);
+
         public void ProcessTreeSaplings(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
             => treeSaplings.Process(api, ecosystem, nowHours, maxChecks);
 
@@ -55,6 +64,9 @@ namespace WildFarming.Ecosystem
 
         public void ProcessFern(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
             => fernMaturation.Process(api, ecosystem, nowHours, maxChecks);
+
+        public void ProcessShoreSedge(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
+            => shoreSedgeMaturation.Process(api, ecosystem, nowHours, maxChecks);
 
         public void ProcessTallgrass(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
             => tallgrassPromotion.Process(api, ecosystem, nowHours, maxChecks);

@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "flowerphase-redtopgrass-vegetative-free",
   "class": "BlockPlant",
   "enabled": true,
@@ -8,10 +8,10 @@
   "randomizeRotations": true,
   "shape": { "base": "game:block/plant/flower/1patch-cross-24x24" },
   "textures": {
-    "north1": { "base": "game:block/plant/flower/petal/redtopgrass1", "tint": "#6d7d62" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1" },
-    "south1": { "base": "game:block/plant/flower/petal/redtopgrass1", "tint": "#6d7d62" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass1" }
+    "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+    "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" }
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },

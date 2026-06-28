@@ -75,9 +75,34 @@ namespace WildFarming.Tests
         [Theory]
         [InlineData("cowparsley", 18)]
         [InlineData("catmint", 24)]
+        [InlineData("brownsedge", 48)]
         public void Flower_PostSpreadCooldown_MatchesProfileTable(string species, double expected)
         {
             Assert.Equal(expected, WildFlowerMaturation.PostSpreadAttemptCooldownHours(null, null, Req(species), Cfg()));
+        }
+
+        [Fact]
+        public void Brownsedge_HasJuvenileMaturationAndCooldown()
+        {
+            var cfg = new EcosystemConfig
+            {
+                EnableFlowerSpreadMaturation = true,
+                EnableFlowerSpreadAttemptCooldown = true,
+            };
+            const string species = EcologyShoreSedgeSpecies.Brownsedge;
+
+            Assert.True(WildFlowerMaturation.UsesMaturation(cfg, species));
+            Assert.True(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, species));
+        }
+
+        [Fact]
+        public void SpreadMaturationPolicies_FacadeMatchesFamilyPolicies()
+        {
+            var cfg = Cfg();
+            Assert.True(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, "catmint"));
+            Assert.True(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, EcologyShoreSedgeSpecies.Brownsedge));
+            Assert.True(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, "hartstongue"));
+            Assert.False(SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, "tallgrass"));
         }
 
         [Fact]

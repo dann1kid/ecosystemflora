@@ -232,8 +232,10 @@ namespace WildFarming.Ecosystem
                 spreadRate = desert.SpreadRate;
 
             if (species == "tallgrass") return "ecosystemflora:dominance-matrix";
-            if (WildGrassColonizerEcology.IsSpecies(species) || WildShoreSedgeEcology.IsSpecies(species))
+            if (WildGrassColonizerEcology.IsSpecies(species))
                 return "ecosystemflora:dominance-grass-colonizer";
+            if (WildShoreSedgeEcology.IsSpecies(species))
+                return "ecosystemflora:dominance-climax";
 
             if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
             {
@@ -319,6 +321,25 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
+            if (ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
+                AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
+
+                if (api.World?.Calendar != null
+                    && EcosystemSystem.Instance != null
+                    && EcosystemSystem.Instance.TryGetShoreSedgeMaturationHoursLeft(pos, out double hoursLeft))
+                {
+                    double daysLeft = hoursLeft / api.World.Calendar.HoursPerDay;
+                    AddInspectLine(
+                        lines,
+                        "ecosystemflora:inspect-line-flower-maturing",
+                        daysLeft.ToString("0.#"));
+                }
+
+                return;
+            }
+
             if (inRegistry)
             {
                 ReproducerEntry entry = registryEntry;
@@ -365,8 +386,7 @@ namespace WildFarming.Ecosystem
                     AddInspectLine(lines, "ecosystemflora:inspect-line-next-spread", daysLeft.ToString("0.#"));
 
                     if (spawnCooldownLeft > 0
-                        && (WildFlowerMaturation.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species)
-                            || WildFernSpread.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species)))
+                        && SpreadMaturationPolicies.UsesPostSpreadAttemptCooldown(cfg, entry.Requirements?.Species))
                     {
                         double cooldownDays = spawnCooldownLeft / api.World.Calendar.HoursPerDay;
                         AddInspectLine(
@@ -620,6 +640,10 @@ namespace WildFarming.Ecosystem
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-berry-colony");
             }
+            else if (req.UsesShoreSedgeMatSpread)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-shore-sedge");
+            }
             else if (req.UsesSurfaceMatSpread)
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-spread-mode-surfacemat");
@@ -635,7 +659,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesFernRhizomeSpread
-                || req.UsesBerryColonySpread)
+                || req.UsesBerryColonySpread || req.UsesShoreSedgeMatSpread)
             {
                 IBlockAccessor acc = api.World.BlockAccessor;
                 bool frontier = MatSpreadDispatch.IsFrontier(acc, pos, req, verticalSearch: 0);
@@ -648,13 +672,16 @@ namespace WildFarming.Ecosystem
 
                 EcosystemConfig cfg = EcosystemConfig.Loaded;
                 if (cfg != null && cfg.RhizomeSeedDispersalEnabled
-                    && (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesBerryColonySpread))
+                    && (req.UsesRhizomeSpread || req.UsesSurfaceMatSpread || req.UsesBerryColonySpread
+                        || req.UsesShoreSedgeMatSpread))
                 {
                     float seedChance = req.UsesRhizomeSpread
                         ? RhizomeSpread.EffectiveSeedDispersalChance(req)
                         : req.UsesBerryColonySpread
                             ? BerryColonySpread.EffectiveSeedDispersalChance(req)
-                            : SurfaceMatSpread.EffectiveSeedDispersalChance(req);
+                            : req.UsesShoreSedgeMatSpread
+                                ? ShoreSedgeMatSpread.EffectiveSeedDispersalChance(req)
+                                : SurfaceMatSpread.EffectiveSeedDispersalChance(req);
 
                     if (seedChance > 0f)
                     {

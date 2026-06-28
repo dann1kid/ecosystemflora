@@ -69,12 +69,15 @@ function Build-SeasonalBlockLang($langCode) {
         }
     }
 
-    foreach ($phase in @("dormant", "dieback")) {
-        $file = Join-Path $plantDir "tallgrassphase-${phase}-free.json"
-        if (-not (Test-Path $file)) { continue }
-        $speciesName = Resolve-SpeciesName "tallgrass" $langData $enData
-        $blockKey = "block-tallgrassphase-${phase}-free"
-        $entries[$blockKey] = "$speciesName ($($labels.$phase))"
+    foreach ($file in (Get-ChildItem -Path $plantDir -Filter "tallgrassphase-*.json")) {
+        if ($file.Name -match "^tallgrassphase-(dormant|dieback)(-free|-snow)?\.json$") {
+            $phase = $Matches[1]
+            $suffix = $Matches[2]
+            if ([string]::IsNullOrEmpty($suffix)) { $suffix = "" }
+            $speciesName = Resolve-SpeciesName "tallgrass" $langData $enData
+            $blockKey = "block-tallgrassphase-${phase}${suffix}"
+            $entries[$blockKey] = "$speciesName ($($labels.$phase))"
+        }
     }
 
     $outPath = Join-Path $langDir "$langCode-seasonalblocks.json"

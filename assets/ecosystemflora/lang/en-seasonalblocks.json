@@ -14,6 +14,8 @@
     "block-fernphase-hartstongue-dormant":  "Hart\\u0027s tongue fern (dormant)",
     "block-fernphase-tallfern-dieback":  "Tall fern (dieback)",
     "block-fernphase-tallfern-dormant":  "Tall fern (dormant)",
+    "block-tallgrassphase-dieback-free":  "Tall grass (dieback)",
+    "block-tallgrassphase-dieback-snow":  "Tall grass (dieback)",
     "block-tallgrassphase-dormant-free":  "Tall grass (dormant)",
-    "block-tallgrassphase-dieback-free":  "Tall grass (dieback)"
+    "block-tallgrassphase-dormant-snow":  "Tall grass (dormant)"
 }

@@ -14,6 +14,8 @@
     "block-fernphase-hartstongue-dormant":  "Hirschzungenfarn (Ruhephase)",
     "block-fernphase-tallfern-dieback":  "Hoher Farn (Absterben)",
     "block-fernphase-tallfern-dormant":  "Hoher Farn (Ruhephase)",
+    "block-tallgrassphase-dieback-free":  "Hohes Gras (Absterben)",
+    "block-tallgrassphase-dieback-snow":  "Hohes Gras (Absterben)",
     "block-tallgrassphase-dormant-free":  "Hohes Gras (Ruhephase)",
-    "block-tallgrassphase-dieback-free":  "Hohes Gras (Absterben)"
+    "block-tallgrassphase-dormant-snow":  "Hohes Gras (Ruhephase)"
 }
