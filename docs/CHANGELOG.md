@@ -3,9 +3,17 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.5.0**
+**This release:** **4.5.3**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.5.3 — Wildgrass patch fixes
+
+- **Wildgrass ecology patches** — `dependsOn` for `wildgrass` / `wildgrasscontinued`; `addmerge` instead of `add` on `/attributesByType`. Stops log spam when Wildgrass is not installed and avoids patch failures when the target file already has attributes.
+- **Wildgrass handbook patches** — explicit per-species file paths instead of `plant/*` glob (nine blocktypes × two mod ids).
+- Maintainer: `tools/generate_wildgrass_patches.py` regenerates both patch files.
 
 ---
 

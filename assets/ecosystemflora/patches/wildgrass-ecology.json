@@ -3,7 +3,7 @@
 		"comment": "Wildgrass / Wildgrass Fork (wildgrass:*). Mature growth stages only; harvest left to wildgrass cutIntoByType.",
 		"file": "wildgrass:blocktypes/plant/bluegrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -40,12 +40,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bluegrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "bluegrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "bluegrass-1-free",
+				"ecologyMatureBlock": "bluegrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -4,
+				"maxTemp": 18,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.5,
+				"ecologySpreadRate": 0.85,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "bluegrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "bluegrass-1-free",
+				"ecologyMatureBlock": "bluegrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -4,
+				"maxTemp": 18,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.5,
+				"ecologySpreadRate": 0.85,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/switchgrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -82,12 +134,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/switchgrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "switchgrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "switchgrass-2-free",
+				"ecologyMatureBlock": "switchgrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -5,
+				"maxTemp": 30,
+				"minRain": 0.2,
+				"maxRain": 0.8,
+				"minForest": 0,
+				"maxForest": 0.3,
+				"ecologySpreadRate": 1.0,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "switchgrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "switchgrass-2-free",
+				"ecologyMatureBlock": "switchgrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -5,
+				"maxTemp": 30,
+				"minRain": 0.2,
+				"maxRain": 0.8,
+				"minForest": 0,
+				"maxForest": 0.3,
+				"ecologySpreadRate": 1.0,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/ryegrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -124,12 +228,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/ryegrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "ryegrass-perennial",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "ryegrass-perennial-1-free",
+				"ecologyMatureBlock": "ryegrass-perennial-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -3,
+				"maxTemp": 18,
+				"minRain": 0.2,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.8,
+				"ecologySpreadRate": 0.85,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "ryegrass-perennial",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "ryegrass-perennial-1-free",
+				"ecologyMatureBlock": "ryegrass-perennial-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -3,
+				"maxTemp": 18,
+				"minRain": 0.2,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.8,
+				"ecologySpreadRate": 0.85,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/bushgrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -166,12 +322,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bushgrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "bushgrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "bushgrass-1-free",
+				"ecologyMatureBlock": "bushgrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -3,
+				"maxTemp": 18,
+				"minRain": 0.1,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 1.0,
+				"ecologySpreadRate": 1.3,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "bushgrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "bushgrass-1-free",
+				"ecologyMatureBlock": "bushgrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -3,
+				"maxTemp": 18,
+				"minRain": 0.1,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 1.0,
+				"ecologySpreadRate": 1.3,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/fescue.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -208,12 +416,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/fescue.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "fescue-meadow",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "fescue-meadow-1-free",
+				"ecologyMatureBlock": "fescue-meadow-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -10,
+				"maxTemp": 20,
+				"minRain": 0.6,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.4,
+				"ecologySpreadRate": 1.1,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "fescue-meadow",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "fescue-meadow-1-free",
+				"ecologyMatureBlock": "fescue-meadow-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -10,
+				"maxTemp": 20,
+				"minRain": 0.6,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.4,
+				"ecologySpreadRate": 1.1,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/buttongrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -250,12 +510,64 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buttongrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "buttongrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "buttongrass-1-free",
+				"ecologyMatureBlock": "buttongrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -10,
+				"maxTemp": 20,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.6,
+				"ecologySpreadRate": 1.3,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "buttongrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "buttongrass-1-free",
+				"ecologyMatureBlock": "buttongrass-3-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": -10,
+				"maxTemp": 20,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.6,
+				"ecologySpreadRate": 1.3,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/bermudagrass.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -275,12 +587,47 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bermudagrass.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "bermudagrass",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "bermudagrass-1-free",
+				"ecologyMatureBlock": "bermudagrass-2-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": 0,
+				"maxTemp": 25,
+				"minRain": 0.2,
+				"maxRain": 0.8,
+				"minForest": 0,
+				"maxForest": 0.5,
+				"ecologySpreadRate": 0.85,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/buffalograss.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-2-*": {
@@ -300,12 +647,47 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 0
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buffalograss.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-2-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "buffalograss",
+				"ecologyHabitat": "Terrestrial",
+				"ecologySpreadBlock": "buffalograss-1-free",
+				"ecologyMatureBlock": "buffalograss-1-free",
+				"ecologyMeadowHarvest": "none",
+				"minTemp": 0,
+				"maxTemp": 40,
+				"minRain": 0,
+				"maxRain": 0.3,
+				"minForest": 0,
+				"maxForest": 1.0,
+				"ecologySpreadRate": 1.3,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 0
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	},
 	{
 		"file": "wildgrass:blocktypes/plant/common-rush.json",
 		"side": "server",
-		"op": "add",
+		"op": "addmerge",
 		"path": "/attributesByType",
 		"value": {
 			"*-3-*": {
@@ -346,6 +728,62 @@
 				"ecologySameSpeciesSpacing": 0,
 				"ecologyOtherSpeciesSpacing": 1
 			}
-		}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/common-rush.json",
+		"side": "server",
+		"op": "addmerge",
+		"path": "/attributesByType",
+		"value": {
+			"*-3-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "rush-common",
+				"ecologyHabitat": "ReedNearWater",
+				"ecologySpreadMode": "independent",
+				"ecologySpreadBlock": "rush-common-1-free",
+				"ecologyMatureBlock": "rush-common-3-free",
+				"ecologyMeadowHarvest": "none",
+				"ecologyMaxWaterDepth": 3,
+				"minTemp": -4,
+				"maxTemp": 32,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.8,
+				"ecologySpreadRate": 1.6,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 1
+			},
+			"*-4-*": {
+				"ecologyParticipant": true,
+				"ecologySpecies": "rush-common",
+				"ecologyHabitat": "ReedNearWater",
+				"ecologySpreadMode": "independent",
+				"ecologySpreadBlock": "rush-common-1-free",
+				"ecologyMatureBlock": "rush-common-3-free",
+				"ecologyMeadowHarvest": "none",
+				"ecologyMaxWaterDepth": 3,
+				"minTemp": -4,
+				"maxTemp": 32,
+				"minRain": 0.4,
+				"maxRain": 1.0,
+				"minForest": 0,
+				"maxForest": 0.8,
+				"ecologySpreadRate": 1.6,
+				"ecologySameSpeciesSpacing": 0,
+				"ecologyOtherSpeciesSpacing": 1
+			}
+		},
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	}
 ]

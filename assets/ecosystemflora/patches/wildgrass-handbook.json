@@ -1,19 +1,291 @@
 [
 	{
-		"comment": "Wildgrass blocks have no root behaviors array; addMerge creates it. Requires Wildgrass or Wildgrass Fork.",
-		"file": "wildgrass:blocktypes/plant/*",
+		"comment": "Wildgrass blocks have no root behaviors array; addmerge creates it. Requires Wildgrass or Wildgrass Fork.",
+		"file": "wildgrass:blocktypes/plant/bluegrass.json",
 		"op": "addmerge",
 		"path": "/behaviors",
-		"value": [{ "name": "ecosystemHandbook" }],
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
 		"side": "server",
-		"dependsOn": [{ "modid": "wildgrass" }]
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
 	},
 	{
-		"file": "wildgrass:blocktypes/plant/*",
+		"file": "wildgrass:blocktypes/plant/bluegrass.json",
 		"op": "addmerge",
 		"path": "/behaviors",
-		"value": [{ "name": "ecosystemHandbook" }],
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
 		"side": "server",
-		"dependsOn": [{ "modid": "wildgrasscontinued" }]
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/switchgrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/switchgrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/ryegrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/ryegrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bushgrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bushgrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/fescue.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/fescue.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buttongrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buttongrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bermudagrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/bermudagrass.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buffalograss.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/buffalograss.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/common-rush.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrass"
+			}
+		]
+	},
+	{
+		"file": "wildgrass:blocktypes/plant/common-rush.json",
+		"op": "addmerge",
+		"path": "/behaviors",
+		"value": [
+			{
+				"name": "ecosystemHandbook"
+			}
+		],
+		"side": "server",
+		"dependsOn": [
+			{
+				"modid": "wildgrasscontinued"
+			}
+		]
 	}
 ]
