@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     /// <summary>Wild spread of vanilla saplings from mature log-grown trunks (no mod trunk blocks).</summary>
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildTreeEcology
     {
         public readonly struct Profile
@@ -52,13 +57,7 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        /// <summary>Wood codes from game sapling / log-grown (bamboo excluded — vanilla shoots).</summary>
-        public static readonly IReadOnlyList<string> AllWoods = new[]
-        {
-            "birch", "oak", "maple", "pine", "acacia", "kapok", "larch",
-            "crimsonkingmaple", "redwood", "baldcypress", "greenspirecypress",
-            "ebony", "purpleheart", "walnut",
-        };
+        public static readonly IReadOnlyList<string> AllWoods = EcologyTreeSpecies.AllWoods;
 
         static readonly Dictionary<string, Profile> ByWood = new Dictionary<string, Profile>
         {

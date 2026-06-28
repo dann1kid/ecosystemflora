@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     /// <summary>
     /// Wet-shore sedges on <c>tallplant-brownsedge-land-*</c> — slow clumping wetland herbs
     /// (Carex-like: edge rhizome steps only, extreme moisture, no long seed jumps).
     /// </summary>
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildShoreSedgeEcology
     {
         public readonly struct EcologyEntry

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     /// <summary>Per-species context affinity, hold strength, symbiosis (unified cell competition).</summary>

@@ -2,9 +2,9 @@
   "type": "code",
   "modid": "ecosystemflora",
   "name": "Ecosystem - Flora",
-  "description": "Wild ecology for vanilla flora on vanilla blocks. Chunk-fair spread, vines and mycelium, seasonal canopy, tree aging, meadow harvest, inspect (I). In-game settings UI (U, /ecoconfig).",
+  "description": "Wild ecology for vanilla flora on vanilla blocks. Per-species balance via ecology/season CSV (ModConfig overrides). Chunk-fair spread, vines and mycelium, seasonal canopy, tree aging, meadow harvest, inspect (I). Settings UI (U, /ecoconfig).",
   "authors": ["-"],
-  "version": "4.4.1",
+  "version": "4.5.0",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

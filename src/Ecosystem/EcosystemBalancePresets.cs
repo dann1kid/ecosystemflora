@@ -104,6 +104,7 @@ namespace WildFarming.Ecosystem
 
             target.UseCalendarScaledSpread = source.UseCalendarScaledSpread;
             target.UseSpeciesSpreadRates = source.UseSpeciesSpreadRates;
+            target.SpeciesSpreadRateScale = source.SpeciesSpreadRateScale;
             target.ReproduceAttemptsPerYear = source.ReproduceAttemptsPerYear;
             target.ReproduceChance = source.ReproduceChance;
             target.MinFitness = source.MinFitness;
@@ -122,6 +123,7 @@ namespace WildFarming.Ecosystem
         {
             cfg.UseCalendarScaledSpread = true;
             cfg.UseSpeciesSpreadRates = true;
+            cfg.SpeciesSpreadRateScale = 1f / 3f;
             cfg.ReproduceAttemptsPerYear = 72;
             cfg.ReproduceChance = 0.5f;
             cfg.MinFitness = 0.45f;
@@ -133,6 +135,7 @@ namespace WildFarming.Ecosystem
         {
             cfg.UseCalendarScaledSpread = true;
             cfg.UseSpeciesSpreadRates = true;
+            cfg.SpeciesSpreadRateScale = 0.45f;
             cfg.ReproduceAttemptsPerYear = 120;
             cfg.ReproduceChance = 0.65f;
             cfg.MinFitness = 0.35f;
@@ -144,6 +147,7 @@ namespace WildFarming.Ecosystem
         {
             cfg.UseCalendarScaledSpread = true;
             cfg.UseSpeciesSpreadRates = true;
+            cfg.SpeciesSpreadRateScale = 0.2f;
             cfg.ReproduceAttemptsPerYear = 36;
             cfg.ReproduceChance = 0.3f;
             cfg.MinFitness = 0.6f;

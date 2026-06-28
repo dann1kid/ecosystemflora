@@ -1,4 +1,3 @@
-using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
 using Xunit;
 
@@ -6,16 +5,28 @@ namespace WildFarming.Tests
 {
     public class WildSpreadBalanceTests
     {
+        static EcosystemConfig ConfigWithScale(float scale) =>
+            new EcosystemConfig { SpeciesSpreadRateScale = scale };
+
         [Fact]
-        public void ScaleSpeciesSpreadRate_DividesByThree()
+        public void ScaleSpeciesSpreadRate_UsesConfigScale()
         {
-            Assert.Equal(2.8f / 3f, WildSpreadBalance.ScaleSpeciesSpreadRate("horsetail", 2.8f), 4);
+            var cfg = ConfigWithScale(1f / 3f);
+            Assert.Equal(2.8f / 3f, WildSpreadBalance.ScaleSpeciesSpreadRate("horsetail", 2.8f, cfg), 4);
         }
 
         [Fact]
-        public void ScaleSpeciesSpreadRate_BrownsedgeExempt()
+        public void ScaleSpeciesSpreadRate_UnityScaleMatchesEcologyTable()
         {
-            Assert.Equal(0.35f, WildSpreadBalance.ScaleSpeciesSpreadRate(EcologyShoreSedgeSpecies.Brownsedge, 0.35f));
+            var cfg = ConfigWithScale(1f);
+            Assert.Equal(2.8f, WildSpreadBalance.ScaleSpeciesSpreadRate("horsetail", 2.8f, cfg), 4);
+        }
+
+        [Fact]
+        public void ScaleSpeciesSpreadRate_BrownsedgeUsesGlobalScale()
+        {
+            var cfg = ConfigWithScale(1f / 3f);
+            Assert.Equal(0.35f / 3f, WildSpreadBalance.ScaleSpeciesSpreadRate(EcologyShoreSedgeSpecies.Brownsedge, 0.35f, cfg), 4);
         }
 
         [Fact]
@@ -26,6 +37,7 @@ namespace WildFarming.Tests
                 UseSpeciesSpreadRates = true,
                 UseCalendarScaledSpread = false,
                 ReproduceIntervalHours = 24,
+                SpeciesSpreadRateScale = 1f / 3f,
             };
             var req = new PlantRequirements { Species = "horsetail", SpreadRate = 2.8f };
 
@@ -41,6 +53,7 @@ namespace WildFarming.Tests
             {
                 UseSpeciesSpreadRates = true,
                 ReproduceChance = 0.5f,
+                SpeciesSpreadRateScale = 1f / 3f,
             };
             var req = new PlantRequirements { Species = "catmint", SpreadRate = 1.65f };
 

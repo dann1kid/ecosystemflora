@@ -1,5 +1,9 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using WildFarming.Ecosystem.SpeciesEcology;
+
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
 
 namespace WildFarming.Ecosystem
 {
@@ -105,6 +109,15 @@ namespace WildFarming.Ecosystem
 
         public static bool TryGetProfile(string species, out Profile profile)
         {
+            if (SpeciesEcologyRegistry.IsLoaded
+                && SpeciesEcologyRegistry.TryGetFlowerMaturation(species, out double maturationHours, out double cooldownHours))
+            {
+                profile = new Profile(
+                    maturationHours > 0 ? maturationHours : DefaultSteady.MaturationHours,
+                    cooldownHours > 0 ? cooldownHours : DefaultSteady.PostSpreadAttemptCooldownHours);
+                return true;
+            }
+
             if (species != null && BySpecies.TryGetValue(species, out profile))
             {
                 return true;

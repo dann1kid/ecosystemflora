@@ -1,5 +1,7 @@
 namespace WildFarming.Ecosystem
 {
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildVineEcology
     {
         public const string TemperateSpecies = WildVineHelper.TemperateSpecies;
@@ -55,8 +57,10 @@ namespace WildFarming.Ecosystem
             sameSpacing: 0,
             otherSpacing: 0);
 
-        public static bool IsSpecies(string species) =>
+        public static bool IsKnown(string species) =>
             species == TemperateSpecies || species == TropicalSpecies;
+
+        public static bool IsSpecies(string species) => IsKnown(species);
 
         public static bool TryGet(string species, out Profile profile)
         {

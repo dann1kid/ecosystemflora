@@ -5,6 +5,10 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using WildFarming.Ecosystem.SpeciesEcology;
+
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
 
 namespace WildFarming.Ecosystem
 {
@@ -148,14 +152,7 @@ namespace WildFarming.Ecosystem
                 stumpDecayScheduler.Bind(sapi);
             }
 
-            WildFlowerClimate.LogMissingSpecies(api);
-            WildTreeEcology.LogMissingWoods(api);
-            WildBerryEcology.LogMissingTypes(api);
-            WildFernEcology.LogMissingSpecies(api);
-            WildTallgrassEcology.LogMissingSpecies(api);
-            WildGrassColonizerEcology.LogMissingSpecies(api);
-            WildShoreSedgeEcology.LogMissingSpecies(api);
-            WildDesertEcology.LogMissingSpecies(api);
+            SpeciesEcologyLegacyAccess.LogMissingContractSpecies(api);
         }
 
         void OnPlayerJoin(IPlayer player)
@@ -740,13 +737,13 @@ namespace WildFarming.Ecosystem
                          && PlantCodeHelper.IsFerntreeTrunkBlock(matureBlock)
                          && cfg.EnableFerntreeEcology)
                 {
-                    if (!treeCalendarAgeStore.TryRestore(entry, origin, WildFerntreeEcology.Species))
+                    if (!treeCalendarAgeStore.TryRestore(entry, origin, EcologyFerntreeSpecies.Ferntree))
                     {
                         entry.TreeAgeYears = 0;
                         entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
                     }
 
-                    treeCalendarAgeStore.Capture(entry, WildFerntreeEcology.Species);
+                    treeCalendarAgeStore.Capture(entry, EcologyFerntreeSpecies.Ferntree);
                 }
 
 
@@ -1040,7 +1037,7 @@ namespace WildFarming.Ecosystem
             else if (PlantCodeHelper.IsFerntreeEcologyBlock(oldBlock))
             {
                 treeCalendarAgeStore.TryRemoveIfTreeGone(
-                    api.World.BlockAccessor, pos, WildFerntreeEcology.Species);
+                    api.World.BlockAccessor, pos, EcologyFerntreeSpecies.Ferntree);
             }
 
             if (CanopyFoliageRules.IsSeasonalFoliageBlock(oldBlock))

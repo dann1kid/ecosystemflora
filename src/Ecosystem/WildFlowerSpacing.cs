@@ -3,6 +3,8 @@ using System.Collections.Generic;
 namespace WildFarming.Ecosystem
 {
     /// <summary>Minimum horizontal distance (Chebyshev blocks) when spreading.</summary>
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildFlowerSpacing
     {
         public readonly struct Profile

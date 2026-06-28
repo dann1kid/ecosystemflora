@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem.Config
 {
     /// <summary>Hand-tuned en/ru descriptions (with On/Off or Higher/Lower hints) for config UI lang keys.</summary>
@@ -63,6 +66,10 @@ namespace WildFarming.Ecosystem.Config
             D(nameof(EcosystemConfig.UseSpeciesSpreadRates),
                 "On: per-species SpreadRate scales interval and chance. Off: uniform spread pacing.",
                 "Вкл.: скорость вида масштабирует интервал и шанс. Выкл.: единый темп распространения.");
+
+            D(nameof(EcosystemConfig.SpeciesSpreadRateScale),
+                "Higher: faster wild spread vs ecology tables (1 = table rates). Lower: slower reproduction for all species.",
+                "Больше: быстрее распространение относительно таблиц (1 = как в таблицах). Меньше: медленнее для всех видов.");
 
             D(nameof(EcosystemConfig.MinSpeciesReproduceIntervalDays),
                 "Higher: minimum days between attempts per species (calendar mode). 0 = no floor.",

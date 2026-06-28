@@ -1,9 +1,11 @@
 namespace WildFarming.Ecosystem
 {
     /// <summary>Vanilla <c>ferntree-normal-*</c> — tropical arborescent fern (not log-grown).</summary>
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildFerntreeEcology
     {
-        public const string Species = "ferntree";
+        public const string Species = EcologyFerntreeSpecies.Ferntree;
 
         public readonly struct Profile
         {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
+using WildFarming.Ecosystem.SpeciesEcology;
 
 namespace WildFarming.Ecosystem
 {
@@ -263,6 +264,35 @@ namespace WildFarming.Ecosystem
                         break;
                 }
             }
+            else if (!thirdPartyParticipant
+                && !string.IsNullOrEmpty(species)
+                && SpeciesEcologyRegistry.IsLoaded
+                && SpeciesEcologyRegistry.TryGet(species, out SpeciesEcologyCsvRow registryRow))
+            {
+                return PlantRequirementsRegistryBuild.Build(
+                    block,
+                    species,
+                    registryRow,
+                    attrs,
+                    minTemp,
+                    maxTemp,
+                    minRain,
+                    maxRain,
+                    minForest,
+                    maxForest,
+                    spreadRate,
+                    minFertility,
+                    minGroundFertility,
+                    maxGroundFertility,
+                    minSunlight,
+                    spreadMode,
+                    suppressRhizomeSpread,
+                    suppressSurfaceMatSpread,
+                    seedDispersalChance,
+                    seedDispersalRadius,
+                    spreadRadius);
+            }
+#pragma warning disable CS0618
             else if (!string.IsNullOrEmpty(species) && WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
             {
                 habitat = aquatic.Habitat;
@@ -457,6 +487,8 @@ namespace WildFarming.Ecosystem
                 }
             }
 
+#pragma warning restore CS0618
+
             if (attrs != null)
             {
                 int attrSame = attrs["ecologySameSpeciesSpacing"].AsInt(-1);
@@ -473,14 +505,15 @@ namespace WildFarming.Ecosystem
             if (float.IsNaN(maxForest)) maxForest = 1f;
             if (float.IsNaN(spreadRate)) spreadRate = 1f;
 
-            if (spreadRadius <= 0 && !string.IsNullOrEmpty(species) && WildTreeEcology.TryGet(species, out WildTreeEcology.Profile treeRadius))
+            if (spreadRadius <= 0 && !string.IsNullOrEmpty(species)
+                && SpeciesEcologyLegacyAccess.TryGetTreeSpreadRadius(species, out int treeRadius))
             {
-                spreadRadius = treeRadius.SpreadRadius;
+                spreadRadius = treeRadius;
             }
 
-            if (spreadRadius <= 0 && WildFerntreeEcology.IsSpecies(species))
+            if (spreadRadius <= 0 && EcologyFerntreeSpecies.IsKnown(species))
             {
-                spreadRadius = WildFerntreeEcology.Resolve().SpreadRadius;
+                spreadRadius = SpeciesEcologyLegacyAccess.ResolveFerntreeSpreadRadius();
             }
 
             var requirements = new PlantRequirements

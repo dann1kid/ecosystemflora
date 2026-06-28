@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using WildFarming.Ecosystem.SpeciesEcology;
 
 namespace WildFarming.Ecosystem
 {
@@ -104,6 +105,15 @@ namespace WildFarming.Ecosystem
 
         public static bool TryGetProfile(string species, out Profile profile)
         {
+            if (SpeciesEcologyRegistry.IsLoaded
+                && SpeciesEcologyRegistry.TryGetFernMaturation(species, out double maturationHours, out double cooldownHours))
+            {
+                profile = new Profile(
+                    maturationHours > 0 ? maturationHours : DefaultForest.MaturationHours,
+                    cooldownHours > 0 ? cooldownHours : DefaultForest.PostSpreadAttemptCooldownHours);
+                return true;
+            }
+
             if (species != null && BySpecies.TryGetValue(species, out profile))
             {
                 return true;

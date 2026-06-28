@@ -4,24 +4,31 @@
 **Template:** `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.  
 **Source of truth:** `src/Ecosystem/EcosystemConfig.cs` (defaults below match C# unless noted).
 
+**Per-species balance** (climate, spread rate, spacing, maturation hours, season curves): [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md) — `ecology.csv` + `season.csv`, not this JSON file.
+
 On load, **missing keys are added** with defaults and the file is rewritten (server always; client when the file already exists).
 
 ---
 
 ## Balance presets
 
-`BalancePreset` is applied **on every server start** when set to `natural`, `lush`, or `sparse`. It overwrites:
-
-`ReproduceAttemptsPerYear`, `ReproduceChance`, `MinFitness`, `DefaultSameSpeciesSpacing`, `DefaultOtherSpeciesSpacing`.
+`BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite spread bundle fields including `SpeciesSpreadRateScale`, attempts/year, chance, fitness, spacing, and (for `vanilla-minimal`) maturation/phenology toggles.
 
 Use `"custom"` to keep your own spread values across restarts.
 
-| Preset | Attempts/year | Chance | MinFitness | Spacing |
-|--------|---------------|--------|------------|---------|
-| `natural` (default) | 72 | 0.50 | 0.45 | 1 |
-| `lush` | 120 | 0.65 | 0.35 | 1 |
-| `sparse` | 36 | 0.30 | 0.60 | 2 |
-| `custom` | — | — | — | — |
+| Preset | Attempts/year | Chance | MinFitness | Same/other spacing | `SpeciesSpreadRateScale` |
+|--------|---------------|--------|------------|--------------------|---------------------------|
+| `natural` (default) | 72 | 0.50 | 0.45 | 1 / 1 | 0.333 (~⅓) |
+| `lush` | 120 | 0.65 | 0.35 | 1 / 1 | 0.45 |
+| `sparse` | 36 | 0.30 | 0.60 | 2 / 2 | 0.20 |
+| `vanilla-minimal` | same as `natural` | | | | 0.333 |
+| `custom` | — | — | — | — | — |
+
+`vanilla-minimal` also sets `EnableFlowerSpreadMaturation`, `EnableFernSpreadMaturation`, `EnableTallgrassSpreadMaturation`, `EnableBerrySpreadMaturation`, and all three phenology flags to **false**.
+
+Optional custom JSON presets: `ModConfig/ecosystemflora.presets/*.json` (filename = preset code). File presets copy the same spread bundle fields as above.
+
+**Global spread multiplier** (`SpeciesSpreadRateScale`) applies to every species `spread_rate` from CSV. Tune one species in `ModConfig/ecosystemflora.species.csv` when you need an exception.
 
 ---
 
@@ -29,7 +36,8 @@ Use `"custom"` to keep your own spread values across restarts.
 
 | Goal | Settings |
 |------|----------|
-| Slower spread everywhere | `"BalancePreset": "sparse"` or `custom` + lower `ReproduceAttemptsPerYear` / `ReproduceChance` |
+| Slower spread everywhere | `"BalancePreset": "sparse"` or lower `SpeciesSpreadRateScale` / `ReproduceAttemptsPerYear` |
+| Tune one species only | Edit `ModConfig/ecosystemflora.species.csv` — see [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md) |
 | Less “instant meadow” after harvest | Default maturation on; or `"GrowthHoursMultiplier": 0.5` for slower juvenile growth |
 | Instant mature spread (legacy feel) | `"EnableFlowerSpreadMaturation": false` |
 | Decorative-only flowers (no bloom gating) | `"EnableFlowerPhenology": false` |
@@ -69,6 +77,7 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `ReproduceAttemptsPerYear` | double | 72 | Calendar mode: attempts per in-game year at species `SpreadRate` 1 |
 | `UseCalendarScaledSpread` | bool | true | Scale intervals from `DaysPerYear` / `HoursPerDay` |
 | `UseSpeciesSpreadRates` | bool | true | Per-species ecology `SpreadRate` scales interval and chance |
+| `SpeciesSpreadRateScale` | float | `0.333` | Multiplier on every species `spread_rate` from CSV (~⅓ at default; preset may override) |
 | `MinSpeciesReproduceIntervalDays` | double | 0 | Floor between attempts (calendar mode); 0 = none |
 | `MinSpeciesReproduceIntervalHours` | double | 0 | Floor between attempts (legacy mode only) |
 | `MaxFailedSurvivalChecks` | int | 5 | Failed survival checks before stress removal |
@@ -85,6 +94,22 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `MaxFlowerPhenologyChecksPerTick` | int | 48 | Phenology updates per reproduce tick |
 | `EnableTallgrassSpreadMaturation` | bool | true | Tallgrass spread uses veryshort; registration waits for short+ height |
 | `MaxPendingTallgrassPromotionChecksPerTick` | int | 32 | Establishing tallgrass promotion checks per reproduce tick |
+| `EnableFernRhizomeSpread` | bool | true | Ground ferns spread from mat edge (orthogonal step) |
+| `EnableFernSpreadMaturation` | bool | true | Fern juvenile spread maturation |
+| `EnableFernSpreadAttemptCooldown` | bool | true | Post-spread cooldown for ferns |
+| `FernSpreadCooldownHoursMultiplier` | float | 1 | Scales fern cooldown hours |
+| `EnableFernSporulationGate` | bool | true | Block fern spread outside sporulation season |
+| `EnableFernPhenology` | bool | true | Fern dormant/sporulating/dieback phases — [`FLOWER_PHENOLOGY.md`](FLOWER_PHENOLOGY.md) pattern |
+| `MaxFernPhenologyChecksPerTick` | int | 32 | Fern phenology updates per reproduce tick |
+| `EnableTallgrassPhenology` | bool | true | Tallgrass dormant/dieback phase blocks |
+| `MaxTallgrassPhenologyChecksPerTick` | int | 32 | Tallgrass phenology updates per reproduce tick |
+| `EnableBerryColonySpread` | bool | true | Berry mat-edge colony spread (CSV defines mode/radius) |
+| `EnableShoreSedgeMatSpread` | bool | true | Brownsedge shore mat spread |
+| `EnableBerrySpreadMaturation` | bool | true | Spread berry bushes mature through cutting state before registry |
+| `MaxPendingBerryMaturationChecksPerTick` | int | 24 | Berry maturation commits per reproduce tick |
+| `EnableStumpDecay` | bool | true | Remove senescence snag stumps after `StumpDecayYears` |
+| `StumpDecayYears` | double | 10 | Game years before stump removal |
+| `MaxStumpDecayChecksPerTick` | int | 16 | Stump decay checks per reproduce tick |
 | `EventWakeRetryHours` | double | 6 | Event wake may pull spread retry forward by this many game hours (not during spawn cooldown) |
 | `StaggerReproduceAttempts` | bool | true | Random initial delay on registration to spread tick load |
 
@@ -103,7 +128,7 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `PlantSpacingEnabled` | bool | true | Enforce Chebyshev spacing between spread plants |
-| `ApplyCrossHabitatSpacing` | bool | false | When false, terrestrial vs aquatic spacing is not cross-checked |
+| `ApplyCrossHabitatSpacing` | bool | **true** | When true, terrestrial and aquatic species share spacing index checks |
 | `DefaultSameSpeciesSpacing` | int | 1 | Used when species table has `SameSpeciesSpacing` 0 |
 | `DefaultOtherSpeciesSpacing` | int | 1 | Used when species table has `OtherSpeciesSpacing` 0 |
 | `SpacingVerticalSearch` | int | 2 | ±Y when scanning for spacing conflicts |
@@ -146,7 +171,7 @@ Types: `bool`, `int`, `float`, `double`, `string`.
 | `MaxStressChecksPerTick` | int | 16 | Stress evaluations per stress tick |
 | `EnableSymbiosis` | bool | true | Forest symbionts need tree hosts; cascade on host loss |
 | `SymbiosisCascadeRadius` | int | 4 | Radius when host tree removed |
-| `UseSeasonalEcology` | bool | true | Monthly spread multipliers from `WildSpeciesSeason` |
+| `UseSeasonalEcology` | bool | true | Monthly spread multipliers from merged season CSV / `WildSpeciesSeason` |
 | `SeasonalStressEnabled` | bool | true | Seasonal stress die-off rolls (terrestrial) |
 
 ### Soil succession & farmland
@@ -344,6 +369,7 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.8–§6.12 for scope limi
 | `EnableEcologyInspect` | bool | true | Hotkey **I** ecology dialog |
 | `EcologyInspectCooldownSeconds` | double | 2 | Min seconds between inspect requests per player |
 | `EcologyInspectScanRadius` | int | 16 | Radius for nearby-species tally |
+| `EnableEcologyHistoryHint` | bool | true | Recent ecology events in inspect report |
 | `EnableEcologyAreaScan` | bool | true | Include area species mix in report |
 
 ### Wild berries (VS 1.22+)
@@ -352,6 +378,8 @@ See [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) §6.8–§6.12 for scope limi
 |-----|------|---------|-------------|
 | `CloneBerryTraits` | bool | true | Spread copies parent bush genetic traits |
 | `BerryTraitMutationChance` | double | 0 | Chance to lose one random trait on spread (0 = off) |
+
+Berry spread/colony fields (`spread_rate`, `mat_connectivity`, maturation hours) — **`ecosystemflora.species.csv`**. Toggle mat spread: `EnableBerryColonySpread` above.
 
 ### Third-party mods
 

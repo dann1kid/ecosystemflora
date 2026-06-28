@@ -102,7 +102,7 @@ namespace WildFarming.Ecosystem
         static float EffectiveSpreadRate(EcosystemConfig cfg, PlantRequirements requirements)
         {
             if (requirements == null || requirements.SpreadRate <= 0f) return requirements?.SpreadRate ?? 0f;
-            return WildSpreadBalance.ScaleSpeciesSpreadRate(requirements.Species, requirements.SpreadRate);
+            return WildSpreadBalance.ScaleSpeciesSpreadRate(requirements.Species, requirements.SpreadRate, cfg);
         }
 
         static float SpreadMultiplier(EcosystemConfig cfg, PlantRequirements requirements)

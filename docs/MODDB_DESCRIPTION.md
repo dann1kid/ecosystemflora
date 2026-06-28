@@ -12,6 +12,22 @@
 
 ---
 
+## 4.5.0 — ModDB update (short paste)
+
+```
+4.5.0 — species CSV tuning (since 4.4.1)
+
+• Runtime balance from shipped ecology.csv + season.csv. Server auto-creates ModConfig/ecosystemflora/species/ with editable CSVs; missing rows appended on update. Partial overrides OK — restart world to reload.
+
+• Inspect (I) and handbook use merged tables. Global spread: SpeciesSpreadRateScale (~⅓ default).
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
+Full notes: [docs/CHANGELOG.md](CHANGELOG.md). CSV reference: [docs/SPECIES_ECOLOGY_CSV.md](SPECIES_ECOLOGY_CSV.md).
+
+---
+
 ## 4.3.0 — ModDB update (short paste)
 
 ```

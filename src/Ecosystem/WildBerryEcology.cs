@@ -1,8 +1,13 @@
 using System.Collections.Generic;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     /// <summary>Wild fruiting bushes (survival/worldgen/blockpatches/berrybush.json).</summary>
+    [EcologyExportTable]
+    [System.Obsolete("Export-only default table. Contract species runtime uses SpeciesEcologyRegistry.")]
     internal static class WildBerryEcology
     {
         public readonly struct Profile
@@ -60,11 +65,7 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        public static readonly IReadOnlyList<string> AllTypes = new[]
-        {
-            "blackcurrant", "redcurrant", "whitecurrant", "blueberry", "cranberry",
-            "strawberry", "beautyberry", "cloudberry", "blackberry", "raspberry",
-        };
+        public static readonly IReadOnlyList<string> AllTypes = EcologyBerrySpecies.All;
 
         static readonly Dictionary<string, Profile> ByType = new Dictionary<string, Profile>
         {

@@ -1,6 +1,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using WildFarming.Ecosystem.SpeciesEcology;
 
 namespace WildFarming.Ecosystem
 {
@@ -66,14 +67,7 @@ namespace WildFarming.Ecosystem
                 stumpDecayScheduler.Bind(sapi);
             }
 
-            WildFlowerClimate.LogMissingSpecies(api);
-            WildTreeEcology.LogMissingWoods(api);
-            WildBerryEcology.LogMissingTypes(api);
-            WildFernEcology.LogMissingSpecies(api);
-            WildTallgrassEcology.LogMissingSpecies(api);
-            WildGrassColonizerEcology.LogMissingSpecies(api);
-            WildShoreSedgeEcology.LogMissingSpecies(api);
-            WildDesertEcology.LogMissingSpecies(api);
+            SpeciesEcologyLegacyAccess.LogMissingContractSpecies(api);
         }
     }
 }

@@ -11,6 +11,7 @@
   "ReproduceAttemptsPerYear": 72,
   "UseCalendarScaledSpread": true,
   "UseSpeciesSpreadRates": true,
+  "SpeciesSpreadRateScale": 0.3333333,
   "MinSpeciesReproduceIntervalDays": 0,
   "MinSpeciesReproduceIntervalHours": 0,
   "MaxFailedSurvivalChecks": 5,

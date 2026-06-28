@@ -3,9 +3,49 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.3.0**
+**This release:** **4.5.0**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.5.0 — Species CSV tuning
+
+**Since 4.4.1**
+
+### Per-species balance in CSV
+
+- Contract species (flowers, ferns, berries, trees, aquatic, …) read **`assets/ecosystemflora/species/ecology.csv`** and **`season.csv`** at load — not hardcoded C# tables at runtime.
+- Server admins can override without recompiling:
+  - `ModConfig/ecosystemflora/species/ecology.csv` — climate, spread rate, spacing, maturation hours, mat connectivity, …
+  - `ModConfig/ecosystemflora/species/season.csv` — monthly spread/stress curves
+- **Server:** folder and files are **created automatically** on first start; missing species rows appended on each start. **Restart world** to reload edits.
+- **Partial rows OK:** leave cells empty to keep shipped defaults. New species rows auto-append when the mod updates.
+- Handbook and **Inspect (I)** show merged registry values.
+- Global vigor knob: **`SpeciesSpreadRateScale`** in JSON (default ~⅓; presets set lush/sparse scales). Per-species exceptions in CSV.
+- Maintainer export: `tools/Export-SpeciesEcologyCsv.ps1`, `tools/Export-SpeciesSeasonCsv.ps1`. Details: [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md).
+
+**ModDB short paste**
+
+```
+4.5.0 — species CSV tuning (since 4.4.1)
+
+• Runtime balance from shipped ecology.csv + season.csv. Server auto-creates ModConfig/ecosystemflora/species/ with editable CSVs; missing rows appended on update. Partial overrides OK — restart world to reload.
+
+• Inspect (I) and handbook use merged tables. Global spread: SpeciesSpreadRateScale (~⅓ default).
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
+---
+
+## 4.4.1 — Spread balance and meadow harvest
+
+**Since 4.3.4**
+
+- **`SpeciesSpreadRateScale`** (~⅓ default) — global multiplier on all species spread rates; presets `natural` / `lush` / `sparse` set scale with attempts and fitness.
+- Shore sedge (**brownsedge**) mat spread retuned for the slower default pace.
+- Meadow **scythe harvest** fix — flowers/tallgrass drop drygrass reliably when using scythe on spread maturation blocks.
 
 ---
 

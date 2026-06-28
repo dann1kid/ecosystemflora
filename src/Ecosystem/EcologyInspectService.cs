@@ -2,7 +2,11 @@ using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using WildFarming.Ecosystem.SpeciesEcology;
 using WildFarming.Network;
+
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
 
 namespace WildFarming.Ecosystem
 {
@@ -187,66 +191,19 @@ namespace WildFarming.Ecosystem
 
         static void AppendStaticProfile(List<InspectLineLite> lines, string species)
         {
-            AddInspectLine(lines, "ecosystemflora:inspect-line-dominance", "L:" + GetDominanceLabelLangKey(species));
+            AddInspectLine(lines, "ecosystemflora:inspect-line-dominance", "L:" + SpeciesEcologyDisplay.GetDominanceLabelLangKey(species));
 
-            if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
-            {
-                string holdKey = mod.HoldStrength < 0.8f
-                    ? "ecosystemflora:hold-weak"
-                    : mod.HoldStrength > 1.1f
-                        ? "ecosystemflora:hold-strong"
-                        : "ecosystemflora:hold-moderate";
-                AddInspectLine(lines, "ecosystemflora:inspect-line-hold", "L:" + holdKey);
-            }
+            float hold = SpeciesEcologyDisplay.ResolveHoldStrength(species);
+            string holdKey = hold < 0.8f
+                ? "ecosystemflora:hold-weak"
+                : hold > 1.1f
+                    ? "ecosystemflora:hold-strong"
+                    : "ecosystemflora:hold-moderate";
+            AddInspectLine(lines, "ecosystemflora:inspect-line-hold", "L:" + holdKey);
         }
 
-        internal static string GetDominanceLabelLangKey(string species)
-        {
-            float spreadRate = 1f;
-            if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry flower))
-                spreadRate = flower.SpreadRate;
-            else if (WildFernEcology.TryGet(species, out WildFernEcology.EcologyEntry fern))
-                spreadRate = fern.SpreadRate;
-            else if (WildBerryEcology.TryGet(species, out WildBerryEcology.Profile berry))
-                spreadRate = berry.SpreadRate;
-            else if (WildTreeEcology.TryGet(species, out WildTreeEcology.Profile tree))
-            {
-                spreadRate = tree.SpreadRate;
-                switch (tree.SeralRole)
-                {
-                    case TreeSeralRole.Pioneer:
-                        return "ecosystemflora:dominance-colonizer";
-                    case TreeSeralRole.Climax:
-                        return "ecosystemflora:dominance-climax";
-                }
-            }
-            else if (WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
-                spreadRate = aquatic.SpreadRate;
-            else if (WildTallgrassEcology.TryGet(species, out WildTallgrassEcology.EcologyEntry grass))
-                spreadRate = grass.SpreadRate;
-            else if (WildGrassColonizerEcology.TryGet(species, out WildGrassColonizerEcology.EcologyEntry colonizer))
-                spreadRate = colonizer.SpreadRate;
-            else if (WildShoreSedgeEcology.TryGet(species, out WildShoreSedgeEcology.EcologyEntry shoreSedge))
-                spreadRate = shoreSedge.SpreadRate;
-            else if (WildDesertEcology.TryGet(species, out WildDesertEcology.EcologyEntry desert))
-                spreadRate = desert.SpreadRate;
-
-            if (species == "tallgrass") return "ecosystemflora:dominance-matrix";
-            if (WildGrassColonizerEcology.IsSpecies(species))
-                return "ecosystemflora:dominance-grass-colonizer";
-            if (WildShoreSedgeEcology.IsSpecies(species))
-                return "ecosystemflora:dominance-climax";
-
-            if (WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
-            {
-                if (mod.HoldStrength < 0.8f && spreadRate >= 1.5f)
-                    return "ecosystemflora:dominance-colonizer";
-                if (mod.HoldStrength > 1.1f)
-                    return "ecosystemflora:dominance-climax";
-            }
-
-            return "ecosystemflora:dominance-stable";
-        }
+        internal static string GetDominanceLabelLangKey(string species) =>
+            SpeciesEcologyDisplay.GetDominanceLabelLangKey(species);
 
         static BlockPos ResolveInspectContextPos(IBlockAccessor acc, BlockPos pos, Block block, PlantRequirements req)
         {
@@ -431,7 +388,7 @@ namespace WildFarming.Ecosystem
                 AddInspectLine(lines, "ecosystemflora:inspect-line-season-now", seasonMult.ToString("0.##"));
             }
 
-            if (WildSpeciesNiche.TryGet(species, out _))
+            if (SpeciesEcologyDisplay.HasNicheProfile(species, req))
             {
                 NicheSampler nicheSampler = EcosystemSystem.Instance?.Niche;
                 if (nicheSampler != null && cfg.UseNicheContext)

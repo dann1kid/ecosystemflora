@@ -38,6 +38,6 @@ namespace WildFarming.Ecosystem
 
         static bool IsMeadowFlower(string species) =>
             EcologyFlowerSpecies.IsKnownFlower(species)
-            && !WildGrassColonizerEcology.IsSpecies(species);
+            && !EcologyGrassColonizerSpecies.IsKnown(species);
     }
 }

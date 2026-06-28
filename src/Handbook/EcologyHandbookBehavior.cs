@@ -3,6 +3,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.SpeciesEcology;
 
 namespace WildFarming.Handbook
 {
@@ -31,11 +32,11 @@ namespace WildFarming.Handbook
             dsc.AppendLine("<strong>" + Lang.Get("ecosystemflora:handbook-ecology-header") + "</strong>");
 
             AppendSpreadRate(dsc, req.SpreadRate);
-            AppendClimate(dsc, species, req, block);
-            AppendContext(dsc, species);
-            AppendHoldStrength(dsc, species);
+            AppendClimate(dsc, req, block);
+            AppendContext(dsc, req);
+            AppendHoldStrength(dsc, req);
             AppendDominanceHint(dsc, species, req);
-            AppendNiche(dsc, species);
+            AppendNiche(dsc, req);
             AppendSeason(dsc, species);
             AppendSymbiosis(dsc, species);
         }
@@ -55,24 +56,24 @@ namespace WildFarming.Handbook
             return Lang.Get("ecosystemflora:spread-veryslow");
         }
 
-        static void AppendClimate(StringBuilder dsc, string species, PlantRequirements req, Block block)
+        static void AppendClimate(StringBuilder dsc, PlantRequirements req, Block block)
         {
-            if (block != null && PlantCodeHelper.IsThirdPartyEcologyBlock(block) && req != null)
-            {
-                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-climate",
-                    req.MinTemp.ToString("0"), req.MaxTemp.ToString("0")));
-                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-rainfall",
-                    req.MinRain.ToString("0.##"), req.MaxRain.ToString("0.##")));
-                if (req.MinForest > 0.01f || req.MaxForest < 0.99f)
-                {
-                    dsc.AppendLine(Lang.Get("ecosystemflora:handbook-forest",
-                        req.MinForest.ToString("0.##"), req.MaxForest.ToString("0.##")));
-                }
+            if (req == null) return;
 
+            if (block != null && PlantCodeHelper.IsThirdPartyEcologyBlock(block))
+            {
+                AppendClimateFromRequirements(dsc, req);
                 return;
             }
 
-            if (WildFlowerClimate.TryGet(species, out WildFlowerClimate.EcologyEntry entry))
+            if (SpeciesEcologyDisplay.TryGetRow(req.Species, out _))
+            {
+                AppendClimateFromRequirements(dsc, req);
+                return;
+            }
+
+#pragma warning disable CS0618
+            if (WildFlowerClimate.TryGet(req.Species, out WildFlowerClimate.EcologyEntry entry))
             {
                 dsc.AppendLine(Lang.Get("ecosystemflora:handbook-climate",
                     entry.MinTemp.ToString("0"), entry.MaxTemp.ToString("0")));
@@ -84,13 +85,27 @@ namespace WildFarming.Handbook
                         entry.MinForest.ToString("0.##"), entry.MaxForest.ToString("0.##")));
                 }
             }
+#pragma warning restore CS0618
         }
 
-        static void AppendContext(StringBuilder dsc, string species)
+        static void AppendClimateFromRequirements(StringBuilder dsc, PlantRequirements req)
         {
-            if (!WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile profile)) return;
+            dsc.AppendLine(Lang.Get("ecosystemflora:handbook-climate",
+                req.MinTemp.ToString("0"), req.MaxTemp.ToString("0")));
+            dsc.AppendLine(Lang.Get("ecosystemflora:handbook-rainfall",
+                req.MinRain.ToString("0.##"), req.MaxRain.ToString("0.##")));
+            if (req.MinForest > 0.01f || req.MaxForest < 0.99f)
+            {
+                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-forest",
+                    req.MinForest.ToString("0.##"), req.MaxForest.ToString("0.##")));
+            }
+        }
 
-            string label = profile.ContextAffinity switch
+        static void AppendContext(StringBuilder dsc, PlantRequirements req)
+        {
+            if (req == null) return;
+
+            string label = req.ContextAffinity switch
             {
                 FloraContextAffinity.Open => Lang.Get("ecosystemflora:context-open"),
                 FloraContextAffinity.Edge => Lang.Get("ecosystemflora:context-edge"),
@@ -104,13 +119,14 @@ namespace WildFarming.Handbook
             }
         }
 
-        static void AppendHoldStrength(StringBuilder dsc, string species)
+        static void AppendHoldStrength(StringBuilder dsc, PlantRequirements req)
         {
-            if (!WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile profile)) return;
+            if (req == null) return;
 
+            float hold = req.HoldStrength > 0f ? req.HoldStrength : SpeciesEcologyDisplay.ResolveHoldStrength(req.Species, req);
             string label;
-            if (profile.HoldStrength < 0.8f) label = Lang.Get("ecosystemflora:hold-weak");
-            else if (profile.HoldStrength > 1.1f) label = Lang.Get("ecosystemflora:hold-strong");
+            if (hold < 0.8f) label = Lang.Get("ecosystemflora:hold-weak");
+            else if (hold > 1.1f) label = Lang.Get("ecosystemflora:hold-strong");
             else label = Lang.Get("ecosystemflora:hold-moderate");
 
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-hold", label));
@@ -118,42 +134,15 @@ namespace WildFarming.Handbook
 
         static void AppendDominanceHint(StringBuilder dsc, string species, PlantRequirements req)
         {
-            // Lightweight UX: explain what kind of "dominant" this plant tends to be in succession.
-            // This is not a territory scanner; it helps players interpret spread/competition behavior.
-            float spreadRate = req != null ? req.SpreadRate : 1f;
-
-            if (!WildSpeciesModifiers.TryGet(species, out WildSpeciesModifiers.Profile mod))
-            {
-                dsc.AppendLine(Lang.Get("ecosystemflora:handbook-dominance", Lang.Get("ecosystemflora:dominance-stable")));
-                return;
-            }
-
-            string label;
-            if (species == "tallgrass")
-            {
-                label = Lang.Get("ecosystemflora:dominance-matrix");
-            }
-            else if (mod.HoldStrength < 0.8f && spreadRate >= 1.5f)
-            {
-                label = Lang.Get("ecosystemflora:dominance-colonizer");
-            }
-            else if (mod.HoldStrength > 1.1f)
-            {
-                label = Lang.Get("ecosystemflora:dominance-climax");
-            }
-            else
-            {
-                label = Lang.Get("ecosystemflora:dominance-stable");
-            }
-
-            dsc.AppendLine(Lang.Get("ecosystemflora:handbook-dominance", label));
+            string labelKey = SpeciesEcologyDisplay.GetDominanceLabelLangKey(species, req);
+            dsc.AppendLine(Lang.Get("ecosystemflora:handbook-dominance", Lang.Get(labelKey)));
         }
 
-        static void AppendNiche(StringBuilder dsc, string species)
+        static void AppendNiche(StringBuilder dsc, PlantRequirements req)
         {
-            if (!WildSpeciesNiche.TryGet(species, out WildSpeciesNiche.Profile profile)) return;
+            if (req == null || !req.HasNicheProfile) return;
 
-            string moisture = profile.PreferredMoisture switch
+            string moisture = req.PreferredMoisture switch
             {
                 MoistureLevel.Dry => Lang.Get("ecosystemflora:moisture-dry"),
                 MoistureLevel.Mesic => Lang.Get("ecosystemflora:moisture-mesic"),
@@ -162,7 +151,7 @@ namespace WildFarming.Handbook
                 _ => null
             };
 
-            string light = profile.PreferredLight switch
+            string light = req.PreferredLight switch
             {
                 LightLevel.DeepShade => Lang.Get("ecosystemflora:light-deepshade"),
                 LightLevel.Shade => Lang.Get("ecosystemflora:light-shade"),
@@ -177,7 +166,7 @@ namespace WildFarming.Handbook
 
         static void AppendSeason(StringBuilder dsc, string species)
         {
-            if (!WildSpeciesSeason.TryGet(species, out WildSpeciesSeason.Profile profile)) return;
+            WildSpeciesSeason.Profile profile = WildSpeciesSeason.Resolve(species);
 
             dsc.AppendLine(Lang.Get("ecosystemflora:handbook-season-spread",
                 profile.SpreadMultiplier(Vintagestory.API.Common.EnumSeason.Spring).ToString("0.#"),

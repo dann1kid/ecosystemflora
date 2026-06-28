@@ -22,6 +22,7 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.DefaultOtherSpeciesSpacing),
             nameof(EcosystemConfig.UseCalendarScaledSpread),
             nameof(EcosystemConfig.UseSpeciesSpreadRates),
+            nameof(EcosystemConfig.SpeciesSpreadRateScale),
         };
 
         static readonly HashSet<string> ClientOnlyProperties = new HashSet<string>(StringComparer.Ordinal)
@@ -50,6 +51,7 @@ namespace WildFarming.Ecosystem.Config
             ("MinSpeciesReproduce", "spread"),
             ("UseCalendarScaledSpread", "spread"),
             ("UseSpeciesSpreadRates", "spread"),
+            ("SpeciesSpreadRateScale", "spread"),
             ("GrowthHoursMultiplier", "spread"),
             ("EnableFlowerSpreadMaturation", "spread"),
             ("EnableFlowerSpreadAttemptCooldown", "spread"),

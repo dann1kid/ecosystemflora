@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
+using WildFarming.Ecosystem.SpeciesEcology;
+
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
 
 namespace WildFarming.Ecosystem
 {
@@ -283,7 +287,26 @@ namespace WildFarming.Ecosystem
             };
         }
 
+        internal static bool HasExplicitSeasonProfile(string species) =>
+            !string.IsNullOrEmpty(species) && BySpecies.ContainsKey(species);
+
+        public static Profile ResolveFromCode(string species)
+        {
+            if (TryGetFromCode(species, out Profile profile)) return profile;
+            return DefaultProfile;
+        }
+
         public static bool TryGet(string species, out Profile profile)
+        {
+            if (SpeciesSeasonRegistry.IsLoaded && SpeciesSeasonRegistry.TryGet(species, out profile))
+            {
+                return true;
+            }
+
+            return TryGetFromCode(species, out profile);
+        }
+
+        static bool TryGetFromCode(string species, out Profile profile)
         {
             profile = default;
             if (string.IsNullOrEmpty(species)) return false;
@@ -319,8 +342,12 @@ namespace WildFarming.Ecosystem
 
         public static Profile Resolve(string species)
         {
-            if (TryGet(species, out Profile profile)) return profile;
-            return DefaultProfile;
+            if (SpeciesSeasonRegistry.IsLoaded && SpeciesSeasonRegistry.TryGet(species, out Profile profile))
+            {
+                return profile;
+            }
+
+            return ResolveFromCode(species);
         }
 
         public static bool UsesSeasonalSpread(string species)

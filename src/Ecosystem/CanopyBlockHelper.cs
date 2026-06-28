@@ -1,6 +1,9 @@
 using System.Collections.Generic;using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     internal static class CanopyBlockHelper

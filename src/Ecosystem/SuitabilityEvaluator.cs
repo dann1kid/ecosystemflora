@@ -1,5 +1,8 @@
 using WildFarming.Network;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     public static class SuitabilityEvaluator

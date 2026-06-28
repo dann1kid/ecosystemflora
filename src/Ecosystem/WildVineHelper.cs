@@ -49,6 +49,9 @@ namespace WildFarming.Ecosystem
 
         public static string SpeciesFor(bool tropical) => tropical ? TropicalSpecies : TemperateSpecies;
 
+        public static bool IsKnown(string species) =>
+            species == TemperateSpecies || species == TropicalSpecies;
+
         public static Block ResolveEndBlock(IWorldAccessor world, bool tropical, BlockFacing facing)
         {
             if (world == null || facing == null) return null;

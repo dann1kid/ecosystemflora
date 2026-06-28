@@ -1,5 +1,8 @@
 using Vintagestory.API.Common;
 
+// Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
+#pragma warning disable CS0618
+
 namespace WildFarming.Ecosystem
 {
     public class EcosystemConfig
@@ -108,6 +111,11 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Per-species SpreadRate from ecology table scales interval and chance.</summary>
         public bool UseSpeciesSpreadRates { get; set; } = true;
+
+        /// <summary>
+        /// Global multiplier on ecology <c>SpreadRate</c> at runtime (1 = table values; 0.33 ≈ three times slower).
+        /// </summary>
+        public float SpeciesSpreadRateScale { get; set; } = 1f / 3f;
 
         /// <summary>Min game-days between attempts (calendar mode). 0 = no floor.</summary>
         public double MinSpeciesReproduceIntervalDays { get; set; } = 0;

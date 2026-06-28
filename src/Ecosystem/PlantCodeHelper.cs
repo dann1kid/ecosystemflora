@@ -169,22 +169,22 @@ namespace WildFarming.Ecosystem
                 string fernType = path.Substring("fern-".Length);
                 if (fernType.EndsWith("-free")) fernType = fernType.Substring(0, fernType.Length - "-free".Length);
                 else if (fernType.EndsWith("-snow")) fernType = fernType.Substring(0, fernType.Length - "-snow".Length);
-                if (WildFernEcology.TryGet(fernType, out _)) return fernType;
+                if (EcologyFernSpecies.IsKnown(fernType)) return fernType;
             }
 
             if (path != null && path.StartsWith("ferntree-normal-"))
             {
-                return WildFerntreeEcology.Species;
+                return EcologyFerntreeSpecies.Ferntree;
             }
 
             if (path != null && path.StartsWith("wildvine-tropical-"))
             {
-                return WildVineEcology.TropicalSpecies;
+                return WildVineHelper.TropicalSpecies;
             }
 
             if (path != null && path.StartsWith("wildvine-"))
             {
-                return WildVineEcology.TemperateSpecies;
+                return WildVineHelper.TemperateSpecies;
             }
 
             string wood = GetTreeWood(blockCode);
@@ -265,14 +265,14 @@ namespace WildFarming.Ecosystem
                 if (dash > 0) rest = rest.Substring(0, dash);
             }
 
-            return WildBerryEcology.TryGet(rest, out _) ? rest : null;
+            return EcologyBerrySpecies.IsKnown(rest) ? rest : null;
         }
 
         public static string GetTreeWood(Block block)
         {
             if (block?.Variant != null && block.Variant.TryGetValue("wood", out string variantWood))
             {
-                if (WildTreeEcology.TryGet(variantWood, out _)) return variantWood;
+                if (EcologyTreeSpecies.IsKnown(variantWood)) return variantWood;
             }
 
             return GetTreeWood(block?.Code);
@@ -291,7 +291,7 @@ namespace WildFarming.Ecosystem
                 int dash = rest.IndexOf('-');
                 if (dash > 0) rest = rest.Substring(0, dash);
                 if (rest == "aged") return null;
-                return WildTreeEcology.TryGet(rest, out _) ? rest : null;
+                return EcologyTreeSpecies.IsKnown(rest) ? rest : null;
             }
 
             if (path.StartsWith("sapling-"))
@@ -299,7 +299,7 @@ namespace WildFarming.Ecosystem
                 string rest = path.Substring("sapling-".Length);
                 int dash = rest.IndexOf('-');
                 if (dash > 0) rest = rest.Substring(0, dash);
-                return WildTreeEcology.TryGet(rest, out _) ? rest : null;
+                return EcologyTreeSpecies.IsKnown(rest) ? rest : null;
             }
 
             return null;
@@ -375,22 +375,23 @@ namespace WildFarming.Ecosystem
         {
             string species = GetEcologySpecies(blockCode);
             if (species == null) return EcologyHabitat.Terrestrial;
-            if (WildAquaticEcology.TryGet(species, out WildAquaticEcology.Profile aquatic))
+
+            if (EcologyAquaticSpecies.IsKnown(species))
             {
-                return aquatic.Habitat;
+                return EcologyAquaticSpecies.GetHabitat(species);
             }
 
-            if (WildTreeEcology.TryGet(species, out _))
+            if (EcologyTreeSpecies.IsKnown(species))
             {
                 return EcologyHabitat.TerrestrialTree;
             }
 
-            if (WildFerntreeEcology.IsSpecies(species))
+            if (EcologyFerntreeSpecies.IsKnown(species))
             {
                 return EcologyHabitat.Ferntree;
             }
 
-            if (WildVineEcology.IsSpecies(species))
+            if (WildVineHelper.IsKnown(species))
             {
                 return EcologyHabitat.WildVine;
             }

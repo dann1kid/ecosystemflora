@@ -483,6 +483,8 @@
   "ecosystemflora:config-field-SoilSuccessionStrength-desc": "Больше: сильнее смена уровень почвы. Меньше: слабее смена почвы. 1.0 — по умолчанию.",
   "ecosystemflora:config-field-SpacingVerticalSearch": "Вертикальная дистанция",
   "ecosystemflora:config-field-SpacingVerticalSearch-desc": "Больше: шире вертикальная проверка дистанции. Меньше: уже обход по Y.",
+  "ecosystemflora:config-field-SpeciesSpreadRateScale": "Общий множитель распространения",
+  "ecosystemflora:config-field-SpeciesSpreadRateScale-desc": "Больше: быстрее распространение относительно таблиц (1 = как в таблицах). Меньше: медленнее для всех видов.",
   "ecosystemflora:config-field-SpreadBudgetMs": "Бюджет распространения (мс)",
   "ecosystemflora:config-field-SpreadBudgetMs-desc": "Больше: больше мс на распространение (0 = бюджет тика). Меньше: жёстче лимит распространения.",
   "ecosystemflora:config-field-SpreadWorkerCount": "Потоков распространения",

@@ -1,5 +1,7 @@
-﻿using Vintagestory.API.Common;
+﻿using System.IO;
+using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.SpeciesEcology;
 using WildFarming.Handbook;
 
 namespace WildFarming
@@ -15,6 +17,14 @@ namespace WildFarming
             api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);
+            SpeciesEcologyRegistry.TryLoadFromDisk(
+                api,
+                ResolveModRoot(),
+                syncUserFiles: api.Side == EnumAppSide.Server);
+            SpeciesSeasonRegistry.TryLoadFromDisk(
+                api,
+                ResolveModRoot(),
+                syncUserFiles: api.Side == EnumAppSide.Server);
 
             if (api.Side == EnumAppSide.Server)
             {
@@ -64,5 +74,7 @@ namespace WildFarming
             ecosystem?.Dispose();
             base.Dispose();
         }
+        static string ResolveModRoot() =>
+            Path.GetDirectoryName(typeof(WildFarming).Assembly.Location);
     }
 }

@@ -483,6 +483,8 @@
   "ecosystemflora:config-field-SoilSuccessionStrength-desc": "Higher: stronger soil tier shifts on spread/death. Lower: subtler succession. 1.0 = default.",
   "ecosystemflora:config-field-SpacingVerticalSearch": "Spacing vertical search",
   "ecosystemflora:config-field-SpacingVerticalSearch-desc": "Higher: check spacing conflicts farther above/below. Lower: tighter vertical spacing scan.",
+  "ecosystemflora:config-field-SpeciesSpreadRateScale": "Global species spread scale",
+  "ecosystemflora:config-field-SpeciesSpreadRateScale-desc": "Higher: faster wild spread vs ecology tables (1 = table rates). Lower: slower reproduction for all species.",
   "ecosystemflora:config-field-SpreadBudgetMs": "Spread tick budget (ms)",
   "ecosystemflora:config-field-SpreadBudgetMs-desc": "Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap.",
   "ecosystemflora:config-field-SpreadWorkerCount": "Spread worker threads",

@@ -1,5 +1,6 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using WildFarming.Ecosystem.SpeciesEcology;
 
 namespace WildFarming.Ecosystem
 {
@@ -13,11 +14,22 @@ namespace WildFarming.Ecosystem
 
         public static void ApplyTo(PlantRequirements req)
         {
-            if (req == null || !EcologyFernSpecies.IsKnown(req.Species)) return;
+            if (req == null) return;
+            if (!IsFernEcologySpecies(req.Species)) return;
             if (!EcosystemConfig.Loaded.EnableFernRhizomeSpread) return;
 
             req.SpreadMode = SpreadMode.FernRhizomeMat;
             if (req.SpreadRadius <= 0) req.SpreadRadius = 1;
+        }
+
+        static bool IsFernEcologySpecies(string species)
+        {
+            if (SpeciesEcologyRegistry.IsLoaded && SpeciesEcologyRegistry.TryGet(species, out SpeciesEcologyCsvRow row))
+            {
+                return row.Taxon == "fern";
+            }
+
+            return EcologyFernSpecies.IsKnown(species);
         }
 
         public static bool IsOrthogonalStep(int dx, int dz)
