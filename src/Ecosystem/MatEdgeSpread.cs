@@ -56,6 +56,8 @@ namespace WildFarming.Ecosystem
     /// same-patch member, per the supplied topology and vertical reach.</summary>
     internal static class MatEdgeSpread
     {
+        static readonly BlockPos NeighborScratch = new BlockPos(0);
+
         public static bool IsFrontier(
             IBlockAccessor acc,
             BlockPos origin,
@@ -65,6 +67,8 @@ namespace WildFarming.Ecosystem
         {
             if (acc == null || origin == null || string.IsNullOrEmpty(species) || topology == null) return true;
             if (verticalReach < 0) verticalReach = 0;
+
+            NeighborScratch.dimension = origin.dimension;
 
             int[][] dirs = topology.Directions;
             for (int i = 0; i < dirs.Length; i++)
@@ -92,8 +96,8 @@ namespace WildFarming.Ecosystem
 
             for (int y = origin.Y - verticalReach; y <= origin.Y + verticalReach; y++)
             {
-                var checkPos = new BlockPos(nx, y, nz, origin.dimension);
-                Block block = acc.GetBlock(checkPos);
+                NeighborScratch.Set(nx, y, nz);
+                Block block = acc.GetBlock(NeighborScratch);
                 if (matches(block, species)) return true;
             }
 

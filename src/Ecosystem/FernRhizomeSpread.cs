@@ -10,7 +10,7 @@ namespace WildFarming.Ecosystem
         static readonly MatEdgeTopology Topology = new MatEdgeTopology(
             MatConnectivity.Orthogonal4,
             (block, species) => block != null && block.Id != 0
-                && string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase));
+                && string.Equals(PlantCodeHelper.GetEcologySpecies(block.Code), species, System.StringComparison.OrdinalIgnoreCase));
 
         public static void ApplyTo(PlantRequirements req)
         {
