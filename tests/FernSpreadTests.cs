@@ -1,4 +1,5 @@
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.SpeciesEcology;
 using Xunit;
 
 namespace WildFarming.Tests
@@ -15,6 +16,19 @@ namespace WildFarming.Tests
 
             Assert.True(req.UsesFernRhizomeSpread);
             Assert.Equal(1, req.SpreadRadius);
+        }
+
+        [Fact]
+        public void ApplyTo_NullSpecies_DoesNotThrow()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableFernRhizomeSpread = true };
+            SpeciesEcologyRegistry.ResetForTests();
+            SpeciesEcologyRegistry.LoadFromPaths("", null, appendMissingUserRows: false);
+
+            var req = new PlantRequirements { Species = null, Habitat = EcologyHabitat.Terrestrial };
+            FernRhizomeSpread.ApplyTo(req);
+
+            Assert.False(req.UsesFernRhizomeSpread);
         }
 
         [Fact]

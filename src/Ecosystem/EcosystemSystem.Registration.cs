@@ -142,8 +142,7 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
-            if (TallgrassSpreadMaturation.ShouldQueuePromotion(
-                    block, PlantRequirements.FromBlock(block), api, pos))
+            if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block))
             {
                 maturationQueues.AddTallgrassPromotion(api, pos);
                 registrationsLeft--;

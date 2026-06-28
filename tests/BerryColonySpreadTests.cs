@@ -5,6 +5,17 @@ namespace WildFarming.Tests
 {
     public class BerryColonySpreadTests
     {
+        [Fact]
+        public void ApplyTo_NullSpecies_DoesNotThrow()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableBerryColonySpread = true };
+
+            var req = new PlantRequirements { Species = null, Habitat = EcologyHabitat.Terrestrial };
+            BerryColonySpread.ApplyTo(req);
+
+            Assert.False(req.UsesBerryColonySpread);
+        }
+
         [Theory]
         [InlineData("blueberry")]
         [InlineData("blackcurrant")]

@@ -41,6 +41,32 @@ namespace WildFarming.Tests
             EcosystemConfig.Loaded = new EcosystemConfig();
         }
 
+        [Fact]
+        public void ShouldQueueAfterPlacement_NonTallgrass_SkipsWithoutThrowing()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+
+            var block = new Vintagestory.API.Common.Block
+            {
+                Code = new Vintagestory.API.Common.AssetLocation("game", "rock-granite"),
+            };
+
+            Assert.False(TallgrassEstablishment.ShouldQueueAfterPlacement(
+                null, new BlockPos(0, 64, 0), block));
+        }
+
+        [Fact]
+        public void ShouldQueueEstablishment_NullRequirements_ReturnsFalse()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+
+            Assert.False(TallgrassEstablishment.ShouldQueueEstablishment(
+                null,
+                new BlockPos(0, 64, 0),
+                Block("tallgrass-veryshort-free"),
+                requirements: null));
+        }
+
         static Vintagestory.API.Common.Block Block(string path) =>
             new Vintagestory.API.Common.Block { Code = new Vintagestory.API.Common.AssetLocation("game", path) };
     }

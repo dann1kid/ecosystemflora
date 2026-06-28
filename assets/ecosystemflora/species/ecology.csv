@@ -15,7 +15,7 @@ cloudberry,berry,-20,-3,0.5,1,0,0.55,0.78,BerryColonyMat,Orthogonal4,0.12,8,1,0,
 coopersreed,aquatic,3,23,0.4,1,0,0,1,RhizomeMat,,0.08,6,0,0,0,0,1,,0,ReedNearWater,1,0,1,-1,,0,0,Open,1,0.35,0.65,,,0,true,,,,,,,
 cornflower,flower,3,23,0.35,0.75,0.1,0.45,1.55,Independent,,0,0,0,0,0,2,1,,0,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,100,180,Open,1.2,0.35,1.08,Mesic,Open,1.15,true,48,24,,,,,MeadowColonizer
 cowparsley,flower,2,20,0.4,1,0,0.35,1.85,Independent,,0,0,0,0,0,1,1,,0,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,100,200,Open,1,0.35,0.68,Mesic,Partial,1.1,true,42,18,,,,,MeadowPerennial
-cranberry,berry,-2,18,0.45,1,0,0.55,0.92,BerryColonyMat,Orthogonal4,0.03,2,1,0,0,0,2,,7,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,80,0,Open,1.25,0.35,1.18,Wet,Open,1.28,false,,,,,182.609,,
+cranberry,berry,-2,18,0.45,1,0,0.55,0.92,BerryColonyMat,Orthogonal4,0.03,2,1,0,0,0,2,,7,,0,0,0,0,MediumFert|LowFert|ForestFloor|Peat,0,0,Open,1.25,0.35,1.18,Wet,Open,1.28,false,,,,,182.609,,
 crimsonkingmaple,tree,1,26,0.4,0.9,0.12,0.75,0.46,Independent,,0,0,0,0,8,7,4,,10,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,100,0,Edge,1.28,0.42,0.96,,,0,false,,,,,,Mid,
 croton,flower,22,50,0.5,1,0.4,1,0.9,Independent,,0,0,0,0,0,1,2,,0,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,80,0,Edge,1.3,0.45,1.05,Mesic,Partial,1.2,true,84,42,,,,,ForestEdge
 daffodil,flower,11,28,0.5,1,0,0.3,0.65,Independent,,0,0,0,0,0,3,1,,0,,0,0,0,0,HighFert|MediumFert|LowFert|ForestFloor|Peat,100,0,Open,1,0.35,1.2,,,0,true,72,36,,,,,MeadowPerennial

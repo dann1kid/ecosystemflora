@@ -14,7 +14,7 @@ namespace WildFarming.Ecosystem
 
         public static void ApplyTo(PlantRequirements req)
         {
-            if (req == null) return;
+            if (req == null || string.IsNullOrEmpty(req.Species)) return;
             if (!IsFernEcologySpecies(req.Species)) return;
             if (!EcosystemConfig.Loaded.EnableFernRhizomeSpread) return;
 
@@ -24,6 +24,8 @@ namespace WildFarming.Ecosystem
 
         static bool IsFernEcologySpecies(string species)
         {
+            if (string.IsNullOrEmpty(species)) return false;
+
             if (SpeciesEcologyRegistry.IsLoaded && SpeciesEcologyRegistry.TryGet(species, out SpeciesEcologyCsvRow row))
             {
                 return row.Taxon == "fern";

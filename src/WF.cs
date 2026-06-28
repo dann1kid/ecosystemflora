@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
 using WildFarming.Ecosystem.SpeciesEcology;

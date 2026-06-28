@@ -19,8 +19,16 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
         public static bool IsLoaded { get; private set; }
 
-        public static bool TryGet(string species, out SpeciesEcologyCsvRow row) =>
-            bySpecies.TryGetValue(species, out row);
+        public static bool TryGet(string species, out SpeciesEcologyCsvRow row)
+        {
+            if (string.IsNullOrEmpty(species))
+            {
+                row = null;
+                return false;
+            }
+
+            return bySpecies.TryGetValue(species, out row);
+        }
 
         public static void TryLoadFromDisk(ICoreAPI api, string modRoot, bool syncUserFiles)
         {

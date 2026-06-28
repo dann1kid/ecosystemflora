@@ -972,7 +972,7 @@ namespace WildFarming.Ecosystem
 
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
             {
-                if (TallgrassSpreadMaturation.ShouldQueuePromotion(block, PlantRequirements.FromBlock(block), api, pos))
+                if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block))
                 {
                     maturationQueues.AddTallgrassPromotion(api, pos);
                 }
@@ -1343,8 +1343,7 @@ namespace WildFarming.Ecosystem
 
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
                     {
-                        if (TallgrassSpreadMaturation.ShouldQueuePromotion(
-                            block, PlantRequirements.FromBlock(block), api, item.Pos))
+                        if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, item.Pos, block))
                         {
                             maturationQueues.AddTallgrassPromotion(api, item.Pos);
                             return true;
