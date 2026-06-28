@@ -22,7 +22,10 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             return keys;
         }
 
-        public static IEnumerable<KeyValuePair<string, Dictionary<string, string>>> ReadRows(string path)
+        public static IEnumerable<KeyValuePair<string, Dictionary<string, string>>> ReadRows(
+            string path,
+            IList<CsvRowIssue> issues = null,
+            bool validateContractSpecies = false)
         {
             if (string.IsNullOrEmpty(path) || !File.Exists(path)) yield break;
 
@@ -40,6 +43,10 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
             if (!columnIndex.ContainsKey(SpeciesEcologyCsvSchema.SpeciesColumn)) yield break;
 
+            var seenSpecies = issues != null
+                ? new HashSet<string>(StringComparer.Ordinal)
+                : null;
+
             for (int lineIndex = 1; lineIndex < lines.Length; lineIndex++)
             {
                 string line = lines[lineIndex];
@@ -52,6 +59,18 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
                 string species = cells[speciesIndex]?.Trim();
                 if (string.IsNullOrEmpty(species)) continue;
+
+                if (seenSpecies != null && !seenSpecies.Add(species))
+                {
+                    issues.Add(new CsvRowIssue(CsvRowIssueKind.DuplicateSpecies, lineIndex + 1, species));
+                }
+
+                if (validateContractSpecies
+                    && issues != null
+                    && !SpeciesEcologyCatalogIndex.IsContractSpecies(species))
+                {
+                    issues.Add(new CsvRowIssue(CsvRowIssueKind.UnknownSpecies, lineIndex + 1, species));
+                }
 
                 var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 foreach (KeyValuePair<string, int> column in columnIndex)

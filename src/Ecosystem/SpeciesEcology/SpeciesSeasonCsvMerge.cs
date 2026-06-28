@@ -48,5 +48,20 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             Array.Copy(row.Stress, stress, 12);
             return new WildSpeciesSeason.Profile(spread, stress);
         }
+
+        public static bool RowEquals(SpeciesSeasonCsvRow a, SpeciesSeasonCsvRow b, float tolerance = 0.001f)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == null || b == null) return false;
+            if (a.Species != b.Species) return false;
+
+            for (int i = 0; i < 12; i++)
+            {
+                if (Math.Abs(a.Spread[i] - b.Spread[i]) > tolerance) return false;
+                if (Math.Abs(a.Stress[i] - b.Stress[i]) > tolerance) return false;
+            }
+
+            return true;
+        }
     }
 }

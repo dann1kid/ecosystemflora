@@ -43,7 +43,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 EnsureUserCsvFile(modRoot, userPath);
             }
 
-            LoadFromPaths(modRoot, File.Exists(userPath) ? userPath : null, appendMissingUserRows: syncUserFiles);
+            LoadFromPaths(modRoot, File.Exists(userPath) ? userPath : null, appendMissingUserRows: syncUserFiles, api);
         }
 
         internal static void EnsureUserCsvFile(string modRoot, string userCsvPath)
@@ -60,13 +60,13 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             AppendMissingUserRows(userCsvPath, seed);
         }
 
-        internal static void LoadFromPaths(string modRoot, string userCsvPath, bool appendMissingUserRows)
+        internal static void LoadFromPaths(string modRoot, string userCsvPath, bool appendMissingUserRows, ICoreAPI api = null)
         {
-            var merged = BuildShippedDefaults(modRoot);
+            var merged = BuildShippedDefaults(modRoot, api);
 
             if (!string.IsNullOrEmpty(userCsvPath) && File.Exists(userCsvPath))
             {
-                MergeCsvFile(userCsvPath, merged);
+                MergeCsvFile(userCsvPath, merged, userFile: true, api);
                 if (appendMissingUserRows)
                 {
                     AppendMissingUserRows(userCsvPath, merged);
@@ -83,13 +83,13 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             IsLoaded = false;
         }
 
-        static Dictionary<string, SpeciesEcologyCsvRow> BuildShippedDefaults(string modRoot)
+        static Dictionary<string, SpeciesEcologyCsvRow> BuildShippedDefaults(string modRoot, ICoreAPI api = null)
         {
             var merged = BuildCodeDefaults();
             string assetPath = Path.Combine(modRoot, AssetRelativePath);
             if (File.Exists(assetPath))
             {
-                MergeCsvFile(assetPath, merged);
+                MergeCsvFile(assetPath, merged, userFile: false, api);
             }
 
             return merged;
@@ -122,10 +122,23 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             return dict;
         }
 
-        static void MergeCsvFile(string path, Dictionary<string, SpeciesEcologyCsvRow> target)
+        static void MergeCsvFile(
+            string path,
+            Dictionary<string, SpeciesEcologyCsvRow> target,
+            bool userFile,
+            ICoreAPI api = null)
         {
-            foreach (KeyValuePair<string, Dictionary<string, string>> entry in SpeciesEcologyCsvReader.ReadRows(path))
+            var issues = new List<CsvRowIssue>();
+            foreach (KeyValuePair<string, Dictionary<string, string>> entry in SpeciesEcologyCsvReader.ReadRows(
+                path,
+                issues,
+                validateContractSpecies: true))
             {
+                if (userFile && !SpeciesEcologyCatalogIndex.IsContractSpecies(entry.Key))
+                {
+                    continue;
+                }
+
                 if (!target.TryGetValue(entry.Key, out SpeciesEcologyCsvRow row))
                 {
                     row = new SpeciesEcologyCsvRow { Species = entry.Key };
@@ -134,6 +147,8 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
                 SpeciesEcologyCsvMerge.ApplyFields(row, entry.Value);
             }
+
+            SpeciesCsvLoadWarnings.LogIssues(api, path, issues, userFile);
         }
 
         static void AppendMissingUserRows(string userCsvPath, Dictionary<string, SpeciesEcologyCsvRow> merged)

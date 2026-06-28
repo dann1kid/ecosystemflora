@@ -3,9 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.5.3**
+**This release:** **4.5.4**
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
+
+---
+
+## 4.5.4 — Species CSV stability
+
+- **Shipped CSV parity tests** — CI fails if `assets/ecosystemflora/species/ecology.csv` or `season.csv` drift from exporters (`tools/Export-SpeciesEcologyCsv.ps1`, `Export-SpeciesSeasonCsv.ps1`).
+- **Load warnings** — duplicate species rows and unknown species in user ModConfig CSV (server log; unknown rows skipped).
+- **`/ecospeciesreload`** — server admin command reloads merged ecology/season tables without world restart.
+- Docs: client vs server inspect/handbook in [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md).
+- **`CONFIGURATION.md`** — complete reference for all **201** JSON keys (generated from `EcosystemConfig.cs` + config UI descriptions via `tools/generate_configuration_doc.py`).
 
 ---
 

@@ -154,5 +154,58 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             if (value == "1") assign(true);
             else if (value == "0") assign(false);
         }
+
+        public static bool RowEquals(SpeciesEcologyCsvRow a, SpeciesEcologyCsvRow b, float tolerance = 0.001f)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == null || b == null) return false;
+
+            return a.Species == b.Species
+                && a.Taxon == b.Taxon
+                && Nearly(a.MinTemp, b.MinTemp, tolerance)
+                && Nearly(a.MaxTemp, b.MaxTemp, tolerance)
+                && Nearly(a.MinRain, b.MinRain, tolerance)
+                && Nearly(a.MaxRain, b.MaxRain, tolerance)
+                && Nearly(a.MinForest, b.MinForest, tolerance)
+                && Nearly(a.MaxForest, b.MaxForest, tolerance)
+                && Nearly(a.SpreadRate, b.SpreadRate, tolerance)
+                && a.SpreadMode == b.SpreadMode
+                && a.MatConnectivity == b.MatConnectivity
+                && Nearly(a.SeedDispersalChance, b.SeedDispersalChance, tolerance)
+                && a.SeedDispersalRadius == b.SeedDispersalRadius
+                && a.MatSpreadRadius == b.MatSpreadRadius
+                && a.IndependentSpreadRadius == b.IndependentSpreadRadius
+                && a.SpreadRadius == b.SpreadRadius
+                && a.SameSpeciesSpacing == b.SameSpeciesSpacing
+                && a.OtherSpeciesSpacing == b.OtherSpeciesSpacing
+                && a.SpacingFromSpecies == b.SpacingFromSpecies
+                && a.MinSunlight == b.MinSunlight
+                && a.Habitat == b.Habitat
+                && a.WaterMaxDepth == b.WaterMaxDepth
+                && a.WaterMinDepth == b.WaterMinDepth
+                && a.WaterVerticalBlocks == b.WaterVerticalBlocks
+                && a.WaterExactDepth == b.WaterExactDepth
+                && a.SoilKinds == b.SoilKinds
+                && a.SoilMinFertility == b.SoilMinFertility
+                && a.SoilMaxFertility == b.SoilMaxFertility
+                && a.ContextAffinity == b.ContextAffinity
+                && Nearly(a.ContextBonus, b.ContextBonus, tolerance)
+                && Nearly(a.ForestInteriorPenalty, b.ForestInteriorPenalty, tolerance)
+                && Nearly(a.HoldStrength, b.HoldStrength, tolerance)
+                && a.Moisture == b.Moisture
+                && a.Light == b.Light
+                && Nearly(a.NicheBonus, b.NicheBonus, tolerance)
+                && a.SeasonExplicit == b.SeasonExplicit
+                && Nearly((float)a.FlowerMaturationHours, (float)b.FlowerMaturationHours, tolerance)
+                && Nearly((float)a.FlowerCooldownHours, (float)b.FlowerCooldownHours, tolerance)
+                && Nearly((float)a.FernMaturationHours, (float)b.FernMaturationHours, tolerance)
+                && Nearly((float)a.FernCooldownHours, (float)b.FernCooldownHours, tolerance)
+                && Nearly((float)a.BerryMaturationHours, (float)b.BerryMaturationHours, tolerance)
+                && a.TreeSeralRole == b.TreeSeralRole
+                && a.SoilSuccessionRole == b.SoilSuccessionRole;
+        }
+
+        static bool Nearly(float a, float b, float tolerance) =>
+            Math.Abs(a - b) <= tolerance;
     }
 }

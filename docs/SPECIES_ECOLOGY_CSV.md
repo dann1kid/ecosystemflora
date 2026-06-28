@@ -16,11 +16,30 @@ JSON config (`ecosystemflora.json`) still controls **global** knobs: spread atte
 | 3. User override | `ModConfig/ecosystemflora/species/ecology.csv` | Your ecology edits (partial rows OK) |
 | 3. User override | `ModConfig/ecosystemflora/species/season.csv` | Your season edits |
 
-**Server first start:** creates `ModConfig/ecosystemflora/species/` and writes full `ecology.csv` + `season.csv` from shipped defaults when missing. On every server start, **missing contract species rows** are appended after mod updates. Edit those files and **restart the world** (or rejoin) to reload.
+**Server first start:** creates `ModConfig/ecosystemflora/species/` and writes full `ecology.csv` + `season.csv` from shipped defaults when missing. On every server start, **missing contract species rows** are appended after mod updates. Edit those files and **restart the world** (or rejoin) to reload — or on server use **`/ecospeciesreload`** (admin) without a full restart.
 
 Legacy flat files (`ModConfig/ecosystemflora.species.csv`, `.species.season.csv`) are **moved** into the species folder on first load if the new paths do not exist yet.
 
 **Partial override:** empty CSV cell = keep value from lower layers when the row is merged at runtime.
+
+### Client vs server (inspect / handbook)
+
+| Side | Ecology source | Notes |
+|------|----------------|-------|
+| **Dedicated server** | `ModConfig/ecosystemflora/species/*.csv` on the **server** | Spread, stress, maturation use this table. |
+| **Client (MP)** | Shipped mod assets only (unless you copy the same ModConfig CSVs locally) | Handbook (**I**) and inspect text may show **defaults**, while simulation follows the server. |
+| **Singleplayer** | Same process — server ModConfig + assets | `/ecospeciesreload` updates the shared in-memory registry immediately. |
+
+After editing CSV on a dedicated server, run **`/ecospeciesreload`** (requires `controlserver` privilege) instead of restarting the world.
+
+### CSV validation (server log)
+
+On load and reload, the mod warns about:
+
+- **Duplicate `species` rows** in one file (last row wins).
+- **Unknown species** in **user** CSV (typo rows are skipped, not merged).
+
+Shipped asset CSV drift is caught in CI: `ShippedSpeciesCsvParityTests` compares `assets/ecosystemflora/species/*.csv` to `SpeciesEcologyExporter` / `SpeciesSeasonExporter`.
 
 ---
 
@@ -143,9 +162,11 @@ See [`CONFIGURATION.md`](CONFIGURATION.md) for full JSON reference.
 
 | Area | Path |
 |------|------|
-| Registry load / merge | `src/Ecosystem/SpeciesEcology/SpeciesEcologyRegistry.cs`, `SpeciesSeasonRegistry.cs` |
+| Registry load / merge | `SpeciesEcologyRegistry.cs`, `SpeciesSeasonRegistry.cs` |
+| Reload / load entry | `SpeciesEcologyLoadService.cs`; `/ecospeciesreload` → `SpeciesEcologyServerSystem.cs` |
+| CSV validation | `SpeciesEcologyCsvReader.cs`, `SpeciesCsvLoadWarnings.cs`, `SpeciesEcologyCatalogIndex.cs` |
 | Export | `SpeciesEcologyExporter.cs`, `SpeciesSeasonExporter.cs` |
 | FromBlock build | `PlantRequirementsRegistryBuild.cs` |
 | Display (handbook / inspect) | `SpeciesEcologyDisplay.cs` |
 | Export-only C# tables | `WildFlowerClimate.cs`, `WildBerryEcology.cs`, … (`[EcologyExportTable]`, `[Obsolete]`) |
-| Tests | `SpeciesEcologyExportTests`, `SpeciesSeasonRegistryTests`, `SpacingFromSpeciesCodecTests` |
+| Tests | `ShippedSpeciesCsvParityTests`, `SpeciesEcologyExportTests`, `SpeciesSeasonRegistryTests`, `SpacingFromSpeciesCodecTests` |

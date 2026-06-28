@@ -24,6 +24,7 @@ namespace WildFarming.Tests
         {
             SpeciesEcologyRegistry.ResetForTests();
             SpeciesSeasonRegistry.ResetForTests();
+            SpeciesEcologyCatalogIndex.ResetForTests();
             try
             {
                 if (Directory.Exists(tempDir))
@@ -139,6 +140,40 @@ namespace WildFarming.Tests
             var present = SpeciesEcologyCsvReader.ReadSpeciesKeys(userCsv);
             Assert.Contains("horsetail", present);
             Assert.Equal(SpeciesEcologyCatalog.All().Count, present.Count);
+        }
+
+        [Fact]
+        public void CsvReader_reports_duplicate_species_rows()
+        {
+            string path = Path.Combine(tempDir, "dup.csv");
+            File.WriteAllText(path,
+                "species,spread_rate\n" +
+                "horsetail,1.1\n" +
+                "horsetail,2.2\n");
+
+            var issues = new List<CsvRowIssue>();
+            var rows = SpeciesEcologyCsvReader.ReadRows(path, issues).ToList();
+
+            Assert.Equal(2, rows.Count);
+            Assert.Single(issues);
+            Assert.Equal(CsvRowIssueKind.DuplicateSpecies, issues[0].Kind);
+            Assert.Equal("horsetail", issues[0].Species);
+            Assert.Equal(3, issues[0].LineNumber);
+        }
+
+        [Fact]
+        public void User_csv_unknown_species_is_not_merged_into_registry()
+        {
+            string userCsv = Path.Combine(tempDir, "ecosystemflora.species.csv");
+            File.WriteAllText(userCsv,
+                "species,spread_rate\n" +
+                "not_a_real_species,9.9\n" +
+                "horsetail,1.5\n");
+
+            SpeciesEcologyRegistry.LoadFromPaths(RepoRoot, userCsv, appendMissingUserRows: false);
+            Assert.False(SpeciesEcologyRegistry.TryGet("not_a_real_species", out _));
+            Assert.True(SpeciesEcologyRegistry.TryGet("horsetail", out SpeciesEcologyCsvRow row));
+            Assert.Equal(1.5f, row.SpreadRate, 3);
         }
 
         [Fact]
