@@ -9,6 +9,14 @@ namespace WildFarming.Ecosystem
     /// </summary>
     internal static class BerryColonySpread
     {
+        static readonly MatEdgeTopology OrthogonalTopology = new MatEdgeTopology(
+            MatConnectivity.Orthogonal4,
+            IsBerrySpeciesBlock);
+
+        static readonly MatEdgeTopology ChebyshevTopology = new MatEdgeTopology(
+            MatConnectivity.Chebyshev8,
+            IsBerrySpeciesBlock);
+
         public static void ApplyTo(PlantRequirements req)
         {
             if (req == null || string.IsNullOrEmpty(req.Species)) return;
@@ -61,24 +69,33 @@ namespace WildFarming.Ecosystem
 
         static MatEdgeTopology TopologyFor(string species)
         {
-            MatConnectivity connectivity = MatConnectivity.Orthogonal4;
+            return ResolveConnectivity(species) == MatConnectivity.Chebyshev8
+                ? ChebyshevTopology
+                : OrthogonalTopology;
+        }
+
+        static MatConnectivity ResolveConnectivity(string species)
+        {
+            if (string.IsNullOrEmpty(species)) return MatConnectivity.Orthogonal4;
+
             if (SpeciesEcologyRegistry.TryGetMatConnectivity(species, out MatConnectivity csvConnectivity))
             {
-                connectivity = csvConnectivity;
-            }
-            else if (SpeciesEcologyLegacyAccess.TryGetBerryMatConnectivity(species, out MatConnectivity legacyConnectivity))
-            {
-                connectivity = legacyConnectivity;
+                return csvConnectivity;
             }
 
-            return new MatEdgeTopology(connectivity, IsBerrySpeciesBlock);
+            if (SpeciesEcologyLegacyAccess.TryGetBerryMatConnectivity(species, out MatConnectivity legacyConnectivity))
+            {
+                return legacyConnectivity;
+            }
+
+            return MatConnectivity.Orthogonal4;
         }
 
         static bool IsBerrySpeciesBlock(Block block, string species)
         {
             return block != null && block.Id != 0
                 && PlantCodeHelper.IsWildBerryBushBlock(block)
-                && string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase);
+                && string.Equals(PlantCodeHelper.GetEcologySpecies(block.Code), species, System.StringComparison.OrdinalIgnoreCase);
         }
 
         public static MatSpreadCollectMode ResolveCollectMode(PlantRequirements req, System.Random rand)

@@ -1,10 +1,16 @@
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.SpeciesEcology;
 using Xunit;
 
 namespace WildFarming.Tests
 {
     public class BerryColonySpreadTests
     {
+        public BerryColonySpreadTests()
+        {
+            SpeciesEcologyRegistry.ResetForTests();
+        }
+
         [Fact]
         public void ApplyTo_NullSpecies_DoesNotThrow()
         {

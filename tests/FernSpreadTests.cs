@@ -25,10 +25,17 @@ namespace WildFarming.Tests
             SpeciesEcologyRegistry.ResetForTests();
             SpeciesEcologyRegistry.LoadFromPaths("", null, appendMissingUserRows: false);
 
-            var req = new PlantRequirements { Species = null, Habitat = EcologyHabitat.Terrestrial };
-            FernRhizomeSpread.ApplyTo(req);
+            try
+            {
+                var req = new PlantRequirements { Species = null, Habitat = EcologyHabitat.Terrestrial };
+                FernRhizomeSpread.ApplyTo(req);
 
-            Assert.False(req.UsesFernRhizomeSpread);
+                Assert.False(req.UsesFernRhizomeSpread);
+            }
+            finally
+            {
+                SpeciesEcologyRegistry.ResetForTests();
+            }
         }
 
         [Fact]
