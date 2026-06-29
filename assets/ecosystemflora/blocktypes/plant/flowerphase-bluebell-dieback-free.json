@@ -9,13 +9,13 @@
   "shape": { "base": "game:block/plant/flower/lilyofthevalley" },
   "textures": {
     "leaves1": { "base": "game:block/plant/flower/stem/bluebellleaves1", "tint": "#8b7355" },
-    "north1": { "base": "game:block/plant/flower/petal/bluebell1", "tint": "#8b7355" },
-    "northTinted1": { "base": "game:block/plant/flower/petal/bluebell1", "tint": "#8b7355" },
+    "north1": { "base": "game:block/transparent" },
+    "northTinted1": { "base": "game:block/transparent" },
     "petal1": { "base": "game:block/plant/flower/petal/bluebell1", "tint": "#8b7355" },
     "petal2": { "base": "game:block/plant/flower/petal/bluebell2", "tint": "#8b7355" },
     "petal3": { "base": "game:block/plant/flower/petal/bluebell3", "tint": "#8b7355" },
-    "south1": { "base": "game:block/plant/flower/petal/bluebell1", "tint": "#8b7355" },
-    "southTinted1": { "base": "game:block/plant/flower/petal/bluebell1", "tint": "#8b7355" },
+    "south1": { "base": "game:block/transparent" },
+    "southTinted1": { "base": "game:block/transparent" },
     "stem1": { "base": "game:block/plant/flower/stem/bluebell1", "tint": "#8b7355" },
     "stem2": { "base": "game:block/plant/flower/stem/bluebell2", "tint": "#8b7355" },
     "stem3": { "base": "game:block/plant/flower/stem/bluebell3", "tint": "#8b7355" }

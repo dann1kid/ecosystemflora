@@ -49,6 +49,11 @@ function Convert-ToPhaseTextures($textures, $phase, $species) {
     foreach ($key in $textures.Keys) {
         $path = Get-TextureBasePath $textures[$key]
 
+        if ($path -match "transparent") {
+            $result[$key] = @{ Path = "game:block/transparent"; Tint = $null }
+            continue
+        }
+
         if ([string]::IsNullOrEmpty($path) -or $path -match "transparent") {
             $path = $fallback
         }
@@ -158,6 +163,69 @@ $texJson
   "drops": []
 }
 "@ | Set-Content -Path $path -Encoding UTF8
+}
+
+function Write-GhostpipePhases($species) {
+    $petal = "game:block/plant/flower/petal/${species}*"
+
+    foreach ($phase in @("vegetative", "dormant", "dieback")) {
+        $path = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+
+        $northPetal = if ($phase -eq "vegetative") {
+            "    `"north1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
+        } else {
+            "    `"north1`": { `"base`": `"$petal`" },"
+        }
+        $southPetal = if ($phase -eq "vegetative") {
+            "    `"south1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
+        } else {
+            "    `"south1`": { `"base`": `"$petal`" },"
+        }
+
+        $climateBlock = ""
+        if ($phase -eq "dormant") {
+            $climateBlock = @"
+
+  "climateColorMap": "climatePlantTint",
+"@
+        }
+        elseif ($phase -eq "dieback") {
+            $climateBlock = @"
+
+  "climateColorMap": "climatePlantTint",
+  "frostable": true,
+"@
+        }
+
+        @"
+{
+  "code": "flowerphase-${species}-${phase}-free",
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "drawtype": "JSON",
+  "randomizeRotations": true,
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-16x16" },
+  "textures": {
+$northPetal
+    "northTinted1": { "base": "game:block/transparent" },
+$southPetal
+    "southTinted1": { "base": "game:block/transparent" }
+  },$climateBlock
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.25, "z2": 0.875 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "materialDensity": 200,
+  "drops": []
+}
+"@ | Set-Content -Path $path -Encoding UTF8
+    }
 }
 
 function Write-RafflesiaPhases($species, $color) {
@@ -276,9 +344,16 @@ foreach ($kv in $shapeOnly.GetEnumerator()) {
     Write-Host "Wrote shape-only flowerphase-$($kv.Key)-*"
 }
 
+$ghostpipeSpecies = @("ghostpipewhite", "ghostpipepink", "ghostpipered")
+
 Write-RafflesiaPhases "rafflesiabrown" "brown"
 Write-RafflesiaPhases "rafflesiared" "red"
 Write-Host "Wrote flowerphase-rafflesia-{brown,red}-*"
+
+foreach ($species in $ghostpipeSpecies) {
+    Write-GhostpipePhases $species
+    Write-Host "Wrote flowerphase-$species-{vegetative,dormant,dieback}"
+}
 
 $juvenileFiles = Get-ChildItem -Path $plantDir -Filter "juvenile-flower-*-free.json"
 $count = 0
@@ -288,6 +363,7 @@ foreach ($file in $juvenileFiles) {
 
     $species = $juvenile.code -replace "^juvenile-flower-", "" -replace "-free$", ""
     if ($shapeOnly.ContainsKey($species)) { continue }
+    if ($ghostpipeSpecies -contains $species) { continue }
 
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
         Write-PhaseBlockFromJuvenile $species $phase $juvenile

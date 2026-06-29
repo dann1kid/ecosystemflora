@@ -10,8 +10,8 @@
   "textures": {
     "southTinted1": { "base": "game:block/transparent" },
     "northTinted1": { "base": "game:block/transparent" },
-    "north1": { "base": "game:block/plant/flower/petal/ghostpipepink" },
-    "south1": { "base": "game:block/plant/flower/petal/ghostpipepink" }
+    "north1": { "base": "game:block/plant/flower/petal/ghostpipepink*" },
+    "south1": { "base": "game:block/plant/flower/petal/ghostpipepink*" }
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },

@@ -147,8 +147,8 @@ function OrangemallowBlock() {
 
 function GhostpipeBlock($species) {
     $t = @{
-        north1 = "game:block/plant/flower/petal/$species"
-        south1 = "game:block/plant/flower/petal/$species"
+        north1 = "game:block/plant/flower/petal/$species*"
+        south1 = "game:block/plant/flower/petal/$species*"
         northTinted1 = "game:block/transparent"
         southTinted1 = "game:block/transparent"
     }

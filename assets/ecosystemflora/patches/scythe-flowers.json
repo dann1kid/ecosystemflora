@@ -18,6 +18,13 @@
 		"side": "server",
 		"op": "add",
 		"path": "/attributes/codePrefixes/-",
+		"value": "flowerphase-"
+	},
+	{
+		"file": "game:itemtypes/tool/scythe.json",
+		"side": "server",
+		"op": "add",
+		"path": "/attributes/codePrefixes/-",
 		"value": "juvenile-sedge-"
 	},
 	{

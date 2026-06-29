@@ -14,6 +14,7 @@ namespace WildFarming.Tests
             string json = File.ReadAllText(path);
             Assert.Contains("flower-", json);
             Assert.Contains("juvenile-flower-", json);
+            Assert.Contains("flowerphase-", json);
             Assert.Contains("juvenile-sedge-", json);
             Assert.Contains("tallplant-brownsedge-", json);
         }

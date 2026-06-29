@@ -104,8 +104,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: быстрее очередь созревания. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EnableFlowerPhenology),
-                "On: meadow flowers follow simulated phases (dormant/vegetative/bloom/dieback). Spread and harvest only in bloom; block appearance follows phase.",
-                "Вкл.: фазы цветов (покой/вегетация/цветение/отмирание). Распространение и сбор только в цветении; вид блока = фаза.");
+                "On: meadow flowers follow simulated phases (dormant/vegetative/bloom/dieback). Spread only in bloom; block appearance follows phase.",
+                "Вкл.: фазы цветов (покой/вегетация/цветение/отмирание). Распространение только в цветении; вид блока = фаза.");
 
             D(nameof(EcosystemConfig.FlowerBloomMinTemperature),
                 "Higher: flowers need warmer weather to bloom (shorter bloom window). Lower: bloom in cooler cells.",
