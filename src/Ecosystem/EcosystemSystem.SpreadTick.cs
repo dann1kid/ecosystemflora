@@ -58,7 +58,7 @@ namespace WildFarming.Ecosystem
 
                     if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
                     {
-                        if (!cfg.EnableWildVineEcology || !WildVineHelper.IsEndBlock(block))
+                        if (!cfg.EnableWildVineEcology || !WildVineHelper.IsVineBlock(block))
                         {
                             return false;
                         }

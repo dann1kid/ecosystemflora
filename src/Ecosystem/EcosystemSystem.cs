@@ -959,6 +959,11 @@ namespace WildFarming.Ecosystem
                 foliageCells.OnBlockAdded(pos);
             }
 
+            if (TryRegisterPlacedVine(pos, block))
+            {
+                return;
+            }
+
             if (PlantCodeHelper.IsTreeSaplingBlock(block))
             {
                 string wood = PlantCodeHelper.GetTreeWood(block);
@@ -984,6 +989,43 @@ namespace WildFarming.Ecosystem
             if (registry.Contains(anchor)) return;
 
             RegisterReproducer(anchor, participant, playerPlaced: true);
+        }
+
+        bool TryRegisterPlacedVine(BlockPos pos, Block block)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableWildVineEcology || !WildVineHelper.IsVineBlock(block)) return false;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+
+            Block placed = acc.GetBlock(pos);
+            if (!WildVineHelper.TryParse(placed, out WildVineInfo info)) return true;
+
+            if (registry.Contains(pos)) return true;
+            if (WildVineHelper.ColumnHasRegistryEntry(acc, pos, info, registry.Contains)) return true;
+
+            if (!EcosystemParticipant.TryFromBlock(placed, out IEcosystemParticipant participant)) return true;
+
+            RegisterReproducer(pos, participant, playerPlaced: true);
+            return true;
+        }
+
+        internal void TryRegisterVineSpreadTip(BlockPos pos)
+        {
+            if (api?.World?.BlockAccessor == null || pos == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableWildVineEcology) return;
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            Block block = acc.GetBlock(pos);
+            if (!WildVineHelper.IsEndBlock(block)) return;
+            if (!WildVineHelper.TryParse(block, out WildVineInfo info)) return;
+            if (registry.Contains(pos)) return;
+            if (WildVineHelper.ColumnHasRegistryEntry(acc, pos, info, registry.Contains)) return;
+            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return;
+
+            RegisterReproducer(pos, participant, spawnBurst: false);
         }
 
         void OnDidUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
@@ -1328,7 +1370,7 @@ namespace WildFarming.Ecosystem
 
                 case PendingRegistrationKind.Vine:
                     if (registry.Contains(item.Pos)) return true;
-                    if (!WildVineHelper.IsEndBlock(block)) { stale = true; return false; }
+                    if (!WildVineHelper.IsVineBlock(block)) { stale = true; return false; }
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant vineParticipant))
                     {
                         stale = true;

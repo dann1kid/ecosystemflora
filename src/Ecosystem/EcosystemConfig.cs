@@ -443,10 +443,13 @@ namespace WildFarming.Ecosystem
         public bool EnableWildVineEcology { get; set; } = true;
 
         /// <summary>Horizontal scan radius when capturing adjacent wall faces.</summary>
-        public int WildVineWallCaptureRadius { get; set; } = 4;
+        public int WildVineWallCaptureRadius { get; set; } = 2;
 
         /// <summary>Vertical scan span when capturing adjacent wall faces.</summary>
-        public int WildVineWallCaptureHeight { get; set; } = 6;
+        public int WildVineWallCaptureHeight { get; set; } = 4;
+
+        /// <summary>Max vine blocks that may dangle in air below the last wall-backed cell (0 = wall only).</summary>
+        public int WildVineMaxHangDepth { get; set; } = 8;
 
         /// <summary>Trunk segments left during ferntree snag senescence year.</summary>
         public int FerntreeSenescenceSnagSegments { get; set; } = 2;

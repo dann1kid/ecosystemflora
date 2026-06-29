@@ -25,6 +25,8 @@ namespace WildFarming.Ecosystem
 
         internal void Test_StressTick(float dt = 0) => OnStressTick(dt);
 
+        internal void Test_TryRegisterPlacedBlock(BlockPos pos) => TryRegisterPlacedBlock(pos);
+
         internal void Test_FlushRegistration()
         {
             if (api?.World?.BlockAccessor == null) return;

@@ -230,7 +230,7 @@ namespace WildFarming.Ecosystem
             if (IsWildBerryBushBlock(block)) return true;
             if (IsTreeLogGrownBlock(block)) return true;
             if (IsFerntreeTrunkBlock(block)) return true;
-            if (WildVineHelper.IsEndBlock(block)) return true;
+            if (WildVineHelper.IsVineBlock(block)) return true;
             if (!IsEcologyPlant(block)) return false;
 
             if (ResolveEcologySpecies(block) == "tallgrass"
@@ -368,6 +368,12 @@ namespace WildFarming.Ecosystem
                 return FerntreeStructure.GetTrunkBase(acc, pos);
             }
 
+            if (WildVineHelper.IsVineBlock(at)
+                && WildVineHelper.TryResolveSpreadAnchor(acc, null, pos, out BlockPos vineAnchor))
+            {
+                return vineAnchor;
+            }
+
             return pos.Copy();
         }
 
@@ -420,9 +426,12 @@ namespace WildFarming.Ecosystem
                 return new AssetLocation("game:ferntree-normal-trunk");
             }
 
-            if (WildVineHelper.IsEndBlock(block))
+            if (WildVineHelper.TryParse(block, out WildVineInfo vine))
             {
-                return block.Code;
+                string path = vine.Tropical
+                    ? "wildvine-tropical-end-" + vine.Facing.Code
+                    : "wildvine-end-" + vine.Facing.Code;
+                return new AssetLocation("game", path);
             }
 
             string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseBlock(block);

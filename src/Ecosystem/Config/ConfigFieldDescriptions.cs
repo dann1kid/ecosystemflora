@@ -443,6 +443,10 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: taller vertical span for wall capture. Lower: shorter vine wall reach.",
                 "Больше: выше вертикальный захват стен. Меньше: короче дальность лиан по стене.");
 
+            D(nameof(EcosystemConfig.WildVineMaxHangDepth),
+                "How many blocks a vine may extend downward through open air below the last wall-backed segment (0 = wall only).",
+                "Сколько блоков лиана может свисать в воздухе под последним участком на стене (0 = только по стене).");
+
             D(nameof(EcosystemConfig.EnableMyceliumNiche),
                 "On: meadow spread penalty and forest bonus near mycelium anchors. Off: no mycelium niche tuning.",
                 "Вкл.: штраф луга и бонус леса у якорей грибницы. Выкл.: без ниши грибницы.");

@@ -216,7 +216,7 @@ namespace WildFarming.Ecosystem
                         }
 
                         if (vineHits.Count < request.MaxVineHits
-                            && WildVineHelper.IsEndBlock(block))
+                            && WildVineHelper.IsVineBlock(block))
                         {
                             vineHits.Add(new ChunkFlowerHit(scanScratch.Copy(), block.Code));
                         }

@@ -44,7 +44,7 @@ namespace WildFarming.Ecosystem
             maxTemp: 28f,
             minRain: 0.35f,
             maxRain: 1f,
-            spreadRate: 0.85f,
+            spreadRate: 0.35f,
             sameSpacing: 0,
             otherSpacing: 0);
 
@@ -53,7 +53,7 @@ namespace WildFarming.Ecosystem
             maxTemp: 42f,
             minRain: 0.55f,
             maxRain: 1f,
-            spreadRate: 0.7f,
+            spreadRate: 0.25f,
             sameSpacing: 0,
             otherSpacing: 0);
 

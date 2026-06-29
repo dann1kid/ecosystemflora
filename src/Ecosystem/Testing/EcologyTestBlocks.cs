@@ -51,6 +51,16 @@ namespace WildFarming.Ecosystem.Testing
                 b.BlockMaterial = EnumBlockMaterial.Plant;
                 b.Replaceable = 3000;
             });
+            blocks = Expand(blocks, Make("game:wildvine-end-north", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
+            blocks = Expand(blocks, Make("game:wildvine-section-north", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
 
             for (int i = 0; i < blocks.Length; i++)
             {
@@ -65,6 +75,18 @@ namespace WildFarming.Ecosystem.Testing
             var block = new Block { Code = new AssetLocation(code) };
             configure(block);
             return block;
+        }
+
+        static Block[] Expand(Block[] blocks, Block block)
+        {
+            var expanded = new Block[blocks.Length + 1];
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                expanded[i] = blocks[i];
+            }
+
+            expanded[blocks.Length] = block;
+            return expanded;
         }
     }
 }
