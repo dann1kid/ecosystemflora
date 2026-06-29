@@ -162,7 +162,20 @@ namespace WildFarming.Ecosystem
 
             if (requirements.Habitat == EcologyHabitat.TerrestrialTree)
             {
-                maturationQueues.AddTreeSapling(pos, requirements.Species, api.World.Calendar.TotalHours);
+                // Wild tree spread places a log-grown seedling; register immediately (no sapling queue).
+                BlockPos basePos = PlantCodeHelper.GetTreeTrunkBase(api.World.BlockAccessor, pos);
+                Block trunkBlock = api.World.BlockAccessor.GetBlock(basePos);
+                if (EcosystemParticipant.TryFromBlock(trunkBlock, out IEcosystemParticipant treeParticipant))
+                {
+                    RegisterReproducer(basePos, treeParticipant, spawnBurst: false);
+                }
+
+                InvalidateEnvironmentAround(basePos);
+                if (spreadOrigin != null)
+                {
+                    WakeEcologyAround(spreadOrigin);
+                }
+
                 return;
             }
 

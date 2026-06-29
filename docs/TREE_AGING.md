@@ -13,17 +13,19 @@ In-game handbook (en/ru): **Overview**, **Trees**, **Seasonal Canopy**, **Ecolog
 Full path for a wild tree under default config (`EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains`):
 
 ```
-sapling (spread) → vanilla treegen → log-grown registered (age 0)
+sapling (spread) → young log-grown seedling (1 trunk + crown) → registered (age 0)
   → each game year: age++, growth, sapling spread
   → calendar age ≥ species lifespan: senescence (4 years)
   → stump + fallen logs (not log-grown) → gap refilled by nearby living trees
 ```
 
+When **`EnableTreeAging`** is off, spread still places vanilla **`sapling-{wood}-free`** and waits for vanilla treegen (legacy).
+
 | Stage | What happens |
 |-------|----------------|
-| **1. Seed** | Mature `log-grown` trunk places `sapling-{wood}-free` on open soil (climate, light, spacing). Nov–Feb spread off; no ice/snow placement. |
-| **2. Grow up** | **Vanilla treegen** from sapling to adult — mod only planted the sapling. |
-| **3. Register** | Lowest `log-grown` in the column enters the ecology registry at **`TreeAgeYears = 0`** (even worldgen giants). |
+| **1. Seed** | Mature `log-grown` trunk places a **young seedling** (one `log-grown` + small crown) on open soil when **`EnableTreeAging`** is on; otherwise a free sapling. Nov–Feb spread off; no ice/snow placement. |
+| **2. Grow up** | **Mod yearly growth** (`TreeGrowthApplier`) from seedling size to mature — no instant vanilla treegen when aging is on. Player-planted saplings still use vanilla treegen. |
+| **3. Register** | Lowest `log-grown` in the column enters the ecology registry at **`TreeAgeYears = 0`** (spread seedlings register immediately; worldgen giants register on chunk scan). |
 | **4. Active life** | Each **game year** in loaded chunks: age +1; may add trunk/crown blocks; continues **sapling spread** from trunk base. Trees do **not** die from niche stress. |
 | **5. Seasonal dress** | *(Parallel, optional)* Deciduous crowns follow autumn/winter/spring (`EnableSeasonalFoliage`) — separate from aging/senescence. |
 | **6. Senescence** | When age ≥ species lifespan (oak ~120 y, birch ~90, redwood ~140 — see `WildTreeGrowthProfiles.cs`), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
@@ -33,6 +35,15 @@ sapling (spread) → vanilla treegen → log-grown registered (age 0)
 **Other exits:** player fells trunk (registry + saved age removed); senescence/growth/spread blocked inside land claims (phase retries next year). Calendar age persists in savegame moddata, not on blocks — see [Persistence](#persistence--server-restart).
 
 Toggle **`EnableTreeSenescenceRemains`** off to skip stump/logs (bare air on final year). Details per phase: [Senescence](#senescence-phased-death).
+
+---
+
+## Reproduction maturity (spread start)
+
+Wild trees do not start spreading offspring immediately after they appear. Each species has a default
+**spread maturity age** (years since ecology registration), based on real-world seed-bearing onset.
+
+See: `docs/TREE_REPRODUCTION_MATURITY.md`.
 
 ---
 

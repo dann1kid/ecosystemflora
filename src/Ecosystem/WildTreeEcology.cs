@@ -28,6 +28,10 @@ namespace WildFarming.Ecosystem
             public readonly TreeSeralRole SeralRole;
             /// <summary>Minimum sunlight at sapling cell (open pioneers need more light).</summary>
             public readonly int SaplingMinSunlight;
+            /// <summary>Species seral peak on local forest cover (0 = use role default).</summary>
+            public readonly float SeralPeakForest;
+            public readonly float SeralHalfWidth;
+            public readonly float SeralFloor;
 
             public Profile(
                 float minTemp, float maxTemp,
@@ -38,7 +42,10 @@ namespace WildFarming.Ecosystem
                 int sameSpeciesSpacing,
                 int otherSpeciesSpacing,
                 TreeSeralRole seralRole,
-                int saplingMinSunlight = 0)
+                int saplingMinSunlight = 0,
+                float seralPeakForest = 0f,
+                float seralHalfWidth = 0f,
+                float seralFloor = 0f)
             {
                 MinTemp = minTemp;
                 MaxTemp = maxTemp;
@@ -54,6 +61,9 @@ namespace WildFarming.Ecosystem
                 SaplingMinSunlight = saplingMinSunlight > 0
                     ? saplingMinSunlight
                     : DefaultSaplingMinSunlight(seralRole);
+                SeralPeakForest = seralPeakForest;
+                SeralHalfWidth = seralHalfWidth;
+                SeralFloor = seralFloor;
             }
         }
 
@@ -61,25 +71,39 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Profile> ByWood = new Dictionary<string, Profile>
         {
-            // Pioneers — open ground, low forest cover, fast turnover
-            ["birch"] = P(-7, 39, 0.35f, 1f, 0f, 0.42f, 0.62f, 8, 7, 4, TreeSeralRole.Pioneer),
-            ["acacia"] = P(21, 60, 0.15f, 0.6f, 0f, 0.40f, 0.44f, 10, 9, 5, TreeSeralRole.Pioneer),
+            // Pioneers — disturbed open ground; vanilla seed spacing ~2–3 (birch), ~6+ (acacia).
+            ["birch"] = P(-12, 28, 0.35f, 1f, 0f, 0.38f, 0.70f, 9, 5, 4,
+                TreeSeralRole.Pioneer, 11, seralPeak: 0.08f, seralHalf: 0.18f, seralFloor: 0.14f),
+            ["acacia"] = P(18, 44, 0.12f, 0.55f, 0f, 0.35f, 0.46f, 11, 7, 5,
+                TreeSeralRole.Pioneer, 11, seralPeak: 0.06f, seralHalf: 0.16f, seralFloor: 0.12f),
 
-            // Mid-seral — edges and young stands
-            ["maple"] = P(-7, 40, 0.35f, 1f, 0.15f, 0.82f, 0.48f, 8, 7, 4, TreeSeralRole.Mid),
-            ["crimsonkingmaple"] = P(1, 26, 0.4f, 0.9f, 0.12f, 0.75f, 0.46f, 8, 7, 4, TreeSeralRole.Mid),
-            ["walnut"] = P(-1, 39, 0.35f, 0.9f, 0.18f, 0.88f, 0.40f, 8, 7, 4, TreeSeralRole.Mid),
-            ["greenspirecypress"] = P(1, 39, 0.4f, 1f, 0.14f, 0.82f, 0.42f, 8, 7, 4, TreeSeralRole.Mid),
-            ["baldcypress"] = P(8, 41, 0.45f, 1f, 0.16f, 0.90f, 0.43f, 9, 8, 4, TreeSeralRole.Mid),
-            ["purpleheart"] = P(20, 50, 0.3f, 0.85f, 0.20f, 0.88f, 0.34f, 10, 9, 5, TreeSeralRole.Mid),
+            // Mid-seral — edges, riparian, semi-open woodland; vanilla spacing ~4–5 blocks.
+            ["oak"] = P(-2, 30, 0.35f, 0.78f, 0f, 0.75f, 0.50f, 9, 6, 4,
+                TreeSeralRole.Mid, 11, seralPeak: 0.35f, seralHalf: 0.28f, seralFloor: 0.16f),
+            ["maple"] = P(-7, 28, 0.35f, 0.95f, 0.08f, 0.82f, 0.52f, 9, 6, 4,
+                TreeSeralRole.Mid, 10, seralPeak: 0.30f, seralHalf: 0.26f, seralFloor: 0.18f),
+            ["crimsonkingmaple"] = P(0, 24, 0.38f, 0.72f, 0.10f, 0.68f, 0.44f, 8, 6, 4,
+                TreeSeralRole.Mid, 10, seralPeak: 0.26f, seralHalf: 0.22f, seralFloor: 0.16f),
+            ["walnut"] = P(-1, 32, 0.35f, 0.88f, 0.12f, 0.85f, 0.42f, 9, 6, 4,
+                TreeSeralRole.Mid, 10, seralPeak: 0.28f, seralHalf: 0.24f, seralFloor: 0.17f),
+            ["greenspirecypress"] = P(0, 34, 0.38f, 1f, 0.10f, 0.80f, 0.40f, 8, 5, 4,
+                TreeSeralRole.Mid, 11, seralPeak: 0.22f, seralHalf: 0.22f, seralFloor: 0.15f),
+            ["baldcypress"] = P(8, 36, 0.45f, 1f, 0.14f, 0.92f, 0.45f, 10, 4, 4,
+                TreeSeralRole.Mid, 10, seralPeak: 0.22f, seralHalf: 0.22f, seralFloor: 0.14f),
+            ["purpleheart"] = P(22, 48, 0.28f, 0.88f, 0.22f, 0.88f, 0.36f, 10, 7, 5,
+                TreeSeralRole.Mid, 9, seralPeak: 0.34f, seralHalf: 0.26f, seralFloor: 0.18f),
 
-            // Climax — mature forest, slower spread, longer lifespan
-            ["oak"] = P(-5, 40, 0.35f, 1f, 0.28f, 1f, 0.44f, 8, 7, 4, TreeSeralRole.Climax),
-            ["pine"] = P(-18, 30, 0.3f, 1f, 0.20f, 1f, 0.40f, 9, 8, 4, TreeSeralRole.Climax),
-            ["larch"] = P(-24, 15, 0.35f, 1f, 0.16f, 0.95f, 0.36f, 9, 8, 4, TreeSeralRole.Climax),
-            ["kapok"] = P(20, 50, 0.35f, 1f, 0.26f, 1f, 0.34f, 9, 8, 4, TreeSeralRole.Climax),
-            ["redwood"] = P(7, 35, 0.4f, 1f, 0.32f, 1f, 0.30f, 10, 9, 5, TreeSeralRole.Climax, saplingMinSunlight: 10),
-            ["ebony"] = P(21, 50, 0.25f, 0.75f, 0.30f, 1f, 0.26f, 10, 9, 5, TreeSeralRole.Climax, saplingMinSunlight: 9),
+            // Climax — mature forest; shade-tolerant seedlings where noted (vanilla wiki).
+            ["pine"] = P(-20, 22, 0.38f, 1f, 0.12f, 1f, 0.48f, 10, 3, 3,
+                TreeSeralRole.Climax, 9, seralPeak: 0.48f, seralHalf: 0.34f, seralFloor: 0.20f),
+            ["larch"] = P(-26, 12, 0.32f, 1f, 0.14f, 0.92f, 0.38f, 10, 4, 4,
+                TreeSeralRole.Climax, 10, seralPeak: 0.38f, seralHalf: 0.30f, seralFloor: 0.18f),
+            ["kapok"] = P(22, 48, 0.32f, 1f, 0.30f, 1f, 0.36f, 11, 7, 5,
+                TreeSeralRole.Climax, 10, seralPeak: 0.55f, seralHalf: 0.32f, seralFloor: 0.22f),
+            ["redwood"] = P(5, 28, 0.42f, 1f, 0.35f, 1f, 0.32f, 12, 8, 5,
+                TreeSeralRole.Climax, 10, seralPeak: 0.62f, seralHalf: 0.30f, seralFloor: 0.24f),
+            ["ebony"] = P(22, 48, 0.22f, 0.72f, 0.32f, 0.95f, 0.28f, 10, 6, 5,
+                TreeSeralRole.Climax, 9, seralPeak: 0.50f, seralHalf: 0.30f, seralFloor: 0.20f),
         };
 
         static Profile P(
@@ -91,13 +115,16 @@ namespace WildFarming.Ecosystem
             int sameSpeciesSpacing,
             int otherSpeciesSpacing,
             TreeSeralRole seralRole,
-            int saplingMinSunlight = 0)
+            int saplingMinSunlight = 0,
+            float seralPeak = 0f,
+            float seralHalf = 0f,
+            float seralFloor = 0f)
         {
             return new Profile(
                 minTemp, maxTemp, minRain, maxRain,
                 minForest, maxForest, spreadRate,
                 spreadRadius, sameSpeciesSpacing, otherSpeciesSpacing,
-                seralRole, saplingMinSunlight);
+                seralRole, saplingMinSunlight, seralPeak, seralHalf, seralFloor);
         }
 
         public static bool TryGet(string wood, out Profile profile)
@@ -113,7 +140,7 @@ namespace WildFarming.Ecosystem
             {
                 case TreeSeralRole.Pioneer: return 11;
                 case TreeSeralRole.Mid: return 10;
-                default: return 10;
+                default: return 9;
             }
         }
 
@@ -122,7 +149,7 @@ namespace WildFarming.Ecosystem
         {
             if (!EcosystemConfig.Loaded.EnableTreeSeralSuccession) return 1f;
             if (!TryGet(wood, out Profile profile)) return 1f;
-            return SeralSpreadMultiplier(profile.SeralRole, localForestCover);
+            return SeralSpreadMultiplier(profile, localForestCover);
         }
 
         internal static float SeralSpreadMultiplier(TreeSeralRole role, float localForestCover)
@@ -143,6 +170,23 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        static float SeralSpreadMultiplier(Profile profile, float localForestCover)
+        {
+            if (profile.SeralPeakForest > 0f)
+            {
+                float half = profile.SeralHalfWidth > 0f ? profile.SeralHalfWidth : 0.24f;
+                float floor = profile.SeralFloor > 0f ? profile.SeralFloor : 0.15f;
+                if (profile.SeralRole == TreeSeralRole.Climax && localForestCover < 0.06f)
+                {
+                    return floor;
+                }
+
+                return Bell(localForestCover, profile.SeralPeakForest, half, floor);
+            }
+
+            return SeralSpreadMultiplier(profile.SeralRole, localForestCover);
+        }
+
         static float Bell(float x, float peak, float halfWidth, float floor)
         {
             if (halfWidth <= 0.001f) return 1f;
@@ -155,12 +199,24 @@ namespace WildFarming.Ecosystem
         {
             profile = default;
             if (!TryGet(wood, out Profile tree)) return false;
-            profile = ModifierFor(tree.SeralRole);
+            profile = ModifierFor(tree.SeralRole, wood);
             return true;
         }
 
-        static WildSpeciesModifiers.Profile ModifierFor(TreeSeralRole role)
+        static WildSpeciesModifiers.Profile ModifierFor(TreeSeralRole role, string wood)
         {
+            if (wood == "baldcypress")
+            {
+                return new WildSpeciesModifiers.Profile(
+                    FloraContextAffinity.Edge, 1.22f, 0.38f, 0.92f);
+            }
+
+            if (wood == "pine" || wood == "larch")
+            {
+                return new WildSpeciesModifiers.Profile(
+                    FloraContextAffinity.Forest, 1.38f, 0.58f, 1.22f);
+            }
+
             switch (role)
             {
                 case TreeSeralRole.Pioneer:

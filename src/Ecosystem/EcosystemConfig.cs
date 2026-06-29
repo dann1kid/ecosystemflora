@@ -415,8 +415,26 @@ namespace WildFarming.Ecosystem
         /// <summary>Once per game year, extend trunk height and crown spread with grown blocks.</summary>
         public bool EnableTreeAging { get; set; } = true;
 
+        /// <summary>
+        /// Suppress wild tree spread on young trees (in calendar years since ecology registration).
+        /// Worldgen-sized trees may bypass this via <see cref="TreeYoungSpreadBypassTrunkHeight"/>.
+        /// </summary>
+        public int TreeMinSpreadAgeYears { get; set; } = 12;
+
+        /// <summary>
+        /// If a tree trunk is already at/above this height, it may spread even when younger than
+        /// <see cref="TreeMinSpreadAgeYears"/> (prevents blocking worldgen-sized trees that register at age 0).
+        /// </summary>
+        public int TreeYoungSpreadBypassTrunkHeight { get; set; } = 10;
+
         /// <summary>Wild trees processed per reproduce tick (global round-robin; filtered to player radius when <see cref="OnlyActivateNearPlayers"/> or <see cref="LimitSpreadNearPlayers"/>).</summary>
         public int MaxTreeGrowthAttemptsPerTick { get; set; } = 6;
+
+        /// <summary>
+        /// When time skips forward (or ticks were throttled), a tree may be behind the current game year.
+        /// This limits how many missed years a single tree can catch up in one tick.
+        /// </summary>
+        public int MaxTreeGrowthCatchUpYearsPerTick { get; set; } = 8;
 
         /// <summary>Multiplier on growth pace vs reference size (higher = faster maturation).</summary>
         public float TreeGrowthActivityScale { get; set; } = 1f;

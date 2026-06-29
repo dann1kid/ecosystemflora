@@ -464,10 +464,12 @@ namespace WildFarming.Ecosystem
                             ? EnvironmentalContext.SampleForSpread(api, plantPos, in columnSnap, requirements)
                             : EnvironmentalContext.SampleForSpread(
                                 api, plantPos, in snap, requirements, EcosystemSystem.Instance?.ColumnCache);
-                        fitness = CellCompetition.SpreadScoreFromContext(
+                        float climateFitness = CellCompetition.SpreadClimateFitness(
                             api, requirements, plantPos, harshClimate, ctx);
+                        if (climateFitness < minFitness) { dFitness++; continue; }
+                        fitness = CellCompetition.SpreadAttemptWeight(
+                            api, requirements, plantPos, climateFitness);
                         fitness *= seedFitnessScale;
-                        if (fitness < minFitness) { dFitness++; continue; }
                         if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) { dSpacing++; continue; }
                     }
                     else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
@@ -651,6 +653,20 @@ namespace WildFarming.Ecosystem
                 return FerntreeStructure.IsTrunkBlock(accessor.GetBlock(plantPos));
             }
 
+            // Trees: never place vanilla saplings from wild spread. We place a tiny log-grown seedling,
+            // and the mod's yearly maturation grows it naturally.
+            if (IsWildTreeSpreadPlacement(requirements, spreadBlock)
+                && TryPlaceWildTreeSeedling(api, accessor, plantPos, requirements, spreadBlock, api.World.Rand))
+            {
+                accessor.MarkBlockDirty(plantPos);
+                return PlantCodeHelper.IsTreeLogGrownBlock(accessor.GetBlock(plantPos));
+            }
+
+            if (IsWildTreeSpreadPlacement(requirements, spreadBlock))
+            {
+                return false;
+            }
+
             ItemStack stack = new ItemStack(spreadBlock);
             accessor.SetBlock(spreadBlock.BlockId, plantPos, stack);
 
@@ -666,6 +682,32 @@ namespace WildFarming.Ecosystem
 
             accessor.MarkBlockDirty(plantPos);
             return true;
+        }
+
+        static bool IsWildTreeSpreadPlacement(PlantRequirements requirements, Block spreadBlock)
+        {
+            if (requirements?.Habitat == EcologyHabitat.TerrestrialTree) return true;
+            return PlantCodeHelper.IsTreeSaplingBlock(spreadBlock)
+                || PlantCodeHelper.IsTreeLogGrownBlock(spreadBlock);
+        }
+
+        static bool TryPlaceWildTreeSeedling(
+            ICoreAPI api,
+            IBlockAccessor accessor,
+            BlockPos plantPos,
+            PlantRequirements requirements,
+            Block spreadBlock,
+            System.Random rand)
+        {
+            string wood = requirements?.Species;
+            if (string.IsNullOrEmpty(wood))
+            {
+                wood = PlantCodeHelper.GetTreeWood(spreadBlock?.Code);
+            }
+
+            if (string.IsNullOrEmpty(wood)) return false;
+
+            return TreeYoungStructure.TryPlaceSeedling(api, accessor, plantPos, wood, rand);
         }
     }
 }

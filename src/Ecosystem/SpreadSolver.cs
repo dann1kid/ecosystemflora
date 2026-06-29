@@ -116,8 +116,11 @@ namespace WildFarming.Ecosystem
                     if (!isEmpty && !cell.MatVacancyOk) continue;
                     if (!cell.SpacingOk) continue;
 
+                    float climate = CellCompetition.SpreadClimateFitnessFromSolveCell(
+                        requirements, plantPos, in cell, harshClimate);
+                    if (climate < minFitness) continue;
+
                     fitness = ScoreFromCell(in cell, requirements, plantPos, harshClimate, seasonSpreadMult, seedFitnessScale);
-                    if (fitness < minFitness) continue;
                     scored.Add(new ScoredCandidate(in cell, fitness, false));
                     continue;
                 }
@@ -150,8 +153,11 @@ namespace WildFarming.Ecosystem
                     if (phase == SpreadCollectPhase.DisplacementOnly) continue;
                     if (!cell.SpacingOk) continue;
 
+                    float climate = CellCompetition.SpreadClimateFitnessFromSolveCell(
+                        requirements, plantPos, in cell, harshClimate);
+                    if (climate < minFitness) continue;
+
                     fitness = ScoreFromCell(in cell, requirements, plantPos, harshClimate, seasonSpreadMult, seedFitnessScale);
-                    if (fitness < minFitness) continue;
                 }
                 else if (requirements.Habitat == EcologyHabitat.Terrestrial && cfg.UseCellDisplacement)
                 {
@@ -214,23 +220,15 @@ namespace WildFarming.Ecosystem
             float seasonSpreadMult,
             float seedFitnessScale)
         {
-            EnvironmentalContext ctx = EnvironmentalContext.FromSpreadSolveCell(in cell);
-            float fitness = CellCompetition.SpreadScoreFromContext(null, requirements, plantPos, harshClimate, ctx);
-
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (cfg.UseFloraContext)
-            {
-                fitness *= EcologySpreadFitness.ContextMultiplierFor(requirements, cell.FloraContext);
-            }
-
-            if (cfg.UseNicheContext && requirements.HasNicheProfile)
-            {
-                var niche = new LocalNiche((MoistureLevel)cell.NicheMoisture, (LightLevel)cell.NicheLight);
-                fitness *= EcologySpreadFitness.NicheMultiplierFor(requirements, niche);
-            }
-
-            fitness *= cell.MyceliumFitnessMult;
+            float climate = CellCompetition.SpreadClimateFitnessFromSolveCell(
+                requirements, plantPos, in cell, harshClimate);
+            float fitness = climate;
             fitness *= seasonSpreadMult;
+            if (requirements.SpreadRate > 0f)
+            {
+                fitness *= requirements.SpreadRate;
+            }
+
             fitness *= seedFitnessScale;
             return fitness;
         }

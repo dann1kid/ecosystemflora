@@ -19,7 +19,7 @@ namespace WildFarming.Ecosystem
             return SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx);
         }
 
-        internal static float SpreadScoreFromContext(
+        internal static float SpreadClimateFitness(
             ICoreAPI api,
             PlantRequirements challenger,
             BlockPos targetPos,
@@ -36,13 +36,69 @@ namespace WildFarming.Ecosystem
             fitness = EcologySpreadFitness.ApplyContext(api, challenger, targetPos, fitness);
             fitness = EcologySpreadFitness.ApplyNiche(api, challenger, targetPos, fitness);
             fitness = MyceliumZone.ApplySpreadFitness(api, challenger, targetPos, fitness);
-            fitness *= SeasonEcology.SpreadActivityMultiplier(api, targetPos, challenger);
+            return fitness;
+        }
+
+        /// <summary>Weighted pick only — season and SpreadRate already gate attempt cadence via <see cref="SpeciesSpread"/>.</summary>
+        internal static float SpreadAttemptWeight(
+            ICoreAPI api,
+            PlantRequirements challenger,
+            BlockPos targetPos,
+            float climateFitness)
+        {
+            if (climateFitness <= 0f) return 0f;
+
+            float weight = climateFitness;
+            weight *= SeasonEcology.SpreadActivityMultiplier(api, targetPos, challenger);
             if (challenger.SpreadRate > 0f)
             {
-                fitness *= challenger.SpreadRate;
+                weight *= challenger.SpreadRate;
             }
 
+            return weight;
+        }
+
+        internal static float SpreadClimateFitnessFromSolveCell(
+            PlantRequirements challenger,
+            BlockPos targetPos,
+            in SpreadSolveCell cell,
+            bool harshClimate,
+            bool occupied = false)
+        {
+            EnvironmentalContext ctx = EnvironmentalContext.FromSpreadSolveCell(in cell);
+            if (!SuitabilityEvaluator.CanCompeteForCell(challenger, ctx, harshClimate, occupied))
+            {
+                return 0f;
+            }
+
+            float fitness = SuitabilityEvaluator.ReproduceFitness(challenger, ctx);
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (cfg.UseFloraContext)
+            {
+                fitness *= EcologySpreadFitness.ContextMultiplierFor(challenger, cell.FloraContext);
+            }
+
+            if (cfg.UseNicheContext && challenger.HasNicheProfile
+                && challenger.Habitat == EcologyHabitat.Terrestrial)
+            {
+                var niche = new LocalNiche((MoistureLevel)cell.NicheMoisture, (LightLevel)cell.NicheLight);
+                fitness *= EcologySpreadFitness.NicheMultiplierFor(challenger, niche);
+            }
+
+            fitness *= cell.MyceliumFitnessMult;
             return fitness;
+        }
+
+        internal static float SpreadScoreFromContext(
+            ICoreAPI api,
+            PlantRequirements challenger,
+            BlockPos targetPos,
+            bool harshClimate,
+            EnvironmentalContext ctx,
+            bool occupied = false)
+        {
+            float climate = SpreadClimateFitness(api, challenger, targetPos, harshClimate, ctx, occupied);
+            return SpreadAttemptWeight(api, challenger, targetPos, climate);
         }
 
         public static float IncumbentHoldScore(
@@ -123,7 +179,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            challengerScore = SpreadScoreFromContext(api, challenger, targetPos, harshClimate, ctx, occupied: true);
+            challengerScore = SpreadClimateFitness(api, challenger, targetPos, harshClimate, ctx, occupied: true);
             challengerScore = MeadowTurfCompetition.AdjustChallengerSpreadScore(
                 challengerScore,
                 challenger.Species,
@@ -175,21 +231,8 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            challengerScore = SpreadScoreFromContext(null, challenger, targetPos, harshClimate, ctx, occupied: true);
-            if (cfg.UseFloraContext)
-            {
-                challengerScore *= EcologySpreadFitness.ContextMultiplierFor(challenger, cell.FloraContext);
-            }
-
-            if (cfg.UseNicheContext && challenger.HasNicheProfile)
-            {
-                var niche = new LocalNiche((MoistureLevel)cell.NicheMoisture, (LightLevel)cell.NicheLight);
-                challengerScore *= EcologySpreadFitness.NicheMultiplierFor(challenger, niche);
-            }
-
-            challengerScore *= cell.MyceliumFitnessMult;
-            challengerScore *= seasonSpreadMult;
-
+            challengerScore = SpreadClimateFitnessFromSolveCell(
+                challenger, targetPos, in cell, harshClimate, occupied: true);
             challengerScore = MeadowTurfCompetition.AdjustChallengerSpreadScore(
                 challengerScore,
                 challenger.Species,

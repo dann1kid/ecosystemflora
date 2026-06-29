@@ -40,5 +40,33 @@ namespace WildFarming.Tests
 
             Assert.False(SuitabilityEvaluator.CanReproduce(req, ctx, harshClimate: false));
         }
+
+        [Theory]
+        [InlineData("birch")]
+        [InlineData("oak")]
+        [InlineData("maple")]
+        public void CanReproduce_Tree_OpenFieldSoil_Passes(string species)
+        {
+            var req = new PlantRequirements
+            {
+                Species = species,
+                Habitat = EcologyHabitat.TerrestrialTree,
+                MinRain = 0f,
+                MaxRain = 1f,
+                MinForest = 0f,
+                MaxForest = 1f,
+            };
+            WildPlantSoil.ApplyTo(req);
+
+            var ctx = new StubContext
+            {
+                GroundSoilKinds = SoilKind.MediumFert,
+                GroundFertility = 200,
+                SpaceReplaceable = 9999,
+                GroundSideSolid = true,
+            };
+
+            Assert.True(SuitabilityEvaluator.CanReproduce(req, ctx, harshClimate: false));
+        }
     }
 }

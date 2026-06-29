@@ -395,9 +395,21 @@ namespace WildFarming.Ecosystem.Config
                 "On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this).",
                 "Вкл.: календарный возраст и рост структуры диких деревьев. Выкл.: без роста (старение требует вкл.).");
 
+            D(nameof(EcosystemConfig.TreeMinSpreadAgeYears),
+                "Higher: trees must be older before they can spread. Lower: younger trees may spread sooner. 0 = no age gate.",
+                "Больше: деревьям нужно прожить больше лет, прежде чем они смогут распространяться. Меньше: раньше. 0 = без возрастного порога.");
+
+            D(nameof(EcosystemConfig.TreeYoungSpreadBypassTrunkHeight),
+                "Higher: more trees bypass the age gate (worldgen-sized trees spread even at age 0). Lower: stricter age gate. 0 = never bypass.",
+                "Больше: больше деревьев обходят возрастной порог (деревья из генератора распространяются даже с возрастом 0). Меньше: строже. 0 = не обходить.");
+
             D(nameof(EcosystemConfig.MaxTreeGrowthAttemptsPerTick),
                 "Higher: more trees advanced per reproduce tick. Lower: slower aging, less CPU.",
                 "Больше: больше деревьев обрабатывается за тик. Меньше: медленнее старение.");
+
+            D(nameof(EcosystemConfig.MaxTreeGrowthCatchUpYearsPerTick),
+                "Higher: trees catch up more missed years after time skips. Lower: slower catch-up, less CPU. 1 = no catch-up.",
+                "Больше: деревья быстрее догоняют пропущенные годы при промотке времени. Меньше: медленнее, меньше нагрузка. 1 = без догонки.");
 
             D(nameof(EcosystemConfig.TreeGrowthActivityScale),
                 "Higher: faster wild tree growth vs reference size. Lower: slower growth. 1.0 = default.",
@@ -444,8 +456,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: выше вертикальный захват стен. Меньше: короче дальность лиан по стене.");
 
             D(nameof(EcosystemConfig.WildVineMaxHangDepth),
-                "How many blocks a vine may extend downward through open air below the last wall-backed segment (0 = wall only).",
-                "Сколько блоков лиана может свисать в воздухе под последним участком на стене (0 = только по стене).");
+                "How many blocks a vine may extend downward through open air below the last wall-backed segment (0 = wall only). Higher = longer free-hanging tips.",
+                "Сколько блоков лиана может свисать в воздухе под последним участком на стене (0 = только по стене). Больше = длиннее свободный кончик.");
 
             D(nameof(EcosystemConfig.EnableMyceliumNiche),
                 "On: meadow spread penalty and forest bonus near mycelium anchors. Off: no mycelium niche tuning.",

@@ -418,7 +418,8 @@ namespace WildFarming.Ecosystem
             string wood = GetTreeWood(block);
             if (wood != null && IsTreeLogGrownBlock(block))
             {
-                return new AssetLocation("game:sapling-" + wood + "-free");
+                // Juvenile spread target is a log-grown seedling (not vanilla sapling treegen).
+                return new AssetLocation("game", "log-grown-" + wood + "-ud");
             }
 
             if (IsFerntreeTrunkBlock(block))

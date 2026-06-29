@@ -726,8 +726,11 @@ namespace WildFarming.Ecosystem
                     string wood = PlantCodeHelper.GetTreeWood(matureBlock);
                     if (!treeCalendarAgeStore.TryRestore(entry, origin, wood))
                     {
-                        entry.TreeAgeYears = 0;
-                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                        int gameYear = CanopyEcology.GameYear(api.World.Calendar);
+                        entry.TreeAgeYears = TreeSpreadMaturity.EffectiveAgeYears(
+                            api.World.BlockAccessor, entry, wood);
+                        // One year behind so the next growth tick can run (including catch-up after time skip).
+                        entry.LastTreeGrowthYear = gameYear - 1;
                     }
 
                     treeCalendarAgeStore.Capture(entry, wood);
@@ -739,8 +742,9 @@ namespace WildFarming.Ecosystem
                 {
                     if (!treeCalendarAgeStore.TryRestore(entry, origin, EcologyFerntreeSpecies.Ferntree))
                     {
+                        int gameYear = CanopyEcology.GameYear(api.World.Calendar);
                         entry.TreeAgeYears = 0;
-                        entry.LastTreeGrowthYear = CanopyEcology.GameYear(api.World.Calendar);
+                        entry.LastTreeGrowthYear = gameYear - 1;
                     }
 
                     treeCalendarAgeStore.Capture(entry, EcologyFerntreeSpecies.Ferntree);

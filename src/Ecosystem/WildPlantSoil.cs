@@ -24,6 +24,14 @@ namespace WildFarming.Ecosystem
 
         static readonly Profile DefaultMeadow = new Profile(SoilKindSets.Meadow, 100, 0);
 
+        /// <summary>Vanilla tree seed on meadow soil (high / medium / low fertility).</summary>
+        static readonly Profile VanillaOpenFieldTree =
+            new Profile(SoilKind.HighFert | SoilKind.MediumFert | SoilKind.LowFert, 80, 0);
+
+        /// <summary>Includes forest floor and peat; still allows open meadow soils.</summary>
+        static readonly Profile VanillaForestTree =
+            new Profile(SoilKindSets.Meadow, 80, 0);
+
         static readonly Dictionary<string, Profile> BySpecies = new Dictionary<string, Profile>
         {
             // Flowers — worldgen maxFertility caps
@@ -52,21 +60,27 @@ namespace WildFarming.Ecosystem
             ["rafflesiared"] = new Profile(SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor, 80, 200),
             ["tallgrass"] = new Profile(SoilKindSets.Meadow | SoilKind.LowFert | SoilKind.ForestFloor, 80, 0),
 
-            // Trees — forest soils, not clay/sand/barren
-            ["birch"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert | SoilKind.MediumFert, 100, 0),
-            ["oak"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert | SoilKind.MediumFert, 100, 0),
-            ["maple"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert | SoilKind.MediumFert, 100, 0),
-            ["pine"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.LowFert | SoilKind.MediumFert, 80, 0),
-            ["larch"] = new Profile(SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor | SoilKind.Gravel, 80, 220),
+            // Trees — niche footing (vanilla: any soil; wild spread excludes barren/clay unless noted).
+            ["birch"] = VanillaOpenFieldTree,
+            ["oak"] = VanillaOpenFieldTree,
+            ["maple"] = VanillaOpenFieldTree,
+            ["crimsonkingmaple"] = VanillaOpenFieldTree,
+            ["walnut"] = new Profile(SoilKind.HighFert | SoilKind.MediumFert | SoilKind.LowFert, 90, 0),
+            ["greenspirecypress"] = VanillaOpenFieldTree,
             ["acacia"] = new Profile(SoilKind.LowFert | SoilKind.Sand | SoilKind.MediumFert, 80, 200),
-            ["kapok"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert, 120, 0),
-            ["crimsonkingmaple"] = new Profile(SoilKindSets.Meadow, 100, 0),
-            ["redwood"] = new Profile(SoilKindSets.ForestUnderstory | SoilKind.HighFert, 120, 0),
             ["baldcypress"] = new Profile(SoilKind.LowFert | SoilKind.MediumFert | SoilKind.Gravel | SoilKind.Peat, 80, 0),
-            ["greenspirecypress"] = new Profile(SoilKindSets.Meadow, 100, 0),
-            ["ebony"] = new Profile(SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert, 120, 0),
-            ["purpleheart"] = new Profile(SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert, 120, 0),
-            ["walnut"] = new Profile(SoilKindSets.Meadow, 100, 0),
+            ["pine"] = new Profile(
+                SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor | SoilKind.Peat, 80, 0),
+            ["larch"] = new Profile(
+                SoilKind.LowFert | SoilKind.MediumFert | SoilKind.ForestFloor | SoilKind.Gravel, 80, 0),
+            ["kapok"] = new Profile(
+                SoilKind.HighFert | SoilKind.MediumFert | SoilKind.LowFert | SoilKind.ForestFloor | SoilKind.Peat, 90, 0),
+            ["redwood"] = new Profile(
+                SoilKind.HighFert | SoilKind.MediumFert | SoilKind.ForestFloor | SoilKind.Peat, 90, 0),
+            ["ebony"] = new Profile(
+                SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert | SoilKind.ForestFloor, 90, 0),
+            ["purpleheart"] = new Profile(
+                SoilKind.MediumFert | SoilKind.HighFert | SoilKind.LowFert | SoilKind.ForestFloor, 90, 0),
         };
 
         public static void ApplyTo(PlantRequirements req)
@@ -87,6 +101,14 @@ namespace WildFarming.Ecosystem
                 {
                     profile = berry.Soil;
                 }
+                else if (WildFernEcology.TryGet(req.Species, out WildFernEcology.EcologyEntry fern))
+                {
+                    profile = fern.Soil;
+                }
+                else if (WildTallgrassEcology.TryGet(req.Species, out WildTallgrassEcology.EcologyEntry grass))
+                {
+                    profile = grass.Soil;
+                }
                 else
                 {
                     profile = DefaultMeadow;
@@ -97,7 +119,6 @@ namespace WildFarming.Ecosystem
             if (req.MinGroundFertility <= 0 && profile.MinBlockFertility > 0) req.MinGroundFertility = profile.MinBlockFertility;
             if (req.MaxGroundFertility <= 0 && profile.MaxBlockFertility > 0) req.MaxGroundFertility = profile.MaxBlockFertility;
 
-            // Legacy MinFertility aligns with soil floor when unset on block attrs.
             if (req.MinGroundFertility > 0 && req.MinFertility < req.MinGroundFertility)
             {
                 req.MinFertility = req.MinGroundFertility;

@@ -17,6 +17,21 @@ namespace WildFarming.Ecosystem
         }
     }
 
+    /// <summary>
+    /// Young wild trees should not spread immediately. This primarily targets the mod's log-grown seedlings;
+    /// worldgen-sized trees register at age 0 and are allowed to spread once large enough.
+    /// </summary>
+    internal sealed class YoungTreeSpreadGate : ISpreadGate
+    {
+        public bool BlocksSpread(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            if (cfg == null || entry?.Requirements == null) return false;
+            if (entry.Requirements.Habitat != EcologyHabitat.TerrestrialTree) return false;
+
+            return !TreeSpreadMaturity.AllowsSpread(api, entry, cfg);
+        }
+    }
+
     /// <summary>Flowers with phenology only spread while in bloom.</summary>
     internal sealed class PhenologyGate : ISpreadGate
     {
@@ -66,6 +81,7 @@ namespace WildFarming.Ecosystem
     {
         public static readonly SpreadGateChain PreSpawn = new SpreadGateChain(
             new SenescenceGate(),
+            new YoungTreeSpreadGate(),
             new PhenologyGate(),
             new FernSpreadGate(),
             new TallgrassPhenologyGate());

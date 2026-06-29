@@ -113,7 +113,16 @@ namespace WildFarming.Ecosystem
             var above = trunkTop.UpCopy();
             if (!acc.IsValidPos(above)) return false;
             if (!LandClaimGuard.AllowsEcologyChange(api, above)) return false;
-            if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(above))) return false;
+            Block aboveBlock = acc.GetBlock(above);
+            if (!PlantVacancyRules.IsVacantPlantSpace(aboveBlock))
+            {
+                // Allow trunk to grow through its own crown by replacing its own foliage only.
+                // Never replace solid blocks, other species' leaves, or any non-foliage blocks.
+                bool ownLeaf =
+                    (CanopyBlockHelper.IsBranchyLeaf(aboveBlock) || CanopyBlockHelper.IsRegularLeaf(aboveBlock))
+                    && CanopyBlockHelper.GetWoodFromFoliageBlock(aboveBlock) == wood;
+                if (!ownLeaf) return false;
+            }
 
             Block log = ResolveLogBlock(api.World, wood);
             if (log == null || log.Id == 0) return false;
@@ -121,7 +130,44 @@ namespace WildFarming.Ecosystem
             acc.SetBlock(log.BlockId, above);
             acc.MarkBlockDirty(above);
             EcosystemSystem.Instance?.FoliageCells?.OnBlockAdded(above);
+
+            // Add a small amount of foliage with upward growth, but never overwrite blocks.
+            TryPlaceOneLeafNearNewTrunk(api, acc, above, wood);
             return true;
+        }
+
+        static void TryPlaceOneLeafNearNewTrunk(ICoreAPI api, IBlockAccessor acc, BlockPos newTrunkPos, string wood)
+        {
+            if (api == null || acc == null || newTrunkPos == null || string.IsNullOrEmpty(wood)) return;
+
+            Block anchor = acc.GetBlock(newTrunkPos);
+            if (!PlantCodeHelper.IsTreeLogGrownBlock(anchor)) return;
+
+            var scratch = new BlockPos(0);
+            int start = (int)(CanopyBlockHelper.DeterministicNoise(newTrunkPos, wood, 31337) * 4f) % 4;
+            if (start < 0) start += 4;
+
+            for (int i = 0; i < 4; i++)
+            {
+                int dir = (start + i) % 4;
+                scratch.Set(
+                    newTrunkPos.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),
+                    newTrunkPos.Y,
+                    newTrunkPos.Z + (dir == 2 ? 1 : dir == 3 ? -1 : 0));
+                scratch.dimension = newTrunkPos.dimension;
+
+                if (!acc.IsValidPos(scratch)) continue;
+                if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
+                if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(scratch))) continue;
+
+                Block leaf = CanopyBlockHelper.ResolveGrownLeafBlock(api.World, wood, scratch, newTrunkPos, anchor);
+                if (leaf == null || leaf.Id == 0) continue;
+
+                acc.SetBlock(leaf.BlockId, scratch);
+                acc.MarkBlockDirty(scratch);
+                EcosystemSystem.Instance?.FoliageCells?.OnBlockAdded(scratch);
+                return;
+            }
         }
 
         static bool TrySpreadBranchy(

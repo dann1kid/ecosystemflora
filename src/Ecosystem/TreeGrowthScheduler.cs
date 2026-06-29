@@ -68,63 +68,73 @@ namespace WildFarming.Ecosystem
                 string wood = PlantCodeHelper.GetTreeWood(block);
                 if (string.IsNullOrEmpty(wood) || !WildTreeEcology.TryGet(wood, out _)) continue;
 
-                entry.TreeAgeYears++;
-                if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
-
                 WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-                if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, cfg))
+                int catchUpLimit = cfg.MaxTreeGrowthCatchUpYearsPerTick <= 0 ? 1 : cfg.MaxTreeGrowthCatchUpYearsPerTick;
+                int advancedYears = 0;
+                int placedTotal = 0;
+
+                for (int year = entry.LastTreeGrowthYear + 1; year <= gameYear && advancedYears < catchUpLimit; year++)
                 {
-                    if (cfg.EnableTreeSenescence)
+                    entry.TreeAgeYears++;
+                    if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
+
+                    if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, cfg))
                     {
-                        TreeSenescence.YearAdvanceResult result = TreeSenescence.AdvanceSenescenceYear(
-                            api,
-                            acc,
-                            entry,
-                            entry.Origin,
-                            wood,
-                            cfg);
-
-                        if (result.NewPhase != entry.TreeSenescencePhase
-                            || result.BlocksRemoved > 0
-                            || result.Completed)
+                        if (cfg.EnableTreeSenescence)
                         {
-                            entry.TreeSenescencePhase = result.NewPhase;
+                            TreeSenescence.YearAdvanceResult result = TreeSenescence.AdvanceSenescenceYear(
+                                api,
+                                acc,
+                                entry,
+                                entry.Origin,
+                                wood,
+                                cfg);
 
-                            if (result.Completed)
+                            if (result.NewPhase != entry.TreeSenescencePhase
+                                || result.BlocksRemoved > 0
+                                || result.Completed)
                             {
-                                pendingSenescence.Add(result.Removal);
-                            }
+                                entry.TreeSenescencePhase = result.NewPhase;
 
-                            if (cfg.ReproduceDebug && result.BlocksRemoved > 0)
-                            {
-                                api.Logger.Notification(
-                                    "[ecosystemflora] Tree senescence {0}y ({1}) phase {2}: removed {3} block(s) at {4}",
-                                    entry.TreeAgeYears,
-                                    wood,
-                                    entry.TreeSenescencePhase,
-                                    result.BlocksRemoved,
-                                    entry.Origin);
+                                if (result.Completed)
+                                {
+                                    pendingSenescence.Add(result.Removal);
+                                }
+
+                                if (cfg.ReproduceDebug && result.BlocksRemoved > 0)
+                                {
+                                    api.Logger.Notification(
+                                        "[ecosystemflora] Tree senescence {0}y ({1}) phase {2}: removed {3} block(s) at {4}",
+                                        entry.TreeAgeYears,
+                                        wood,
+                                        entry.TreeSenescencePhase,
+                                        result.BlocksRemoved,
+                                        entry.Origin);
+                                }
                             }
                         }
+
+                        entry.LastTreeGrowthYear = year;
+                        advancedYears++;
+                        continue;
                     }
 
-                    entry.LastTreeGrowthYear = gameYear;
-                    calendarAgeStore?.Capture(entry, wood);
-                    continue;
+                    int placed = TreeGrowthApplier.TryGrowYear(
+                        api,
+                        acc,
+                        entry.Origin,
+                        wood,
+                        year,
+                        scale);
+
+                    placedTotal += placed;
+                    entry.LastTreeGrowthYear = year;
+                    advancedYears++;
                 }
 
-                int placed = TreeGrowthApplier.TryGrowYear(
-                    api,
-                    acc,
-                    entry.Origin,
-                    wood,
-                    gameYear,
-                    scale);
-
-                entry.LastTreeGrowthYear = gameYear;
                 calendarAgeStore?.Capture(entry, wood);
 
-                if (placed > 0 && cfg.ReproduceDebug)
+                if (placedTotal > 0 && cfg.ReproduceDebug)
                 {
                     TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
                     int sizePct = TreeGrowthTargets.SizeIndexPercent(
@@ -133,12 +143,13 @@ namespace WildFarming.Ecosystem
                         profile);
 
                     api.Logger.Notification(
-                        "[ecosystemflora] Tree {0}y ({1}) size {2}%: +{3} block(s) at {4}",
+                        "[ecosystemflora] Tree {0}y ({1}) size {2}%: +{3} block(s) at {4} (catch-up {5}y)",
                         entry.TreeAgeYears,
                         wood,
                         sizePct,
-                        placed,
-                        entry.Origin);
+                        placedTotal,
+                        entry.Origin,
+                        advancedYears);
                 }
             }
 

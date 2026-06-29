@@ -7,7 +7,8 @@ namespace WildFarming.Ecosystem
     /// <summary>Vanilla log blocks left when senescent snag collapses (not log-grown — no re-registration).</summary>
     internal static class TreeDecayRemains
     {
-        static readonly string[] HorizontalVariants = { "north", "east", "south", "west" };
+        /// <summary>Vanilla pillar rotations for horizontal debarked logs (ns / we).</summary>
+        static readonly string[] HorizontalVariants = { "ns", "we" };
 
         /// <summary>Replace snag with stump + scattered ground logs; returns blocks changed.</summary>
         public static int CollapseSnagToRemains(
@@ -177,7 +178,11 @@ namespace WildFarming.Ecosystem
             if (acc == null || string.IsNullOrEmpty(wood)) return null;
 
             string rot = HorizontalVariants[PositiveMod(variantIndex, HorizontalVariants.Length)];
-            Block block = acc.GetBlock(new AssetLocation("game:debarkedlog-" + wood + "-" + rot));
+
+            Block block = acc.GetBlock(new AssetLocation("game:debarkedlog-rotten-" + rot));
+            if (block != null && block.Id != 0) return block;
+
+            block = acc.GetBlock(new AssetLocation("game:debarkedlog-" + wood + "-" + rot));
             if (block != null && block.Id != 0) return block;
 
             block = acc.GetBlock(new AssetLocation("game:log-" + wood + "-" + rot));
@@ -190,13 +195,22 @@ namespace WildFarming.Ecosystem
         {
             unchecked
             {
-                int h = 17;
-                h = (h * 31) + basePos.X;
-                h = (h * 31) + basePos.Y;
-                h = (h * 31) + basePos.Z;
-                h = (h * 31) + (wood?.GetHashCode() ?? 0);
-                h = (h * 31) + slot;
-                return h;
+                // NOTE: do not use string.GetHashCode() (randomized between processes).
+                // We want a stable shuffle for save/load parity and unit tests.
+                uint h = 2166136261u;
+                h = (h ^ (uint)basePos.X) * 16777619u;
+                h = (h ^ (uint)basePos.Y) * 16777619u;
+                h = (h ^ (uint)basePos.Z) * 16777619u;
+                h = (h ^ (uint)slot) * 16777619u;
+                if (wood != null)
+                {
+                    for (int i = 0; i < wood.Length; i++)
+                    {
+                        h = (h ^ wood[i]) * 16777619u;
+                    }
+                }
+
+                return (int)h;
             }
         }
 
