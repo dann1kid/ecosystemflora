@@ -41,13 +41,13 @@ namespace WildFarming.Blocks
                     }
                 }
             }
-            else if (player.InventoryManager?.ActiveTool != EnumTool.Knife)
+            else if (!IsHarvestTool(player.InventoryManager?.ActiveTool))
             {
                 dt /= 3f;
             }
-            else if (TryGetMiningSpeed(itemslot, EnumBlockMaterial.Plant, out float knifeMul))
+            else if (TryGetMiningSpeed(itemslot, EnumBlockMaterial.Plant, out float harvestMul))
             {
-                dt *= knifeMul;
+                dt *= harvestMul;
             }
 
             int requiredMiningTier = 0;
@@ -175,6 +175,9 @@ namespace WildFarming.Blocks
             props.Init(api);
             world.SpawnParticles(props, plr);
         }
+
+        static bool IsHarvestTool(EnumTool? tool) =>
+            tool == EnumTool.Knife || tool == EnumTool.Sickle || tool == EnumTool.Scythe;
 
         static bool TryGetMiningSpeed(ItemSlot itemslot, EnumBlockMaterial material, out float multiplier)
         {

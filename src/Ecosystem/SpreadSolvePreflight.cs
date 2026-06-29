@@ -18,6 +18,7 @@ namespace WildFarming.Ecosystem
             if (!isEmpty)
             {
                 Block space = ResolveBlock(blocks, cell.SpaceBlockId);
+                if (PlantCodeHelper.IsArborealHostBlock(space)) return false;
                 if (!PlantCodeHelper.IsEcologySpreadParent(space)) return false;
             }
 

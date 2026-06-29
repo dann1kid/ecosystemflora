@@ -19,5 +19,13 @@
 		"op": "add",
 		"path": "/attributes/codePrefixes/-",
 		"value": "juvenile-sedge-"
+	},
+	{
+		"comment": "Mature brown sedge (BlockReedsSafe → harvested stubble, same as knife/sickle).",
+		"file": "game:itemtypes/tool/scythe.json",
+		"side": "server",
+		"op": "add",
+		"path": "/attributes/codePrefixes/-",
+		"value": "tallplant-brownsedge-"
 	}
 ]

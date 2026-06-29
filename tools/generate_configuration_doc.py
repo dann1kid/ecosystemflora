@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Regenerate docs/CONFIGURATION.md key reference from EcosystemConfig + ConfigFieldDescriptions."""
+"""Regenerate config docs, example JSON, and sync public config mirrors."""
+import json
 import re
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -8,6 +10,22 @@ CONFIG_CS = ROOT / "src" / "Ecosystem" / "EcosystemConfig.cs"
 DESC_CS = ROOT / "src" / "Ecosystem" / "Config" / "ConfigFieldDescriptions.cs"
 SCHEMA_CS = ROOT / "src" / "Ecosystem" / "Config" / "EcosystemConfigSchema.cs"
 OUT = ROOT / "docs" / "CONFIGURATION.md"
+SPECIES_DOC = ROOT / "docs" / "SPECIES_ECOLOGY_CSV.md"
+EXAMPLE_JSON_OUT = ROOT / "assets" / "ecosystemflora" / "ecosystemflora.example.json"
+MIRROR_DIRS = (
+    ROOT / "examples" / "ecosystemflora-config",
+    ROOT / "public-config",
+)
+SECTION_BREAK_BEFORE = {
+    "EnableTreeAging",
+    "UseFloraContext",
+    "EnableEcologyInspect",
+    "CloneBerryTraits",
+    "EnableThirdPartyParticipants",
+    "EnableMyceliumNiche",
+    "EnableSeasonalFoliage",
+    "EnableCanopyAmbience",
+}
 
 SKIP = {
     "MaxCanopyUpdateOpsPerTick",
@@ -72,6 +90,115 @@ def parse_defaults() -> dict[str, tuple[str, str]]:
             continue
         out[name] = (m.group(1), default)
     return out
+
+
+def parse_field_order() -> list[str]:
+    text = CONFIG_CS.read_text(encoding="utf-8")
+    order: list[str] = []
+    for m in re.finditer(
+        r"public (\w+(?:\[\])?) (\w+) \{ get; set; \} = ([^;]+);",
+        text,
+    ):
+        name = m.group(2)
+        if name in SKIP:
+            continue
+        order.append(name)
+    return order
+
+
+def default_to_json(clr_type: str, default: str):
+    default = default.strip()
+    if default == "true":
+        return True
+    if default == "false":
+        return False
+    if "EcosystemBalancePresets.Natural" in default:
+        return "natural"
+    if default.startswith('"') and default.endswith('"'):
+        return default[1:-1]
+    if clr_type == "int":
+        token = default.split()[0]
+        if token.endswith("f") or token.endswith("F"):
+            token = token[:-1]
+        return int(float(token))
+    if clr_type in ("float", "double"):
+        if "/" in default:
+            left, right = (part.strip() for part in default.split("/", 1))
+
+            def strip_f(token: str) -> float:
+                if token.endswith("f") or token.endswith("F"):
+                    token = token[:-1]
+                return float(token)
+
+            return strip_f(left) / strip_f(right)
+        token = default
+        if token.endswith("f") or token.endswith("F"):
+            token = token[:-1]
+        return float(token)
+    raise ValueError(f"Unsupported default {default!r} ({clr_type})")
+
+
+def generate_example_json(defaults: dict[str, tuple[str, str]], field_order: list[str]) -> str:
+    pairs: list[tuple[str, object]] = []
+    for name in field_order:
+        if name not in defaults:
+            continue
+        clr_type, default = defaults[name]
+        pairs.append((name, default_to_json(clr_type, default)))
+
+    chunks: list[str] = []
+    for i, (name, value) in enumerate(pairs):
+        line = f'  "{name}": {json.dumps(value, ensure_ascii=False)}'
+        if i == 0:
+            chunks.append(line)
+            continue
+        sep = ",\n\n" if name in SECTION_BREAK_BEFORE else ",\n"
+        chunks.append(sep + line)
+    return "{\n" + "".join(chunks) + "\n}\n"
+
+
+def adapt_configuration_for_mirror(text: str) -> str:
+    text = text.replace(
+        "**Template:** `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.",
+        "**Template:** [`ecosystemflora.example.json`](ecosystemflora.example.json) in this folder "
+        "(also shipped as `assets/ecosystemflora/ecosystemflora.example.json` in the mod).",
+    )
+    text = text.replace(
+        "See [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md).",
+        "See [THIRD_PARTY_ECOLOGY.md](https://github.com/dann1kid/vs-wildfarming/blob/main/docs/THIRD_PARTY_ECOLOGY.md) in the mod repo.",
+    )
+    text = text.replace(
+        "For release history see [`CHANGELOG.md`](CHANGELOG.md).",
+        "For release history see [CHANGELOG.md](https://github.com/dann1kid/vs-wildfarming/blob/main/docs/CHANGELOG.md).",
+    )
+    return text
+
+
+def sync_config_mirrors(configuration_md: str, example_json: str) -> None:
+    mirror_configuration = adapt_configuration_for_mirror(configuration_md)
+    for dest_dir in MIRROR_DIRS:
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        (dest_dir / "CONFIGURATION.md").write_text(mirror_configuration, encoding="utf-8")
+        (dest_dir / "ecosystemflora.example.json").write_text(example_json, encoding="utf-8")
+        shutil.copy2(SPECIES_DOC, dest_dir / "SPECIES_ECOLOGY_CSV.md")
+        species_dir = dest_dir / "species"
+        species_dir.mkdir(exist_ok=True)
+        override = species_dir / "ecology.override.example.csv"
+        if not override.exists():
+            override.write_text(
+                "species,spread_rate\n"
+                "horsetail,1.5\n"
+                "brownsedge,1.05\n",
+                encoding="utf-8",
+            )
+        season_override = species_dir / "season.override.example.csv"
+        if not season_override.exists():
+            season_override.write_text(
+                "species,spread_jun,spread_jul,stress_jan\n"
+                "bluebell,1.2,1.0,0.15\n",
+                encoding="utf-8",
+            )
+        print(f"Synced {dest_dir.relative_to(ROOT)}")
 
 
 def parse_descriptions() -> dict[str, str]:
@@ -262,11 +389,21 @@ For release history see [`CHANGELOG.md`](CHANGELOG.md). This file lists the **co
 ```powershell
 python tools/generate_configuration_doc.py
 ```
+
+This also refreshes `assets/ecosystemflora/ecosystemflora.example.json`, `examples/ecosystemflora-config/`, and `public-config/`.
 """
 
     body = build_key_tables(defaults, descriptions, prefixes)
-    OUT.write_text(head + "\n\n" + body + tail + "\n", encoding="utf-8")
+    configuration_md = head + "\n\n" + body + tail + "\n"
+    OUT.write_text(configuration_md, encoding="utf-8")
     print(f"Wrote {OUT} ({len(defaults)} keys, {len(descriptions)} descriptions).")
+
+    field_order = parse_field_order()
+    example_json = generate_example_json(defaults, field_order)
+    EXAMPLE_JSON_OUT.write_text(example_json, encoding="utf-8")
+    print(f"Wrote {EXAMPLE_JSON_OUT.relative_to(ROOT)} ({len(field_order)} keys).")
+
+    sync_config_mirrors(configuration_md, example_json)
 
 
 if __name__ == "__main__":

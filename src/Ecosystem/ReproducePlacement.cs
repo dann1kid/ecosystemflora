@@ -192,7 +192,11 @@ namespace WildFarming.Ecosystem
 
             if (intent.Displacing)
             {
-                if (!PlantCodeHelper.IsEcologySpreadParent(snap.Space)) return false;
+                if (!PlantCodeHelper.IsEcologySpreadParent(snap.Space)
+                    || PlantCodeHelper.IsArborealHostBlock(snap.Space))
+                {
+                    return false;
+                }
             }
             else if (!isEmpty && !SpreadVacancy.CanOccupy(acc, targetPos, intent.Requirements, snap.Space, isEmpty))
             {

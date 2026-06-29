@@ -13,9 +13,9 @@ namespace WildFarming.Tests
             Assert.True(File.Exists(path));
             string json = File.ReadAllText(path);
             Assert.Contains("flower-", json);
-            Assert.DoesNotContain("tallplant-brownsedge", json);
             Assert.Contains("juvenile-flower-", json);
             Assert.Contains("juvenile-sedge-", json);
+            Assert.Contains("tallplant-brownsedge-", json);
         }
 
         static string ResolveRepoPath(params string[] parts)

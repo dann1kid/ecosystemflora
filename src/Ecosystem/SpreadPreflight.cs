@@ -50,6 +50,11 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
+            if (!isEmpty && PlantCodeHelper.IsArborealHostBlock(snap.Space))
+            {
+                return false;
+            }
+
             if (PlantVacancyRules.TouchesSpreadBlockingFluid(in snap))
             {
                 return false;

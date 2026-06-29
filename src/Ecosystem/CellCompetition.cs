@@ -104,6 +104,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (!PlantCodeHelper.IsEcologySpreadParent(incumbentBlock)) return false;
+            if (PlantCodeHelper.IsArborealHostBlock(incumbentBlock)) return false;
 
             IBlockAccessor acc = api.World.BlockAccessor;
             if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, challenger, in snap, out _))
@@ -163,6 +164,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (!PlantCodeHelper.IsEcologySpreadParent(incumbentBlock)) return false;
+            if (PlantCodeHelper.IsArborealHostBlock(incumbentBlock)) return false;
 
             string incumbentSpecies = PlantCodeHelper.ResolveEcologySpecies(incumbentBlock);
             if (incumbentSpecies != null && incumbentSpecies == challenger.Species) return false;

@@ -1,5 +1,12 @@
 # Examples
 
+## `ecosystemflora-config/`
+
+Public **configuration reference** for [Ecosystem - Flora](https://mods.vintagestory.at/ecosystemflora): `CONFIGURATION.md`, `ecosystemflora.example.json`, species CSV docs, and override samples.
+
+- Synced from `docs/` + `assets/ecosystemflora/` via `python tools/generate_configuration_doc.py`.
+- Published as [vs-ecosystemflora-config](https://github.com/dann1kid/vs-ecosystemflora-config) (`public-config/` in this repo).
+
 ## `ecologysample-mynewplant/`
 
 Reference **content mod** for third-party [Ecosystem - Flora](https://mods.vintagestory.at/ecosystemflora) integration (`ecologyParticipant` JSON attributes).
