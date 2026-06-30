@@ -96,16 +96,51 @@ foreach ($file in Get-ChildItem -Path $outDir -Filter "flowerphase-*-free.json")
 }
 Write-Host "Migrated $flowerCount flower phase blocks."
 
-# --- Fern phases: legacy codes without -free suffix; snow via WriteFernPhaseSnowCompanions.ps1 ---
+# --- Fern phases: legacy bare dormant/dieback + optional separate -snow.json ---
 $fernCount = 0
 foreach ($file in Get-ChildItem -Path $outDir -Filter "fernphase-*.json") {
     if ($file.Name -match "-snow\.json$") { continue }
     if ($file.Name -notmatch "^fernphase-(.+)-(dormant|dieback)\.json$") { continue }
     $block = Get-Content -Raw -Path $file.FullName | ConvertFrom-Json
     if ($block.variantgroups) { continue }
+
+    $baseCode = $block.code
+    $shapeInner = if ($block.shape.base) {
+        $inner = "`"base`": `"$($block.shape.base)`""
+        if ($block.shape.scale) { $inner += ", `"scale`": $($block.shape.scale)" }
+        $inner
+    } else {
+        "`"base`": `"game:block/basic/cross`""
+    }
+
+    $texJson = if ($block.textures -and $block.textures.PSObject.Properties.Count -gt 0) {
+        Textures-ToJsonLines $block.textures
+    } else {
+        ""
+    }
+    $snowTex = Pick-SnowTexture $block
+
+    $snowCompanion = Join-Path $outDir "$baseCode-snow.json"
+    if (Test-Path $snowCompanion) {
+        $snowBlock = Get-Content -Raw -Path $snowCompanion | ConvertFrom-Json
+        if ($snowBlock.textures.north) {
+            $snowTex = Get-TexturePath $snowBlock.textures.north
+        }
+    }
+
+    $y2 = if ($block.selectionbox.y2) { $block.selectionbox.y2 } else { 0.6 }
+    $opts = @{
+        SelectionY2 = $y2
+        UseShapeByType = $true
+        SnowDrawnHeight = 14
+        FreeOnlyLines = "`n  `"attributesByType`": { `"*-free`": { `"drawnHeight`": 14 }, `"*-snow`": { `"drawnHeight`": 14, `"allowOverlays`": false, `"allowStepWhenStuck`": true } },"
+    }
+
+    Write-PlantPhaseSnowBlock $outDir $baseCode $block.class $shapeInner $texJson $snowTex $opts
+    if (Test-Path $snowCompanion) { Remove-Item $snowCompanion -Force }
     $fernCount++
 }
-Write-Host "Skipped $fernCount fern phase blocks (legacy codes; run WriteFernPhaseSnowCompanions.ps1 for snow)."
+Write-Host "Migrated $fernCount fern phase blocks."
 
 # --- Tallgrass: merge free+snow pairs ---
 $tallCount = 0

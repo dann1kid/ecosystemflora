@@ -21,18 +21,18 @@
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/goldenpoppy1", "tint": "#8b7355" },
-      "north2": { "base": "game:block/plant/flower/petal/goldenpoppy2", "tint": "#8b7355" },
-      "north3": { "base": "game:block/plant/flower/petal/goldenpoppy3", "tint": "#8b7355" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/goldenpoppy1", "tint": "#8b7355" },
-      "northTinted2": { "base": "game:block/plant/flower/stem/goldenpoppy2", "tint": "#8b7355" },
-      "northTinted3": { "base": "game:block/plant/flower/stem/goldenpoppy3", "tint": "#8b7355" },
-      "south1": { "base": "game:block/plant/flower/petal/goldenpoppy1", "tint": "#8b7355" },
-      "south2": { "base": "game:block/plant/flower/petal/goldenpoppy2", "tint": "#8b7355" },
-      "south3": { "base": "game:block/plant/flower/petal/goldenpoppy3", "tint": "#8b7355" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/goldenpoppy1", "tint": "#8b7355" },
-      "southTinted2": { "base": "game:block/plant/flower/stem/goldenpoppy2", "tint": "#8b7355" },
-      "southTinted3": { "base": "game:block/plant/flower/stem/goldenpoppy3", "tint": "#8b7355" }
+    "north1": { "base": "game:block/plant/flower/petal/goldenpoppy1", "tint": "#8b7355" },
+    "north2": { "base": "game:block/plant/flower/petal/goldenpoppy2", "tint": "#8b7355" },
+    "north3": { "base": "game:block/plant/flower/petal/goldenpoppy3", "tint": "#8b7355" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/goldenpoppy1", "tint": "#8b7355" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/goldenpoppy2", "tint": "#8b7355" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/goldenpoppy3", "tint": "#8b7355" },
+    "south1": { "base": "game:block/plant/flower/petal/goldenpoppy1", "tint": "#8b7355" },
+    "south2": { "base": "game:block/plant/flower/petal/goldenpoppy2", "tint": "#8b7355" },
+    "south3": { "base": "game:block/plant/flower/petal/goldenpoppy3", "tint": "#8b7355" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/goldenpoppy1", "tint": "#8b7355" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/goldenpoppy2", "tint": "#8b7355" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/goldenpoppy3", "tint": "#8b7355" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/goldenpoppy1" },
@@ -61,6 +61,7 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
+  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,

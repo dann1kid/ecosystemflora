@@ -10,19 +10,16 @@
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
-  "drawtype": "JSON",
   "drawtypeByType": {
+    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
   "randomDrawOffset": true,
-  "attributes": {
-    "drawnHeight": 8,
-    "overrideRandomDrawOffset": 2,
-    "allowOverlays": false,
-    "allowStepWhenStuck": true
+  "shapeByType": {
+    "*-free": { "base": "game:block/basic/cross" },
+    "*-snow": { "base": "game:block/basic/cross" }
   },
-  "shape": { "base": "game:block/basic/cross" },
   "texturesByType": {
     "*-free": {
       "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "#5c6b52" },
@@ -31,6 +28,18 @@
     "*-snow": {
       "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north", "tint": "#5c6b52" },
       "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south", "tint": "#5c6b52" }
+    }
+  },
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 8,
+      "overrideRandomDrawOffset": 2
+    },
+    "*-snow": {
+      "drawnHeight": 8,
+      "overrideRandomDrawOffset": 2,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
     }
   },
   "vertexFlagsByType": {

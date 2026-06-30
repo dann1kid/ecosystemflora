@@ -1,5 +1,5 @@
 {
-  "code": "fernphase-hartstongue-dormant",
+  "code": "fernphase-cinnamonfern-sporulating",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
   ],
@@ -16,17 +16,19 @@
   },
   "randomizeRotations": true,
   "shapeByType": {
-    "*-free": { "base": "game:block/plant/fern/hartstongue/var*", "scale": 1.0 },
+    "*-free": { "base": "game:block/plant/fern/cinnamonfern/var*", "scale": 1.0 },
     "*-snow": { "base": "game:block/basic/cross" }
   },
   "texturesByType": {
     "*-free": {
-      "straight": { "base": "game:block/plant/fern/hartstongue/straight", "tint": "#5c6b52" },
-      "curved": { "base": "game:block/plant/fern/hartstongue/curved", "tint": "#5c6b52" }
+      "tall": { "base": "game:block/plant/fern/cinnamonfern/tall" },
+      "short": { "base": "game:block/plant/fern/cinnamonfern/short" },
+      "center1": { "base": "game:block/plant/fern/cinnamonfern/center1" },
+      "center2": { "base": "game:block/plant/fern/cinnamonfern/center2" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/fern/hartstongue/straight" },
-      "south": { "base": "game:block/plant/fern/hartstongue/straight" }
+      "north": { "base": "game:block/plant/fern/cinnamonfern/tall" },
+      "south": { "base": "game:block/plant/fern/cinnamonfern/tall" }
     }
   },
 

@@ -6,8 +6,8 @@ using Vintagestory.API.MathTools;
 namespace WildFarming.Ecosystem
 {
     /// <summary>
-    /// Remaps fern phase blocks saved with mistaken <c>-free</c> cover suffix (variant-group migration)
-    /// back to legacy codes without that suffix.
+    /// Remaps legacy bare fern phase block codes (pre cover-variant migration)
+    /// to <c>-free</c> cover variants.
     /// </summary>
     internal static class LegacyPhaseBlockMigration
     {
@@ -38,15 +38,19 @@ namespace WildFarming.Ecosystem
                     for (int lz = 0; lz < cs; lz++)
                     {
                         var pos = new BlockPos(baseX + lx, y, baseZ + lz);
-                        TryRemapAt(acc, pos);
+                        Block block = acc.GetBlock(pos);
+                        TryRemapAt(acc, pos, block);
+                        if (PlantSnowCover.BlockHasCoverVariant(block?.Code?.Path))
+                        {
+                            PlantSnowCoverSync.TrySyncCover(api, pos, block);
+                        }
                     }
                 }
             }
         }
 
-        static void TryRemapAt(IBlockAccessor acc, BlockPos pos)
+        static void TryRemapAt(IBlockAccessor acc, BlockPos pos, Block block)
         {
-            Block block = acc.GetBlock(pos);
             AssetLocation targetCode = ResolveRemapTarget(block?.Code);
             if (targetCode == null) return;
 
@@ -60,12 +64,11 @@ namespace WildFarming.Ecosystem
         {
             if (code?.Domain != "ecosystemflora" || code.Path == null) return null;
             if (!code.Path.StartsWith("fernphase-")) return null;
-            if (!code.Path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal)) return null;
+            if (!PlantSnowCover.IsLegacyBareFernPhasePath(code.Path)) return null;
 
-            string withoutFree = code.Path.Substring(0, code.Path.Length - JuvenileBlockNaming.FreeSuffix.Length);
-            if (!withoutFree.EndsWith("-dormant") && !withoutFree.EndsWith("-dieback")) return null;
-
-            return new AssetLocation(code.Domain, withoutFree);
+            return new AssetLocation(
+                code.Domain,
+                code.Path + JuvenileBlockNaming.FreeSuffix);
         }
     }
 }

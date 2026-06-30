@@ -89,8 +89,7 @@ namespace WildFarming.Ecosystem
             FernPhenologyPhase effective = EffectivePhase(acc, entry, seasonal, cfg);
             entry.FernPhenologyPhase = effective;
             entry.LastFernPhenologyUpdateHours = now;
-            SyncBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective);
-            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+            ReconcileBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective);
         }
 
         public static void Advance(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg, double nowHours)
@@ -100,28 +99,66 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             FernPhenologyPhase seasonal = ResolveSeasonalPhase(api, entry.Origin, entry.Requirements, cfg);
             FernPhenologyPhase effective = EffectivePhase(acc, entry, seasonal, cfg);
+
             if (entry.FernPhenologyPhase == effective
                 && nowHours - entry.LastFernPhenologyUpdateHours < 6)
             {
-                PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+                ReconcileBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective);
                 return;
             }
 
+            FernPhenologyPhase previous = entry.FernPhenologyPhase;
             entry.FernPhenologyPhase = effective;
             entry.LastFernPhenologyUpdateHours = nowHours;
-            if (SyncBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective)
-                && effective == FernPhenologyPhase.Dieback)
+            if (ReconcileBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective)
+                && effective == FernPhenologyPhase.Dieback
+                && previous != FernPhenologyPhase.Dieback)
             {
                 EcologyHistoryRecorder.RecordOrphanDieback(api, entry.Origin, entry.Requirements.Species);
             }
-
-            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
         internal static FernPhenologyPhase InferPhaseForTests(float seasonActivity) =>
             seasonActivity >= SporulationSeasonThreshold
                 ? FernPhenologyPhase.Sporulating
                 : FernPhenologyPhase.Dormant;
+
+        static bool ReconcileBlockToPhase(
+            ICoreAPI api,
+            BlockPos pos,
+            string species,
+            FernPhenologyPhase phase)
+        {
+            Block current = api.World.BlockAccessor.GetBlock(pos);
+            if (BlockMatchesPhase(api, pos, species, current, phase))
+            {
+                PlantSnowCoverSync.TrySyncCover(api, pos, current);
+                return false;
+            }
+
+            bool changed = SyncBlockToPhase(api, pos, species, phase);
+            PlantSnowCoverSync.TrySyncCover(api, pos);
+            return changed;
+        }
+
+        internal static bool BlockMatchesPhase(
+            ICoreAPI api,
+            BlockPos pos,
+            string species,
+            Block block,
+            FernPhenologyPhase phase)
+        {
+            if (block == null || block.Id == 0) return false;
+            if (!string.Equals(FernPhenologyBlocks.SpeciesFromPhaseCode(block.Code), species, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (FernPhenologyBlocks.PhaseFromCode(block.Code) != phase) return false;
+
+            bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
+            return PlantSnowCover.PathHasSnowCover(block.Code.Path) == wantSnow;
+        }
 
         public static bool SyncBlockToPhase(
             ICoreAPI api,
@@ -130,10 +167,10 @@ namespace WildFarming.Ecosystem
             FernPhenologyPhase phase)
         {
             if (api == null || pos == null || string.IsNullOrEmpty(species)) return false;
+            if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
 
             Block current = api.World.BlockAccessor.GetBlock(pos);
-            bool snow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
-            AssetLocation code = FernPhenologyBlocks.CodeForPhase(species, phase, snow);
+            AssetLocation code = FernPhenologyBlocks.CodeForPhase(species, phase, snow: false);
             if (code == null) return false;
 
             Block target = api.World.GetBlock(code);

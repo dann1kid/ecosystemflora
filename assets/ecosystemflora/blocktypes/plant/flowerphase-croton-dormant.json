@@ -15,8 +15,8 @@
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
-  "randomDrawOffset": true,
   "randomizeAxes": "xz",
+  "randomDrawOffset": true,
   "shapeByType": {
     "*-free": { "base": "game:block/plant/croton/small/crimson-green" },
     "*-snow": { "base": "game:block/basic/cross" }

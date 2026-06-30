@@ -1,17 +1,56 @@
-﻿{
+{
   "code": "fernphase-deerfern-dieback",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
   "class": "BlockFern",
   "enabled": true,
   "renderpass": "OpaqueNoCull",
   "blockmaterial": "Plant",
-  "drawtype": "JSON",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtypeByType": {
+    "*-free": "JSON",
+    "*-snow": "crossandsnowlayer"
+  },
   "randomizeRotations": true,
-  "shape": { "base": "game:block/plant/fern/deerfern/var*", "scale": 1.0 },
-  "textures": {
-    "tall1": { "base": "game:block/plant/fern/deerfern/tall1", "tint": "#8b7355" },
-    "tall2": { "base": "game:block/plant/fern/deerfern/tall2", "tint": "#8b7355" },
-    "tall3": { "base": "game:block/plant/fern/deerfern/tall3", "tint": "#8b7355" },
-    "center1": { "base": "game:block/plant/fern/deerfern/center1", "tint": "#8b7355" }
+  "shapeByType": {
+    "*-free": { "base": "game:block/plant/fern/deerfern/var*", "scale": 1.0 },
+    "*-snow": { "base": "game:block/basic/cross" }
+  },
+  "texturesByType": {
+    "*-free": {
+      "tall1": { "base": "game:block/plant/fern/deerfern/tall1", "tint": "#8b7355" },
+      "tall2": { "base": "game:block/plant/fern/deerfern/tall2", "tint": "#8b7355" },
+      "tall3": { "base": "game:block/plant/fern/deerfern/tall3", "tint": "#8b7355" },
+      "center1": { "base": "game:block/plant/fern/deerfern/center1", "tint": "#8b7355" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/fern/deerfern/tall1" },
+      "south": { "base": "game:block/plant/fern/deerfern/tall1" }
+    }
+  },
+
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 14
+    },
+    "*-snow": {
+      "drawnHeight": 14,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
+  },
+  "vertexFlagsByType": {
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
@@ -19,7 +58,7 @@
   "resistance": 0.5,
   "lightAbsorption": 0,
   "collisionbox": null,
-  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.6, "z2": 0.875 },
+  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.6, "z2": 0.85 },
   "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "frostable": true,
   "materialDensity": 200,

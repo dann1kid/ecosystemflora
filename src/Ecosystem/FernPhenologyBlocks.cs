@@ -4,29 +4,18 @@ namespace WildFarming.Ecosystem
 {
     internal static class FernPhenologyBlocks
     {
+        const string Domain = "ecosystemflora";
         const string Prefix = "fernphase-";
 
         public static AssetLocation CodeForPhase(string species, FernPhenologyPhase phase, bool snow = false)
         {
             if (string.IsNullOrEmpty(species)) return null;
-            string suffix = phase switch
-            {
-                FernPhenologyPhase.Dormant => "dormant",
-                FernPhenologyPhase.Dieback => "dieback",
-                _ => null,
-            };
 
-            if (suffix == null)
-            {
-                return PlantSnowCover.CodeWithCover(
-                    FernJuvenileBlocks.MatureVanillaCode(species),
-                    snow);
-            }
+            string phaseSuffix = SuffixForPhase(phase);
+            if (phaseSuffix == null) return null;
 
-            // Legacy fern phase codes omit the -free suffix (saves pre cover-variant migration).
-            string path = Prefix + species + "-" + suffix;
-            if (snow) path += JuvenileBlockNaming.SnowSuffix;
-            return new AssetLocation("ecosystemflora", path);
+            string cover = snow ? JuvenileBlockNaming.SnowSuffix : JuvenileBlockNaming.FreeSuffix;
+            return new AssetLocation(Domain, Prefix + species + "-" + phaseSuffix + cover);
         }
 
         public static AssetLocation CodeForPhase(string species, FernPhenologyPhase phase, Block referenceBlock)
@@ -42,46 +31,77 @@ namespace WildFarming.Ecosystem
 
         public static string SpeciesFromPhaseCode(AssetLocation code)
         {
-            if (code?.Domain != "ecosystemflora" || code.Path == null) return null;
-            if (!code.Path.StartsWith(Prefix)) return null;
-
-            if (!TryParsePhasePath(code.Path, out string species, out _)) return null;
-            return EcologyFernSpecies.IsKnown(species) ? species : null;
+            return TryParse(code, out string species, out _) ? species : null;
         }
 
         public static FernPhenologyPhase? PhaseFromCode(AssetLocation code)
         {
-            if (!TryParsePhasePath(code?.Path, out _, out FernPhenologyPhase? phase)) return null;
+            if (!TryParse(code, out _, out FernPhenologyPhase? phase)) return null;
             return phase;
         }
 
-        static bool TryParsePhasePath(string path, out string species, out FernPhenologyPhase? phase)
+        static string SuffixForPhase(FernPhenologyPhase phase)
+        {
+            switch (phase)
+            {
+                case FernPhenologyPhase.Dormant: return "dormant";
+                case FernPhenologyPhase.Dieback: return "dieback";
+                case FernPhenologyPhase.Sporulating: return "sporulating";
+                default: return null;
+            }
+        }
+
+        static bool TryParse(AssetLocation code, out string species, out FernPhenologyPhase? phase)
         {
             species = null;
             phase = null;
-            if (string.IsNullOrEmpty(path) || !path.StartsWith(Prefix)) return false;
 
-            string rest = path.Substring(Prefix.Length);
-            if (rest.EndsWith(JuvenileBlockNaming.FreeSuffix))
-            {
-                rest = rest.Substring(0, rest.Length - JuvenileBlockNaming.FreeSuffix.Length);
-            }
-            else if (rest.EndsWith(JuvenileBlockNaming.SnowSuffix))
-            {
-                rest = rest.Substring(0, rest.Length - JuvenileBlockNaming.SnowSuffix.Length);
-            }
+            if (code == null || !Domain.Equals(code.Domain, System.StringComparison.OrdinalIgnoreCase)) return false;
 
-            int dash = rest.LastIndexOf('-');
+            string path = code.Path ?? "";
+            if (!path.StartsWith(Prefix, System.StringComparison.Ordinal)) return false;
+            if (!TryStripCoverSuffix(path, out string inner)) return false;
+
+            inner = inner.Substring(Prefix.Length);
+            int dash = inner.LastIndexOf('-');
             if (dash <= 0) return false;
 
-            species = rest.Substring(0, dash);
-            string phaseSuffix = rest.Substring(dash + 1);
+            species = inner.Substring(0, dash);
+            string phaseSuffix = inner.Substring(dash + 1);
+
             switch (phaseSuffix)
             {
-                case "dormant": phase = FernPhenologyPhase.Dormant; return true;
-                case "dieback": phase = FernPhenologyPhase.Dieback; return true;
+                case "dormant": phase = FernPhenologyPhase.Dormant; return EcologyFernSpecies.IsKnown(species);
+                case "dieback": phase = FernPhenologyPhase.Dieback; return EcologyFernSpecies.IsKnown(species);
+                case "sporulating": phase = FernPhenologyPhase.Sporulating; return EcologyFernSpecies.IsKnown(species);
                 default: return false;
             }
+        }
+
+        static bool TryStripCoverSuffix(string path, out string withoutCover)
+        {
+            withoutCover = null;
+            if (string.IsNullOrEmpty(path)) return false;
+
+            if (path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal))
+            {
+                withoutCover = path.Substring(0, path.Length - JuvenileBlockNaming.FreeSuffix.Length);
+                return true;
+            }
+
+            if (path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
+            {
+                withoutCover = path.Substring(0, path.Length - JuvenileBlockNaming.SnowSuffix.Length);
+                return true;
+            }
+
+            if (PlantSnowCover.IsLegacyBareFernPhasePath(path))
+            {
+                withoutCover = path;
+                return true;
+            }
+
+            return false;
         }
     }
 }

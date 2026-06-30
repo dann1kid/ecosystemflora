@@ -1,5 +1,6 @@
-# Fern phenology phase blocks (dormant/dieback) — vanilla fern shapes + tinted texture overrides.
+# Fern phenology phase blocks (dormant / dieback / sporulating) — cover variant groups (free / snow).
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "WritePlantPhaseSnowBlock.ps1")
 $outDir = Join-Path $PSScriptRoot "..\assets\ecosystemflora\blocktypes\plant"
 
 function GameAsset([string]$path) {
@@ -7,11 +8,10 @@ function GameAsset([string]$path) {
     return "game:$path"
 }
 
-$plantSounds = '"place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant"'
-
 $phases = @{
-    dormant = "#5c6b52"
-    dieback = "#8b7355"
+    dormant = @{ Tint = "#5c6b52" }
+    dieback = @{ Tint = "#8b7355" }
+    sporulating = @{ Tint = $null }
 }
 
 $species = @(
@@ -65,44 +65,53 @@ $species = @(
     }
 )
 
-function Format-TintedTextures($tintKeys, $tint) {
+function Format-PhaseTextures($tintKeys, $tint) {
     ($tintKeys | ForEach-Object {
-        "    `"$($_.Key)`": { `"base`": `"$($_.Base)`", `"tint`": `"$tint`" }"
+        if ($tint) {
+            "      `"$($_.Key)`": { `"base`": `"$($_.Base)`", `"tint`": `"$tint`" }"
+        } else {
+            "      `"$($_.Key)`": { `"base`": `"$($_.Base)`" }"
+        }
     }) -join ",`n"
 }
 
-foreach ($entry in $species) {
-    foreach ($phase in $phases.Keys) {
-        $tint = $phases[$phase]
-        $texJson = Format-TintedTextures $entry.TintKeys $tint
-        $dest = Join-Path $outDir "fernphase-$($entry.Name)-$phase.json"
-        @"
-{
-  "code": "fernphase-$($entry.Name)-$phase",
-  "class": "$($entry.Class)",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "shape": { "base": "$($entry.Shape)", "scale": 1.0 },
-  "textures": {
-$texJson
-  },
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.6, "z2": 0.875 },
-  "sounds": { $plantSounds },
-  "frostable": true,
-  "materialDensity": 200,
-  "drops": []
+function Get-SnowTextureFromKeys($tintKeys) {
+    $paths = $tintKeys | ForEach-Object { $_.Base }
+    return Get-SnowCrossTextureFromPaths $paths
 }
-"@ | Set-Content -Encoding UTF8 $dest
-        Write-Host "Wrote $dest"
+
+foreach ($entry in $species) {
+    foreach ($phaseName in $phases.Keys) {
+        $phaseCfg = $phases[$phaseName]
+        $baseCode = "fernphase-$($entry.Name)-$phaseName"
+        $shapeInner = "`"base`": `"$($entry.Shape)`", `"scale`": 1.0"
+        $texJson = Format-PhaseTextures $entry.TintKeys $phaseCfg.Tint
+        $snowTex = Get-SnowTextureFromKeys $entry.TintKeys
+
+        $legacySnow = Join-Path $outDir "$baseCode-snow.json"
+        if (Test-Path $legacySnow) { Remove-Item $legacySnow -Force }
+
+        $opts = @{
+            SelectionY2 = 0.6
+            UseShapeByType = $true
+            SnowDrawnHeight = 14
+            FreeOnlyLines = @"
+
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 14
+    },
+    "*-snow": {
+      "drawnHeight": 14,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
+  },
+"@
+        }
+
+        Write-PlantPhaseSnowBlock $outDir $baseCode $entry.Class $shapeInner $texJson $snowTex $opts
+        Write-Host "Wrote $baseCode"
     }
 }
 

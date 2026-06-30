@@ -240,18 +240,15 @@ namespace WildFarming.Tests
         {
             foreach (string species in new[] { "eaglefern", "cinnamonfern", "deerfern", "hartstongue", "tallfern" })
             {
-                foreach (string phase in new[] { "dormant", "dieback" })
+                foreach (string phase in new[] { "dormant", "dieback", "sporulating" })
                 {
                     string basePath = Path.Combine(PlantAssetDir, $"fernphase-{species}-{phase}.json");
                     Assert.True(File.Exists(basePath), basePath);
-                    string baseJson = File.ReadAllText(basePath);
-                    Assert.Contains("\"frostable\": true", baseJson);
-                    Assert.DoesNotContain("variantgroups", baseJson);
-
-                    string snowPath = Path.Combine(PlantAssetDir, $"fernphase-{species}-{phase}-snow.json");
-                    Assert.True(File.Exists(snowPath), snowPath);
-                    string snowJson = File.ReadAllText(snowPath);
-                    Assert.Contains("crossandsnowlayer", snowJson);
+                    string json = File.ReadAllText(basePath);
+                    Assert.Contains("\"variantgroups\"", json);
+                    Assert.Contains("\"frostable\": true", json);
+                    Assert.Contains("crossandsnowlayer", json);
+                    Assert.False(File.Exists(Path.Combine(PlantAssetDir, $"fernphase-{species}-{phase}-snow.json")));
                 }
             }
         }
@@ -276,7 +273,8 @@ namespace WildFarming.Tests
             {
                 string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}.json");
                 string json = File.ReadAllText(path);
-                Assert.Contains("\"drawtype\": \"JSON\"", json);
+                Assert.Contains("\"*-free\": \"JSON\"", json);
+                Assert.Contains("shapeByType", json);
                 Assert.Contains("game:block/basic/cross", json);
                 Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", json);
                 Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", json);

@@ -26,8 +26,30 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
-            return IsLegacyFernPhasePath(path);
+            return IsLegacyBareFernPhasePath(path);
         }
+
+        /// <summary>Bare <c>fernphase-*-{dormant|dieback|sporulating}</c> without cover suffix (pre-unification saves).</summary>
+        internal static bool IsLegacyBareFernPhasePath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !path.StartsWith("fernphase-", System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal)
+                || path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return path.EndsWith("-dormant", System.StringComparison.Ordinal)
+                || path.EndsWith("-dieback", System.StringComparison.Ordinal)
+                || path.EndsWith("-sporulating", System.StringComparison.Ordinal);
+        }
+
+        [System.Obsolete("Use IsLegacyBareFernPhasePath")]
+        internal static bool IsLegacyFernPhasePath(string path) => IsLegacyBareFernPhasePath(path);
 
         /// <summary>Snow layer block directly above the plant cell.</summary>
         public static bool EnvironmentWantsSnowCover(ICoreAPI api, BlockPos plantPos)
@@ -40,7 +62,7 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
-        /// Whether a frostable plant should use its snow cover variant now (climate + snow layer + accum map).
+        /// Whether a frostable plant should use its snow cover variant now (snow layer above or frost).
         /// </summary>
         public static bool ResolveWantsSnowCover(ICoreAPI api, BlockPos plantPos)
         {
@@ -48,18 +70,15 @@ namespace WildFarming.Ecosystem
             return ClimateWantsSnowCover(api, plantPos);
         }
 
+        /// <summary>Frost at the plant cell only; residual snow-accum map does not keep cover above freezing.</summary>
         public static bool ClimateWantsSnowCover(ICoreAPI api, BlockPos plantPos)
         {
             if (api?.World?.BlockAccessor == null || plantPos == null) return false;
 
             if (api.ModLoader != null && GreenhouseHelper.IsGreenhouse(api, plantPos)) return false;
 
-            IBlockAccessor acc = api.World.BlockAccessor;
-            ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
-            if (now != null && now.Temperature <= FrostCoverTemperatureC) return true;
-
-            return TryGetSnowAccum(acc, plantPos, out float accum)
-                && accum >= SnowAccumCoverThreshold;
+            ClimateCondition now = api.World.BlockAccessor.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
+            return now != null && now.Temperature <= FrostCoverTemperatureC;
         }
 
         /// <summary>
@@ -108,7 +127,7 @@ namespace WildFarming.Ecosystem
                             + JuvenileBlockNaming.SnowSuffix);
                 }
 
-                if (IsLegacyFernPhasePath(path))
+                if (IsLegacyBareFernPhasePath(path))
                 {
                     return new AssetLocation(code.Domain, path + JuvenileBlockNaming.SnowSuffix);
                 }
@@ -119,9 +138,9 @@ namespace WildFarming.Ecosystem
             if (path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
             {
                 string bare = path.Substring(0, path.Length - JuvenileBlockNaming.SnowSuffix.Length);
-                if (IsLegacyFernPhasePath(bare))
+                if (IsLegacyBareFernPhasePath(bare))
                 {
-                    return new AssetLocation(code.Domain, bare);
+                    return new AssetLocation(code.Domain, bare + JuvenileBlockNaming.FreeSuffix);
                 }
 
                 return new AssetLocation(
@@ -130,18 +149,6 @@ namespace WildFarming.Ecosystem
             }
 
             return code;
-        }
-
-        /// <summary>Fern phase blocks use bare <c>-dormant</c>/<c>-dieback</c> for free cover (no <c>-free</c> suffix).</summary>
-        internal static bool IsLegacyFernPhasePath(string path)
-        {
-            if (string.IsNullOrEmpty(path) || !path.StartsWith("fernphase-", System.StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            return path.EndsWith("-dormant", System.StringComparison.Ordinal)
-                || path.EndsWith("-dieback", System.StringComparison.Ordinal);
         }
 
         internal static bool TryGetSnowAccum(IBlockAccessor acc, BlockPos pos, out float snowAccum)

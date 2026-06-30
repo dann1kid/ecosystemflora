@@ -21,16 +21,16 @@
   },
   "texturesByType": {
     "*-free": {
-      "flower2": { "base": "game:block/plant/flower/petal/orangemallow2", "tint": "#8b7355" },
-      "flower2Tinted": { "base": "game:block/plant/flower/stem/orangemallow2", "tint": "#8b7355" },
-      "north1": { "base": "game:block/plant/flower/petal/orangemallow1", "tint": "#8b7355" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/orangemallow1", "tint": "#8b7355" },
-      "south1": { "base": "game:block/plant/flower/petal/orangemallow3", "tint": "#8b7355" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/orangemallow3", "tint": "#8b7355" }
+    "flower2": { "base": "game:block/plant/flower/petal/orangemallow2", "tint": "#8b7355" },
+    "flower2Tinted": { "base": "game:block/plant/flower/stem/orangemallow2", "tint": "#8b7355" },
+    "north1": { "base": "game:block/plant/flower/petal/orangemallow1", "tint": "#8b7355" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/orangemallow1", "tint": "#8b7355" },
+    "south1": { "base": "game:block/plant/flower/petal/orangemallow3", "tint": "#8b7355" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/orangemallow3", "tint": "#8b7355" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/petal/orangemallow2" },
-      "south": { "base": "game:block/plant/flower/petal/orangemallow2" }
+      "north": { "base": "game:block/plant/flower/stem/orangemallow1" },
+      "south": { "base": "game:block/plant/flower/stem/orangemallow1" }
     }
   },
 
@@ -55,6 +55,7 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
+  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,

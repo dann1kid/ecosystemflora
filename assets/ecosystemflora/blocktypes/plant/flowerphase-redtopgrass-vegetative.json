@@ -21,14 +21,14 @@
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
-      "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" }
+    "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+    "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#6d7d62" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/petal/redtopgrass*" },
-      "south": { "base": "game:block/plant/flower/petal/redtopgrass*" }
+      "north": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+      "south": { "base": "game:block/plant/flower/stem/redtopgrass*" }
     }
   },
 

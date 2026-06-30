@@ -15,20 +15,17 @@
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
-  "randomDrawOffset": true,
-  "randomizeAxes": "xz",
   "shapeByType": {
     "*-free": { "base": "game:block/plant/rafflesia/red" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
   "texturesByType": {
     "*-free": {
-      "inside": { "base": "game:block/plant/rafflesia/red/inside", "tint": "#5c6b52" },
-      "petals": { "base": "game:block/plant/rafflesia/red/inside", "tint": "#5c6b52" }
+    
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/rafflesia/red/inside" },
-      "south": { "base": "game:block/plant/rafflesia/red/inside" }
+      "north": { "base": "game:block/plant/flower/petal/wilddaisy1" },
+      "south": { "base": "game:block/plant/flower/petal/wilddaisy1" }
     }
   },
 
@@ -59,7 +56,7 @@
   "resistance": 0.5,
   "lightAbsorption": 0,
   "collisionbox": null,
-  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.25, "z2": 0.85 },
+  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.49, "z2": 0.85 },
   "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "frostable": true,
   "materialDensity": 200,

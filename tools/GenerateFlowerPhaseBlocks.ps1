@@ -1,6 +1,7 @@
 # Full-size flower phenology blocks derived from juvenile-flower-* assets.
 # Fixes invisible phases: wrong stem paths, transparent slots, mismatched shapes.
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "WritePlantPhaseSnowBlock.ps1")
 $outDir = Join-Path $PSScriptRoot "..\assets\ecosystemflora\blocktypes\plant"
 $plantDir = $outDir
 
@@ -93,12 +94,33 @@ function Format-TextureJson($phaseTextures) {
     return $lines -join ",`n"
 }
 
-function Write-PhaseBlockFromJuvenile($species, $phase, $juvenile) {
-    $shapeBase = $juvenile.shape.base
-    $textures = @{}
-    foreach ($prop in $juvenile.textures.PSObject.Properties) {
-        $textures[$prop.Name] = $prop.Value
+function Get-JuvenileFreeShape($juvenile) {
+    if ($juvenile.shapeByType.'*-free'.base) {
+        return $juvenile.shapeByType.'*-free'.base
     }
+    if ($juvenile.shape.base) {
+        return $juvenile.shape.base
+    }
+    return "game:block/basic/cross"
+}
+
+function Get-JuvenileFreeTextures($juvenile) {
+    $textures = @{}
+    $source = $juvenile.texturesByType.'*-free'
+    if (-not $source -and $juvenile.textures) {
+        $source = $juvenile.textures
+    }
+    if ($source) {
+        foreach ($prop in $source.PSObject.Properties) {
+            $textures[$prop.Name] = $prop.Value
+        }
+    }
+    return $textures
+}
+
+function Write-PhaseBlockFromJuvenile($species, $phase, $juvenile) {
+    $shapeBase = Get-JuvenileFreeShape $juvenile
+    $textures = Get-JuvenileFreeTextures $juvenile
 
     $phaseTextures = Convert-ToPhaseTextures $textures $phase $species
     $texJson = Format-TextureJson $phaseTextures
@@ -110,7 +132,8 @@ function Write-PhaseBlockFromJuvenile($species, $phase, $juvenile) {
         if ($y2 -lt 0.35) { $y2 = 0.35 }
     }
 
-    $path = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+    $legacyFree = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+    if (Test-Path $legacyFree) { Remove-Item $legacyFree -Force }
 
     $climateBlock = ""
     if ($phase -eq "dormant") {
@@ -127,104 +150,70 @@ function Write-PhaseBlockFromJuvenile($species, $phase, $juvenile) {
 "@
     }
 
-    $extraAttrs = ""
+    $extraTop = ""
     if ($species -eq "heather") {
-        $extraAttrs = @"
-
-  "attributes": {
-    "overrideRandomDrawOffset": 3
-  },
-"@
+        $extraTop = "`n  `"randomDrawOffset`": true,"
         $y2 = 0.31
     }
 
-    @"
-{
-  "code": "flowerphase-${species}-${phase}-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,$extraAttrs
-  "shape": { "base": "$shapeBase" },
-  "textures": {
-$texJson
-  },$climateBlock
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": $y2, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+    $snowPaths = $phaseTextures.Values | ForEach-Object { $_.Path }
+    $snowTex = Get-SnowCrossTextureFromPaths @($snowPaths)
+
+    $opts = @{
+        SelectionY2 = $y2
+        UseShapeByType = $true
+        ClimateLines = $climateBlock
+        ExtraTopLines = $extraTop
+    }
+    if ($species -eq "heather") {
+        $opts.FreeOnlyLines = "`n  `"attributesByType`": { `"*-free`": { `"overrideRandomDrawOffset`": 3 }, `"*-snow`": { `"allowOverlays`": false, `"allowStepWhenStuck`": true } },"
+    }
+
+    $baseCode = "flowerphase-${species}-${phase}"
+    $shapeInner = "`"base`": `"$shapeBase`""
+    Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" $shapeInner $texJson $snowTex $opts
 }
 
 function Write-GhostpipePhases($species) {
     $petal = "game:block/plant/flower/petal/${species}*"
 
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
-        $path = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        $legacyFree = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        if (Test-Path $legacyFree) { Remove-Item $legacyFree -Force }
 
         $northPetal = if ($phase -eq "vegetative") {
-            "    `"north1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
+            "      `"north1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
         } else {
-            "    `"north1`": { `"base`": `"$petal`" },"
+            "      `"north1`": { `"base`": `"$petal`" },"
         }
         $southPetal = if ($phase -eq "vegetative") {
-            "    `"south1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
+            "      `"south1`": { `"base`": `"$petal`", `"tint`": `"#6d7d62`" },"
         } else {
-            "    `"south1`": { `"base`": `"$petal`" },"
+            "      `"south1`": { `"base`": `"$petal`" },"
         }
+
+        $texJson = @"
+$northPetal
+      "northTinted1": { "base": "game:block/transparent" },
+$southPetal
+      "southTinted1": { "base": "game:block/transparent" }
+"@
 
         $climateBlock = ""
         if ($phase -eq "dormant") {
-            $climateBlock = @"
-
-  "climateColorMap": "climatePlantTint",
-"@
+            $climateBlock = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
         elseif ($phase -eq "dieback") {
-            $climateBlock = @"
-
-  "climateColorMap": "climatePlantTint",
-  "frostable": true,
-"@
+            $climateBlock = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
 
-        @"
-{
-  "code": "flowerphase-${species}-${phase}-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "shape": { "base": "game:block/plant/flower/1patch-3faces-16x16" },
-  "textures": {
-$northPetal
-    "northTinted1": { "base": "game:block/transparent" },
-$southPetal
-    "southTinted1": { "base": "game:block/transparent" }
-  },$climateBlock
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.25, "z2": 0.875 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+        $baseCode = "flowerphase-${species}-${phase}"
+        $shapeInner = "`"base`": `"game:block/plant/flower/1patch-3faces-16x16`""
+        Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" $shapeInner $texJson $petal @{
+            SelectionY2 = 0.25
+            UseShapeByType = $true
+            ClimateLines = $climateBlock
+        }
     }
 }
 
@@ -233,7 +222,9 @@ function Write-RafflesiaPhases($species, $color) {
     $shape = "game:block/plant/rafflesia/$color"
 
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
-        $path = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        $legacyFree = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        if (Test-Path $legacyFree) { Remove-Item $legacyFree -Force }
+
         $tint = switch ($phase) {
             "dormant" { "#5c6b52" }
             "dieback" { "#8b7355" }
@@ -241,97 +232,57 @@ function Write-RafflesiaPhases($species, $color) {
         }
 
         $insideLine = if ($tint) {
-            "    `"inside`": { `"base`": `"$inside`", `"tint`": `"$tint`" },"
+            "      `"inside`": { `"base`": `"$inside`", `"tint`": `"$tint`" },"
         } else {
-            "    `"inside`": { `"base`": `"$inside`" },"
+            "      `"inside`": { `"base`": `"$inside`" },"
         }
         $petalsLine = if ($tint) {
-            "    `"petals`": { `"base`": `"$inside`", `"tint`": `"$tint`" }"
+            "      `"petals`": { `"base`": `"$inside`", `"tint`": `"$tint`" }"
         } else {
-            "    `"petals`": { `"base`": `"$inside`" }"
+            "      `"petals`": { `"base`": `"$inside`" }"
         }
+        $texJson = "$insideLine`n$petalsLine"
 
         $climateLine = ""
         if ($phase -eq "dormant") {
             $climateLine = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
         elseif ($phase -eq "dieback") {
-            $climateLine = "`n  `"climateColorMap`": `"climatePlantTint`",`n  `"frostable`": true,"
+            $climateLine = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
 
-        @"
-{
-  "code": "flowerphase-${species}-${phase}-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "randomizeAxes": "xz",
-  "randomDrawOffset": true,
-  "shape": { "base": "$shape" },
-  "textures": {
-$insideLine
-$petalsLine
-  },$climateLine
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.25, "z2": 0.875 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+        $baseCode = "flowerphase-${species}-${phase}"
+        $shapeInner = "`"base`": `"$shape`""
+        Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" $shapeInner $texJson $inside @{
+            SelectionY2 = 0.25
+            UseShapeByType = $true
+            ClimateLines = $climateLine
+            ExtraTopLines = "`n  `"randomizeAxes`": `"xz`",`n  `"randomDrawOffset`": true,"
+        }
     }
 }
 
 function Write-ShapeOnlyPhases($species, $shape, $selectionY2 = 0.55) {
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
-        $path = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        $legacyFree = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
+        if (Test-Path $legacyFree) { Remove-Item $legacyFree -Force }
+
         $climateBlock = ""
         if ($phase -eq "dormant") {
-            $climateBlock = @"
-
-  "climateColorMap": "climatePlantTint",
-"@
+            $climateBlock = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
         elseif ($phase -eq "dieback") {
-            $climateBlock = @"
-
-  "climateColorMap": "climatePlantTint",
-  "frostable": true,
-"@
+            $climateBlock = "`n  `"climateColorMap`": `"climatePlantTint`","
         }
 
-        @"
-{
-  "code": "flowerphase-${species}-${phase}-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "randomizeAxes": "xz",
-  "randomDrawOffset": true,
-  "shape": { "base": "$shape" },$climateBlock
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": $selectionY2, "z2": 0.85 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+        $baseCode = "flowerphase-${species}-${phase}"
+        $shapeInner = "`"base`": `"$shape`""
+        Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" $shapeInner "" "game:block/plant/flower/petal/wilddaisy1" @{
+            SelectionY2 = $selectionY2
+            UseShapeByType = $true
+            ClimateLines = $climateBlock
+            ExtraTopLines = "`n  `"randomizeAxes`": `"xz`",`n  `"randomDrawOffset`": true,"
+        }
     }
 }
 
@@ -379,78 +330,19 @@ foreach ($file in $juvenileFiles) {
 
 Write-Host "Done. Generated $count phase blocktypes from juvenile sources."
 
+. (Join-Path $PSScriptRoot "SeasonalLangCommon.ps1")
 $langDir = Join-Path $PSScriptRoot "..\assets\ecosystemflora\lang"
 $labelsPath = Join-Path $langDir "flowerphase-labels.json"
 $phaseLabels = Get-Content -Raw -Encoding UTF8 -Path $labelsPath | ConvertFrom-Json
-
-function Read-LangSpeciesMap($langPath) {
-    $map = @{}
-    if (-not (Test-Path $langPath)) { return $map }
-    $content = [System.IO.File]::ReadAllText($langPath, [System.Text.Encoding]::UTF8)
-    foreach ($m in [regex]::Matches($content, '"ecosystemflora:species-([^"]+)":\s*"([^"]*)"')) {
-        $map[$m.Groups[1].Value] = $m.Groups[2].Value
-    }
-    return $map
-}
-
-function Merge-LangEntriesIntoMain($langPath, $entries) {
-    if (-not (Test-Path $langPath)) { return }
-    $json = [System.IO.File]::ReadAllText($langPath, [System.Text.Encoding]::UTF8)
-    $obj = $json | ConvertFrom-Json
-
-    foreach ($key in $entries.Keys) {
-        $prop = $obj.PSObject.Properties[$key]
-        if ($null -ne $prop) {
-            $prop.Value = $entries[$key]
-        }
-        else {
-            $obj | Add-Member -NotePropertyName $key -NotePropertyValue $entries[$key]
-        }
-    }
-
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    $outJson = ($obj | ConvertTo-Json -Depth 5 -Compress:$false)
-    [System.IO.File]::WriteAllText($langPath, $outJson, $utf8NoBom)
-}
 
 function Write-FlowerPhaseLang($langCode) {
     $mainPath = Join-Path $langDir "$langCode.json"
     $enPath = Join-Path $langDir "en.json"
     $langData = Read-LangSpeciesMap $mainPath
     $enData = Read-LangSpeciesMap $enPath
-
     $labels = $phaseLabels.$langCode
     $entries = [ordered]@{}
-
-    foreach ($file in (Get-ChildItem -Path $outDir -Filter "juvenile-flower-*.json" |
-            Where-Object { $_.Name -notmatch "-(free|snow)\.json$" })) {
-        if ($file.Name -match "^juvenile-flower-(.+)\.json$") {
-            $species = $Matches[1]
-            $speciesName = $null
-            if ($langData.ContainsKey($species)) { $speciesName = $langData[$species] }
-            elseif ($enData.ContainsKey($species)) { $speciesName = $enData[$species] }
-            else { $speciesName = ($species.Substring(0, 1).ToUpper() + $species.Substring(1)) }
-
-            $blockKey = "block-juvenile-flower-${species}-free"
-            $entries[$blockKey] = "$speciesName ($($labels.seedling))"
-        }
-    }
-
-    foreach ($file in (Get-ChildItem -Path $outDir -Filter "flowerphase-*-free.json")) {
-        if ($file.Name -match "^flowerphase-(.+)-(vegetative|dormant|dieback)-free\.json$") {
-            $species = $Matches[1]
-            $phase = $Matches[2]
-
-            $speciesName = $null
-            if ($langData.ContainsKey($species)) { $speciesName = $langData[$species] }
-            elseif ($enData.ContainsKey($species)) { $speciesName = $enData[$species] }
-            else { $speciesName = ($species.Substring(0, 1).ToUpper() + $species.Substring(1)) }
-
-            $blockKey = "block-flowerphase-${species}-${phase}-free"
-            $phaseLabel = $labels.$phase
-            $entries[$blockKey] = "$speciesName ($phaseLabel)"
-        }
-    }
+    Add-FlowerCoverLangEntries $entries $outDir $langData $enData $labels
 
     $outPath = Join-Path $langDir "$langCode-flowerphases.json"
     $json = ($entries | ConvertTo-Json -Depth 3)

@@ -21,6 +21,17 @@ namespace WildFarming.Tests
             "ecosystemflora",
             "lang");
 
+        static readonly string[] SeasonalPrefixes =
+        {
+            "flowerphase-",
+            "fernphase-",
+            "tallgrassphase-",
+            "sedgephase-",
+            "juvenile-flower-",
+            "juvenile-fern-",
+            "juvenile-sedge-",
+        };
+
         static string FindRepoRoot()
         {
             string dir = Directory.GetCurrentDirectory();
@@ -39,44 +50,66 @@ namespace WildFarming.Tests
 
         static IEnumerable<string> SeasonalBlockCodes()
         {
+            var codes = new HashSet<string>();
             foreach (string file in Directory.GetFiles(PlantAssetDir, "*.json"))
             {
                 string name = Path.GetFileNameWithoutExtension(file);
-                if (name.StartsWith("fernphase-"))
+                if (!IsSeasonalAssetName(name)) continue;
+
+                using var doc = JsonDocument.Parse(File.ReadAllText(file));
+                JsonElement root = doc.RootElement;
+                if (!root.TryGetProperty("code", out JsonElement codeEl)) continue;
+                string baseCode = codeEl.GetString();
+                if (string.IsNullOrEmpty(baseCode)) continue;
+
+                if (root.TryGetProperty("variantgroups", out JsonElement groups))
                 {
-                    if (name.EndsWith("-snow"))
+                    bool hasCover = false;
+                    foreach (JsonElement group in groups.EnumerateArray())
                     {
-                        yield return name;
-                        continue;
+                        if (group.TryGetProperty("code", out JsonElement gCode)
+                            && gCode.GetString() == "cover"
+                            && group.TryGetProperty("states", out JsonElement states))
+                        {
+                            hasCover = true;
+                            foreach (JsonElement state in states.EnumerateArray())
+                            {
+                                codes.Add(baseCode + "-" + state.GetString());
+                            }
+                        }
                     }
 
-                    if (name.EndsWith("-dormant") || name.EndsWith("-dieback"))
-                    {
-                        yield return name;
-                        yield return name + "-snow";
-                        continue;
-                    }
+                    if (hasCover) continue;
                 }
 
-                if (name.StartsWith("tallgrassphase-") || name.StartsWith("sedgephase-"))
+                if (Regex.IsMatch(baseCode, @"^fernphase-.+-(dormant|dieback|sporulating)$"))
                 {
-                    yield return name + "-free";
-                    yield return name + "-snow";
-                    continue;
-                }
-
-                if (name.StartsWith("juvenile-fern-") || name.StartsWith("juvenile-sedge-"))
-                {
-                    yield return name + "-free";
-                    continue;
+                    codes.Add(baseCode);
+                    codes.Add(baseCode + "-snow");
                 }
             }
+
+            foreach (string code in codes)
+            {
+                yield return code;
+            }
+        }
+
+        static bool IsSeasonalAssetName(string name)
+        {
+            foreach (string prefix in SeasonalPrefixes)
+            {
+                if (name.StartsWith(prefix)) return true;
+            }
+
+            return false;
         }
 
         [Theory]
         [InlineData("en")]
         [InlineData("ru")]
-        public void AllFernAndTallgrassSeasonalBlocks_HaveReadableNames(string langCode)
+        [InlineData("de")]
+        public void AllSeasonalCoverBlocks_HaveReadableNames(string langCode)
         {
             var lang = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 File.ReadAllText(Path.Combine(LangDir, langCode + ".json")));
@@ -86,7 +119,9 @@ namespace WildFarming.Tests
                 string key = "block-" + code;
                 Assert.True(lang.ContainsKey(key), $"missing {langCode} name for {key}");
                 Assert.False(string.IsNullOrWhiteSpace(lang[key]), key);
-                Assert.DoesNotMatch(@"^(fernphase|tallgrassphase|sedgephase|juvenile-fern)-", lang[key]);
+                Assert.DoesNotMatch(
+                    @"^(flowerphase|fernphase|tallgrassphase|sedgephase|juvenile-flower|juvenile-fern|juvenile-sedge)-",
+                    lang[key]);
             }
         }
 
@@ -98,6 +133,7 @@ namespace WildFarming.Tests
 
             Assert.Equal("Коричный папоротник (отмирание)", lang["block-fernphase-cinnamonfern-dieback-free"]);
             Assert.Equal("Высокая трава (покой)", lang["block-tallgrassphase-dormant-free"]);
+            Assert.Equal("Орляк (активная фаза)", lang["block-fernphase-eaglefern-sporulating-snow"]);
         }
     }
 }

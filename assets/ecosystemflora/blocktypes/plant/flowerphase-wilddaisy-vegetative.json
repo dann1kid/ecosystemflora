@@ -21,18 +21,18 @@
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/wilddaisy1", "tint": "#6d7d62" },
-      "north2": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
-      "north3": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/wilddaisy1" },
-      "northTinted2": { "base": "game:block/plant/flower/stem/wilddaisy2" },
-      "northTinted3": { "base": "game:block/plant/flower/stem/wilddaisy2" },
-      "south1": { "base": "game:block/plant/flower/petal/wilddaisy1", "tint": "#6d7d62" },
-      "south2": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
-      "south3": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/wilddaisy1" },
-      "southTinted2": { "base": "game:block/plant/flower/stem/wilddaisy2" },
-      "southTinted3": { "base": "game:block/plant/flower/stem/wilddaisy2" }
+    "north1": { "base": "game:block/plant/flower/petal/wilddaisy1", "tint": "#6d7d62" },
+    "north2": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
+    "north3": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/wilddaisy1" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/wilddaisy2" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/wilddaisy2" },
+    "south1": { "base": "game:block/plant/flower/petal/wilddaisy1", "tint": "#6d7d62" },
+    "south2": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
+    "south3": { "base": "game:block/plant/flower/petal/wilddaisy2", "tint": "#6d7d62" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/wilddaisy1" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/wilddaisy2" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/wilddaisy2" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/wilddaisy1" },

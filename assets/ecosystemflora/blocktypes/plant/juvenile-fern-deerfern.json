@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "juvenile-fern-deerfern",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
@@ -21,8 +21,8 @@
   },
   "texturesByType": {
     "*-snow": {
-      "north": { "base": "game:block/plant/fern/deerfern/tall" },
-      "south": { "base": "game:block/plant/fern/deerfern/tall" }
+      "north": { "base": "game:block/plant/fern/deerfern/tall1" },
+      "south": { "base": "game:block/plant/fern/deerfern/tall1" }
     }
   },
   "attributesByType": {

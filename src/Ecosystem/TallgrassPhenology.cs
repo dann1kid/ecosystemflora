@@ -18,11 +18,11 @@ namespace WildFarming.Ecosystem
         {
             if (!IsEnabled(cfg) || requirements == null) return false;
             if (requirements.Species == "tallgrass") return true;
-            return WildShoreSedgeEcology.IsSpecies(requirements.Species);
+            return EcologyShoreSedgeSpecies.IsKnown(requirements.Species);
         }
 
         static bool IsShoreSedge(PlantRequirements requirements) =>
-            WildShoreSedgeEcology.IsSpecies(requirements?.Species);
+            EcologyShoreSedgeSpecies.IsKnown(requirements?.Species);
 
         public static bool IsRegisteredPlantBlock(ReproducerEntry entry, Block block)
         {
@@ -84,7 +84,7 @@ namespace WildFarming.Ecosystem
             if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
 
             string species = PlantCodeHelper.ResolveEcologySpecies(block);
-            if (!WildShoreSedgeEcology.IsSpecies(species)) return false;
+            if (!EcologyShoreSedgeSpecies.IsKnown(species)) return false;
 
             var requirements = new PlantRequirements
             {
@@ -205,13 +205,18 @@ namespace WildFarming.Ecosystem
         {
             if (phase == TallgrassPhenologyPhase.Active)
             {
-                return PlantCodeHelper.ResolveEcologySpecies(block) == "tallgrass"
-                    && !TallgrassPhenologyBlocks.IsPhaseBlock(block);
+                if (PlantCodeHelper.ResolveEcologySpecies(block) != "tallgrass"
+                    || TallgrassPhenologyBlocks.IsPhaseBlock(block))
+                {
+                    return false;
+                }
             }
-
-            if (!TallgrassPhenologyBlocks.IsPhaseBlock(block)) return false;
-            TallgrassPhenologyPhase? blockPhase = TallgrassPhenologyBlocks.PhaseFromBlock(block);
-            if (blockPhase != phase) return false;
+            else
+            {
+                if (!TallgrassPhenologyBlocks.IsPhaseBlock(block)) return false;
+                TallgrassPhenologyPhase? blockPhase = TallgrassPhenologyBlocks.PhaseFromBlock(block);
+                if (blockPhase != phase) return false;
+            }
 
             bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
             return PlantSnowCover.PathHasSnowCover(block.Code.Path) == wantSnow;

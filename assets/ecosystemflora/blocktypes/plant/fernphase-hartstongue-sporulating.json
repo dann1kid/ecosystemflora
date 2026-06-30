@@ -1,5 +1,5 @@
 {
-  "code": "fernphase-hartstongue-dormant",
+  "code": "fernphase-hartstongue-sporulating",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
   ],
@@ -21,8 +21,8 @@
   },
   "texturesByType": {
     "*-free": {
-      "straight": { "base": "game:block/plant/fern/hartstongue/straight", "tint": "#5c6b52" },
-      "curved": { "base": "game:block/plant/fern/hartstongue/curved", "tint": "#5c6b52" }
+      "straight": { "base": "game:block/plant/fern/hartstongue/straight" },
+      "curved": { "base": "game:block/plant/fern/hartstongue/curved" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/fern/hartstongue/straight" },

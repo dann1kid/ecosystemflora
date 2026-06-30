@@ -85,8 +85,8 @@ function Write-PlantPhaseSnowBlock(
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
-  "drawtype": "JSON",
   "drawtypeByType": {
+    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,$extraTop

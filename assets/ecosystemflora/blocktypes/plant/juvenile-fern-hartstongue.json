@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "juvenile-fern-hartstongue",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
@@ -21,8 +21,8 @@
   },
   "texturesByType": {
     "*-snow": {
-      "north": { "base": "game:block/plant/fern/hartstongue/tall" },
-      "south": { "base": "game:block/plant/fern/hartstongue/tall" }
+      "north": { "base": "game:block/plant/fern/hartstongue/straight" },
+      "south": { "base": "game:block/plant/fern/hartstongue/straight" }
     }
   },
   "attributesByType": {

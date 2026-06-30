@@ -21,18 +21,18 @@
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/cowparsley1", "tint": "#5c6b52" },
-      "north2": { "base": "game:block/plant/flower/petal/cowparsley2", "tint": "#5c6b52" },
-      "north3": { "base": "game:block/plant/flower/petal/cowparsley3", "tint": "#5c6b52" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/cowparsley1", "tint": "#5c6b52" },
-      "northTinted2": { "base": "game:block/plant/flower/stem/cowparsley2", "tint": "#5c6b52" },
-      "northTinted3": { "base": "game:block/plant/flower/stem/cowparsley3", "tint": "#5c6b52" },
-      "south1": { "base": "game:block/plant/flower/petal/cowparsley1", "tint": "#5c6b52" },
-      "south2": { "base": "game:block/plant/flower/petal/cowparsley2", "tint": "#5c6b52" },
-      "south3": { "base": "game:block/plant/flower/petal/cowparsley3", "tint": "#5c6b52" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/cowparsley1", "tint": "#5c6b52" },
-      "southTinted2": { "base": "game:block/plant/flower/stem/cowparsley2", "tint": "#5c6b52" },
-      "southTinted3": { "base": "game:block/plant/flower/stem/cowparsley3", "tint": "#5c6b52" }
+    "north1": { "base": "game:block/plant/flower/petal/cowparsley1", "tint": "#5c6b52" },
+    "north2": { "base": "game:block/plant/flower/petal/cowparsley2", "tint": "#5c6b52" },
+    "north3": { "base": "game:block/plant/flower/petal/cowparsley3", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/cowparsley1", "tint": "#5c6b52" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/cowparsley2", "tint": "#5c6b52" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/cowparsley3", "tint": "#5c6b52" },
+    "south1": { "base": "game:block/plant/flower/petal/cowparsley1", "tint": "#5c6b52" },
+    "south2": { "base": "game:block/plant/flower/petal/cowparsley2", "tint": "#5c6b52" },
+    "south3": { "base": "game:block/plant/flower/petal/cowparsley3", "tint": "#5c6b52" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/cowparsley1", "tint": "#5c6b52" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/cowparsley2", "tint": "#5c6b52" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/cowparsley3", "tint": "#5c6b52" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/cowparsley1" },

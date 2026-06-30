@@ -21,14 +21,14 @@
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
-      "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" },
-      "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
-      "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" }
+    "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" },
+    "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/petal/redtopgrass*" },
-      "south": { "base": "game:block/plant/flower/petal/redtopgrass*" }
+      "north": { "base": "game:block/plant/flower/stem/redtopgrass*" },
+      "south": { "base": "game:block/plant/flower/stem/redtopgrass*" }
     }
   },
 

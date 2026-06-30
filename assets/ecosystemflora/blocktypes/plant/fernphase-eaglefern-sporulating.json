@@ -1,5 +1,5 @@
 {
-  "code": "fernphase-hartstongue-dormant",
+  "code": "fernphase-eaglefern-sporulating",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
   ],
@@ -16,17 +16,17 @@
   },
   "randomizeRotations": true,
   "shapeByType": {
-    "*-free": { "base": "game:block/plant/fern/hartstongue/var*", "scale": 1.0 },
+    "*-free": { "base": "game:block/plant/fern/eaglefern/var*", "scale": 1.0 },
     "*-snow": { "base": "game:block/basic/cross" }
   },
   "texturesByType": {
     "*-free": {
-      "straight": { "base": "game:block/plant/fern/hartstongue/straight", "tint": "#5c6b52" },
-      "curved": { "base": "game:block/plant/fern/hartstongue/curved", "tint": "#5c6b52" }
+      "tall2": { "base": "game:block/plant/fern/eaglefern/tall" },
+      "center1": { "base": "game:block/plant/fern/eaglefern/center1" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/fern/hartstongue/straight" },
-      "south": { "base": "game:block/plant/fern/hartstongue/straight" }
+      "north": { "base": "game:block/plant/fern/eaglefern/tall" },
+      "south": { "base": "game:block/plant/fern/eaglefern/tall" }
     }
   },
 

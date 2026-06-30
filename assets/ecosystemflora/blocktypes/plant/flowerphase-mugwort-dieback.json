@@ -16,23 +16,23 @@
   },
   "randomizeRotations": true,
   "shapeByType": {
-    "*-free": { "base": "game:block/plant/flower/3patches-3faces-24x24" },
+    "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
   "texturesByType": {
     "*-free": {
-      "north1": { "base": "game:block/plant/flower/petal/mugwort1", "tint": "#8b7355" },
-      "north2": { "base": "game:block/plant/flower/petal/mugwort2", "tint": "#8b7355" },
-      "north3": { "base": "game:block/plant/flower/petal/mugwort3", "tint": "#8b7355" },
-      "northTinted1": { "base": "game:block/transparent" },
-      "northTinted2": { "base": "game:block/transparent" },
-      "northTinted3": { "base": "game:block/transparent" },
-      "south1": { "base": "game:block/plant/flower/petal/mugwort1", "tint": "#8b7355" },
-      "south2": { "base": "game:block/plant/flower/petal/mugwort2", "tint": "#8b7355" },
-      "south3": { "base": "game:block/plant/flower/petal/mugwort3", "tint": "#8b7355" },
-      "southTinted1": { "base": "game:block/transparent" },
-      "southTinted2": { "base": "game:block/transparent" },
-      "southTinted3": { "base": "game:block/transparent" }
+    "north1": { "base": "game:block/plant/flower/petal/mugwort1", "tint": "#8b7355" },
+    "north2": { "base": "game:block/plant/flower/petal/mugwort2", "tint": "#8b7355" },
+    "north3": { "base": "game:block/plant/flower/petal/mugwort3", "tint": "#8b7355" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/mugwort1", "tint": "#8b7355" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/mugwort2", "tint": "#8b7355" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/mugwort3", "tint": "#8b7355" },
+    "south1": { "base": "game:block/plant/flower/petal/mugwort1", "tint": "#8b7355" },
+    "south2": { "base": "game:block/plant/flower/petal/mugwort2", "tint": "#8b7355" },
+    "south3": { "base": "game:block/plant/flower/petal/mugwort3", "tint": "#8b7355" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/mugwort1", "tint": "#8b7355" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/mugwort2", "tint": "#8b7355" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/mugwort3", "tint": "#8b7355" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/mugwort1" },
@@ -61,6 +61,7 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
+  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,
