@@ -128,7 +128,7 @@
   "ecosystemflora:config-field-EnableSymbiosis": "Tree symbiosis",
   "ecosystemflora:config-field-EnableSymbiosis-desc": "On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off.",
   "ecosystemflora:config-field-EnableTallgrassPhenology": "Tallgrass phenology simulation",
-  "ecosystemflora:config-field-EnableTallgrassPhenology-desc": "On: tallgrass winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla height only.",
+  "ecosystemflora:config-field-EnableTallgrassPhenology-desc": "On: tallgrass and brown sedge winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla blocks only.",
   "ecosystemflora:config-field-EnableTallgrassSpreadMaturation": "Establishing tallgrass spread",
   "ecosystemflora:config-field-EnableTallgrassSpreadMaturation-desc": "On: spread places very low grass; mod raises to short on a timer before spread. Off: height chosen at spread.",
   "ecosystemflora:config-field-EnableThirdPartyParticipants": "Third-party participants",

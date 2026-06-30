@@ -1,0 +1,64 @@
+{
+  "code": "tallgrassphase-dormant",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtype": "JSON",
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "randomizeRotations": true,
+  "randomDrawOffset": true,
+  "attributes": {
+    "drawnHeight": 8,
+    "overrideRandomDrawOffset": 2,
+    "allowOverlays": false,
+    "allowStepWhenStuck": true
+  },
+  "shape": { "base": "game:block/basic/cross" },
+  "texturesByType": {
+    "*-free": {
+      "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "#5c6b52" },
+      "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "#5c6b52" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north", "tint": "#5c6b52" },
+      "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south", "tint": "#5c6b52" }
+    }
+  },
+  "vertexFlagsByType": {
+    "*-free": {
+      "windMode": "NormalWind",
+      "windData": 2
+    },
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-free": "Default",
+    "*-snow": "MergeSnowLayer"
+  },
+  "climateColorMap": "climatePlantTint",
+  "seasonColorMap": "seasonalGrass",
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 6000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.1, "y1": 0, "z1": 0.1, "x2": 0.9, "y2": 0.35, "z2": 0.9 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
+}

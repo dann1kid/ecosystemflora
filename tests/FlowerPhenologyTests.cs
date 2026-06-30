@@ -1,3 +1,5 @@
+using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
 using Xunit;
 
@@ -75,6 +77,50 @@ namespace WildFarming.Tests
 
             FlowerPhenology.AdvanceVegetativeForTests(entry, season: 2f, temp: 18f, cfg, deltaDays: 10);
             Assert.True(entry.PhenologyEnergy > 0.5f);
+        }
+
+        [Fact]
+        public void ResolveRegisterPhase_MatureFlowerFollowsSeason_NotBloomAppearance()
+        {
+            var cfg = EnabledCfg;
+            var mature = new Block { Code = new AssetLocation("game:flower-catmint-free"), BlockId = 1 };
+            var entry = new ReproducerEntry(
+                new BlockPos(1, 64, 1),
+                new AssetLocation("game:flower-catmint-free"),
+                new AssetLocation("game:flower-catmint-free"),
+                new PlantRequirements { Species = "catmint", Habitat = EcologyHabitat.Terrestrial },
+                0);
+
+            FlowerPhenologyPhase winter = FlowerPhenology.ResolveRegisterPhase(
+                api: null,
+                entry,
+                mature,
+                cfg,
+                spreadEstablished: false);
+
+            // api null => season/temp default to 0 => dormant
+            Assert.Equal(FlowerPhenologyPhase.Dormant, winter);
+        }
+
+        [Fact]
+        public void ResolveRegisterPhase_PhaseBlockPreservesWorldPhase()
+        {
+            var cfg = EnabledCfg;
+            var dormant = new Block
+            {
+                Code = new AssetLocation("ecosystemflora:flowerphase-catmint-dormant-free"),
+                BlockId = 1,
+            };
+            var entry = new ReproducerEntry(
+                new BlockPos(1, 64, 1),
+                null,
+                new AssetLocation("game:flower-catmint-free"),
+                new PlantRequirements { Species = "catmint", Habitat = EcologyHabitat.Terrestrial },
+                0);
+
+            Assert.Equal(
+                FlowerPhenologyPhase.Dormant,
+                FlowerPhenology.ResolveRegisterPhase(null, entry, dormant, cfg, spreadEstablished: false));
         }
 
         [Fact]

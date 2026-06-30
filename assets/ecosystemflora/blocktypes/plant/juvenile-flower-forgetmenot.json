@@ -1,0 +1,73 @@
+﻿{
+  "code": "juvenile-flower-forgetmenot",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtype": "JSON",
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "randomizeRotations": true,
+  "shapeByType": {
+    "*-free": { "base": "game:block/plant/flower/1patch-3faces-16x16", "scale": 0.45 }
+  },
+  "shape": { "base": "game:block/basic/cross" },
+  "texturesByType": {
+    "*-free": {
+    "south3": { "base": "game:block/plant/flower/petal/forgetmenot2" },
+    "north1": { "base": "game:block/plant/flower/petal/forgetmenot1" },
+    "north3": { "base": "game:block/plant/flower/petal/forgetmenot2" },
+    "south1": { "base": "game:block/plant/flower/petal/forgetmenot1" },
+    "north2": { "base": "game:block/plant/flower/petal/forgetmenot2" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "south2": { "base": "game:block/plant/flower/petal/forgetmenot2" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/flower/petal/forgetmenot1" },
+      "south": { "base": "game:block/plant/flower/petal/forgetmenot1" }
+    }
+  },
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 11
+    },
+    "*-snow": {
+      "drawnHeight": 11,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
+  },
+  "vertexFlagsByType": {
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
+  },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
+}

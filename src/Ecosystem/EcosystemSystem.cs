@@ -50,6 +50,7 @@ namespace WildFarming.Ecosystem
         readonly FlowerPhenologyScheduler flowerPhenologyScheduler = new FlowerPhenologyScheduler();
         readonly FernPhenologyScheduler fernPhenologyScheduler = new FernPhenologyScheduler();
         readonly TallgrassPhenologyScheduler tallgrassPhenologyScheduler = new TallgrassPhenologyScheduler();
+        readonly PlantSnowCoverScheduler plantSnowCoverScheduler = new PlantSnowCoverScheduler();
         readonly StumpDecayScheduler stumpDecayScheduler = new StumpDecayScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
@@ -869,6 +870,7 @@ namespace WildFarming.Ecosystem
             if (api?.World?.BlockAccessor == null) return;
 
             LegacyBlockEntityMigration.ScheduleStripColumn(api, chunkCoord);
+            LegacyPhaseBlockMigration.ScheduleRemapColumn(api, chunkCoord);
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
@@ -1807,6 +1809,10 @@ namespace WildFarming.Ecosystem
             tickBudgetWatch.Restart();
             tallgrassPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
             timings.TallgrassPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+
+            tickBudgetWatch.Restart();
+            plantSnowCoverScheduler.Tick(api, cfg, registry, spreadActiveChunks);
+            timings.PlantSnowCoverTicks = tickBudgetWatch.ElapsedTicks;
 
             tickBudgetWatch.Restart();
             maturationQueues.ProcessTallgrass(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);

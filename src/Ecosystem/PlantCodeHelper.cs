@@ -75,6 +75,7 @@ namespace WildFarming.Ecosystem
             if (FernJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (FlowerPhenologyBlocks.IsPhaseBlock(block)) return true;
+            if (SedgePhenologyBlocks.IsPhaseBlock(block)) return true;
             if (block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
@@ -119,6 +120,13 @@ namespace WildFarming.Ecosystem
                 && blockCode.Path.StartsWith("tallgrassphase-"))
             {
                 return "tallgrass";
+            }
+
+            if (blockCode?.Domain == "ecosystemflora"
+                && blockCode.Path != null
+                && blockCode.Path.StartsWith("sedgephase-"))
+            {
+                return EcologyShoreSedgeSpecies.Brownsedge;
             }
 
             if (path.StartsWith("flower-"))

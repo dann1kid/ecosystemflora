@@ -24,7 +24,8 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!WildFlowerMaturation.UsesMaturation(cfg, requirements.Species)) return matureSpreadBlock;
 
-            AssetLocation juvenileCode = ShoreSedgeJuvenileBlocks.CodeForSpecies(requirements.Species);
+            bool snow = PlantSnowCover.ShouldUseSnowVariant(api, origin, origin);
+            AssetLocation juvenileCode = ShoreSedgeJuvenileBlocks.CodeForSpecies(requirements.Species, snow);
             if (juvenileCode == null) return matureSpreadBlock;
 
             Block juvenile = api.World.GetBlock(juvenileCode);

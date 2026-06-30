@@ -355,15 +355,20 @@ foreach ($species in $ghostpipeSpecies) {
     Write-Host "Wrote flowerphase-$species-{vegetative,dormant,dieback}"
 }
 
-$juvenileFiles = Get-ChildItem -Path $plantDir -Filter "juvenile-flower-*-free.json"
+$juvenileFiles = Get-ChildItem -Path $plantDir -Filter "juvenile-flower-*.json" |
+    Where-Object { $_.Name -notmatch "-(free|snow)\.json$" }
 $count = 0
 foreach ($file in $juvenileFiles) {
     $juvenile = Get-Content -Raw -Path $file.FullName | ConvertFrom-Json
-    if (-not $juvenile.code -or -not $juvenile.textures) { continue }
+    if (-not $juvenile.code) { continue }
 
-    $species = $juvenile.code -replace "^juvenile-flower-", "" -replace "-free$", ""
+    $species = $juvenile.code -replace "^juvenile-flower-", ""
     if ($shapeOnly.ContainsKey($species)) { continue }
     if ($ghostpipeSpecies -contains $species) { continue }
+
+    $textures = $juvenile.texturesByType.'*-free'
+    if (-not $textures) { $textures = $juvenile.textures }
+    if (-not $textures) { continue }
 
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
         Write-PhaseBlockFromJuvenile $species $phase $juvenile
@@ -417,8 +422,9 @@ function Write-FlowerPhaseLang($langCode) {
     $labels = $phaseLabels.$langCode
     $entries = [ordered]@{}
 
-    foreach ($file in (Get-ChildItem -Path $outDir -Filter "juvenile-flower-*-free.json")) {
-        if ($file.Name -match "^juvenile-flower-(.+)-free\.json$") {
+    foreach ($file in (Get-ChildItem -Path $outDir -Filter "juvenile-flower-*.json" |
+            Where-Object { $_.Name -notmatch "-(free|snow)\.json$" })) {
+        if ($file.Name -match "^juvenile-flower-(.+)\.json$") {
             $species = $Matches[1]
             $speciesName = $null
             if ($langData.ContainsKey($species)) { $speciesName = $langData[$species] }

@@ -60,23 +60,25 @@ function Build-SeasonalBlockLang($langCode) {
     }
 
     foreach ($file in (Get-ChildItem -Path $plantDir -Filter "fernphase-*.json")) {
+        if ($file.Name -match "-(free|snow)\.json$") { continue }
         if ($file.Name -match "^fernphase-(.+)-(dormant|dieback)\.json$") {
             $species = $Matches[1]
             $phase = $Matches[2]
             $speciesName = Resolve-SpeciesName $species $langData $enData
-            $blockKey = "block-fernphase-${species}-${phase}"
-            $entries[$blockKey] = "$speciesName ($($labels.$phase))"
+            $label = "$speciesName ($($labels.$phase))"
+            $entries["block-fernphase-${species}-${phase}-free"] = $label
+            $entries["block-fernphase-${species}-${phase}-snow"] = $label
         }
     }
 
     foreach ($file in (Get-ChildItem -Path $plantDir -Filter "tallgrassphase-*.json")) {
-        if ($file.Name -match "^tallgrassphase-(dormant|dieback)(-free|-snow)?\.json$") {
+        if ($file.Name -match "-(free|snow)\.json$") { continue }
+        if ($file.Name -match "^tallgrassphase-(dormant|dieback)\.json$") {
             $phase = $Matches[1]
-            $suffix = $Matches[2]
-            if ([string]::IsNullOrEmpty($suffix)) { $suffix = "" }
             $speciesName = Resolve-SpeciesName "tallgrass" $langData $enData
-            $blockKey = "block-tallgrassphase-${phase}${suffix}"
-            $entries[$blockKey] = "$speciesName ($($labels.$phase))"
+            $label = "$speciesName ($($labels.$phase))"
+            $entries["block-tallgrassphase-${phase}-free"] = $label
+            $entries["block-tallgrassphase-${phase}-snow"] = $label
         }
     }
 

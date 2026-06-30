@@ -42,6 +42,11 @@ namespace WildFarming.Ecosystem
                 if (EcologyAttributes.ReproduceEnabled(block))
                 {
                     pos = scratch.Copy();
+                    if (api != null && EcosystemConfig.Loaded.EnableTallgrassPhenology)
+                    {
+                        TallgrassPhenology.TrySyncWildBlock(api, pos, block, EcosystemConfig.Loaded);
+                    }
+
                     return true;
                 }
 

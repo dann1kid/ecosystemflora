@@ -92,9 +92,13 @@ namespace WildFarming.Ecosystem
                 Entry entry = entries[i];
                 checkedCount++;
 
-                if (nowHours < entry.MatureAtHours) continue;
-
                 Block current = acc.GetBlock(entry.Pos);
+                if (IsJuvenileBlock(current))
+                {
+                    PlantSnowCoverSync.TrySyncCover(api, entry.Pos, current);
+                }
+
+                if (nowHours < entry.MatureAtHours) continue;
                 if (!IsJuvenileBlock(current))
                 {
                     remove.Add(entry.Pos);
@@ -110,7 +114,14 @@ namespace WildFarming.Ecosystem
 
                 if (!LandClaimGuard.AllowsEcologyChange(api, entry.Pos)) continue;
 
-                Block mature = api.World.GetBlock(entry.MatureCode);
+                bool snow = PlantSnowCover.ResolveWantsSnowCover(api, entry.Pos);
+                AssetLocation matureLoc = PlantSnowCover.CodeWithCover(entry.MatureCode, snow);
+                Block mature = api.World.GetBlock(matureLoc);
+                if (mature == null || mature.Id == 0)
+                {
+                    mature = api.World.GetBlock(entry.MatureCode);
+                }
+
                 if (mature == null)
                 {
                     remove.Add(entry.Pos);

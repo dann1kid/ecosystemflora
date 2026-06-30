@@ -85,11 +85,12 @@ namespace WildFarming.Tests
                 "ecosystemflora",
                 "blocktypes",
                 "plant",
-                "juvenile-sedge-brownsedge-free.json");
+                "juvenile-sedge-brownsedge.json");
             Assert.True(System.IO.File.Exists(path));
             string json = System.IO.File.ReadAllText(path);
             Assert.Contains("reedpapyrus/sedge", json);
             Assert.Contains("reeds/brownsedge", json);
+            Assert.Contains("crossandsnowlayer", json);
         }
 
         [Fact]

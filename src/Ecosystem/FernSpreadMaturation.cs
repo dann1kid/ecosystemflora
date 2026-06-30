@@ -17,7 +17,8 @@ namespace WildFarming.Ecosystem
             if (api == null || requirements == null || matureSpreadBlock == null) return matureSpreadBlock;
             if (!WildFernSpread.UsesMaturation(EcosystemConfig.Loaded, requirements.Species)) return matureSpreadBlock;
 
-            AssetLocation juvenileCode = FernJuvenileBlocks.CodeForSpecies(requirements.Species);
+            bool snow = PlantSnowCover.ShouldUseSnowVariant(api, origin, origin);
+            AssetLocation juvenileCode = FernJuvenileBlocks.CodeForSpecies(requirements.Species, snow);
             if (juvenileCode == null) return matureSpreadBlock;
 
             Block juvenile = api.World.GetBlock(juvenileCode);

@@ -1,0 +1,57 @@
+{
+  "code": "sedgephase-dormant",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtype": "JSON",
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "faceCullMode": "NeverCull",
+  "randomDrawOffset": true,
+  "randomizeRotations": true,
+  "shapeByType": {
+    "*-free": { "base": "game:block/plant/reedpapyrus/sedge", "scale": 1.0 },
+    "*-snow": { "base": "game:block/basic/cross" }
+  },
+    "texturesByType": {
+    "*-free": {
+      "leaves": { "base": "game:block/plant/reeds/brownsedge", "tint": "#6e6254" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/reeds/brownsedge", "tint": "#6e6254" },
+      "south": { "base": "game:block/plant/reeds/brownsedge", "tint": "#6e6254" }
+    }
+  },
+  "attributesByType": {
+    "*-free": { "drawnHeight": 10 },
+    "*-snow": { "drawnHeight": 10, "allowOverlays": false, "allowStepWhenStuck": true }
+  },
+  "vertexFlagsByType": {
+    "*-free": { "windMode": "NormalWind", "windData": 2 },
+    "*-snow": { "zOffset": 3, "windMode": "ExtraWeakWind", "windData": 2 }
+  },
+  "faceCullModeByType": {
+    "*-free": "NeverCull",
+    "*-snow": "MergeSnowLayer"
+  },
+  "climateColorMap": "climatePlantTint",
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 0.45, "z2": 0.75 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
+}

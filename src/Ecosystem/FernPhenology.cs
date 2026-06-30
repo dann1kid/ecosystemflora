@@ -90,6 +90,7 @@ namespace WildFarming.Ecosystem
             entry.FernPhenologyPhase = effective;
             entry.LastFernPhenologyUpdateHours = now;
             SyncBlockToPhase(api, entry.Origin, entry.Requirements.Species, effective);
+            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
         public static void Advance(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg, double nowHours)
@@ -100,7 +101,11 @@ namespace WildFarming.Ecosystem
             FernPhenologyPhase seasonal = ResolveSeasonalPhase(api, entry.Origin, entry.Requirements, cfg);
             FernPhenologyPhase effective = EffectivePhase(acc, entry, seasonal, cfg);
             if (entry.FernPhenologyPhase == effective
-                && nowHours - entry.LastFernPhenologyUpdateHours < 6) return;
+                && nowHours - entry.LastFernPhenologyUpdateHours < 6)
+            {
+                PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+                return;
+            }
 
             entry.FernPhenologyPhase = effective;
             entry.LastFernPhenologyUpdateHours = nowHours;
@@ -109,6 +114,8 @@ namespace WildFarming.Ecosystem
             {
                 EcologyHistoryRecorder.RecordOrphanDieback(api, entry.Origin, entry.Requirements.Species);
             }
+
+            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
         internal static FernPhenologyPhase InferPhaseForTests(float seasonActivity) =>
@@ -124,13 +131,14 @@ namespace WildFarming.Ecosystem
         {
             if (api == null || pos == null || string.IsNullOrEmpty(species)) return false;
 
-            AssetLocation code = FernPhenologyBlocks.CodeForPhase(species, phase);
+            Block current = api.World.BlockAccessor.GetBlock(pos);
+            bool snow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
+            AssetLocation code = FernPhenologyBlocks.CodeForPhase(species, phase, snow);
             if (code == null) return false;
 
             Block target = api.World.GetBlock(code);
             if (target == null || target.Id == 0) return false;
 
-            Block current = api.World.BlockAccessor.GetBlock(pos);
             if (current?.BlockId == target.BlockId) return false;
 
             api.World.BlockAccessor.SetBlock(target.BlockId, pos);

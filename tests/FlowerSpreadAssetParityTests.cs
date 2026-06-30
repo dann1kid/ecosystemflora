@@ -36,16 +36,19 @@ namespace WildFarming.Tests
         [Fact]
         public void Catmint_Juvenile_UsesWildcardSingleTexture()
         {
-            string path = Path.Combine(PlantAssetDir, "juvenile-flower-catmint-free.json");
+            string path = Path.Combine(PlantAssetDir, "juvenile-flower-catmint.json");
             string json = File.ReadAllText(path);
             Assert.Contains("petal/catmint", json);
             Assert.DoesNotMatch("petal/catmint[0-9]", json);
+            Assert.Contains("\"frostable\": true", json);
+            Assert.Contains("\"cover\"", json);
+            Assert.Contains("\"snow\"", json);
         }
 
         [Fact]
         public void Redtopgrass_Juvenile_UsesWildcardCrossTextures()
         {
-            string path = Path.Combine(PlantAssetDir, "juvenile-flower-redtopgrass-free.json");
+            string path = Path.Combine(PlantAssetDir, "juvenile-flower-redtopgrass.json");
             string json = File.ReadAllText(path);
             Assert.Contains("petal/redtopgrass*", json);
             Assert.DoesNotContain("petal/redtopgrass1", json);
@@ -56,8 +59,22 @@ namespace WildFarming.Tests
         {
             foreach (string species in EcologyFlowerSpecies.All)
             {
-                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}-free.json");
+                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}.json");
                 Assert.True(File.Exists(path), $"missing juvenile for {species}");
+                string json = File.ReadAllText(path);
+                Assert.Contains("\"frostable\": true", json);
+            }
+        }
+
+        [Fact]
+        public void AllEcologyFlowers_JuvenileSpreadBlock_HasSnowCoverVariant()
+        {
+            foreach (string species in EcologyFlowerSpecies.All)
+            {
+                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains("crossandsnowlayer", json);
+                Assert.Contains("*-snow", json);
             }
         }
 
@@ -124,7 +141,7 @@ namespace WildFarming.Tests
             Assert.True(FlowerPhenology.UsesPhenology(cfg, req));
             Assert.NotNull(FlowerPhenologyBlocks.CodeForPhase("catmint", FlowerPhenologyPhase.Dormant));
 
-            string phasePath = Path.Combine(PlantAssetDir, "flowerphase-catmint-dormant-free.json");
+            string phasePath = Path.Combine(PlantAssetDir, "flowerphase-catmint-dormant.json");
             Assert.True(File.Exists(phasePath));
 
             string json = File.ReadAllText(phasePath);
@@ -137,11 +154,12 @@ namespace WildFarming.Tests
         [InlineData("hartstongue")]
         public void Ferns_UseFernJuvenilePipeline_NotFlowerJuvenile(string species)
         {
-            string flowerPath = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}-free.json");
+            string flowerPath = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}.json");
             Assert.False(File.Exists(flowerPath));
 
-            string fernPath = Path.Combine(PlantAssetDir, $"juvenile-fern-{species}-free.json");
+            string fernPath = Path.Combine(PlantAssetDir, $"juvenile-fern-{species}.json");
             Assert.True(File.Exists(fernPath), fernPath);
+            Assert.Contains("crossandsnowlayer", File.ReadAllText(fernPath));
 
             var cfg = new EcosystemConfig
             {
@@ -181,9 +199,10 @@ namespace WildFarming.Tests
         {
             foreach (string species in new[] { "eaglefern", "cinnamonfern", "deerfern", "hartstongue", "tallfern" })
             {
-                string path = Path.Combine(PlantAssetDir, $"juvenile-fern-{species}-free.json");
+                string path = Path.Combine(PlantAssetDir, $"juvenile-fern-{species}.json");
                 string json = File.ReadAllText(path);
                 Assert.Contains($"game:block/plant/fern/{species}", json);
+                Assert.Contains("crossandsnowlayer", json);
             }
         }
 
@@ -192,7 +211,7 @@ namespace WildFarming.Tests
         {
             foreach (string species in EcologyFlowerSpecies.All)
             {
-                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}-free.json");
+                string path = Path.Combine(PlantAssetDir, $"juvenile-flower-{species}.json");
                 string json = File.ReadAllText(path);
                 Assert.Contains("\"break\": \"game:block/plant\"", json);
                 Assert.Contains("\"hit\": \"game:block/plant\"", json);
@@ -201,25 +220,71 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void AllEcologyFlowers_PhenologyPhaseBlocks_HaveSnowCoverVariant()
+        {
+            foreach (string species in EcologyFlowerSpecies.All)
+            {
+                foreach (string phase in new[] { "vegetative", "dormant", "dieback" })
+                {
+                    string path = Path.Combine(PlantAssetDir, $"flowerphase-{species}-{phase}.json");
+                    Assert.True(File.Exists(path), $"missing {species} {phase}");
+                    string json = File.ReadAllText(path);
+                    Assert.Contains("\"frostable\": true", json);
+                    Assert.Contains("crossandsnowlayer", json);
+                }
+            }
+        }
+
+        [Fact]
+        public void AllFernPhases_HaveSnowCoverVariant()
+        {
+            foreach (string species in new[] { "eaglefern", "cinnamonfern", "deerfern", "hartstongue", "tallfern" })
+            {
+                foreach (string phase in new[] { "dormant", "dieback" })
+                {
+                    string basePath = Path.Combine(PlantAssetDir, $"fernphase-{species}-{phase}.json");
+                    Assert.True(File.Exists(basePath), basePath);
+                    string baseJson = File.ReadAllText(basePath);
+                    Assert.Contains("\"frostable\": true", baseJson);
+                    Assert.DoesNotContain("variantgroups", baseJson);
+
+                    string snowPath = Path.Combine(PlantAssetDir, $"fernphase-{species}-{phase}-snow.json");
+                    Assert.True(File.Exists(snowPath), snowPath);
+                    string snowJson = File.ReadAllText(snowPath);
+                    Assert.Contains("crossandsnowlayer", snowJson);
+                }
+            }
+        }
+
+        [Fact]
+        public void TallgrassPhases_HaveSnowCoverVariant()
+        {
+            foreach (string phase in new[] { "dormant", "dieback" })
+            {
+                string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}.json");
+                Assert.True(File.Exists(path), path);
+                string json = File.ReadAllText(path);
+                Assert.Contains("\"frostable\": true", json);
+                Assert.Contains("crossandsnowlayer", json);
+            }
+        }
+
+        [Fact]
         public void TallgrassPhaseBlocks_UseVanillaCrossAndTallgrassTextures()
         {
             foreach (string phase in new[] { "dormant", "dieback" })
             {
-                string freePath = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-free.json");
-                string freeJson = File.ReadAllText(freePath);
-                Assert.Contains("\"drawtype\": \"JSON\"", freeJson);
-                Assert.Contains("game:block/basic/cross", freeJson);
-                Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", freeJson);
-                Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", freeJson);
-                Assert.Contains("\"drawnHeight\": 8", freeJson);
-                Assert.DoesNotContain("plant/grass/tall/veryshort", freeJson);
-
-                string snowPath = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}-snow.json");
-                Assert.True(File.Exists(snowPath), snowPath);
-                string snowJson = File.ReadAllText(snowPath);
-                Assert.Contains("\"drawtype\": \"crossandsnowlayer\"", snowJson);
-                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-north", snowJson);
-                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-south", snowJson);
+                string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains("\"drawtype\": \"JSON\"", json);
+                Assert.Contains("game:block/basic/cross", json);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", json);
+                Assert.Contains("game:block/plant/tallgrass/free/veryshort-south", json);
+                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-north", json);
+                Assert.Contains("game:block/plant/tallgrass/snow/veryshort-south", json);
+                Assert.Contains("\"drawnHeight\": 8", json);
+                Assert.DoesNotContain("plant/grass/tall/veryshort", json);
+                Assert.Contains("crossandsnowlayer", json);
             }
         }
 

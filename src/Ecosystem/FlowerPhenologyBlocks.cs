@@ -8,9 +8,8 @@ namespace WildFarming.Ecosystem
     {
         const string Domain = "ecosystemflora";
         const string Prefix = "flowerphase-";
-        const string Suffix = "-free";
 
-        public static AssetLocation CodeForPhase(string species, FlowerPhenologyPhase phase)
+        public static AssetLocation CodeForPhase(string species, FlowerPhenologyPhase phase, bool snow = false)
         {
             if (string.IsNullOrEmpty(species)) return null;
             if (phase == FlowerPhenologyPhase.Bloom) return null;
@@ -18,7 +17,14 @@ namespace WildFarming.Ecosystem
             string phaseSuffix = SuffixForPhase(phase);
             if (phaseSuffix == null) return null;
 
-            return new AssetLocation(Domain, Prefix + species + "-" + phaseSuffix + Suffix);
+            string cover = snow ? JuvenileBlockNaming.SnowSuffix : JuvenileBlockNaming.FreeSuffix;
+            return new AssetLocation(Domain, Prefix + species + "-" + phaseSuffix + cover);
+        }
+
+        public static AssetLocation CodeForPhase(string species, FlowerPhenologyPhase phase, Block referenceBlock)
+        {
+            bool snow = PlantSnowCover.PathHasSnowCover(referenceBlock?.Code?.Path);
+            return CodeForPhase(species, phase, snow);
         }
 
         public static string SpeciesFromPhaseBlock(Block block) => SpeciesFromPhaseCode(block?.Code);
@@ -54,12 +60,9 @@ namespace WildFarming.Ecosystem
             if (code == null || !Domain.Equals(code.Domain, StringComparison.OrdinalIgnoreCase)) return false;
 
             string path = code.Path ?? "";
-            if (!path.StartsWith(Prefix, StringComparison.Ordinal) || !path.EndsWith(Suffix, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            string inner = path.Substring(Prefix.Length, path.Length - Prefix.Length - Suffix.Length);
+            if (!path.StartsWith(Prefix, StringComparison.Ordinal)) return false;
+            if (!TryStripCoverSuffix(path, out string inner)) return false;
+            inner = inner.Substring(Prefix.Length);
             int lastDash = inner.LastIndexOf('-');
             if (lastDash <= 0 || lastDash >= inner.Length - 1) return false;
 
@@ -75,6 +78,26 @@ namespace WildFarming.Ecosystem
             }
 
             return species.Length > 0;
+        }
+
+        static bool TryStripCoverSuffix(string path, out string withoutCover)
+        {
+            withoutCover = null;
+            if (string.IsNullOrEmpty(path)) return false;
+
+            if (path.EndsWith(JuvenileBlockNaming.FreeSuffix, StringComparison.Ordinal))
+            {
+                withoutCover = path.Substring(0, path.Length - JuvenileBlockNaming.FreeSuffix.Length);
+                return true;
+            }
+
+            if (path.EndsWith(JuvenileBlockNaming.SnowSuffix, StringComparison.Ordinal))
+            {
+                withoutCover = path.Substring(0, path.Length - JuvenileBlockNaming.SnowSuffix.Length);
+                return true;
+            }
+
+            return false;
         }
     }
 }

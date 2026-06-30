@@ -7,11 +7,10 @@ namespace WildFarming.Ecosystem
     internal static class FlowerJuvenileBlocks
     {
         const string Prefix = "juvenile-flower-";
-        const string Suffix = JuvenileBlockNaming.Suffix;
 
-        public static AssetLocation CodeForSpecies(string species)
+        public static AssetLocation CodeForSpecies(string species, bool snow = false)
         {
-            return JuvenileBlockNaming.CodeForSpecies(Prefix, species);
+            return JuvenileBlockNaming.CodeForSpecies(Prefix, species, snow);
         }
 
         public static AssetLocation MatureVanillaCode(string species)
@@ -37,7 +36,7 @@ namespace WildFarming.Ecosystem
                 return new AssetLocation("game", "flower-croton-small-crimson-green-free");
             }
 
-            return new AssetLocation("game", "flower-" + species + Suffix);
+            return new AssetLocation("game", "flower-" + species + JuvenileBlockNaming.FreeSuffix);
         }
 
         /// <summary>Lupine, croton, and rafflesia inherit parent variant when spread origin is known.</summary>
@@ -71,7 +70,14 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            return MatureVanillaCode(species);
+            AssetLocation mature = MatureVanillaCode(species);
+            if (api != null && parentOrigin != null)
+            {
+                bool snow = PlantSnowCover.ResolveWantsSnowCover(api, parentOrigin);
+                mature = PlantSnowCover.CodeWithCover(mature, snow);
+            }
+
+            return mature;
         }
 
         public static bool IsJuvenileBlock(Block block)

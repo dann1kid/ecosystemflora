@@ -1,0 +1,72 @@
+﻿{
+  "code": "juvenile-flower-lilyofthevalley",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtype": "JSON",
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "randomizeRotations": true,
+  "shapeByType": {
+    "*-free": { "base": "game:block/plant/flower/lilyofthevalley", "scale": 0.45 }
+  },
+  "shape": { "base": "game:block/basic/cross" },
+  "texturesByType": {
+    "*-free": {
+    "petal1": { "base": "game:block/plant/flower/petal/lilyofthevalley1" },
+    "north1": { "base": "game:block/transparent" },
+    "petal2": { "base": "game:block/plant/flower/petal/lilyofthevalley2" },
+    "stem3": { "base": "game:block/plant/flower/stem/lilyofthevalley3" },
+    "northTinted1": { "base": "game:block/transparent" },
+    "south1": { "base": "game:block/transparent" },
+    "stem2": { "base": "game:block/plant/flower/stem/lilyofthevalley2" },
+    "stem1": { "base": "game:block/plant/flower/stem/lilyofthevalley1" },
+    "leaves1": { "base": "game:block/plant/flower/stem/lilyofthevalleyleaves1" },
+    "southTinted1": { "base": "game:block/transparent" },
+    "petal3": { "base": "game:block/plant/flower/petal/lilyofthevalley3" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/flower/petal/lilyofthevalley1" },
+      "south": { "base": "game:block/plant/flower/petal/lilyofthevalley1" }
+    }
+  },
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 11
+    },
+    "*-snow": {
+      "drawnHeight": 11,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
+  },
+  "vertexFlagsByType": {
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
+  },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
+}

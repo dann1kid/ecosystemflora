@@ -42,11 +42,33 @@ namespace WildFarming.Tests
             foreach (string file in Directory.GetFiles(PlantAssetDir, "*.json"))
             {
                 string name = Path.GetFileNameWithoutExtension(file);
-                if (name.StartsWith("fernphase-")
-                    || name.StartsWith("tallgrassphase-")
-                    || name.StartsWith("juvenile-fern-"))
+                if (name.StartsWith("fernphase-"))
                 {
-                    yield return name;
+                    if (name.EndsWith("-snow"))
+                    {
+                        yield return name;
+                        continue;
+                    }
+
+                    if (name.EndsWith("-dormant") || name.EndsWith("-dieback"))
+                    {
+                        yield return name;
+                        yield return name + "-snow";
+                        continue;
+                    }
+                }
+
+                if (name.StartsWith("tallgrassphase-") || name.StartsWith("sedgephase-"))
+                {
+                    yield return name + "-free";
+                    yield return name + "-snow";
+                    continue;
+                }
+
+                if (name.StartsWith("juvenile-fern-") || name.StartsWith("juvenile-sedge-"))
+                {
+                    yield return name + "-free";
+                    continue;
                 }
             }
         }
@@ -64,7 +86,7 @@ namespace WildFarming.Tests
                 string key = "block-" + code;
                 Assert.True(lang.ContainsKey(key), $"missing {langCode} name for {key}");
                 Assert.False(string.IsNullOrWhiteSpace(lang[key]), key);
-                Assert.DoesNotMatch(@"^(fernphase|tallgrassphase|juvenile-fern)-", lang[key]);
+                Assert.DoesNotMatch(@"^(fernphase|tallgrassphase|sedgephase|juvenile-fern)-", lang[key]);
             }
         }
 
@@ -74,7 +96,7 @@ namespace WildFarming.Tests
             var lang = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 File.ReadAllText(Path.Combine(LangDir, "ru.json")));
 
-            Assert.Equal("Коричный папоротник (отмирание)", lang["block-fernphase-cinnamonfern-dieback"]);
+            Assert.Equal("Коричный папоротник (отмирание)", lang["block-fernphase-cinnamonfern-dieback-free"]);
             Assert.Equal("Высокая трава (покой)", lang["block-tallgrassphase-dormant-free"]);
         }
     }

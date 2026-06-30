@@ -29,12 +29,21 @@ namespace WildFarming.Tests
         [InlineData("ecosystemflora:flowerphase-catmint-vegetative-free", "catmint", FlowerPhenologyPhase.Vegetative)]
         [InlineData("ecosystemflora:flowerphase-lupine-dormant-free", "lupine", FlowerPhenologyPhase.Dormant)]
         [InlineData("ecosystemflora:flowerphase-heather-dieback-free", "heather", FlowerPhenologyPhase.Dieback)]
+        [InlineData("ecosystemflora:flowerphase-catmint-vegetative-snow", "catmint", FlowerPhenologyPhase.Vegetative)]
         public void TryParse_RecognizesPhaseBlocks(string codePath, string species, FlowerPhenologyPhase phase)
         {
             var code = new AssetLocation(codePath);
             Assert.Equal(species, FlowerPhenologyBlocks.SpeciesFromPhaseCode(code));
             Assert.True(FlowerPhenologyBlocks.TryGetPhase(code, out FlowerPhenologyPhase parsed));
             Assert.Equal(phase, parsed);
+        }
+
+        [Fact]
+        public void CodeForPhase_PreservesSnowFromReference()
+        {
+            var snowBlock = new Block { Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-snow") };
+            AssetLocation code = FlowerPhenologyBlocks.CodeForPhase("cornflower", FlowerPhenologyPhase.Dieback, snowBlock);
+            Assert.Equal("flowerphase-cornflower-dieback-snow", code.Path);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace WildFarming.Ecosystem
     {
         const string Prefix = "tallgrassphase-";
 
-        public static AssetLocation CodeForPhase(TallgrassPhenologyPhase phase, Block referenceBlock)
+        public static AssetLocation CodeForPhase(TallgrassPhenologyPhase phase, bool snow = false)
         {
             string suffix = phase switch
             {
@@ -17,10 +17,14 @@ namespace WildFarming.Ecosystem
 
             if (suffix == null) return null;
 
-            bool snow = referenceBlock?.Code?.Path?.Contains("-snow") == true;
-            bool free = referenceBlock?.Code?.Path?.Contains("-free") != false;
-            string path = Prefix + suffix + (free ? "-free" : "") + (snow ? "-snow" : "");
-            return new AssetLocation("ecosystemflora", path);
+            string cover = snow ? JuvenileBlockNaming.SnowSuffix : JuvenileBlockNaming.FreeSuffix;
+            return new AssetLocation("ecosystemflora", Prefix + suffix + cover);
+        }
+
+        public static AssetLocation CodeForPhase(TallgrassPhenologyPhase phase, Block referenceBlock)
+        {
+            bool snow = PlantSnowCover.PathHasSnowCover(referenceBlock?.Code?.Path);
+            return CodeForPhase(phase, snow);
         }
 
         public static bool IsPhaseBlock(Block block) =>

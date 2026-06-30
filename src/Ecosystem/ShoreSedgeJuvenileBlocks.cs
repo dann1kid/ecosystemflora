@@ -8,9 +8,9 @@ namespace WildFarming.Ecosystem
     {
         const string Prefix = "juvenile-sedge-";
 
-        public static AssetLocation CodeForSpecies(string species)
+        public static AssetLocation CodeForSpecies(string species, bool snow = false)
         {
-            return JuvenileBlockNaming.CodeForSpecies(Prefix, species);
+            return JuvenileBlockNaming.CodeForSpecies(Prefix, species, snow);
         }
 
         public static AssetLocation MatureVanillaCode(string species)

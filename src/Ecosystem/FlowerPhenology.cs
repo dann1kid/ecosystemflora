@@ -77,46 +77,65 @@ namespace WildFarming.Ecosystem
             double now = api.World.Calendar.TotalHours;
             entry.LastPhenologyUpdateHours = now;
 
-            if (spreadEstablished)
-            {
-                entry.PhenologyPhase = FlowerPhenologyPhase.Vegetative;
-                entry.PhenologyEnergy = 0.25f;
-            }
-            else if (TryInferPhaseFromWorldBlock(api, entry, out FlowerPhenologyPhase worldPhase))
-            {
-                entry.PhenologyPhase = worldPhase;
-                entry.PhenologyEnergy = worldPhase == FlowerPhenologyPhase.Bloom ? 1f : 0.12f;
-            }
-            else
-            {
-                ResolveSeasonInputs(api, entry.Origin, entry.Requirements.Species, out float season, out float temp);
-                entry.PhenologyPhase = InferInitialPhase(season, temp, cfg);
-                entry.PhenologyEnergy = entry.PhenologyPhase == FlowerPhenologyPhase.Bloom ? 1f : 0.12f;
-            }
+            Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
+            entry.PhenologyPhase = ResolveRegisterPhase(api, entry, block, cfg, spreadEstablished);
+            entry.PhenologyEnergy = entry.PhenologyPhase == FlowerPhenologyPhase.Bloom
+                ? cfg.FlowerBloomEnergyThreshold
+                : spreadEstablished ? 0.25f : 0.12f;
 
             SyncBlock(api, entry, cfg);
+            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
-        static bool TryInferPhaseFromWorldBlock(ICoreAPI api, ReproducerEntry entry, out FlowerPhenologyPhase phase)
+        /// <summary>
+        /// World block hints juvenile / phase assets; mature vanilla flowers follow season, not bloom appearance.
+        /// </summary>
+        internal static FlowerPhenologyPhase ResolveRegisterPhase(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            Block block,
+            EcosystemConfig cfg,
+            bool spreadEstablished)
         {
-            phase = FlowerPhenologyPhase.Vegetative;
-            if (api?.World?.BlockAccessor == null || entry?.Origin == null) return false;
-
-            Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
-            if (block == null) return false;
-
-            if (entry.IsMatureBlock(block))
+            if (spreadEstablished)
             {
-                phase = FlowerPhenologyPhase.Bloom;
-                return true;
+                return FlowerPhenologyPhase.Vegetative;
             }
 
-            if (FlowerPhenologyBlocks.TryGetPhase(block.Code, out phase))
+            if (FlowerPhenologyBlocks.TryGetPhase(block?.Code, out FlowerPhenologyPhase blockPhase))
             {
-                return true;
+                return blockPhase;
             }
 
-            return false;
+            if (MatchesJuvenileBlock(block, entry.Requirements))
+            {
+                return FlowerPhenologyPhase.Vegetative;
+            }
+
+            ResolveSeasonInputs(api, entry.Origin, entry.Requirements.Species, out float season, out float temp);
+            return InferInitialPhase(season, temp, cfg);
+        }
+
+        static bool BlockMatchesEntryPhase(ReproducerEntry entry, Block block)
+        {
+            if (block == null || block.Id == 0) return false;
+
+            switch (entry.PhenologyPhase)
+            {
+                case FlowerPhenologyPhase.Bloom:
+                    return entry.IsMatureBlock(block);
+                case FlowerPhenologyPhase.Dormant:
+                case FlowerPhenologyPhase.Vegetative:
+                case FlowerPhenologyPhase.Dieback:
+                    if (!FlowerPhenologyBlocks.TryGetPhase(block.Code, out FlowerPhenologyPhase blockPhase))
+                    {
+                        return false;
+                    }
+
+                    return blockPhase == entry.PhenologyPhase;
+                default:
+                    return false;
+            }
         }
 
         public static FlowerPhenologyPhase InferInitialPhase(float seasonActivity, float temp, EcosystemConfig cfg)
@@ -140,7 +159,11 @@ namespace WildFarming.Ecosystem
             if (!UsesPhenology(cfg, entry?.Requirements) || api?.World?.Calendar == null) return;
 
             double deltaHours = nowHours - entry.LastPhenologyUpdateHours;
-            if (deltaHours < 0.25) return;
+            if (deltaHours < 0.25)
+            {
+                PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+                return;
+            }
 
             entry.LastPhenologyUpdateHours = nowHours;
             double deltaDays = deltaHours / Math.Max(1.0, api.World.Calendar.HoursPerDay);
@@ -168,6 +191,16 @@ namespace WildFarming.Ecosystem
             {
                 SyncBlock(api, entry, cfg);
             }
+            else
+            {
+                Block current = api.World.BlockAccessor.GetBlock(entry.Origin);
+                if (!BlockMatchesEntryPhase(entry, current))
+                {
+                    SyncBlock(api, entry, cfg);
+                }
+            }
+
+            PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
         static void AdvanceDormant(
@@ -275,28 +308,31 @@ namespace WildFarming.Ecosystem
             if (!UsesPhenology(cfg, entry?.Requirements) || api?.World?.BlockAccessor == null) return;
             if (!LandClaimGuard.AllowsEcologyChange(api, entry.Origin)) return;
 
-            Block target = ResolveBlockForPhase(api, entry);
+            Block current = api.World.BlockAccessor.GetBlock(entry.Origin);
+            Block target = ResolveBlockForPhase(api, entry, current);
             if (target == null || target.Id == 0) return;
 
-            IBlockAccessor acc = api.World.BlockAccessor;
-            Block current = acc.GetBlock(entry.Origin);
             if (current == null || current.Id == target.Id) return;
 
-            acc.SetBlock(target.Id, entry.Origin);
-            acc.MarkBlockDirty(entry.Origin);
+            api.World.BlockAccessor.SetBlock(target.Id, entry.Origin);
+            api.World.BlockAccessor.MarkBlockDirty(entry.Origin);
         }
 
-        static Block ResolveBlockForPhase(ICoreAPI api, ReproducerEntry entry)
+        static Block ResolveBlockForPhase(ICoreAPI api, ReproducerEntry entry, Block current)
         {
+            bool snow = PlantSnowCover.ResolveWantsSnowCover(api, entry.Origin);
+
             if (entry.PhenologyPhase == FlowerPhenologyPhase.Bloom)
             {
-                Block mature = api.World.GetBlock(entry.MatureBlockCode);
+                AssetLocation matureCode = PlantSnowCover.CodeWithCover(entry.MatureBlockCode, snow);
+                Block mature = api.World.GetBlock(matureCode);
                 if (mature != null && mature.Id != 0) return mature;
             }
 
             AssetLocation phaseCode = FlowerPhenologyBlocks.CodeForPhase(
                 entry.Requirements.Species,
-                entry.PhenologyPhase);
+                entry.PhenologyPhase,
+                snow);
             if (phaseCode != null)
             {
                 Block phaseBlock = api.World.GetBlock(phaseCode);
@@ -304,7 +340,7 @@ namespace WildFarming.Ecosystem
             }
 
             // Fallback when phase assets are missing (dev / third-party species).
-            AssetLocation juvenileCode = FlowerJuvenileBlocks.CodeForSpecies(entry.Requirements.Species);
+            AssetLocation juvenileCode = FlowerJuvenileBlocks.CodeForSpecies(entry.Requirements.Species, snow);
             if (juvenileCode == null) return null;
             return api.World.GetBlock(juvenileCode);
         }

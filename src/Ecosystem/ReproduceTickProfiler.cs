@@ -10,6 +10,7 @@ namespace WildFarming.Ecosystem
         public long FlowerPhenologyTicks;
         public long FernPhenologyTicks;
         public long TallgrassPhenologyTicks;
+        public long PlantSnowCoverTicks;
         public long TallgrassPromotionTicks;
         public long BerryMaturationTicks;
         public long StumpDecayTicks;

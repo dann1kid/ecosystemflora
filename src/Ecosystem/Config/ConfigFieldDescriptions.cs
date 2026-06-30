@@ -176,7 +176,7 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: быстрее синхронизация фаз папоротника. Меньше: медленнее.");
 
             D(nameof(EcosystemConfig.EnableTallgrassPhenology),
-                "On: tallgrass winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla height only.",
+                "On: tallgrass and brown sedge winter dormant and stress dieback visuals; spread gated off-season. Off: vanilla blocks only.",
                 "Вкл.: зимний покой и отмирание высокой травы, распространение по сезону. Выкл.: только ванильная высота.");
 
             D(nameof(EcosystemConfig.MaxTallgrassPhenologyChecksPerTick),

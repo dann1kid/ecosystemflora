@@ -1,0 +1,52 @@
+{
+  "code": "juvenile-fern-tallfern",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
+  "class": "BlockPlant",
+  "enabled": true,
+  "renderpass": "OpaqueNoCull",
+  "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
+  "drawtype": "JSON",
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "randomizeRotations": true,
+  "shapeByType": {
+    "*-free": { "base": "game:block/plant/fern/tallfern/var1", "scale": 0.42 },
+    "*-snow": { "base": "game:block/basic/cross" }
+  },
+  "texturesByType": {
+    "*-free": {
+      "all": { "base": "game:block/plant/fern/tallfern/fern*" }
+    },
+    "*-snow": {
+      "north": { "base": "game:block/plant/fern/tallfern/fern1" },
+      "south": { "base": "game:block/plant/fern/tallfern/fern1" }
+    }
+  },
+  "attributesByType": {
+    "*-free": { "drawnHeight": 10 },
+    "*-snow": { "drawnHeight": 10, "allowOverlays": false, "allowStepWhenStuck": true }
+  },
+  "vertexFlagsByType": {
+    "*-snow": { "zOffset": 3, "windMode": "ExtraWeakWind", "windData": 2 }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
+  },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "replaceable": 3000,
+  "resistance": 0.5,
+  "lightAbsorption": 0,
+  "collisionbox": null,
+  "selectionbox": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 0.28, "z2": 0.75 },
+  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
+  "materialDensity": 200,
+  "drops": []
+}

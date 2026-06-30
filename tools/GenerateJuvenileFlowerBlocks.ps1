@@ -8,23 +8,98 @@ $existing = @(
     "cowparsley","horsetail","mugwort","lupine","woad","heather","westerngorse"
 )
 
-function Write-Block($species, $shape, $textures) {
-    $path = Join-Path $outDir "juvenile-flower-$species-free.json"
+function Get-SnowCrossTexture($textures) {
+    foreach ($key in @("north1", "petal1", "flower2", "north")) {
+        if ($textures.ContainsKey($key)) {
+            $path = $textures[$key]
+            if (-not [string]::IsNullOrEmpty($path) -and $path -notmatch "transparent") {
+                return $path
+            }
+        }
+    }
+    foreach ($val in $textures.Values) {
+        if (-not [string]::IsNullOrEmpty($val) -and $val -match "/petal/" -and $val -notmatch "transparent") {
+            return $val
+        }
+    }
+    return "game:block/plant/flower/petal/wilddaisy1"
+}
+
+function Write-Block($species, $shape, $textures, [hashtable]$extra = $null) {
+    $path = Join-Path $outDir "juvenile-flower-$species.json"
+    $legacyPath = Join-Path $outDir "juvenile-flower-$species-free.json"
+    if (Test-Path $legacyPath) { Remove-Item $legacyPath -Force }
+
+    $selY2 = 0.22
     $texJson = ($textures.GetEnumerator() | ForEach-Object {
         "    `"$($_.Key)`": { `"base`": `"$($_.Value)`" }"
     }) -join ",`n"
+
+    $snowTex = Get-SnowCrossTexture $textures
+    $extraAttrs = ""
+    if ($null -ne $extra) {
+        if ($extra.ContainsKey("randomDrawOffset")) {
+            $extraAttrs += "`n  `"randomDrawOffset`": true,"
+        }
+        if ($extra.ContainsKey("randomizeAxes")) {
+            $extraAttrs += "`n  `"randomizeAxes`": `"xz`","
+        }
+        if ($extra.ContainsKey("selectionY2")) {
+            $selY2 = $extra["selectionY2"]
+        }
+    }
+    if (-not $selY2) { $selY2 = 0.22 }
+
     @"
 {
-  "code": "juvenile-flower-$species-free",
+  "code": "juvenile-flower-$species",
+  "variantgroups": [
+    { "code": "cover", "states": ["free", "snow"] }
+  ],
   "class": "BlockPlant",
   "enabled": true,
   "renderpass": "OpaqueNoCull",
   "blockmaterial": "Plant",
+  "blockmaterialByType": {
+    "*-snow": "Snow"
+  },
   "drawtype": "JSON",
-  "randomizeRotations": true,
-  "shape": { "base": "$shape", "scale": 0.45 },
-  "textures": {
+  "drawtypeByType": {
+    "*-snow": "crossandsnowlayer"
+  },
+  "randomizeRotations": true,$extraAttrs
+  "shapeByType": {
+    "*-free": { "base": "$shape", "scale": 0.45 }
+  },
+  "shape": { "base": "game:block/basic/cross" },
+  "texturesByType": {
+    "*-free": {
 $texJson
+    },
+    "*-snow": {
+      "north": { "base": "$snowTex" },
+      "south": { "base": "$snowTex" }
+    }
+  },
+  "attributesByType": {
+    "*-free": {
+      "drawnHeight": 11
+    },
+    "*-snow": {
+      "drawnHeight": 11,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
+  },
+  "vertexFlagsByType": {
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
   },
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
@@ -32,8 +107,9 @@ $texJson
   "resistance": 0.5,
   "lightAbsorption": 0,
   "collisionbox": null,
-  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
+  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": $selY2, "z2": 0.8 },
   "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
+  "frostable": true,
   "materialDensity": 200,
   "drops": []
 }
@@ -156,59 +232,18 @@ function GhostpipeBlock($species) {
 }
 
 function CrotonBlock() {
-    $path = Join-Path $outDir "juvenile-flower-croton-free.json"
-    @"
-{
-  "code": "juvenile-flower-croton-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "randomDrawOffset": true,
-  "randomizeAxes": "xz",
-  "shape": { "base": "game:block/plant/croton/small/crimson-green", "scale": 0.45 },
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+    $species = "croton"
+    Write-Block $species "game:block/plant/croton/small/crimson-green" @{} @{
+        randomDrawOffset = $true
+        randomizeAxes = $true
+    }
 }
 
 function RafflesiaBlock($species, $color) {
-    $path = Join-Path $outDir "juvenile-flower-$species-free.json"
-    @"
-{
-  "code": "juvenile-flower-$species-free",
-  "class": "BlockPlant",
-  "enabled": true,
-  "renderpass": "OpaqueNoCull",
-  "blockmaterial": "Plant",
-  "drawtype": "JSON",
-  "randomizeRotations": true,
-  "randomDrawOffset": true,
-  "randomizeAxes": "xz",
-  "shape": { "base": "game:block/plant/rafflesia/$color", "scale": 0.45 },
-  "sideopaque": { "all": false },
-  "sidesolid": { "all": false },
-  "replaceable": 3000,
-  "resistance": 0.5,
-  "lightAbsorption": 0,
-  "collisionbox": null,
-  "selectionbox": { "x1": 0.2, "y1": 0, "z1": 0.2, "x2": 0.8, "y2": 0.22, "z2": 0.8 },
-  "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
-  "materialDensity": 200,
-  "drops": []
-}
-"@ | Set-Content -Path $path -Encoding UTF8
+    Write-Block $species "game:block/plant/rafflesia/$color" @{} @{
+        randomDrawOffset = $true
+        randomizeAxes = $true
+    }
 }
 
 $toGenerate = @{
@@ -229,12 +264,23 @@ $toGenerate = @{
     rafflesiabrown = { RafflesiaBlock "rafflesiabrown" "brown" }
     rafflesiared = { RafflesiaBlock "rafflesiared" "red" }
     redtopgrass = { CrossNumbered24 "redtopgrass" }
+    cowparsley = { ThreePatch24 "cowparsley" }
+    horsetail = { ThreePatch24 "horsetail" }
+    mugwort = { ThreePatch24 "mugwort" }
+    lupine = { ThreePatch24 "lupine" }
+    woad = { ThreePatch24 "woad" }
+    heather = { ThreePatch24 "heather" }
+    westerngorse = { ThreePatch24 "westerngorse" }
 }
 
 foreach ($kv in $toGenerate.GetEnumerator()) {
-    if ($existing -contains $kv.Key) { continue }
     & $kv.Value
-    Write-Host "Wrote juvenile-flower-$($kv.Key)-free.json"
+    Write-Host "Wrote juvenile-flower-$($kv.Key).json"
+}
+
+Get-ChildItem -Path $outDir -Filter "juvenile-flower-*-free.json" | ForEach-Object {
+    Remove-Item $_.FullName -Force
+    Write-Host "Removed legacy $($_.Name)"
 }
 
 Write-Host "Done."
