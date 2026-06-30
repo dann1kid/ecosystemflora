@@ -203,11 +203,17 @@ namespace WildFarming.Ecosystem
 
         public static bool IsTreeLogGrownBlock(Block block)
         {
+            if (!IsAnyLogGrownTrunkBlock(block)) return false;
+            return GetTreeWood(block) != null;
+        }
+
+        /// <summary>Living log-grown trunk segment (any wood/orientation; excludes aged snags).</summary>
+        public static bool IsAnyLogGrownTrunkBlock(Block block)
+        {
             if (block?.Code == null || block.Code.Domain != "game") return false;
             string path = block.Code.Path;
             if (string.IsNullOrEmpty(path) || !path.StartsWith("log-grown-")) return false;
-            if (path.StartsWith("log-grown-aged")) return false;
-            return GetTreeWood(block) != null;
+            return !path.StartsWith("log-grown-aged");
         }
 
         public static bool IsFerntreeTrunkBlock(Block block) =>
@@ -216,8 +222,20 @@ namespace WildFarming.Ecosystem
         public static bool IsFerntreeEcologyBlock(Block block) =>
             FerntreeStructure.IsFerntreeBlock(block);
 
+        public static bool IsFruitTreeTrunkBlock(Block block)
+        {
+            if (block?.Code == null || block.Code.Domain != "game") return false;
+            string path = block.Code.Path;
+            return path != null
+                && (path.StartsWith("fruittree-stem-") || path.StartsWith("fruittree-young-"));
+        }
+
+        /// <summary>Blocks meadow spread must never occupy or displace (player-planted saplings included).</summary>
         public static bool IsArborealHostBlock(Block block) =>
-            IsTreeLogGrownBlock(block) || IsFerntreeTrunkBlock(block);
+            IsAnyLogGrownTrunkBlock(block)
+            || IsFerntreeTrunkBlock(block)
+            || IsTreeSaplingBlock(block)
+            || IsFruitTreeTrunkBlock(block);
 
         public static bool IsTreeSaplingBlock(Block block)
         {

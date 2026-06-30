@@ -135,6 +135,12 @@ namespace WildFarming.Ecosystem
 
             string path = space.Code?.Path ?? ("id=" + space.Id);
 
+            if (PlantCodeHelper.IsArborealHostBlock(space))
+            {
+                rejectReason = $"space is protected tree trunk ({path})";
+                return false;
+            }
+
             if (PlantCodeHelper.IsEcologySpreadParent(space))
             {
                 if (PlantCodeHelper.IsArborealHostBlock(space))

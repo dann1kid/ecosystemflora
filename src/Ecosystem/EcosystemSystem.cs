@@ -948,6 +948,7 @@ namespace WildFarming.Ecosystem
             ScheduleFarmlandBridgeCheck(placed, oldGround);
             api.Event.RegisterCallback(_ =>
             {
+                InvalidateEnvironmentAround(placed);
                 TryRegisterPlacedBlock(placed);
                 WakeEcologyAround(placed);
             }, 0);

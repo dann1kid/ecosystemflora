@@ -84,5 +84,38 @@ namespace WildFarming.Ecosystem
 
             return true;
         }
+
+        /// <summary>Final gate before SetBlock (sync spread path and commit queue).</summary>
+        public static bool PassesSpreadTargetGate(
+            IBlockAccessor acc,
+            BlockPos targetPos,
+            PlantRequirements requirements,
+            bool displacing,
+            out bool isEmpty)
+        {
+            isEmpty = false;
+            if (acc == null || targetPos == null || requirements == null) return false;
+
+            CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, targetPos);
+            if (!PassesPhysicalGate(acc, targetPos, requirements, in snap, out isEmpty))
+            {
+                return false;
+            }
+
+            if (displacing)
+            {
+                if (!PlantCodeHelper.IsEcologySpreadParent(snap.Space)
+                    || PlantCodeHelper.IsArborealHostBlock(snap.Space))
+                {
+                    return false;
+                }
+            }
+            else if (!isEmpty && !SpreadVacancy.CanOccupy(acc, targetPos, requirements, snap.Space, isEmpty))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

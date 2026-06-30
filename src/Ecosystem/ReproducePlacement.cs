@@ -184,21 +184,8 @@ namespace WildFarming.Ecosystem
 
             if (!LandClaimGuard.AllowsEcologyChange(api, targetPos)) return false;
 
-            CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, targetPos);
-            if (!SpreadPreflight.PassesPhysicalGate(acc, targetPos, intent.Requirements, in snap, out bool isEmpty))
-            {
-                return false;
-            }
-
-            if (intent.Displacing)
-            {
-                if (!PlantCodeHelper.IsEcologySpreadParent(snap.Space)
-                    || PlantCodeHelper.IsArborealHostBlock(snap.Space))
-                {
-                    return false;
-                }
-            }
-            else if (!isEmpty && !SpreadVacancy.CanOccupy(acc, targetPos, intent.Requirements, snap.Space, isEmpty))
+            if (!SpreadPreflight.PassesSpreadTargetGate(
+                    acc, targetPos, intent.Requirements, intent.Displacing, out _))
             {
                 return false;
             }
@@ -593,9 +580,18 @@ namespace WildFarming.Ecosystem
         {
             if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) return false;
 
+            IBlockAccessor accessor = api.World.BlockAccessor;
+
+            if (requirements.Habitat != EcologyHabitat.UnderwaterColumn
+                && !SpreadPreflight.PassesSpreadTargetGate(
+                    accessor, plantPos, requirements, displacing, out _))
+            {
+                return false;
+            }
+
             if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
             {
-                IBlockAccessor acc = api.World.BlockAccessor;
+                IBlockAccessor acc = accessor;
 
                 if (!WaterColumnHelper.TrySnapCrowfootColumnBase(acc, plantPos, out BlockPos columnBase))
                 {
@@ -615,8 +611,6 @@ namespace WildFarming.Ecosystem
                 bool preferFlower = spreadBlock.Code?.Path?.Contains("top") == true;
                 return CrowfootColumnPlacer.PlaceColumn(api, columnBase, height, preferFlower, api.World.Rand);
             }
-
-            IBlockAccessor accessor = api.World.BlockAccessor;
 
             if (displacing)
             {
