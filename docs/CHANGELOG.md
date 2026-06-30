@@ -9,7 +9,20 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
-## 4.5.4 — Species CSV stability
+## Unreleased — Tree spread guard
+
+- **Meadow grass no longer replaces tree bases** — spread skips log-grown trunks, player saplings, and fruit-tree stems; sync spread re-checks the cell before `SetBlock`.
+- Spread column cache clears when the player places a block nearby.
+
+---
+
+## Unreleased — Seasonal snow & fern saves
+
+- **Winter snow on meadow plants** — phase/juvenile blocks swap `-free` / `-snow` from climate and snow layer; round-robin sync at runtime.
+- **Brown sedge seasons** — dormant/dieback via tallgrass phenology (`sedgephase-*` blocks).
+- **Fern phase save fix** — legacy `fernphase-*-dieback` codes restored (no `-free` suffix); chunk migration for mistaken `-free` variants.
+
+---
 
 - **Shipped CSV parity tests** — CI fails if `assets/ecosystemflora/species/ecology.csv` or `season.csv` drift from exporters (`tools/Export-SpeciesEcologyCsv.ps1`, `Export-SpeciesSeasonCsv.ps1`).
 - **Load warnings** — duplicate species rows and unknown species in user ModConfig CSV (server log; unknown rows skipped).
