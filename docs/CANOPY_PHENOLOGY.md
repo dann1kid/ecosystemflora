@@ -1,8 +1,49 @@
 # Canopy foliage — сезонная листва (v3.4)
 
-Per-cell seasonal foliage on **deciduous** `log-grown` / `leavesbranchy` / `leaves-grown` blocks. No trunk anchor BFS, no `GrowTree`, no disk persistence.
+Per-cell seasonal foliage on **deciduous** `log-grown` / `leavesbranchy` / `leaves-grown` blocks. No trunk-anchor persistence, no `GrowTree`, no disk persistence.
 
-Updated: 2026-06-18.
+Updated: 2026-06-30 (wildfire guard + orphan prune).
+
+---
+
+## Wildfire interaction (v4.5.4+)
+
+Two lightweight server systems share the existing foliage chunk column pass — no extra world scanner.
+
+### Bud suppression (`CanopyBurnGuard`)
+
+Before ecology places foliage (seasonal bud, tree growth, spread seedling crown):
+
+| Check | Radius | When |
+|-------|--------|------|
+| Bud source | 3 blocks | Once per bud attempt |
+| Target air cell | 2 blocks | Before `SetBlock` |
+
+Active fire = `BlockMaterial.Fire` or block code `fire` / `fire-*`. When fire is detected, the chunk is marked **fire-touched** for orphan prune priority.
+
+### Orphan prune (`CanopyOrphanPrune`)
+
+During the same `ChunkEcologyColumnPass` that runs `CanopySeasonSync`:
+
+1. For each wild `leaves-grown` / `leavesbranchy` cell (not `leaves-placed`), optional bounded **BFS** (default depth **14**) through same-wood foliage asks: is there a `log-grown` trunk?
+2. If not → strip to air (land claims respected).
+3. Budget: default **64** BFS checks per chunk pass (`OrphanFoliageMaxChecksPerChunkPass`; `0` = unlimited).
+
+**Fire-touched chunks** (`FoliageChunkState.FireTouchedAtHours`):
+
+- Set when fire is seen in the column pass or via burn guard.
+- `PendingOrphanPrune` schedules an extra pass (season sync skipped; prune only) after the chunk’s normal monthly sync completes.
+- Chunk sync queue sorts fire-touched / pending-prune chunks first for `OrphanFoliageFireChunkHours` (default **48** game hours).
+
+Random/hybrid foliage tick also runs orphan prune on picked cells.
+
+| Component | File |
+|-----------|------|
+| Fire proximity guard | `CanopyBurnGuard.cs` |
+| Orphan BFS + strip | `CanopyOrphanPrune.cs` |
+| Per-pass counters | `FoliageChunkPassState.cs` |
+
+**Limits:** does not replace vanilla leaf-pruning for non-ecology blocks; does not strip foliage still connected to a surviving trunk. Pyrogenesis / other fire mods — compatible via vanilla fire blocks.
 
 ---
 
@@ -19,6 +60,8 @@ On chunk-scan tick (main thread):
   FoliageCellScheduler.ProcessChunkSyncBatch → FoliageChunkSyncPass
         ↓
 CanopySeasonSync.TrySyncCell — strip/bud per foliage block
+        ↓
+CanopyOrphanPrune — optional orphan strip (budgeted BFS)
 ```
 
 Ecology registration (flowers, trees, **vines**) uses the worker column pipeline when background scan is on. **Mycelium anchors** register on chunk load via `MyceliumChunkRegistrar` (BE scan on main) and then share the same reproduce registry as vines. **Seasonal foliage** uses a separate main-thread pass. Foliage **never** runs on the worker thread.
@@ -42,6 +85,8 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 | Unified column pass | `ChunkEcologyColumnPass.cs`, `ChunkColumnWalker.cs` |
 | Foliage-only chunk pass | `FoliageChunkSyncPass.cs` |
 | Scheduler / chunk state | `FoliageCellScheduler.cs`, `FoliageChunkState.cs` |
+| Fire guard | `CanopyBurnGuard.cs` |
+| Orphan prune | `CanopyOrphanPrune.cs` |
 | Season key | `FoliageSeasonKey.cs` |
 | Season curves | `WildCanopySeason.cs`, `CanopyEcology.cs` |
 | Block codes | `CanopyBlockHelper.cs` |
@@ -113,6 +158,10 @@ Random/hybrid modes also maintain `FoliageCellIndex` for per-tick picks.
 | `SpringBranchyAgeBoostYearsToMax` | `60` | calendar years to max spring branch boost |
 | `SpringBranchyAgeBoostMax` | `1.5` | max spring branchy bud multiplier from age |
 | `FoliageRestoreBareSkeleton` | `true` | Winter crown repair only (not lower trunk; not autumn) |
+| `EnableOrphanFoliagePrune` | `true` | strip wild foliage with no path to log-grown |
+| `OrphanFoliageMaxBfsDepth` | `14` | BFS depth when testing foliage support |
+| `OrphanFoliageMaxChecksPerChunkPass` | `64` | orphan BFS checks per chunk pass (`0` = unlimited) |
+| `OrphanFoliageFireChunkHours` | `48` | prioritize fire-touched chunks for orphan prune (hours; `0` = off) |
 
 Legacy keys `MaxCanopyUpdateOpsPerTick` / `CanopyBudgetMs` still map to foliage fields.
 
@@ -137,3 +186,4 @@ Toggle: `EnableCanopyAmbience` (requires `EnableSeasonalFoliage`).
 | v3.5 | Client canopy ambience particles |
 | v3.8 | Background registration decoupled; `ProcessChunkSyncBatch` + `FoliageChunkSyncPass` on main when worker scan enabled |
 | v3.8 | Fallen sticks use `SurfacePlacement.TryFindSurfaceCellBelow` (ground/tallgrass surface, not floating) |
+| v4.5.4 | `CanopyBurnGuard` — no budding near fire; `CanopyOrphanPrune` in chunk pass; fire-touched chunk priority |

@@ -9,6 +9,14 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
+## Unreleased — Wildfire foliage
+
+- **No budding near active fire** — ecology stops placing `leaves-grown` / `leavesbranchy` while fire blocks are nearby (seasonal sync, tree growth, spread seedlings). Works with vanilla lightning and mods such as Pyrogenesis.
+- **Orphan foliage prune** — during foliage chunk sync, wild leaves with no BFS path to `log-grown` of the same wood are stripped (`EnableOrphanFoliagePrune`). Skips player `leaves-placed`.
+- **Fire-touched chunks** — chunks that recently had fire are prioritized for orphan-prune passes for **48** game hours (`OrphanFoliageFireChunkHours`). See [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
+
+---
+
 ## Unreleased — Tree spread guard
 
 - **Meadow grass no longer replaces tree bases** — spread skips log-grown trunks, player saplings, and fruit-tree stems; sync spread re-checks the cell before `SetBlock`.
@@ -28,7 +36,7 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Load warnings** — duplicate species rows and unknown species in user ModConfig CSV (server log; unknown rows skipped).
 - **`/ecospeciesreload`** — server admin command reloads merged ecology/season tables without world restart.
 - Docs: client vs server inspect/handbook in [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md).
-- **`CONFIGURATION.md`** — complete reference for all **201** JSON keys (generated from `EcosystemConfig.cs` + config UI descriptions via `tools/generate_configuration_doc.py`).
+- **`CONFIGURATION.md`** — complete reference for all **209** JSON keys (generated from `EcosystemConfig.cs` + config UI descriptions via `tools/generate_configuration_doc.py`).
 
 ---
 

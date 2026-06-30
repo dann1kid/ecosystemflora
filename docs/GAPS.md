@@ -13,7 +13,7 @@
 | **Луг / цветы** | Juvenile spread → maturation; post-spread cooldown; inspect на ростках | Полный жизненный цикл всё ещё abstract; росток inspect — «не в реестре» до созревания (намеренно) |
 | **Reeds / lily** | Mat edge + virtual seed (A–D); inspect: mode, frontier, seed %, **last spread channel** | Нет предметов семян/ризомов; игрок не видит «канал» spread в мире, только в I |
 | **Water crowfoot** | Independent column spread в 2–8 блоков воды над илом | **Не mat** — другой код, чем reeds/lily; **заполнение мелководья — норма**, не баг (см. §2) |
-| **Деревья** | `log-grown` → sapling; senescence + stump/logs | living trunk stress; sapling burst on death |
+| **Деревья** | `log-grown` → sapling; senescence + stump/logs; **wildfire** — no bud near fire, orphan foliage prune in chunk sync ([`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) | living trunk stress; sapling burst on death |
 | **Древовидный папоротник** | [`FERNTREE.md`](FERNTREE.md) | playtest spread/senescence в тропиках |
 | **Дикие лианы** | [`WILD_VINE.md`](WILD_VINE.md) | playtest на зданиях/стволах; нет stress/climate gate на tip |
 | **Грибница** | network spread + chunk load anchors | нет своих блоков; баланс mat vs vanilla regrowth — playtest |

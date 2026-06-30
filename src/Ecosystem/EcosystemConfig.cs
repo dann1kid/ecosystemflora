@@ -652,10 +652,10 @@ namespace WildFarming.Ecosystem
         public bool EnableOrphanFoliagePrune { get; set; } = true;
 
         /// <summary>BFS depth when checking foliage support (blocks).</summary>
-        public int OrphanFoliageMaxBfsDepth { get; set; } = CanopyOrphanPrune.DefaultMaxBfsDepth;
+        public int OrphanFoliageMaxBfsDepth { get; set; } = 14;
 
         /// <summary>Orphan foliage BFS checks per chunk column pass (0 = unlimited).</summary>
-        public int OrphanFoliageMaxChecksPerChunkPass { get; set; } = CanopyOrphanPrune.DefaultMaxChecksPerChunkPass;
+        public int OrphanFoliageMaxChecksPerChunkPass { get; set; } = 64;
 
         /// <summary>Re-prioritize fire-touched chunks for orphan prune for this many game hours.</summary>
         public double OrphanFoliageFireChunkHours { get; set; } = 48;
