@@ -21,6 +21,7 @@ namespace WildFarming.Ecosystem
             public int MaxVineHits { get; init; }
             public bool SyncFoliage { get; init; }
             public FoliageCellIndex FoliageIndex { get; init; }
+            public FoliageChunkPassState PassState { get; init; }
         }
 
         public readonly struct Result
@@ -125,7 +126,14 @@ namespace WildFarming.Ecosystem
             int foliageChanged = 0;
             int treesRegistered = 0;
             int gameYear = api != null ? CanopyEcology.GameYear(api.World.Calendar) : 0;
-            bool syncFoliage = request.SyncFoliage && api != null && view.SupportsFoliageMutation;
+            FoliageChunkPassState passState = request.PassState;
+            bool syncSeasonalFoliage = request.SyncFoliage
+                && api != null
+                && view.SupportsFoliageMutation
+                && (passState == null || !passState.OrphanPruneOnly);
+            bool runOrphanPrune = passState != null
+                && EcosystemConfig.Loaded.EnableOrphanFoliagePrune
+                && passState.OrphanChecksRemaining > 0;
             IBlockAccessor acc = view.SupportsFoliageMutation && api?.World?.BlockAccessor != null
                 ? api.World.BlockAccessor
                 : null;
@@ -155,12 +163,38 @@ namespace WildFarming.Ecosystem
                         Block block = view.GetBlock(x, y, z);
                         if (block == null || block.Id == 0) continue;
 
-                        if (syncFoliage && acc != null && CanopyFoliageRules.IsSeasonalFoliageBlock(block))
+                        if (passState != null && acc != null && CanopyBurnGuard.IsActiveFireBlock(block))
                         {
-                            if (CanopySeasonSync.TrySyncCell(
-                                    api, acc, scanScratch, block, request.FoliageIndex, gameYear, out _))
+                            passState.FireSeenInChunk = true;
+                        }
+
+                        bool isSeasonalFoliage = CanopyFoliageRules.IsSeasonalFoliageBlock(block);
+                        if ((syncSeasonalFoliage || runOrphanPrune) && acc != null && isSeasonalFoliage)
+                        {
+                            if (syncSeasonalFoliage)
                             {
-                                foliageChanged++;
+                                if (CanopySeasonSync.TrySyncCell(
+                                        api, acc, scanScratch, block, request.FoliageIndex, gameYear, out _))
+                                {
+                                    foliageChanged++;
+                                }
+                            }
+
+                            if (runOrphanPrune
+                                && CanopyOrphanPrune.IsWildPrunableLeaf(block)
+                                && passState.OrphanChecksRemaining > 0)
+                            {
+                                passState.OrphanChecksRemaining--;
+                                if (CanopyOrphanPrune.TryPruneIfOrphan(
+                                        api,
+                                        acc,
+                                        scanScratch,
+                                        block,
+                                        request.FoliageIndex,
+                                        EcosystemConfig.Loaded.OrphanFoliageMaxBfsDepth))
+                                {
+                                    foliageChanged++;
+                                }
                             }
 
                             if (request.FoliageIndex != null)

@@ -575,6 +575,22 @@ namespace WildFarming.Ecosystem.Config
                 "On: winter repair adds branchy leaves on bare log-grown pillars. Off: bare crowns stay bare.",
                 "Вкл.: зимой восстанавливается ветвистая листва на голых выросших стволах. Выкл.: голые кроны остаются голыми.");
 
+            D(nameof(EcosystemConfig.EnableOrphanFoliagePrune),
+                "On: remove wild leaves with no path to log-grown (e.g. after wildfire). Off: leave floating foliage.",
+                "Вкл.: снимает дикую листву без связи со стволом (после пожара). Выкл.: висящие листья остаются.");
+
+            D(nameof(EcosystemConfig.OrphanFoliageMaxBfsDepth),
+                "Higher: longer support search before pruning (safer, more CPU). Lower: faster, may miss edge cases.",
+                "Больше: длиннее поиск опоры перед снятием. Меньше: быстрее, возможны пропуски.");
+
+            D(nameof(EcosystemConfig.OrphanFoliageMaxChecksPerChunkPass),
+                "Higher: more orphan BFS checks per chunk pass (0 = unlimited). Lower: slower cleanup.",
+                "Больше: больше проверок сирот за проход чанка (0 = без лимита). Меньше: медленнее уборка.");
+
+            D(nameof(EcosystemConfig.OrphanFoliageFireChunkHours),
+                "Hours after fire to prioritize orphan-prune chunk passes. 0 = no fire priority window.",
+                "Часов после пожара с приоритетом уборки сирот в чанке. 0 = без окна приоритета.");
+
             D(nameof(EcosystemConfig.CanopyActivityScale),
                 "Higher: faster seasonal defoliation and budding curves. Lower: subtler canopy seasons. 1.0 = default.",
                 "Больше: быстрее сезонные кривые сброс листвы/почки. Меньше: слабее сезоны кроны. 1.0 — по умолчанию.");

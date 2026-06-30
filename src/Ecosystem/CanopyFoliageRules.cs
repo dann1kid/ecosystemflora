@@ -810,6 +810,7 @@ namespace WildFarming.Ecosystem
             if (!LandClaimGuard.AllowsEcologyChange(api, sourcePos)) return false;
 
             if (TreeSenescence.BlocksSeasonalCanopy(api, acc, sourcePos, wood)) return false;
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, sourcePos)) return false;
 
             if (budBranchy)
             {
@@ -844,6 +845,8 @@ namespace WildFarming.Ecosystem
                 if (!acc.IsValidPos(scratch)) continue;
 
                 if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
+
+                if (CanopyBurnGuard.SuppressesBudTarget(acc, scratch)) continue;
 
 
 
@@ -929,6 +932,7 @@ namespace WildFarming.Ecosystem
             FoliageCellIndex index)
         {
             if (!LandClaimGuard.AllowsEcologyChange(api, sourcePos)) return false;
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, sourcePos)) return false;
 
             float budActivity = activity;
             if (budBranchy)
@@ -945,6 +949,7 @@ namespace WildFarming.Ecosystem
                     sourcePos.Z + NeighborDz[i]);
                 if (!acc.IsValidPos(scratch)) continue;
                 if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
+                if (CanopyBurnGuard.SuppressesBudTarget(acc, scratch)) continue;
 
                 Block space = acc.GetBlock(scratch);
                 if (!PlantVacancyRules.IsVacantPlantSpace(space)) continue;

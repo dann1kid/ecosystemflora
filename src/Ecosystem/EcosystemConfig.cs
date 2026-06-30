@@ -648,6 +648,18 @@ namespace WildFarming.Ecosystem
         /// <summary>Max spring branchy bud multiplier from age (1 = disabled scaling).</summary>
         public float SpringBranchyAgeBoostMax { get; set; } = 1.5f;
 
+        /// <summary>Remove wild foliage with no path to log-grown (e.g. after wildfire).</summary>
+        public bool EnableOrphanFoliagePrune { get; set; } = true;
+
+        /// <summary>BFS depth when checking foliage support (blocks).</summary>
+        public int OrphanFoliageMaxBfsDepth { get; set; } = CanopyOrphanPrune.DefaultMaxBfsDepth;
+
+        /// <summary>Orphan foliage BFS checks per chunk column pass (0 = unlimited).</summary>
+        public int OrphanFoliageMaxChecksPerChunkPass { get; set; } = CanopyOrphanPrune.DefaultMaxChecksPerChunkPass;
+
+        /// <summary>Re-prioritize fire-touched chunks for orphan prune for this many game hours.</summary>
+        public double OrphanFoliageFireChunkHours { get; set; } = 48;
+
         /// <summary>Place branchy leaves on log-grown when crown was stripped bare (pillar repair).</summary>
         public bool FoliageRestoreBareSkeleton { get; set; } = true;
 

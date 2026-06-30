@@ -1,5 +1,7 @@
+using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.Testing;
 using Xunit;
 
 namespace WildFarming.Tests
@@ -265,6 +267,132 @@ namespace WildFarming.Tests
                 Code = new Vintagestory.API.Common.AssetLocation("game", path),
             };
             Assert.Equal(expected, FoliageColumnScanner.ContinueColumnScan(block));
+        }
+    }
+
+    public class CanopyOrphanPruneTests
+    {
+        static Block[] BuildTreeBlocks()
+        {
+            var air = new Block { BlockId = 0, Code = new AssetLocation("game:air") };
+            var log = new Block { BlockId = 1, Code = new AssetLocation("game:log-grown-oak-ud") };
+            var branchy = new Block { BlockId = 2, Code = new AssetLocation("game:leavesbranchy-grown-oak-n") };
+            var leaf = new Block { BlockId = 3, Code = new AssetLocation("game:leaves-grown-oak-n") };
+            var placed = new Block { BlockId = 4, Code = new AssetLocation("game:leaves-placed-oak-n") };
+            return new[] { air, log, branchy, leaf, placed };
+        }
+
+        [Fact]
+        public void IsOrphan_FloatingLeafWithoutTrunk()
+        {
+            Block[] blocks = BuildTreeBlocks();
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var pos = new BlockPos(5, 70, 5);
+            acc.SetBlock(blocks[3].BlockId, pos);
+
+            Assert.True(CanopyOrphanPrune.IsOrphan(acc, pos, blocks[3]));
+        }
+
+        [Fact]
+        public void IsOrphan_LeafAdjacentToLog_IsSupported()
+        {
+            Block[] blocks = BuildTreeBlocks();
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var logPos = new BlockPos(5, 69, 5);
+            var leafPos = new BlockPos(5, 70, 5);
+            acc.SetBlock(blocks[1].BlockId, logPos);
+            acc.SetBlock(blocks[3].BlockId, leafPos);
+
+            Assert.False(CanopyOrphanPrune.IsOrphan(acc, leafPos, blocks[3]));
+        }
+
+        [Fact]
+        public void IsOrphan_LeafChainToLog_IsSupported()
+        {
+            Block[] blocks = BuildTreeBlocks();
+            var acc = new EcologyTestBlockAccessor(blocks);
+            acc.SetBlock(blocks[1].BlockId, new BlockPos(5, 68, 5));
+            acc.SetBlock(blocks[2].BlockId, new BlockPos(5, 69, 5));
+            var leafPos = new BlockPos(5, 70, 5);
+            acc.SetBlock(blocks[3].BlockId, leafPos);
+
+            Assert.False(CanopyOrphanPrune.IsOrphan(acc, leafPos, blocks[3]));
+        }
+
+        [Fact]
+        public void IsWildPrunableLeaf_SkipsPlayerPlaced()
+        {
+            Block[] blocks = BuildTreeBlocks();
+            Assert.False(CanopyOrphanPrune.IsWildPrunableLeaf(blocks[4]));
+            Assert.True(CanopyOrphanPrune.IsWildPrunableLeaf(blocks[3]));
+        }
+    }
+
+    public class CanopyBurnGuardTests
+    {
+        [Theory]
+        [InlineData("fire", true)]
+        [InlineData("fire-blue", true)]
+        [InlineData("leaves-grown-oak-n", false)]
+        [InlineData("air", false)]
+        public void IsActiveFireBlock_DetectsFireCodes(string path, bool expected)
+        {
+            var block = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game", path),
+            };
+            if (expected) block.BlockMaterial = EnumBlockMaterial.Fire;
+
+            Assert.Equal(expected, CanopyBurnGuard.IsActiveFireBlock(block));
+        }
+
+        [Fact]
+        public void IsActiveFireBlock_DetectsFireByPathWithoutMaterial()
+        {
+            var block = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game", "fire"),
+            };
+            Assert.True(CanopyBurnGuard.IsActiveFireBlock(block));
+        }
+
+        [Fact]
+        public void SuppressesFoliagePlacement_WhenFireWithinRadius()
+        {
+            var air = new Vintagestory.API.Common.Block { BlockId = 0, Code = new Vintagestory.API.Common.AssetLocation("game:air") };
+            var fire = new Vintagestory.API.Common.Block
+            {
+                BlockId = 1,
+                Code = new Vintagestory.API.Common.AssetLocation("game:fire"),
+                BlockMaterial = EnumBlockMaterial.Fire,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, fire });
+
+            var center = new BlockPos(10, 64, 10);
+            acc.SetBlock(fire.BlockId, new BlockPos(12, 64, 10));
+
+            Assert.True(CanopyBurnGuard.SuppressesFoliagePlacement(acc, center, radius: 3));
+            Assert.False(CanopyBurnGuard.SuppressesFoliagePlacement(acc, center, radius: 1));
+        }
+
+        [Fact]
+        public void SuppressesBudTarget_UsesCandidateRadius()
+        {
+            var air = new Vintagestory.API.Common.Block { BlockId = 0, Code = new Vintagestory.API.Common.AssetLocation("game:air") };
+            var fire = new Vintagestory.API.Common.Block
+            {
+                BlockId = 1,
+                Code = new Vintagestory.API.Common.AssetLocation("game:fire"),
+                BlockMaterial = EnumBlockMaterial.Fire,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, fire });
+
+            var target = new BlockPos(5, 70, 5);
+            acc.SetBlock(fire.BlockId, new BlockPos(7, 70, 5));
+
+            Assert.True(CanopyBurnGuard.SuppressesBudTarget(acc, target));
         }
     }
 

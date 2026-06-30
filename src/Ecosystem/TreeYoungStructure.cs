@@ -59,6 +59,7 @@ namespace WildFarming.Ecosystem
         {
             if (!acc.IsValidPos(target)) return;
             if (!LandClaimGuard.AllowsEcologyChange(api, target)) return;
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, target)) return;
             if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(target))) return;
 
             Block leaf = branchy

@@ -10,5 +10,9 @@ namespace WildFarming.Ecosystem
         public bool Completed;
         public int LastIndexed;
         public int LastChanged;
+        /// <summary>Calendar hours when active fire was last seen in this chunk.</summary>
+        public double FireTouchedAtHours;
+        /// <summary>Schedule an extra column pass to prune orphan foliage after fire.</summary>
+        public bool PendingOrphanPrune;
     }
 }

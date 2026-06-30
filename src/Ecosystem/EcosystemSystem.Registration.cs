@@ -62,6 +62,14 @@ namespace WildFarming.Ecosystem
             Vec2i chunkCoord = job.ChunkCoord;
             int maxHits = PendingRegistrationQueue.MaxHitsPerPass;
 
+            FoliageChunkPassState passState = null;
+            if (syncFoliage && cfg.EnableOrphanFoliagePrune)
+            {
+                int maxChecks = cfg.OrphanFoliageMaxChecksPerChunkPass;
+                if (maxChecks <= 0) maxChecks = int.MaxValue;
+                passState = new FoliageChunkPassState { OrphanChecksRemaining = maxChecks };
+            }
+
             pass = ChunkEcologyColumnPass.Run(
                 api,
                 acc,
@@ -73,6 +81,7 @@ namespace WildFarming.Ecosystem
                     MaxVineHits = cfg.EnableWildVineEcology ? maxHits : 0,
                     SyncFoliage = syncFoliage,
                     FoliageIndex = foliageIndex,
+                    PassState = passState,
                 },
                 job.NextLx,
                 job.NextLz,
@@ -90,6 +99,11 @@ namespace WildFarming.Ecosystem
             if (syncFoliage)
             {
                 foliageCells.ApplyEcologyPassResult(chunkCoord, pass, seasonKey);
+                foliageCells.ApplyFoliagePassState(
+                    chunkCoord,
+                    passState,
+                    pass.Completed,
+                    api.World.Calendar.TotalHours);
 
                 if (pass.FoliageChanged > 0)
                 {

@@ -35,7 +35,8 @@ namespace WildFarming.Ecosystem
             int resumeLx,
             int resumeLz,
             int resumeY,
-            long budgetDeadlineTicks)
+            long budgetDeadlineTicks,
+            FoliageChunkPassState passState = null)
         {
             ChunkEcologyColumnPass.Result pass = ChunkEcologyColumnPass.Run(
                 api,
@@ -47,6 +48,7 @@ namespace WildFarming.Ecosystem
                     MaxTreeHits = 0,
                     SyncFoliage = true,
                     FoliageIndex = index,
+                    PassState = passState,
                 },
                 resumeLx,
                 resumeLz,

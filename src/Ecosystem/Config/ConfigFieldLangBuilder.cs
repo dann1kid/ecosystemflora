@@ -266,6 +266,13 @@ namespace WildFarming.Ecosystem.Config
                     "Вкл.: зимой восстанавливает branchy на голых log-grown. Выкл.: голые кроны остаются голыми.");
             }
 
+            if (name == nameof(EcosystemConfig.EnableOrphanFoliagePrune))
+            {
+                return BoolOnOff(
+                    "On: remove wild leaves with no path to log-grown (e.g. after wildfire). Off: leave floating foliage.",
+                    "Вкл.: снимает дикую листву без связи со стволом. Выкл.: висящие листья остаются.");
+            }
+
             if (name == nameof(EcosystemConfig.TramplingSoilDegradation))
             {
                 return BoolOnOff(

@@ -25,6 +25,10 @@ namespace WildFarming.Ecosystem
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
             TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
 
+            int fireRadius = System.Math.Min(10, System.Math.Max(CanopyBurnGuard.SourceRadius, metrics.CrownRadius + 2));
+            BlockPos fireCheck = metrics.TrunkTop ?? trunkBase;
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, fireCheck, fireRadius)) return 0;
+
             float pace = activityScale < 0.25f ? 0.25f : activityScale;
             float sizeIndex = TreeGrowthTargets.SizeIndexFraction(
                 metrics.TrunkHeight,
@@ -139,6 +143,7 @@ namespace WildFarming.Ecosystem
         static void TryPlaceOneLeafNearNewTrunk(ICoreAPI api, IBlockAccessor acc, BlockPos newTrunkPos, string wood)
         {
             if (api == null || acc == null || newTrunkPos == null || string.IsNullOrEmpty(wood)) return;
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, newTrunkPos)) return;
 
             Block anchor = acc.GetBlock(newTrunkPos);
             if (!PlantCodeHelper.IsTreeLogGrownBlock(anchor)) return;
@@ -295,6 +300,8 @@ namespace WildFarming.Ecosystem
             int gameYear,
             int salt)
         {
+            if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, sourcePos)) return false;
+
             var scratch = new BlockPos(0);
             int start = (int)(CanopyBlockHelper.DeterministicNoise(sourcePos, wood, gameYear + salt) * 6f) % 6;
             if (start < 0) start += 6;
@@ -308,6 +315,7 @@ namespace WildFarming.Ecosystem
                     sourcePos.Z + NeighborDz[i]);
                 if (!acc.IsValidPos(scratch)) continue;
                 if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
+                if (CanopyBurnGuard.SuppressesBudTarget(acc, scratch)) continue;
                 if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(scratch))) continue;
 
                 if (CanopyFoliageRules.BlocksPlayerClearedVacancy(api, scratch)) continue;
