@@ -46,6 +46,10 @@ namespace WildFarming.Ecosystem
             return ground.SideSolid[BlockFacing.UP.Index];
         }
 
+        /// <summary>Terrestrial meadow footing — solid ground, not tree trunk / sapling.</summary>
+        public static bool IsMeadowFooting(Block ground) =>
+            IsSupportingGround(ground) && !PlantCodeHelper.IsArborealHostBlock(ground);
+
         /// <summary>Fluid layers with id=0 are ignored (empty fluid slot).</summary>
         public static bool TouchesSpreadBlockingFluid(
             Block space,

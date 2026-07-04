@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "fernphase-eaglefern-dormant",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
@@ -10,8 +10,8 @@
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
+  "drawtype": "JSON",
   "drawtypeByType": {
-    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
@@ -31,9 +31,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 14
-    },
+
     "*-snow": {
       "drawnHeight": 14,
       "allowOverlays": false,

@@ -19,6 +19,7 @@
     "*-free": { "base": "game:block/plant/flower/lilyofthevalley" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/lilyofthevalley" },
   "texturesByType": {
     "*-free": {
     "leaves1": { "base": "game:block/plant/flower/stem/daffodilleaves1" },
@@ -40,9 +41,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

@@ -19,20 +19,21 @@
     "*-free": { "base": "game:block/plant/flower/1patch-3faces-16x16" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-16x16" },
   "texturesByType": {
     "*-free": {
     "north1": { "base": "game:block/plant/flower/petal/forgetmenot1", "tint": "#5c6b52" },
     "north2": { "base": "game:block/plant/flower/petal/forgetmenot2", "tint": "#5c6b52" },
     "north3": { "base": "game:block/plant/flower/petal/forgetmenot2", "tint": "#5c6b52" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1", "tint": "#5c6b52" },
-    "northTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2", "tint": "#5c6b52" },
-    "northTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2" },
     "south1": { "base": "game:block/plant/flower/petal/forgetmenot1", "tint": "#5c6b52" },
     "south2": { "base": "game:block/plant/flower/petal/forgetmenot2", "tint": "#5c6b52" },
     "south3": { "base": "game:block/plant/flower/petal/forgetmenot2", "tint": "#5c6b52" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1", "tint": "#5c6b52" },
-    "southTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2", "tint": "#5c6b52" },
-    "southTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2", "tint": "#5c6b52" }
+    "southTinted1": { "base": "game:block/plant/flower/stem/forgetmenot1" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/forgetmenot2" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/forgetmenot2" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/forgetmenot1" },
@@ -41,9 +42,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

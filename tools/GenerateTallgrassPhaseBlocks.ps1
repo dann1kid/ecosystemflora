@@ -22,12 +22,15 @@ foreach ($phase in $phases.Keys) {
       "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "$($cfg.Tint)" },
       "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "$($cfg.Tint)" }
 "@
-    $snowTex = "game:block/plant/tallgrass/snow/veryshort-north"
+    $snowTexNorth = "game:block/plant/tallgrass/snow/veryshort-north"
+    $snowTexSouth = "game:block/plant/tallgrass/snow/veryshort-south"
 
     $opts = @{
         SelectionY2 = $cfg.SelectionY2
         Replaceable = 6000
         SnowDrawnHeight = 8
+        SnowTextureSouth = $snowTexSouth
+        SkipDefaultSnowPresentation = $true
         UseShapeByType = $true
         ExtraTopLines = "`n  `"randomDrawOffset`": true,"
         ClimateLines = @"
@@ -66,7 +69,7 @@ foreach ($phase in $phases.Keys) {
 "@
     }
 
-    Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" "`"base`": `"game:block/basic/cross`"" $texJson $snowTex $opts
+    Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" "`"base`": `"game:block/basic/cross`"" $texJson $snowTexNorth $opts
     Write-Host "Wrote $baseCode"
 }
 

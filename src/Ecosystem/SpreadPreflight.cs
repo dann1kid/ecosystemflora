@@ -31,11 +31,18 @@ namespace WildFarming.Ecosystem
 
                 case EcologyHabitat.WaterSurface:
                 case EcologyHabitat.ReedNearWater:
-                case EcologyHabitat.UnderwaterColumn:
                     return true;
+
+                case EcologyHabitat.UnderwaterColumn:
+                    return PassesCrowfootPhysical(acc, plantPos, requirements);
             }
 
             return false;
+        }
+
+        static bool PassesCrowfootPhysical(IBlockAccessor acc, BlockPos plantPos, PlantRequirements requirements)
+        {
+            return WaterColumnHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
         }
 
         static bool PassesTerrestrialPhysical(
@@ -60,7 +67,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (!PlantVacancyRules.IsSupportingGround(snap.Ground))
+            if (!PlantVacancyRules.IsMeadowFooting(snap.Ground))
             {
                 return false;
             }
@@ -100,6 +107,13 @@ namespace WildFarming.Ecosystem
             if (!PassesPhysicalGate(acc, targetPos, requirements, in snap, out isEmpty))
             {
                 return false;
+            }
+
+            if (requirements.Habitat == EcologyHabitat.UnderwaterColumn)
+            {
+                if (displacing) return false;
+                return CrowfootSpreadGuard.IsPlantableWaterCell(acc, targetPos)
+                    && WaterColumnHelper.IsValidCrowfootSpreadBase(acc, targetPos, requirements);
             }
 
             if (displacing)

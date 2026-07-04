@@ -94,20 +94,8 @@ foreach ($entry in $species) {
         $opts = @{
             SelectionY2 = 0.6
             UseShapeByType = $true
+            OmitTopLevelShape = ($entry.Class -eq "BlockFern")
             SnowDrawnHeight = 14
-            FreeOnlyLines = @"
-
-  "attributesByType": {
-    "*-free": {
-      "drawnHeight": 14
-    },
-    "*-snow": {
-      "drawnHeight": 14,
-      "allowOverlays": false,
-      "allowStepWhenStuck": true
-    }
-  },
-"@
         }
 
         Write-PlantPhaseSnowBlock $outDir $baseCode $entry.Class $shapeInner $texJson $snowTex $opts

@@ -65,6 +65,60 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void SurfacePlacement_rejects_grass_on_trunk_as_ground()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block trunk = Block("game:log-grown-oak-ud", 1);
+            trunk.SideSolid[BlockFacing.UP.Index] = true;
+            Block soil = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:soil-medium-normal"),
+            };
+            soil.SideSolid[BlockFacing.UP.Index] = true;
+
+            var acc = new EcologyTestBlockAccessor(new[] { air, trunk, soil });
+            acc.SetBlock(2, new BlockPos(10, 63, 10));
+            acc.SetBlock(1, new BlockPos(10, 64, 10));
+
+            bool ok = SurfacePlacement.IsValidPlantSite(
+                acc,
+                new BlockPos(10, 65, 10),
+                new PlantRequirements { Species = "tallgrass", Habitat = EcologyHabitat.Terrestrial });
+
+            Assert.False(ok);
+        }
+
+        [Fact]
+        public void PassesTerrestrialPhysical_rejects_air_above_log_trunk()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block trunk = Block("game:log-grown-oak-ud", 1);
+            trunk.SideSolid[BlockFacing.UP.Index] = true;
+            Block soil = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:soil-medium-normal"),
+            };
+            soil.SideSolid[BlockFacing.UP.Index] = true;
+
+            var acc = new EcologyTestBlockAccessor(new[] { air, trunk, soil });
+            acc.SetBlock(2, new BlockPos(10, 63, 10));
+            acc.SetBlock(1, new BlockPos(10, 64, 10));
+
+            CellBlockSnapshot snap = CellBlockSnapshot.Sample(acc, new BlockPos(10, 65, 10));
+
+            bool ok = SpreadPreflight.PassesPhysicalGate(
+                acc,
+                new BlockPos(10, 65, 10),
+                new PlantRequirements { Species = "cornflower", Habitat = EcologyHabitat.Terrestrial },
+                in snap,
+                out bool isEmpty);
+
+            Assert.False(ok);
+        }
+
+        [Fact]
         public void PassesSpreadTargetGate_rejects_tallgrass_on_player_sapling()
         {
             Block air = new Block { BlockId = 0 };

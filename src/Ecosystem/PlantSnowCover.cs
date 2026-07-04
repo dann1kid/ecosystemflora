@@ -62,12 +62,25 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
-        /// Whether a frostable plant should use its snow cover variant now (snow layer above or frost).
+        /// Whether a frostable plant should use its snow cover variant now.
+        /// Requires frost at the cell and visible snow (layer above or ground accum map).
         /// </summary>
         public static bool ResolveWantsSnowCover(ICoreAPI api, BlockPos plantPos)
         {
+            if (api?.World?.BlockAccessor == null || plantPos == null) return false;
+            if (BlockFluidHelper.ExcludesSnowCover(api.World.BlockAccessor, plantPos)) return false;
+            if (!ClimateWantsSnowCover(api, plantPos)) return false;
+            return SurroundingsHaveSnow(api, plantPos);
+        }
+
+        /// <summary>Snow layer above the plant cell or chunk snow-accum at this column.</summary>
+        public static bool SurroundingsHaveSnow(ICoreAPI api, BlockPos plantPos)
+        {
+            if (api?.World?.BlockAccessor == null || plantPos == null) return false;
             if (EnvironmentWantsSnowCover(api, plantPos)) return true;
-            return ClimateWantsSnowCover(api, plantPos);
+
+            return TryGetSnowAccum(api.World.BlockAccessor, plantPos, out float accum)
+                && accum >= SnowAccumCoverThreshold;
         }
 
         /// <summary>Frost at the plant cell only; residual snow-accum map does not keep cover above freezing.</summary>
@@ -88,6 +101,9 @@ namespace WildFarming.Ecosystem
         {
             if (api?.World?.BlockAccessor == null) return false;
 
+            BlockPos target = plantPos ?? parentOrigin;
+            if (target == null || !ResolveWantsSnowCover(api, target)) return false;
+
             IBlockAccessor acc = api.World.BlockAccessor;
 
             if (parentOrigin != null)
@@ -96,13 +112,7 @@ namespace WildFarming.Ecosystem
                 if (PathHasSnowCover(parent?.Code?.Path)) return true;
             }
 
-            BlockPos target = plantPos ?? parentOrigin;
-            if (target != null)
-            {
-                return ResolveWantsSnowCover(api, target);
-            }
-
-            return false;
+            return true;
         }
 
         /// <summary>Swap <c>cover</c> variant suffix on block codes that use <c>-free</c> / <c>-snow</c>.</summary>

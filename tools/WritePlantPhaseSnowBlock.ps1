@@ -1,6 +1,9 @@
 # Shared helper: emit one block JSON with cover variant group (free / snow).
 function Get-SnowCrossTextureFromPaths([string[]]$paths) {
     foreach ($p in $paths) {
+        if (-not [string]::IsNullOrEmpty($p) -and $p -match "/petal/" -and $p -notmatch "transparent") { return $p }
+    }
+    foreach ($p in $paths) {
         if (-not [string]::IsNullOrEmpty($p) -and $p -notmatch "transparent") { return $p }
     }
     return "game:block/plant/flower/petal/wilddaisy1"
@@ -30,6 +33,9 @@ function Write-PlantPhaseSnowBlock(
     $extraTop = if ($Options.ExtraTopLines) { $Options.ExtraTopLines } else { "" }
     $climate = if ($Options.ClimateLines) { $Options.ClimateLines } else { "" }
     $snowDrawnHeight = if ($Options.SnowDrawnHeight) { $Options.SnowDrawnHeight } else { 11 }
+    $freeDrawnHeight = $Options.FreeDrawnHeight
+    $snowTextureSouth = if ($Options.SnowTextureSouth) { $Options.SnowTextureSouth } else { $SnowTexture }
+    $skipDefaultSnowPresentation = [bool]$Options.SkipDefaultSnowPresentation
 
     if ([string]::IsNullOrEmpty($SnowTexture)) {
         $SnowTexture = "game:block/plant/flower/petal/wilddaisy1"
@@ -38,12 +44,15 @@ function Write-PlantPhaseSnowBlock(
     $attrsBlock = if ($Options.FreeOnlyLines) {
         $Options.FreeOnlyLines
     } else {
+        $freeAttrLine = if ($null -ne $freeDrawnHeight) {
+            "    `"*-free`": { `"drawnHeight`": $freeDrawnHeight },"
+        } else {
+            ""
+        }
         @"
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": $snowDrawnHeight
-    },
+$freeAttrLine
     "*-snow": {
       "drawnHeight": $snowDrawnHeight,
       "allowOverlays": false,
@@ -54,11 +63,16 @@ function Write-PlantPhaseSnowBlock(
     }
 
     $shapeByType = if ($Options.UseShapeByType) {
+        $topShape = if ($Options.OmitTopLevelShape) {
+            ""
+        } else {
+            "`n  `"shape`": { $FreeShapeJson },"
+        }
         @"
   "shapeByType": {
     "*-free": { $FreeShapeJson },
     "*-snow": { "base": "game:block/basic/cross" }
-  },
+  },$topShape
 "@
     } else {
         @"
@@ -70,6 +84,24 @@ function Write-PlantPhaseSnowBlock(
         "    "
     } else {
         $FreeTexturesJson
+    }
+
+    $snowPresentationBlock = if ($skipDefaultSnowPresentation) {
+        ""
+    } else {
+        @"
+
+  "vertexFlagsByType": {
+    "*-snow": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    }
+  },
+  "faceCullModeByType": {
+    "*-snow": "MergeSnowLayer"
+  },
+"@
     }
 
     @"
@@ -85,8 +117,8 @@ function Write-PlantPhaseSnowBlock(
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
+  "drawtype": "JSON",
   "drawtypeByType": {
-    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,$extraTop
@@ -97,20 +129,10 @@ $freeTexSection
     },
     "*-snow": {
       "north": { "base": "$SnowTexture" },
-      "south": { "base": "$SnowTexture" }
+      "south": { "base": "$snowTextureSouth" }
     }
   },
-$attrsBlock
-  "vertexFlagsByType": {
-    "*-snow": {
-      "zOffset": 3,
-      "windMode": "ExtraWeakWind",
-      "windData": 2
-    }
-  },
-  "faceCullModeByType": {
-    "*-snow": "MergeSnowLayer"
-  },$climate
+$attrsBlock$snowPresentationBlock$climate
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": $replaceable,

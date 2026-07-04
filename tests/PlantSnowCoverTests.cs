@@ -10,6 +10,19 @@ namespace WildFarming.Tests
 {
     public class PlantSnowCoverTests
     {
+        static void SetSnowAccum(EcologyTestBlockAccessor acc, BlockPos pos, float value)
+        {
+            int cs = GlobalConstants.ChunkSize;
+            EcologyTestMapChunk chunk = acc.GetOrCreateMapChunk(pos.X / cs, pos.Z / cs);
+            chunk.SnowAccum ??= new float[cs * cs];
+            int idx = (pos.Z % cs) * cs + (pos.X % cs);
+            chunk.SnowAccum[idx] = value;
+        }
+
+        static void PlaceSnowLayerAbove(EcologyTestBlockAccessor acc, BlockPos plantPos, Block snowLayer)
+        {
+            acc.SetBlock(snowLayer.BlockId, plantPos.UpCopy());
+        }
         [Theory]
         [InlineData("ecosystemflora:juvenile-flower-cornflower-free", false)]
         [InlineData("ecosystemflora:juvenile-flower-cornflower-snow", true)]
@@ -28,9 +41,21 @@ namespace WildFarming.Tests
                 BlockId = 1,
                 Code = new AssetLocation("game:flower-catmint-snow"),
             };
-            var blocks = new[] { air, snowFlower };
-            var acc = new EcologyTestBlockAccessor(blocks);
-            acc.SetBlock(1, new BlockPos(5, 64, 5));
+            Block snowLayer = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            var blocks = new[] { air, snowFlower, snowLayer };
+            var acc = new EcologyTestBlockAccessor(blocks)
+            {
+                Temperature = -4f,
+            };
+            var parentPos = new BlockPos(5, 64, 5);
+            var childPos = new BlockPos(6, 64, 6);
+            acc.SetBlock(1, parentPos);
+            PlaceSnowLayerAbove(acc, childPos, snowLayer);
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);
@@ -39,8 +64,8 @@ namespace WildFarming.Tests
 
             bool snow = PlantSnowCover.ShouldUseSnowVariant(
                 api.Object,
-                new BlockPos(5, 64, 5),
-                new BlockPos(6, 64, 6));
+                parentPos,
+                childPos);
 
             Assert.True(snow);
         }
@@ -106,12 +131,19 @@ namespace WildFarming.Tests
                 BlockId = 2,
                 Code = new AssetLocation("ecosystemflora:fernphase-eaglefern-dormant-snow"),
             };
-            var acc = new EcologyTestBlockAccessor(new[] { air, freePhase, snowPhase })
+            Block snowLayer = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, freePhase, snowPhase, snowLayer })
             {
                 Temperature = -8f,
             };
             var pos = new BlockPos(3, 64, 3);
             acc.SetBlock(1, pos);
+            PlaceSnowLayerAbove(acc, pos, snowLayer);
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);
@@ -151,6 +183,7 @@ namespace WildFarming.Tests
             };
             var pos = new BlockPos(7, 64, 7);
             acc.SetBlock(1, pos);
+            SetSnowAccum(acc, pos, 0.25f);
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);
@@ -219,6 +252,7 @@ namespace WildFarming.Tests
             };
             var pos = new BlockPos(5, 64, 5);
             acc.SetBlock(1, pos);
+            SetSnowAccum(acc, pos, 0.25f);
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);
@@ -234,6 +268,163 @@ namespace WildFarming.Tests
 
             Assert.True(PlantSnowCoverSync.TrySyncCover(api.Object, pos));
             Assert.True(PlantSnowCover.PathHasSnowCover(acc.GetBlock(pos).Code.Path));
+        }
+
+        [Fact]
+        public void ResolveWantsSnowCover_ColdWithoutGroundSnow_ReturnsFalse()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block dormant = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:fernphase-eaglefern-dormant-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, dormant })
+            {
+                Temperature = -6f,
+            };
+            var pos = new BlockPos(8, 64, 8);
+            acc.SetBlock(1, pos);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCover.ClimateWantsSnowCover(api.Object, pos));
+            Assert.False(PlantSnowCover.ResolveWantsSnowCover(api.Object, pos));
+        }
+
+        [Fact]
+        public void TrySyncCover_ThawsDormantSnowWhenColdButNoGroundSnow()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block dormantSnow = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:fernphase-eaglefern-dormant-snow"),
+            };
+            Block dormantFree = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("ecosystemflora:fernphase-eaglefern-dormant-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, dormantSnow, dormantFree })
+            {
+                Temperature = -3f,
+            };
+            var pos = new BlockPos(9, 64, 9);
+            acc.SetBlock(1, pos);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                .Returns((AssetLocation loc) =>
+                {
+                    if (loc.Path.Contains("-snow")) return dormantSnow;
+                    if (loc.Path.Contains("-free")) return dormantFree;
+                    return air;
+                });
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCoverSync.TrySyncCover(api.Object, pos));
+            Assert.False(PlantSnowCover.PathHasSnowCover(acc.GetBlock(pos).Code.Path));
+        }
+
+        [Fact]
+        public void ResolveWantsSnowCover_WarmWeather_IgnoresSnowLayerAbove()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block snowLayer = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            Block dieback = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:tallgrassphase-dieback-snow"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, dieback, snowLayer })
+            {
+                Temperature = 16f,
+            };
+            var pos = new BlockPos(4, 64, 4);
+            acc.SetBlock(1, pos);
+            acc.SetBlock(2, new BlockPos(4, 65, 4));
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCover.EnvironmentWantsSnowCover(api.Object, pos));
+            Assert.False(PlantSnowCover.ResolveWantsSnowCover(api.Object, pos));
+        }
+
+        [Fact]
+        public void TrySyncCover_ThawsDiebackSnowInSummer()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block diebackSnow = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:tallgrassphase-dieback-snow"),
+            };
+            Block diebackFree = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("ecosystemflora:tallgrassphase-dieback-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, diebackSnow, diebackFree })
+            {
+                Temperature = 18f,
+            };
+            var pos = new BlockPos(6, 64, 6);
+            acc.SetBlock(1, pos);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                .Returns((AssetLocation loc) =>
+                {
+                    if (loc.Path.Contains("-snow")) return diebackSnow;
+                    if (loc.Path.Contains("-free")) return diebackFree;
+                    return air;
+                });
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCoverSync.TrySyncCover(api.Object, pos));
+            Assert.False(PlantSnowCover.PathHasSnowCover(acc.GetBlock(pos).Code.Path));
+        }
+
+        [Fact]
+        public void ShouldUseSnowVariant_DoesNotInheritParentSnowInWarmWeather()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block snowFlower = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:flower-catmint-snow"),
+            };
+            var acc = new EcologyTestBlockAccessor(blocks: new[] { air, snowFlower })
+            {
+                Temperature = 20f,
+            };
+            acc.SetBlock(1, new BlockPos(5, 64, 5));
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.False(PlantSnowCover.ShouldUseSnowVariant(
+                api.Object,
+                new BlockPos(5, 64, 5),
+                new BlockPos(6, 64, 6)));
         }
 
         [Fact]
@@ -257,7 +448,38 @@ namespace WildFarming.Tests
             api.Setup(a => a.World).Returns(world.Object);
 
             Assert.True(PlantSnowCover.ClimateWantsSnowCover(api.Object, new BlockPos(4, 64, 4)));
-            Assert.True(PlantSnowCover.ResolveWantsSnowCover(api.Object, new BlockPos(4, 64, 4)));
+            Assert.False(PlantSnowCover.ResolveWantsSnowCover(api.Object, new BlockPos(4, 64, 4)));
+        }
+
+        [Fact]
+        public void ResolveWantsSnowCover_ColdWithSnowLayer_ReturnsTrue()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block snowLayer = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            Block dormant = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, dormant, snowLayer })
+            {
+                Temperature = -5f,
+            };
+            var pos = new BlockPos(4, 64, 4);
+            acc.SetBlock(1, pos);
+            PlaceSnowLayerAbove(acc, pos, snowLayer);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCover.ResolveWantsSnowCover(api.Object, pos));
         }
 
         [Fact]
@@ -274,12 +496,19 @@ namespace WildFarming.Tests
                 BlockId = 2,
                 Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-snow"),
             };
-            var acc = new EcologyTestBlockAccessor(new[] { air, freePhase, snowPhase })
+            Block snowLayer = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, freePhase, snowPhase, snowLayer })
             {
                 Temperature = -8f,
             };
             var pos = new BlockPos(3, 64, 3);
             acc.SetBlock(1, pos);
+            PlaceSnowLayerAbove(acc, pos, snowLayer);
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);
@@ -325,6 +554,101 @@ namespace WildFarming.Tests
             api.Setup(a => a.World).Returns(world.Object);
 
             Assert.True(PlantSnowCover.EnvironmentWantsSnowCover(api.Object, new BlockPos(4, 64, 4)));
+        }
+
+        [Fact]
+        public void ResolveWantsSnowCover_UnderWaterColumn_ReturnsFalse()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block gravel = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:gravel-granite"),
+            };
+            gravel.SideSolid[BlockFacing.UP.Index] = true;
+            Block dormant = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-free"),
+            };
+            Block water = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:water-still-7"),
+                LiquidLevel = 7,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, gravel, dormant, water })
+            {
+                Temperature = -8f,
+            };
+            var bed = new BlockPos(8, 63, 8);
+            var plantPos = new BlockPos(8, 64, 8);
+            var waterPos = new BlockPos(8, 65, 8);
+            acc.SetBlock(1, bed);
+            acc.SetBlock(2, plantPos);
+            acc.SetBlock(3, waterPos);
+            SetSnowAccum(acc, plantPos, 0.4f);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(BlockFluidHelper.ExcludesSnowCover(acc, plantPos));
+            Assert.False(PlantSnowCover.ResolveWantsSnowCover(api.Object, plantPos));
+        }
+
+        [Fact]
+        public void TrySyncCover_StripsSnowFromPlantUnderWater()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block gravel = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:gravel-granite"),
+            };
+            gravel.SideSolid[BlockFacing.UP.Index] = true;
+            Block snowPhase = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-snow"),
+            };
+            Block freePhase = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-free"),
+            };
+            Block water = new Block
+            {
+                BlockId = 4,
+                Code = new AssetLocation("game:water-still-7"),
+                LiquidLevel = 7,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, gravel, snowPhase, freePhase, water })
+            {
+                Temperature = -8f,
+            };
+            var bed = new BlockPos(9, 63, 9);
+            var plantPos = new BlockPos(9, 64, 9);
+            acc.SetBlock(1, bed);
+            acc.SetBlock(2, plantPos);
+            acc.SetBlock(4, plantPos.UpCopy());
+            SetSnowAccum(acc, plantPos, 0.5f);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                .Returns((AssetLocation loc) =>
+                {
+                    if (loc.Path.Contains("-snow")) return snowPhase;
+                    if (loc.Path.Contains("-free")) return freePhase;
+                    return air;
+                });
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCoverSync.TrySyncCover(api.Object, plantPos));
+            Assert.False(PlantSnowCover.PathHasSnowCover(acc.GetBlock(plantPos).Code.Path));
         }
 
         [Fact]

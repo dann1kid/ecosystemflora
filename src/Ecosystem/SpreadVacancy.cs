@@ -26,7 +26,8 @@ namespace WildFarming.Ecosystem
                     return WaterPlacement.IsValidWaterLilySpreadSite(acc, plantPos);
 
                 case EcologyHabitat.UnderwaterColumn:
-                    return WaterColumnHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
+                    return CrowfootSpreadGuard.IsPlantableWaterCell(acc, plantPos)
+                        && WaterColumnHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
 
                 default:
                     return false;

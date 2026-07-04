@@ -51,8 +51,9 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
-        /// Lowest valid ground cell below foliage. Aborts when any <c>loosestick</c> is hit while scanning down.
-        /// Replaces meadow flora (grass, flowers, ferns) or occupies air directly above solid ground.
+        /// Nearest valid ground cell directly below foliage (first hit when scanning down).
+        /// Stops at solid non-pass-through blocks so sticks do not fall through floors.
+        /// Aborts when any <c>loosestick</c> is hit while scanning down.
         /// </summary>
         internal static bool TryFindGroundStickCell(IBlockAccessor acc, BlockPos from, out BlockPos stickPos)
         {
@@ -62,8 +63,6 @@ namespace WildFarming.Ecosystem
             int minY = from.Y - MaxDropScan;
             if (minY < 0) minY = 0;
 
-            BlockPos lowest = null;
-
             for (int y = from.Y - 1; y >= minY; y--)
             {
                 scanPos.Set(from.X, y, from.Z);
@@ -72,14 +71,19 @@ namespace WildFarming.Ecosystem
                 Block space = acc.GetBlock(scanPos);
                 if (IsLooseStickBlock(space)) return false;
 
-                if (!HasStickSupportingGround(acc, scanPos)) continue;
-                lowest = scanPos.Copy();
+                if (HasStickSupportingGround(acc, scanPos))
+                {
+                    stickPos = scanPos.Copy();
+                    return true;
+                }
+
+                if (space.Id != 0 && !PlantVacancyRules.IsPassThroughForColumnScan(space))
+                {
+                    break;
+                }
             }
 
-            if (lowest == null) return false;
-
-            stickPos = lowest;
-            return true;
+            return false;
         }
 
         internal static bool IsLooseStickBlock(Block block)

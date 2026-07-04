@@ -26,6 +26,9 @@ namespace WildFarming.Ecosystem
 
             if (!cell.GroundSideSolid) return false;
 
+            Block ground = ResolveBlock(blocks, cell.GroundBlockId);
+            if (PlantCodeHelper.IsArborealHostBlock(ground)) return false;
+
             if (!SoilClassification.MeetsSoilRequirements(
                     requirements, cell.GroundSoilKinds, cell.GroundFertility, skipMaxFertility: true))
             {
@@ -44,7 +47,9 @@ namespace WildFarming.Ecosystem
             isEmpty = cell.IsEmpty;
             if (requirements == null || requirements.Habitat != EcologyHabitat.UnderwaterColumn) return false;
             if (!cell.MatVacancyOk) return false;
-            if (!isEmpty) return false;
+
+            Block space = ResolveBlock(blocks, cell.SpaceBlockId);
+            if (space != null && space.Id != 0 && !BlockFluidHelper.IsWater(space)) return false;
 
             int minDepth = requirements.MinWaterDepth > 0 ? requirements.MinWaterDepth : 2;
             if (cell.WaterColumnDepth < minDepth || cell.WaterColumnDepth > requirements.MaxWaterDepth)

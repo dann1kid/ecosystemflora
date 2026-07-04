@@ -19,6 +19,7 @@
     "*-free": { "base": "game:block/plant/rafflesia/brown" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/rafflesia/brown" },
   "texturesByType": {
     "*-free": {
     
@@ -30,9 +31,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

@@ -1072,6 +1072,12 @@ namespace WildFarming.Ecosystem
 
             PlantHandHarvest.TryDropPlantBlockOnBreak(api, byPlayer, oldBlock, pos);
 
+            Block newBlock = api.World.BlockAccessor.GetBlock(pos);
+            if (PlantCodeHelper.IsBrownsedgeMowHarvestTransition(oldBlock, newBlock))
+            {
+                return;
+            }
+
             if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
             {
                 FloraSymbiosis.NotifyHostRemoved(api, pos, oldBlock);
@@ -1108,7 +1114,7 @@ namespace WildFarming.Ecosystem
             }
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            bool ecologyPlant = oldBlock != null && PlantCodeHelper.IsEcologyPlant(oldBlock);
+            bool ecologyPlant = PlantCodeHelper.CountsAsEcologyPlantRemovalForWake(oldBlock);
             bool forestNeighbor = FloraContextSampler.IsForestNeighborBlock(oldBlock);
             bool inRegistry = registry.Contains(pos);
             bool wakeNeighbors = cfg.EnableEventDrivenSpread

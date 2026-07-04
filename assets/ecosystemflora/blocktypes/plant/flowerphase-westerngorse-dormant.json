@@ -19,20 +19,23 @@
     "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
   "texturesByType": {
     "*-free": {
+    "flower2": { "base": "game:block/plant/flower/petal/westerngorse2", "tint": "#5c6b52" },
+    "flower2Tinted": { "base": "game:block/plant/flower/stem/westerngorse2" },
     "north1": { "base": "game:block/plant/flower/petal/westerngorse1", "tint": "#5c6b52" },
     "north2": { "base": "game:block/plant/flower/petal/westerngorse2", "tint": "#5c6b52" },
-    "north3": { "base": "game:block/plant/flower/petal/westerngorse3", "tint": "#5c6b52" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/westerngorse1", "tint": "#5c6b52" },
-    "northTinted2": { "base": "game:block/plant/flower/stem/westerngorse2", "tint": "#5c6b52" },
-    "northTinted3": { "base": "game:block/plant/flower/stem/westerngorse3", "tint": "#5c6b52" },
+    "north3": { "base": "game:block/plant/flower/petal/westerngorse2", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/westerngorse1" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/westerngorse2" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/westerngorse2" },
     "south1": { "base": "game:block/plant/flower/petal/westerngorse1", "tint": "#5c6b52" },
     "south2": { "base": "game:block/plant/flower/petal/westerngorse2", "tint": "#5c6b52" },
-    "south3": { "base": "game:block/plant/flower/petal/westerngorse3", "tint": "#5c6b52" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/westerngorse1", "tint": "#5c6b52" },
-    "southTinted2": { "base": "game:block/plant/flower/stem/westerngorse2", "tint": "#5c6b52" },
-    "southTinted3": { "base": "game:block/plant/flower/stem/westerngorse3", "tint": "#5c6b52" }
+    "south3": { "base": "game:block/plant/flower/petal/westerngorse2", "tint": "#5c6b52" },
+    "southTinted1": { "base": "game:block/plant/flower/stem/westerngorse1" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/westerngorse2" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/westerngorse2" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/westerngorse1" },
@@ -41,9 +44,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

@@ -81,6 +81,34 @@ namespace WildFarming.Ecosystem
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
         }
 
+        /// <summary>
+        /// Vanilla <see cref="Blocks.BlockReedsSafe"/> mow: normal brown sedge → harvested stubble (block remains).
+        /// DidBreakBlock still fires; ecology must not treat this as removal or wake the mat.
+        /// </summary>
+        public static bool IsBrownsedgeMowHarvestTransition(Block oldBlock, Block newBlock)
+        {
+            string oldPath = oldBlock?.Code?.Path;
+            string newPath = newBlock?.Code?.Path;
+            if (oldPath == null || newPath == null) return false;
+            if (!oldPath.StartsWith("tallplant-brownsedge-", StringComparison.Ordinal)) return false;
+            if (!oldPath.Contains("-normal-", StringComparison.Ordinal)) return false;
+            return newPath.Contains("-harvested-", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Ecology plant broken to air that should clear registry / wake neighbors.
+        /// Excludes mown brown sedge stubble and eaten tallgrass (not removed from the world).
+        /// </summary>
+        public static bool CountsAsEcologyPlantRemovalForWake(Block block)
+        {
+            if (!IsEcologyPlant(block)) return false;
+
+            string path = block.Code.Path;
+            if (path != null && path.Contains("-harvested-", StringComparison.Ordinal)) return false;
+            if (path != null && path.Contains("-eaten-", StringComparison.Ordinal)) return false;
+            return true;
+        }
+
         /// <summary>Vanilla game-domain ecology only (excludes declared third-party JSON participants).</summary>
         public static bool IsVanillaEcologyPlant(Block block)
         {

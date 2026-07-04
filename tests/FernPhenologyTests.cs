@@ -1,5 +1,6 @@
 using Moq;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
 using WildFarming.Ecosystem.Testing;
@@ -38,7 +39,7 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void BlockMatchesPhase_DiebackFree_FalseWhenWinterWantsSnow()
+        public void BlockMatchesPhase_DiebackFree_MatchesWhenColdWithoutGroundSnow()
         {
             Block diebackFree = new Block
             {
@@ -57,7 +58,7 @@ namespace WildFarming.Tests
             var api = new Mock<ICoreAPI>();
             api.Setup(a => a.World).Returns(world.Object);
 
-            Assert.False(FernPhenology.BlockMatchesPhase(
+            Assert.True(FernPhenology.BlockMatchesPhase(
                 api.Object, pos, "eaglefern", diebackFree, FernPhenologyPhase.Dieback));
         }
 
@@ -86,6 +87,10 @@ namespace WildFarming.Tests
             };
             var pos = new BlockPos(9, 64, 9);
             acc.SetBlock(1, pos);
+            int cs = GlobalConstants.ChunkSize;
+            EcologyTestMapChunk chunk = acc.GetOrCreateMapChunk(pos.X / cs, pos.Z / cs);
+            chunk.SnowAccum = new float[cs * cs];
+            chunk.SnowAccum[(pos.Z % cs) * cs + (pos.X % cs)] = 0.4f;
 
             var world = new Mock<IWorldAccessor>();
             world.Setup(w => w.BlockAccessor).Returns(acc);

@@ -153,5 +153,40 @@ namespace WildFarming.Ecosystem
         {
             return IsWaterAt(acc, pos);
         }
+
+        static readonly BlockPos snowCoverScanScratch = new BlockPos(0);
+
+        /// <summary>
+        /// Frostable plant <c>-snow</c> variants use <c>crossandsnowlayer</c> + <c>MergeSnowLayer</c>, which
+        /// merges snow onto the ground block — skip when submerged or under an open water column (river beds).
+        /// </summary>
+        public static bool ExcludesSnowCover(IBlockAccessor acc, BlockPos plantPos)
+        {
+            if (acc == null || plantPos == null) return false;
+            if (TouchesFluid(acc, plantPos)) return true;
+
+            BlockPos above = plantPos.UpCopy();
+            if (acc.IsValidPos(above) && IsWaterAt(acc, above)) return true;
+
+            snowCoverScanScratch.Set(plantPos.X, plantPos.Y + 1, plantPos.Z);
+            int limit = System.Math.Min(plantPos.Y + 48, acc.MapSizeY - 1);
+            while (snowCoverScanScratch.Y <= limit && acc.IsValidPos(snowCoverScanScratch))
+            {
+                Block solid = acc.GetBlock(snowCoverScanScratch);
+                Block fluid = acc.GetBlock(snowCoverScanScratch, BlockLayersAccess.Fluid);
+                if (IsWater(solid) || IsWater(fluid)) return true;
+
+                if (solid.Id != 0
+                    && solid.Replaceable < SuitabilityEvaluator.ReproduceMinReplaceable
+                    && !IsFluid(solid))
+                {
+                    return false;
+                }
+
+                snowCoverScanScratch.Y++;
+            }
+
+            return false;
+        }
     }
 }

@@ -38,6 +38,7 @@ namespace WildFarming.Ecosystem
 
         internal static bool UsesMatSpread(PlantRequirements requirements) =>
             requirements != null
+                && requirements.Habitat != EcologyHabitat.UnderwaterColumn
                 && (requirements.UsesRhizomeSpread
                 || requirements.UsesSurfaceMatSpread
                 || requirements.UsesFernRhizomeSpread
@@ -46,8 +47,7 @@ namespace WildFarming.Ecosystem
 
         internal static bool UsesCrowfootSpread(PlantRequirements requirements) =>
             requirements != null
-            && requirements.Habitat == EcologyHabitat.UnderwaterColumn
-            && requirements.SpreadMode == SpreadMode.Independent;
+            && requirements.Habitat == EcologyHabitat.UnderwaterColumn;
 
         internal static bool CanBackgroundSolve(PlantRequirements requirements)
         {
@@ -471,15 +471,15 @@ namespace WildFarming.Ecosystem
                         continue;
                     }
 
+                    if (!CrowfootSpreadGuard.IsPlantableWaterCell(acc, plantPos)) continue;
+
                     bool crowfootVacancyOk = WaterColumnHelper.IsValidCrowfootSpreadBase(acc, plantPos, requirements);
                     if (!crowfootVacancyOk) continue;
 
                     if (!PlantSpacing.MeetsSpacing(acc, plantPos, requirements, out _)) continue;
 
-                    if (!WaterColumnHelper.TryMeasureWaterColumn(acc, plantPos, out int waterDepth, out _))
-                    {
-                        continue;
-                    }
+                    if (!WaterColumnHelper.TrySnapCrowfootColumnBase(acc, plantPos, out BlockPos columnBase)) continue;
+                    int waterDepth = WaterColumnHelper.CountPlantableWaterLayersUp(acc, columnBase);
 
                     AppendEnvCell(
                         api,

@@ -19,6 +19,7 @@
     "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
   "texturesByType": {
     "*-free": {
     "north1": { "base": "game:block/plant/flower/petal/horsetail1", "tint": "#6d7d62" },
@@ -41,9 +42,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

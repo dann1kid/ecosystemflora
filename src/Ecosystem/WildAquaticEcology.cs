@@ -69,7 +69,7 @@ namespace WildFarming.Ecosystem
             ["papyrus"] = new Profile(EcologyHabitat.ReedNearWater, 24, 40, 0.33f, 1f, 0.75f, 1, 0, 1, exactWaterDepth: 1, verticalBlocks: 2, seedDispersalChance: 0.10f, seedDispersalRadius: 5),
             ["waterlily"] = new Profile(EcologyHabitat.WaterSurface, 10, 40, 0.5f, 1f, 1.2f, 2, 1, 1, seedDispersalChance: 0.05f, seedDispersalRadius: 4),
             // Water crowfoot (водяной лютик): section column + top/tip
-            ["watercrowfoot"] = new Profile(EcologyHabitat.UnderwaterColumn, -10, 40, 0.5f, 1f, 2.0f, 8, 1, 1, minWaterDepth: 2),
+            ["watercrowfoot"] = new Profile(EcologyHabitat.UnderwaterColumn, -10, 40, 0.5f, 1f, 0.75f, 6, 2, 2, minWaterDepth: 2),
         };
 
         public static bool TryGet(string species, out Profile profile)

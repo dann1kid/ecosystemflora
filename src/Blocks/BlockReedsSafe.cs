@@ -142,10 +142,7 @@ namespace WildFarming.Blocks
                 return;
             }
 
-            if (IsBrownsedgeHarvestedRoot())
-                SpawnSmallRootBreakParticles(world, pos, byPlayer);
-            else
-                SpawnBlockBrokenParticles(pos, byPlayer);
+            SpawnBlockBrokenParticles(pos, byPlayer);
 
             world.BlockAccessor.SetBlock(0, pos);
         }
@@ -155,25 +152,6 @@ namespace WildFarming.Blocks
             return Code?.Path != null
                 && Code.Path.StartsWith("tallplant-brownsedge-")
                 && Variant?["state"] == "harvested";
-        }
-
-        void SpawnSmallRootBreakParticles(IWorldAccessor world, BlockPos pos, IPlayer plr)
-        {
-            if (api == null)
-                return;
-
-            var props = new SmallRootBrokenParticleProps
-            {
-                blockdamage = new BlockDamage
-                {
-                    Block = this,
-                    Position = pos,
-                    Facing = BlockFacing.UP,
-                },
-                boyant = MaterialDensity < 1000,
-            };
-            props.Init(api);
-            world.SpawnParticles(props, plr);
         }
 
         static bool IsHarvestTool(EnumTool? tool) =>
@@ -191,13 +169,6 @@ namespace WildFarming.Blocks
                 return false;
 
             return speeds.TryGetValue(material, out multiplier);
-        }
-
-        sealed class SmallRootBrokenParticleProps : BlockBrokenParticleProps
-        {
-            public override float Size => 0.12f + (float)rand.NextDouble() * 0.18f;
-
-            public override float Quantity => 4f + rand.Next(5);
         }
     }
 }

@@ -218,7 +218,12 @@ namespace WildFarming.Ecosystem
             matMode = MatSpreadCollectMode.NotApplicable;
             int searchRadius = radius;
 
-            if (requirements != null && requirements.UsesRhizomeSpread)
+            if (requirements != null && requirements.Habitat == EcologyHabitat.UnderwaterColumn && requirements.UsesRhizomeSpread)
+            {
+                matMode = CrowfootMatSpread.ResolveCollectMode(requirements, rand);
+                searchRadius = CrowfootMatSpread.ResolveSearchRadius(requirements, matMode, radius);
+            }
+            else if (requirements != null && requirements.UsesRhizomeSpread)
             {
                 matMode = RhizomeSpread.ResolveCollectMode(requirements, rand);
                 searchRadius = RhizomeSpread.ResolveSearchRadius(requirements, matMode, radius);
@@ -582,8 +587,7 @@ namespace WildFarming.Ecosystem
 
             IBlockAccessor accessor = api.World.BlockAccessor;
 
-            if (requirements.Habitat != EcologyHabitat.UnderwaterColumn
-                && !SpreadPreflight.PassesSpreadTargetGate(
+            if (!SpreadPreflight.PassesSpreadTargetGate(
                     accessor, plantPos, requirements, displacing, out _))
             {
                 return false;

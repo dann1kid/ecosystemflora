@@ -19,23 +19,22 @@
     "*-free": { "base": "game:block/plant/flower/1patch-cross-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-cross-24x24" },
   "texturesByType": {
     "*-free": {
     "north1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" },
     "south1": { "base": "game:block/plant/flower/petal/redtopgrass*", "tint": "#5c6b52" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*", "tint": "#5c6b52" }
+    "southTinted1": { "base": "game:block/plant/flower/stem/redtopgrass*" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/stem/redtopgrass*" },
-      "south": { "base": "game:block/plant/flower/stem/redtopgrass*" }
+      "north": { "base": "game:block/plant/flower/petal/redtopgrass*" },
+      "south": { "base": "game:block/plant/flower/petal/redtopgrass*" }
     }
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

@@ -16,6 +16,12 @@ namespace WildFarming.Ecosystem
         {
             if (req == null) return true;
 
+            if (req.Habitat == EcologyHabitat.UnderwaterColumn && req.UsesRhizomeSpread)
+            {
+                int reach = verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : CrowfootMatSpread.DefaultVerticalReach;
+                return CrowfootMatSpread.IsFrontier(acc, origin, req.Species, reach);
+            }
+
             if (req.UsesRhizomeSpread)
             {
                 int reach = verticalSearch > 0 ? System.Math.Min(verticalSearch, 3) : RhizomeSpread.DefaultVerticalReach;
@@ -49,6 +55,10 @@ namespace WildFarming.Ecosystem
         public static bool IsStep(int dx, int dz, PlantRequirements req)
         {
             if (req == null) return true;
+            if (req.Habitat == EcologyHabitat.UnderwaterColumn && req.UsesRhizomeSpread)
+            {
+                return CrowfootMatSpread.IsOrthogonalStep(dx, dz);
+            }
             if (req.UsesRhizomeSpread) return RhizomeSpread.IsOrthogonalStep(dx, dz);
             if (req.UsesSurfaceMatSpread) return SurfaceMatSpread.IsMatStep(dx, dz);
             if (req.UsesFernRhizomeSpread) return FernRhizomeSpread.IsOrthogonalStep(dx, dz);
@@ -60,6 +70,10 @@ namespace WildFarming.Ecosystem
         public static MatSpreadCollectMode ResolveCollectMode(PlantRequirements req, System.Random rand)
         {
             if (req == null || rand == null) return MatSpreadCollectMode.NotApplicable;
+            if (req.Habitat == EcologyHabitat.UnderwaterColumn && req.UsesRhizomeSpread)
+            {
+                return CrowfootMatSpread.ResolveCollectMode(req, rand);
+            }
             if (req.UsesRhizomeSpread) return RhizomeSpread.ResolveCollectMode(req, rand);
             if (req.UsesBerryColonySpread) return BerryColonySpread.ResolveCollectMode(req, rand);
             if (req.UsesShoreSedgeMatSpread) return ShoreSedgeMatSpread.ResolveCollectMode(req, rand);

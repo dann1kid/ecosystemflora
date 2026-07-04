@@ -80,11 +80,7 @@ namespace WildFarming.Tests
             }
 
             string path = System.IO.Path.Combine(
-                dir ?? System.IO.Directory.GetCurrentDirectory(),
-                "assets",
-                "ecosystemflora",
-                "blocktypes",
-                "plant",
+                ResolvePlantAssetDir(),
                 "juvenile-sedge-brownsedge.json");
             Assert.True(System.IO.File.Exists(path));
             string json = System.IO.File.ReadAllText(path);
@@ -94,10 +90,40 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void SedgePhaseBlocks_FreeVariant_HasNoDrawnHeightClip()
+        {
+            foreach (string phase in new[] { "dormant", "dieback" })
+            {
+                string path = System.IO.Path.Combine(
+                    ResolvePlantAssetDir(),
+                    $"sedgephase-{phase}.json");
+                string json = System.IO.File.ReadAllText(path);
+                Assert.Contains("\"scale\": 1.0", json);
+                Assert.DoesNotMatch(@"\""\*-free\""\s*:\s*\{[^\}]*\""drawnHeight\""", json);
+            }
+        }
+
+        [Fact]
         public void UsesJuvenileMaturation_WhenFlowerMaturationEnabled()
         {
             var cfg = new EcosystemConfig { EnableFlowerSpreadMaturation = true };
             Assert.True(WildFlowerMaturation.UsesMaturation(cfg, EcologyShoreSedgeSpecies.Brownsedge));
+        }
+
+        static string ResolvePlantAssetDir()
+        {
+            string dir = System.IO.Directory.GetCurrentDirectory();
+            while (!string.IsNullOrEmpty(dir) && !System.IO.File.Exists(System.IO.Path.Combine(dir, "wildfarming.sln")))
+            {
+                dir = System.IO.Directory.GetParent(dir)?.FullName;
+            }
+
+            return System.IO.Path.Combine(
+                dir ?? System.IO.Directory.GetCurrentDirectory(),
+                "assets",
+                "ecosystemflora",
+                "blocktypes",
+                "plant");
         }
     }
 }

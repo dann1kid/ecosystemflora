@@ -19,9 +19,10 @@
     "*-free": { "base": "game:block/plant/flower/lilyofthevalley" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/lilyofthevalley" },
   "texturesByType": {
     "*-free": {
-    "leaves1": { "base": "game:block/plant/flower/stem/lilyofthevalleyleaves1", "tint": "#5c6b52" },
+    "leaves1": { "base": "game:block/plant/flower/stem/lilyofthevalleyleaves1" },
     "north1": { "base": "game:block/transparent" },
     "northTinted1": { "base": "game:block/transparent" },
     "petal1": { "base": "game:block/plant/flower/petal/lilyofthevalley1", "tint": "#5c6b52" },
@@ -29,9 +30,9 @@
     "petal3": { "base": "game:block/plant/flower/petal/lilyofthevalley3", "tint": "#5c6b52" },
     "south1": { "base": "game:block/transparent" },
     "southTinted1": { "base": "game:block/transparent" },
-    "stem1": { "base": "game:block/plant/flower/stem/lilyofthevalley1", "tint": "#5c6b52" },
-    "stem2": { "base": "game:block/plant/flower/stem/lilyofthevalley2", "tint": "#5c6b52" },
-    "stem3": { "base": "game:block/plant/flower/stem/lilyofthevalley3", "tint": "#5c6b52" }
+    "stem1": { "base": "game:block/plant/flower/stem/lilyofthevalley1" },
+    "stem2": { "base": "game:block/plant/flower/stem/lilyofthevalley2" },
+    "stem3": { "base": "game:block/plant/flower/stem/lilyofthevalley3" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/lilyofthevalley1" },
@@ -40,9 +41,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

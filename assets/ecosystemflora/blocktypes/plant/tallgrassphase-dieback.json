@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "tallgrassphase-dieback",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
@@ -10,8 +10,8 @@
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
+  "drawtype": "JSON",
   "drawtypeByType": {
-    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
@@ -20,16 +20,18 @@
     "*-free": { "base": "game:block/basic/cross" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/basic/cross" },
   "texturesByType": {
     "*-free": {
       "north": { "base": "game:block/plant/tallgrass/free/veryshort-north", "tint": "#8b7355" },
       "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "#8b7355" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north", "tint": "#8b7355" },
-      "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south", "tint": "#8b7355" }
+      "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north" },
+      "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south" }
     }
   },
+
   "attributesByType": {
     "*-free": {
       "drawnHeight": 8,
@@ -56,8 +58,7 @@
   "faceCullModeByType": {
     "*-free": "Default",
     "*-snow": "MergeSnowLayer"
-  },
-  "climateColorMap": "climatePlantTint",
+  },  "climateColorMap": "climatePlantTint",
   "seasonColorMap": "seasonalGrass",
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
@@ -65,7 +66,7 @@
   "resistance": 0.5,
   "lightAbsorption": 0,
   "collisionbox": null,
-  "selectionbox": { "x1": 0.1, "y1": 0, "z1": 0.1, "x2": 0.9, "y2": 0.22, "z2": 0.9 },
+  "selectionbox": { "x1": 0.15, "y1": 0, "z1": 0.15, "x2": 0.85, "y2": 0.22, "z2": 0.85 },
   "sounds": { "place": "game:block/plant", "break": "game:block/plant", "hit": "game:block/plant" },
   "frostable": true,
   "materialDensity": 200,

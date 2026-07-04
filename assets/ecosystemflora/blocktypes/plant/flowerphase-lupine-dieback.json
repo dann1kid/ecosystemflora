@@ -16,34 +16,41 @@
   },
   "randomizeRotations": true,
   "shapeByType": {
-    "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
+    "*-free": { "base": "game:block/plant/lupine/one-plant" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/lupine/one-plant" },
   "texturesByType": {
     "*-free": {
-    "north1": { "base": "game:block/plant/flower/petal/lupine1", "tint": "#8b7355" },
-    "north2": { "base": "game:block/plant/flower/petal/lupine2", "tint": "#8b7355" },
-    "north3": { "base": "game:block/plant/flower/petal/lupine3", "tint": "#8b7355" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/lupine1", "tint": "#8b7355" },
-    "northTinted2": { "base": "game:block/plant/flower/stem/lupine2", "tint": "#8b7355" },
-    "northTinted3": { "base": "game:block/plant/flower/stem/lupine3", "tint": "#8b7355" },
-    "south1": { "base": "game:block/plant/flower/petal/lupine1", "tint": "#8b7355" },
-    "south2": { "base": "game:block/plant/flower/petal/lupine2", "tint": "#8b7355" },
-    "south3": { "base": "game:block/plant/flower/petal/lupine3", "tint": "#8b7355" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/lupine1", "tint": "#8b7355" },
-    "southTinted2": { "base": "game:block/plant/flower/stem/lupine2", "tint": "#8b7355" },
-    "southTinted3": { "base": "game:block/plant/flower/stem/lupine3", "tint": "#8b7355" }
+    "plant1a": { "base": "game:block/plant/flower/petal/lupine/blue1-a", "tint": "#8b7355" },
+    "plant1astem": { "base": "game:block/plant/flower/stem/lupine/normal1-a" },
+    "plant1b": { "base": "game:block/plant/flower/petal/lupine/blue1-b", "tint": "#8b7355" },
+    "plant1bstem": { "base": "game:block/plant/flower/stem/lupine/normal1-b" },
+    "plant2a": { "base": "game:block/plant/flower/petal/lupine/blue2-a", "tint": "#8b7355" },
+    "plant2astem": { "base": "game:block/plant/flower/stem/lupine/normal2-a" },
+    "plant2b": { "base": "game:block/plant/flower/petal/lupine/blue2-b", "tint": "#8b7355" },
+    "plant2bstem": { "base": "game:block/plant/flower/stem/lupine/normal2-b" },
+    "plant3a": { "base": "game:block/plant/flower/petal/lupine/blue3-a", "tint": "#8b7355" },
+    "plant3astem": { "base": "game:block/plant/flower/stem/lupine/normal3-a" },
+    "plant3b": { "base": "game:block/plant/flower/petal/lupine/blue3-b", "tint": "#8b7355" },
+    "plant3bstem": { "base": "game:block/plant/flower/stem/lupine/normal3-b" },
+    "plant4a": { "base": "game:block/plant/flower/petal/lupine/blue4-a", "tint": "#8b7355" },
+    "plant4astem": { "base": "game:block/plant/flower/stem/lupine/normal4-a" },
+    "plant4b": { "base": "game:block/plant/flower/petal/lupine/blue4-b", "tint": "#8b7355" },
+    "plant4bstem": { "base": "game:block/plant/flower/stem/lupine/normal4-b" },
+    "plant5a": { "base": "game:block/plant/flower/petal/lupine/blue5-a", "tint": "#8b7355" },
+    "plant5astem": { "base": "game:block/plant/flower/stem/lupine/normal5-a" },
+    "plant5b": { "base": "game:block/plant/flower/petal/lupine/blue5-b", "tint": "#8b7355" },
+    "plant5bstem": { "base": "game:block/plant/flower/stem/lupine/normal5-b" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/petal/lupine1" },
-      "south": { "base": "game:block/plant/flower/petal/lupine1" }
+      "north": { "base": "game:block/plant/flower/petal/lupine/blue1-a" },
+      "south": { "base": "game:block/plant/flower/petal/lupine/blue1-a" }
     }
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,
@@ -61,7 +68,6 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
-  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,

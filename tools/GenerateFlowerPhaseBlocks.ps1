@@ -14,6 +14,7 @@ function Get-TextureBasePath($texEntry) {
 function Test-IsPetalSlot($key, $path) {
     if ($path -match "/petal/") { return $true }
     if ($key -match "^(petal|flower2)$") { return $true }
+    if ($key -match "^plant\d+[ab]$") { return $true }
     if ($key -match "^(north|south)\d+$" -and $key -notmatch "Tinted") { return $true }
     return $false
 }
@@ -69,8 +70,8 @@ function Convert-ToPhaseTextures($textures, $phase, $species) {
             "vegetative" {
                 if ($isPetal) { $tint = $vegetativePetalTint }
             }
-            "dormant" { $tint = $dormantTint }
-            "dieback" { $tint = $diebackTint }
+            "dormant" { if ($isPetal) { $tint = $dormantTint } }
+            "dieback" { if ($isPetal) { $tint = $diebackTint } }
         }
 
         $result[$key] = @{ Path = $path; Tint = $tint }
@@ -146,7 +147,6 @@ function Write-PhaseBlockFromJuvenile($species, $phase, $juvenile) {
         $climateBlock = @"
 
   "climateColorMap": "climatePlantTint",
-  "frostable": true,
 "@
     }
 
@@ -262,6 +262,53 @@ function Write-RafflesiaPhases($species, $color) {
     }
 }
 
+function Write-LupinePhases() {
+    $shape = "game:block/plant/lupine/one-plant"
+    $snowPetal = "game:block/plant/flower/petal/lupine/blue1-a"
+
+    foreach ($phase in @("vegetative", "dormant", "dieback")) {
+        $legacyFree = Join-Path $outDir "flowerphase-lupine-${phase}-free.json"
+        if (Test-Path $legacyFree) { Remove-Item $legacyFree -Force }
+
+        $petalTint = switch ($phase) {
+            "vegetative" { "#6d7d62" }
+            "dormant" { "#5c6b52" }
+            "dieback" { "#8b7355" }
+            default { $null }
+        }
+
+        $texLines = New-Object System.Collections.Generic.List[string]
+        foreach ($n in 1..5) {
+            foreach ($side in @("a", "b")) {
+                $petalKey = "plant${n}${side}"
+                $stemKey = "plant${n}${side}stem"
+                $petalPath = "game:block/plant/flower/petal/lupine/blue${n}-${side}"
+                $stemPath = "game:block/plant/flower/stem/lupine/normal${n}-${side}"
+                if ($petalTint) {
+                    $texLines.Add("    `"$petalKey`": { `"base`": `"$petalPath`", `"tint`": `"$petalTint`" },")
+                } else {
+                    $texLines.Add("    `"$petalKey`": { `"base`": `"$petalPath`" },")
+                }
+                $texLines.Add("    `"$stemKey`": { `"base`": `"$stemPath`" },")
+            }
+        }
+        $texJson = ($texLines -join "`n").TrimEnd(",")
+
+        $climateBlock = ""
+        if ($phase -eq "dormant" -or $phase -eq "dieback") {
+            $climateBlock = "`n  `"climateColorMap`": `"climatePlantTint`","
+        }
+
+        $baseCode = "flowerphase-lupine-$phase"
+        $shapeInner = "`"base`": `"$shape`""
+        Write-PlantPhaseSnowBlock $outDir $baseCode "BlockPlant" $shapeInner $texJson $snowPetal @{
+            SelectionY2 = 0.49
+            UseShapeByType = $true
+            ClimateLines = $climateBlock
+        }
+    }
+}
+
 function Write-ShapeOnlyPhases($species, $shape, $selectionY2 = 0.55) {
     foreach ($phase in @("vegetative", "dormant", "dieback")) {
         $legacyFree = Join-Path $outDir "flowerphase-${species}-${phase}-free.json"
@@ -286,6 +333,8 @@ function Write-ShapeOnlyPhases($species, $shape, $selectionY2 = 0.55) {
     }
 }
 
+$ghostpipeSpecies = @("ghostpipewhite", "ghostpipepink", "ghostpipered")
+
 $shapeOnly = @{
     croton = @{ shape = "game:block/plant/croton/small/crimson-green"; y2 = 0.5 }
 }
@@ -295,7 +344,10 @@ foreach ($kv in $shapeOnly.GetEnumerator()) {
     Write-Host "Wrote shape-only flowerphase-$($kv.Key)-*"
 }
 
-$ghostpipeSpecies = @("ghostpipewhite", "ghostpipepink", "ghostpipered")
+Write-LupinePhases
+Write-Host "Wrote flowerphase-lupine-{vegetative,dormant,dieback}"
+
+$skipJuvenilePhase = @("lupine") + $shapeOnly.Keys + $ghostpipeSpecies
 
 Write-RafflesiaPhases "rafflesiabrown" "brown"
 Write-RafflesiaPhases "rafflesiared" "red"
@@ -314,6 +366,7 @@ foreach ($file in $juvenileFiles) {
     if (-not $juvenile.code) { continue }
 
     $species = $juvenile.code -replace "^juvenile-flower-", ""
+    if ($skipJuvenilePhase -contains $species) { continue }
     if ($shapeOnly.ContainsKey($species)) { continue }
     if ($ghostpipeSpecies -contains $species) { continue }
 

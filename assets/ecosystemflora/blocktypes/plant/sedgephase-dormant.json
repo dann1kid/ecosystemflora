@@ -31,8 +31,11 @@
     }
   },
   "attributesByType": {
-    "*-free": { "drawnHeight": 10 },
-    "*-snow": { "drawnHeight": 10, "allowOverlays": false, "allowStepWhenStuck": true }
+    "*-snow": {
+      "drawnHeight": 10,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    }
   },
   "vertexFlagsByType": {
     "*-free": { "windMode": "NormalWind", "windData": 2 },

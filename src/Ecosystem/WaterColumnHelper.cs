@@ -21,16 +21,34 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (!TryMeasureWaterColumn(acc, columnBase, out int waterDepth, out _))
+            if (!CrowfootSpreadGuard.IsPlantableWaterCell(acc, columnBase))
             {
                 return false;
             }
+
+            int plantableDepth = CountPlantableWaterLayersUp(acc, columnBase);
 
             int minDepth = requirements != null && requirements.MinWaterDepth > 0
                 ? requirements.MinWaterDepth
                 : 2;
             int maxDepth = requirements != null ? requirements.MaxWaterDepth : 8;
-            return waterDepth >= minDepth && waterDepth <= maxDepth;
+            return plantableDepth >= minDepth && plantableDepth <= maxDepth;
+        }
+
+        public static int CountPlantableWaterLayersUp(IBlockAccessor acc, BlockPos basePos)
+        {
+            if (acc == null || basePos == null) return 0;
+
+            int count = 0;
+            BlockPos scan = basePos.Copy();
+            for (int i = 0; i < 12; i++)
+            {
+                if (!CrowfootSpreadGuard.IsPlantableWaterCell(acc, scan)) break;
+                count++;
+                scan.Up();
+            }
+
+            return count;
         }
 
         /// <summary>Lowest submerged cell in the water column (directly above substrate).</summary>

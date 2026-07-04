@@ -1,4 +1,4 @@
-{
+﻿{
   "code": "fernphase-tallfern-sporulating",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow"] }
@@ -10,8 +10,8 @@
   "blockmaterialByType": {
     "*-snow": "Snow"
   },
+  "drawtype": "JSON",
   "drawtypeByType": {
-    "*-free": "JSON",
     "*-snow": "crossandsnowlayer"
   },
   "randomizeRotations": true,
@@ -19,6 +19,7 @@
     "*-free": { "base": "game:block/plant/fern/tallfern/var1", "scale": 1.0 },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/fern/tallfern/var1", "scale": 1.0 },
   "texturesByType": {
     "*-free": {
       "all": { "base": "game:block/plant/fern/tallfern/fern*" }
@@ -30,9 +31,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 14
-    },
+
     "*-snow": {
       "drawnHeight": 14,
       "allowOverlays": false,

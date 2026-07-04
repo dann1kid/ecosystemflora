@@ -9,7 +9,7 @@ $existing = @(
 )
 
 function Get-SnowCrossTexture($textures) {
-    foreach ($key in @("north1", "petal1", "flower2", "north")) {
+    foreach ($key in @("north1", "petal1", "flower2", "north", "plant1a")) {
         if ($textures.ContainsKey($key)) {
             $path = $textures[$key]
             if (-not [string]::IsNullOrEmpty($path) -and $path -notmatch "transparent") {
@@ -127,6 +127,57 @@ function ThreePatch24($species) {
     Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
 }
 
+function MugwortBlock() {
+    $t = @{}
+    foreach ($n in 1,2,3) {
+        $t["north$n"] = "game:block/plant/flower/petal/mugwort$n"
+        $t["south$n"] = "game:block/plant/flower/petal/mugwort$n"
+        $t["northTinted$n"] = "game:block/transparent"
+        $t["southTinted$n"] = "game:block/transparent"
+    }
+    Write-Block "mugwort" "game:block/plant/flower/3patches-3faces-24x24" $t
+}
+
+function HeatherBlock() {
+    $t = @{
+        north1 = "game:block/plant/flower/petal/heather1"
+        south1 = "game:block/plant/flower/petal/heather1"
+        northTinted1 = "game:block/plant/flower/stem/heather1"
+        southTinted1 = "game:block/plant/flower/stem/heather1"
+        north2 = "game:block/plant/flower/petal/heather2"
+        south2 = "game:block/plant/flower/petal/heather2"
+        northTinted2 = "game:block/plant/flower/stem/heather2"
+        southTinted2 = "game:block/plant/flower/stem/heather2"
+        north3 = "game:block/plant/flower/petal/heather2"
+        south3 = "game:block/plant/flower/petal/heather2"
+        northTinted3 = "game:block/plant/flower/stem/heather2"
+        southTinted3 = "game:block/plant/flower/stem/heather2"
+        flower2 = "game:block/plant/flower/petal/heather2"
+        flower2Tinted = "game:block/plant/flower/stem/heather2"
+    }
+    Write-Block "heather" "game:block/plant/flower/1patch-3faces-24x24" $t @{ randomDrawOffset = $true }
+}
+
+function WesternGorseBlock() {
+    $t = @{
+        north1 = "game:block/plant/flower/petal/westerngorse1"
+        south1 = "game:block/plant/flower/petal/westerngorse1"
+        northTinted1 = "game:block/plant/flower/stem/westerngorse1"
+        southTinted1 = "game:block/plant/flower/stem/westerngorse1"
+        north2 = "game:block/plant/flower/petal/westerngorse2"
+        south2 = "game:block/plant/flower/petal/westerngorse2"
+        northTinted2 = "game:block/plant/flower/stem/westerngorse2"
+        southTinted2 = "game:block/plant/flower/stem/westerngorse2"
+        north3 = "game:block/plant/flower/petal/westerngorse2"
+        south3 = "game:block/plant/flower/petal/westerngorse2"
+        northTinted3 = "game:block/plant/flower/stem/westerngorse2"
+        southTinted3 = "game:block/plant/flower/stem/westerngorse2"
+        flower2 = "game:block/plant/flower/petal/westerngorse2"
+        flower2Tinted = "game:block/plant/flower/stem/westerngorse2"
+    }
+    Write-Block "westerngorse" "game:block/plant/flower/1patch-3faces-24x24" $t
+}
+
 function CrossNumbered24($species) {
     # Vanilla flower-redtopgrass uses petal/{flower}* — redtopgrass1 alone is pale/white.
     $t = @{
@@ -208,6 +259,18 @@ function LilyShape($species) {
     Write-Block $species "game:block/plant/flower/lilyofthevalley" $t
 }
 
+function LupineBlock() {
+    # Vanilla lupine uses game:block/plant/lupine/one-plant — not 1patch-3faces / lupine1..3 paths.
+    $t = @{}
+    foreach ($n in 1..5) {
+        $t["plant${n}a"] = "game:block/plant/flower/petal/lupine/blue${n}-a"
+        $t["plant${n}b"] = "game:block/plant/flower/petal/lupine/blue${n}-b"
+        $t["plant${n}astem"] = "game:block/plant/flower/stem/lupine/normal${n}-a"
+        $t["plant${n}bstem"] = "game:block/plant/flower/stem/lupine/normal${n}-b"
+    }
+    Write-Block "lupine" "game:block/plant/lupine/one-plant" $t
+}
+
 function OrangemallowBlock() {
     $species = "orangemallow"
     $t = @{
@@ -266,11 +329,11 @@ $toGenerate = @{
     redtopgrass = { CrossNumbered24 "redtopgrass" }
     cowparsley = { ThreePatch24 "cowparsley" }
     horsetail = { ThreePatch24 "horsetail" }
-    mugwort = { ThreePatch24 "mugwort" }
-    lupine = { ThreePatch24 "lupine" }
+    mugwort = { MugwortBlock }
+    lupine = { LupineBlock }
     woad = { ThreePatch24 "woad" }
-    heather = { ThreePatch24 "heather" }
-    westerngorse = { ThreePatch24 "westerngorse" }
+    heather = { HeatherBlock }
+    westerngorse = { WesternGorseBlock }
 }
 
 foreach ($kv in $toGenerate.GetEnumerator()) {

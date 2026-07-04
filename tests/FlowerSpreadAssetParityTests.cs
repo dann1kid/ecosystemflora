@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using WildFarming.Ecosystem;
@@ -180,6 +181,9 @@ namespace WildFarming.Tests
             string json = File.ReadAllText(path);
             Assert.Contains("game:block/plant/fern/eaglefern/var*", json);
             Assert.DoesNotContain("fern/cross", json);
+            Assert.DoesNotMatch(
+                @"""shape""\s*:\s*\{\s*""base""\s*:\s*""game:block/basic/cross""",
+                json);
             Assert.Contains("\"break\": \"game:block/plant\"", json);
         }
 
@@ -192,6 +196,38 @@ namespace WildFarming.Tests
             Assert.Contains("\"center1\"", json);
             Assert.Contains("\"center2\"", json);
             Assert.Contains("\"short\"", json);
+        }
+
+        [Fact]
+        public void Lupine_Juvenile_UsesVanillaLupineShapeAndTextures()
+        {
+            string path = Path.Combine(PlantAssetDir, "juvenile-flower-lupine.json");
+            string json = File.ReadAllText(path);
+            Assert.Contains("game:block/plant/lupine/one-plant", json);
+            Assert.Contains("game:block/plant/flower/petal/lupine/blue1-a", json);
+            Assert.Contains("game:block/plant/flower/stem/lupine/normal1-a", json);
+            Assert.DoesNotContain("petal/lupine1", json);
+            Assert.DoesNotContain("1patch-3faces-24x24", json);
+        }
+
+        [Fact]
+        public void Lupine_PhaseBlocks_UseVanillaLupineShapeAndTextures()
+        {
+            foreach (string phase in new[] { "vegetative", "dormant", "dieback" })
+            {
+                string path = Path.Combine(PlantAssetDir, $"flowerphase-lupine-{phase}.json");
+                string json = File.ReadAllText(path);
+                Assert.Contains("game:block/plant/lupine/one-plant", json);
+                Assert.Contains("game:block/plant/flower/petal/lupine/blue1-a", json);
+                Assert.Contains("game:block/plant/flower/stem/lupine/normal1-a", json);
+                Assert.DoesNotContain("petal/lupine1", json);
+                Assert.DoesNotContain("1patch-3faces-24x24", json);
+                if (phase == "dieback")
+                {
+                    Assert.DoesNotContain("\"plant1astem\": { \"base\": \"game:block/plant/flower/stem/lupine/normal1-a\", \"tint\"", json);
+                    Assert.Contains("\"north\": { \"base\": \"game:block/plant/flower/petal/lupine/blue1-a\"", json);
+                }
+            }
         }
 
         [Fact]
@@ -273,7 +309,7 @@ namespace WildFarming.Tests
             {
                 string path = Path.Combine(PlantAssetDir, $"tallgrassphase-{phase}.json");
                 string json = File.ReadAllText(path);
-                Assert.Contains("\"*-free\": \"JSON\"", json);
+                Assert.Contains("\"drawtype\": \"JSON\"", json);
                 Assert.Contains("shapeByType", json);
                 Assert.Contains("game:block/basic/cross", json);
                 Assert.Contains("game:block/plant/tallgrass/free/veryshort-north", json);
@@ -283,6 +319,47 @@ namespace WildFarming.Tests
                 Assert.Contains("\"drawnHeight\": 8", json);
                 Assert.DoesNotContain("plant/grass/tall/veryshort", json);
                 Assert.Contains("crossandsnowlayer", json);
+            }
+        }
+
+        [Fact]
+        public void FlowerPhaseBlocks_FreeVariant_HasNoDrawnHeightClip()
+        {
+            foreach (string species in EcologyFlowerSpecies.All)
+            {
+                foreach (string phase in new[] { "vegetative", "dormant", "dieback" })
+                {
+                    string path = Path.Combine(PlantAssetDir, $"flowerphase-{species}-{phase}.json");
+                    string json = File.ReadAllText(path);
+                    Assert.Contains("\"drawtype\": \"JSON\"", json);
+                    Assert.DoesNotMatch(@"\""\*-free\""\s*:\s*\{[^\}]*\""drawnHeight\""", json);
+                }
+            }
+        }
+
+        [Fact]
+        public void FlowerPhaseBlocks_AvoidNonVanillaNumberedTexturePaths()
+        {
+            string[] forbidden =
+            {
+                "/petal/heather3",
+                "/stem/heather3",
+                "/stem/mugwort",
+                "/petal/westerngorse3",
+                "/stem/westerngorse3",
+            };
+
+            foreach (string species in new[] { "heather", "mugwort", "westerngorse" })
+            {
+                foreach (string phase in new[] { "vegetative", "dormant", "dieback" })
+                {
+                    string path = Path.Combine(PlantAssetDir, $"flowerphase-{species}-{phase}.json");
+                    string json = File.ReadAllText(path);
+                    foreach (string bad in forbidden)
+                    {
+                        Assert.DoesNotContain(bad, json);
+                    }
+                }
             }
         }
 

@@ -19,20 +19,21 @@
     "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
   "texturesByType": {
     "*-free": {
     "north1": { "base": "game:block/plant/flower/petal/cornflower1", "tint": "#8b7355" },
     "north2": { "base": "game:block/plant/flower/petal/cornflower2", "tint": "#8b7355" },
     "north3": { "base": "game:block/plant/flower/petal/cornflower3", "tint": "#8b7355" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/cornflower1", "tint": "#8b7355" },
-    "northTinted2": { "base": "game:block/plant/flower/stem/cornflower2", "tint": "#8b7355" },
-    "northTinted3": { "base": "game:block/plant/flower/stem/cornflower3", "tint": "#8b7355" },
+    "northTinted1": { "base": "game:block/plant/flower/stem/cornflower1" },
+    "northTinted2": { "base": "game:block/plant/flower/stem/cornflower2" },
+    "northTinted3": { "base": "game:block/plant/flower/stem/cornflower3" },
     "south1": { "base": "game:block/plant/flower/petal/cornflower1", "tint": "#8b7355" },
     "south2": { "base": "game:block/plant/flower/petal/cornflower2", "tint": "#8b7355" },
     "south3": { "base": "game:block/plant/flower/petal/cornflower3", "tint": "#8b7355" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/cornflower1", "tint": "#8b7355" },
-    "southTinted2": { "base": "game:block/plant/flower/stem/cornflower2", "tint": "#8b7355" },
-    "southTinted3": { "base": "game:block/plant/flower/stem/cornflower3", "tint": "#8b7355" }
+    "southTinted1": { "base": "game:block/plant/flower/stem/cornflower1" },
+    "southTinted2": { "base": "game:block/plant/flower/stem/cornflower2" },
+    "southTinted3": { "base": "game:block/plant/flower/stem/cornflower3" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/cornflower1" },
@@ -41,9 +42,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,
@@ -61,7 +60,6 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
-  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,

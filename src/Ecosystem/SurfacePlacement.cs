@@ -114,10 +114,11 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            if (!PlantVacancyRules.IsSupportingGround(ground))
+            if (!PlantVacancyRules.IsMeadowFooting(ground))
             {
-                rejectReason =
-                    $"ground up not solid ({ground.Code?.Path}, SideSolid.UP={ground.SideSolid[BlockFacing.UP.Index]}, farmland={WildSoilGroundRules.IsFarmland(ground)})";
+                rejectReason = PlantCodeHelper.IsArborealHostBlock(ground)
+                    ? $"ground is protected tree trunk ({ground.Code?.Path})"
+                    : $"ground up not solid ({ground.Code?.Path}, SideSolid.UP={ground.SideSolid[BlockFacing.UP.Index]}, farmland={WildSoilGroundRules.IsFarmland(ground)})";
                 return false;
             }
 

@@ -16,27 +16,35 @@
   },
   "randomizeRotations": true,
   "shapeByType": {
-    "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24", "scale": 0.45 }
+    "*-free": { "base": "game:block/plant/lupine/one-plant", "scale": 0.45 }
   },
   "shape": { "base": "game:block/basic/cross" },
   "texturesByType": {
     "*-free": {
-    "south3": { "base": "game:block/plant/flower/petal/lupine3" },
-    "north1": { "base": "game:block/plant/flower/petal/lupine1" },
-    "north3": { "base": "game:block/plant/flower/petal/lupine3" },
-    "south1": { "base": "game:block/plant/flower/petal/lupine1" },
-    "north2": { "base": "game:block/plant/flower/petal/lupine2" },
-    "southTinted3": { "base": "game:block/plant/flower/stem/lupine3" },
-    "southTinted2": { "base": "game:block/plant/flower/stem/lupine2" },
-    "south2": { "base": "game:block/plant/flower/petal/lupine2" },
-    "northTinted1": { "base": "game:block/plant/flower/stem/lupine1" },
-    "northTinted3": { "base": "game:block/plant/flower/stem/lupine3" },
-    "northTinted2": { "base": "game:block/plant/flower/stem/lupine2" },
-    "southTinted1": { "base": "game:block/plant/flower/stem/lupine1" }
+    "plant1astem": { "base": "game:block/plant/flower/stem/lupine/normal1-a" },
+    "plant2astem": { "base": "game:block/plant/flower/stem/lupine/normal2-a" },
+    "plant3b": { "base": "game:block/plant/flower/petal/lupine/blue3-b" },
+    "plant5bstem": { "base": "game:block/plant/flower/stem/lupine/normal5-b" },
+    "plant4b": { "base": "game:block/plant/flower/petal/lupine/blue4-b" },
+    "plant2a": { "base": "game:block/plant/flower/petal/lupine/blue2-a" },
+    "plant1a": { "base": "game:block/plant/flower/petal/lupine/blue1-a" },
+    "plant3astem": { "base": "game:block/plant/flower/stem/lupine/normal3-a" },
+    "plant2b": { "base": "game:block/plant/flower/petal/lupine/blue2-b" },
+    "plant5b": { "base": "game:block/plant/flower/petal/lupine/blue5-b" },
+    "plant5a": { "base": "game:block/plant/flower/petal/lupine/blue5-a" },
+    "plant5astem": { "base": "game:block/plant/flower/stem/lupine/normal5-a" },
+    "plant3a": { "base": "game:block/plant/flower/petal/lupine/blue3-a" },
+    "plant4bstem": { "base": "game:block/plant/flower/stem/lupine/normal4-b" },
+    "plant1bstem": { "base": "game:block/plant/flower/stem/lupine/normal1-b" },
+    "plant4astem": { "base": "game:block/plant/flower/stem/lupine/normal4-a" },
+    "plant1b": { "base": "game:block/plant/flower/petal/lupine/blue1-b" },
+    "plant4a": { "base": "game:block/plant/flower/petal/lupine/blue4-a" },
+    "plant3bstem": { "base": "game:block/plant/flower/stem/lupine/normal3-b" },
+    "plant2bstem": { "base": "game:block/plant/flower/stem/lupine/normal2-b" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/petal/lupine1" },
-      "south": { "base": "game:block/plant/flower/petal/lupine1" }
+      "north": { "base": "game:block/plant/flower/petal/lupine/blue1-a" },
+      "south": { "base": "game:block/plant/flower/petal/lupine/blue1-a" }
     }
   },
   "attributesByType": {

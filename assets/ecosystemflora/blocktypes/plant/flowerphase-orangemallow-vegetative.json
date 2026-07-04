@@ -19,6 +19,7 @@
     "*-free": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/1patch-3faces-24x24" },
   "texturesByType": {
     "*-free": {
     "flower2": { "base": "game:block/plant/flower/petal/orangemallow2", "tint": "#6d7d62" },
@@ -29,15 +30,13 @@
     "southTinted1": { "base": "game:block/plant/flower/stem/orangemallow3" }
     },
     "*-snow": {
-      "north": { "base": "game:block/plant/flower/stem/orangemallow1" },
-      "south": { "base": "game:block/plant/flower/stem/orangemallow1" }
+      "north": { "base": "game:block/plant/flower/petal/orangemallow1" },
+      "south": { "base": "game:block/plant/flower/petal/orangemallow1" }
     }
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,

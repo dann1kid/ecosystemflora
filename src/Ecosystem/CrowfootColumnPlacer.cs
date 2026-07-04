@@ -19,7 +19,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            int waterLayers = WaterColumnHelper.CountContiguousWaterLayersUp(acc, columnBase);
+            int waterLayers = WaterColumnHelper.CountPlantableWaterLayersUp(acc, columnBase);
             if (waterLayers < 2) return false;
 
             if (targetHeight < 2) targetHeight = 2;
@@ -31,14 +31,14 @@ namespace WildFarming.Ecosystem
             for (int i = 0; i < sections; i++)
             {
                 if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
-                if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
+                if (!CrowfootSpreadGuard.IsPlantableWaterCell(acc, pos)) return false;
 
                 acc.SetBlock(sectionBlock.BlockId, pos);
                 pos.Up();
             }
 
             if (!LandClaimGuard.AllowsEcologyChange(api, pos)) return false;
-            if (!BlockFluidHelper.IsSubmergedWaterCell(acc, pos)) return false;
+            if (!CrowfootSpreadGuard.IsPlantableWaterCell(acc, pos)) return false;
 
             bool surfaceCap = !BlockFluidHelper.IsWaterAt(acc, pos.UpCopy());
 

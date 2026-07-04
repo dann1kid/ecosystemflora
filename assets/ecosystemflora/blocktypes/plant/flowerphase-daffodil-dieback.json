@@ -19,9 +19,10 @@
     "*-free": { "base": "game:block/plant/flower/lilyofthevalley" },
     "*-snow": { "base": "game:block/basic/cross" }
   },
+  "shape": { "base": "game:block/plant/flower/lilyofthevalley" },
   "texturesByType": {
     "*-free": {
-    "leaves1": { "base": "game:block/plant/flower/stem/daffodilleaves1", "tint": "#8b7355" },
+    "leaves1": { "base": "game:block/plant/flower/stem/daffodilleaves1" },
     "north1": { "base": "game:block/transparent" },
     "northTinted1": { "base": "game:block/transparent" },
     "petal1": { "base": "game:block/plant/flower/petal/daffodil1", "tint": "#8b7355" },
@@ -29,9 +30,9 @@
     "petal3": { "base": "game:block/plant/flower/petal/daffodil3", "tint": "#8b7355" },
     "south1": { "base": "game:block/transparent" },
     "southTinted1": { "base": "game:block/transparent" },
-    "stem1": { "base": "game:block/plant/flower/stem/daffodil1", "tint": "#8b7355" },
-    "stem2": { "base": "game:block/plant/flower/stem/daffodil2", "tint": "#8b7355" },
-    "stem3": { "base": "game:block/plant/flower/stem/daffodil3", "tint": "#8b7355" }
+    "stem1": { "base": "game:block/plant/flower/stem/daffodil1" },
+    "stem2": { "base": "game:block/plant/flower/stem/daffodil2" },
+    "stem3": { "base": "game:block/plant/flower/stem/daffodil3" }
     },
     "*-snow": {
       "north": { "base": "game:block/plant/flower/petal/daffodil1" },
@@ -40,9 +41,7 @@
   },
 
   "attributesByType": {
-    "*-free": {
-      "drawnHeight": 11
-    },
+
     "*-snow": {
       "drawnHeight": 11,
       "allowOverlays": false,
@@ -60,7 +59,6 @@
     "*-snow": "MergeSnowLayer"
   },
   "climateColorMap": "climatePlantTint",
-  "frostable": true,
   "sideopaque": { "all": false },
   "sidesolid": { "all": false },
   "replaceable": 3000,
