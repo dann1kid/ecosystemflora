@@ -1,0 +1,3 @@
+[submodule "community"]
+	path = community
+	url = ssh://git@95.165.173.218:2222/danni1kid/ecosystemfloracompat.git

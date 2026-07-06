@@ -75,6 +75,10 @@ Patches use **`"side": "server"`** (blocktypes load server-side in VS 1.22+) and
 
 No hard dependency on either grass mod. Requires **`EnableThirdPartyParticipants`: `true`** (default).
 
+### Community patch mod (optional submodule)
+
+Content patches live in git submodule **`community/`** → [`ecosystemfloracompat`](ssh://git@95.165.173.218:2222/danni1kid/ecosystemfloracompat.git) (e.g. **Biodiversity `bdshrub`**). Clone with `git clone --recursive` or `git submodule update --init community`. See [`docs/SUBMODULES.md`](SUBMODULES.md) and [`community/docs/`](../community/docs/).
+
 ### Handbook patches (vanilla + third-party)
 
 `handbook-behaviors.json` adds `ecosystemHandbook` via **`addmerge`** on `/behaviors` (or `/behaviorsByType` for tallgrass). On VS **1.22+** many plant blocktypes no longer have a root `behaviors` array — do **not** use `add` on `/behaviors/-`. Reeds and crowfoot paths: `reedpapyrus.json`, `aquatic/watercrowfoot.json` (not legacy `tallplant-*` / flat `aquatic-watercrowfoot` filenames).

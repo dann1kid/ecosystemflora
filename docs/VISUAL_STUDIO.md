@@ -10,12 +10,15 @@
 3. Выберите профиль запуска **Vintage Story (F5)** на панели отладки.
 4. **F5** — сборка, копирование мода в `Mods\ecosystemflora`, запуск `Vintagestory.exe` с подключённым отладчиком.
 
+**Submodule `community/`:** после `git submodule update --init community` в solution есть проект **ecosystemfloracompat** (content-only). Сборка solution копирует патчи в `Mods\ecosystemfloracompat\` (`community\bin\…`). См. [`community/docs/BUILD.md`](../community/docs/BUILD.md).
+
 ## Сборка и деплой
 
-| Конфигурация | Выход | Деплой в игру |
-|--------------|-------|----------------|
-| **Debug** | `bin\Debug\Mods\ecosystemflora\` | Да → `%AppData%\Vintagestory\Mods\ecosystemflora\` |
-| **Release** | `bin\Release\Mods\ecosystemflora\` | Да (можно отключить) |
+| Проект | Выход | Деплой в игру |
+|--------|-------|----------------|
+| **wildfarming** (Debug) | `bin\Debug\Mods\ecosystemflora\` | `%AppData%\Vintagestory\Mods\ecosystemflora\` |
+| **ecosystemfloracompat** (Debug) | `community\bin\Debug\Mods\ecosystemfloracompat\` | `%AppData%\Vintagestory\Mods\ecosystemfloracompat\` |
+| **Release** | те же пути, `Release` | Да (можно отключить) |
 
 Отключить автокопирование в свойствах проекта → **Build** → переменная MSBuild `DeployModToGame=false`,  
 или в `Directory.Build.user.props` в корне репозитория.

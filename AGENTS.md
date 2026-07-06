@@ -19,8 +19,8 @@ Quick constraints:
 - Do **not** expand living trees or termites unless the user asks. **Mycelium (v3.1.12):** soft niche around vanilla `BlockEntityMycelium` only — no custom mushroom blocks. **Ferntree / wild vines (v3.7):** vanilla blocks only; playtest before tuning.
 - Legacy BE: `src/Ecosystem/LegacyBlockEntityMigration.cs` (EcoSystemLife / EcosystemPlant strip on load); new logic under `src/Ecosystem/`.
 - Target: VS **1.22+**, **.NET 10**, `wildfarming.sln`.
-- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 681 tests).
+- Tests: `tests/WildFarming.Tests.csproj` (xUnit, 684 tests).
 - **Config:** `TryLoadFromDisk` rewrites `ModConfig/ecosystemflora.json` after load so new keys appear automatically (server always; client when file exists). Per-species tuning: `ModConfig/ecosystemflora/species/ecology.csv` and `season.csv` (auto-created on server start) — see `docs/SPECIES_ECOLOGY_CSV.md`.
 - Do **not** run alongside **wildfarmingrevival**.
 
-Entry: `src/WF.cs`, `src/Ecosystem/EcosystemSystem.cs`. Docs: `docs/PROJECT_VISION.md`, `docs/PROMPT.md`, `docs/THIRD_PARTY_ECOLOGY.md`, `docs/GAPS.md`, `docs/CHANGELOG.md`, `docs/VISUAL_STUDIO.md`.
+Entry: `src/WF.cs`, `src/Ecosystem/EcosystemSystem.cs`. Docs: `docs/PROJECT_VISION.md`, `docs/PROMPT.md`, `docs/THIRD_PARTY_ECOLOGY.md`, `docs/GAPS.md`, `docs/CHANGELOG.md`, `docs/VISUAL_STUDIO.md`, `docs/SUBMODULES.md`. Community compat patches: submodule `community/` (`ecosystemfloracompat`).

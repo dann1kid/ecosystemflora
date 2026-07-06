@@ -93,8 +93,15 @@ namespace WildFarming.Ecosystem
 
         static bool IsBerrySpeciesBlock(Block block, string species)
         {
-            return block != null && block.Id != 0
-                && PlantCodeHelper.IsWildBerryBushBlock(block)
+            if (block == null || (block.Id == 0 && block.BlockId == 0) || string.IsNullOrEmpty(species)) return false;
+
+            if (PlantCodeHelper.IsThirdPartyEcologyBlock(block))
+            {
+                return EcologyBerrySpecies.IsKnown(species)
+                    && string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            return PlantCodeHelper.IsWildBerryBushBlock(block)
                 && string.Equals(PlantCodeHelper.GetEcologySpecies(block.Code), species, System.StringComparison.OrdinalIgnoreCase);
         }
 

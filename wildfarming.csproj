@@ -47,6 +47,10 @@
     <None Remove="tests\**" />
     <Compile Remove="tools\**" />
     <None Remove="tools\**" />
+    <Compile Remove="_compatcheck\**" />
+    <None Remove="_compatcheck\**" />
+    <Compile Remove="community\**" />
+    <None Remove="community\**" />
   </ItemGroup>
 
   <ItemGroup>

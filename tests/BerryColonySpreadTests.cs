@@ -1,5 +1,9 @@
+using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
 using WildFarming.Ecosystem.SpeciesEcology;
+using WildFarming.Ecosystem.Testing;
 using Xunit;
 
 namespace WildFarming.Tests
@@ -68,6 +72,93 @@ namespace WildFarming.Tests
         public void IsStep_RespectsConnectivity(string species, int dx, int dz, bool expected)
         {
             Assert.Equal(expected, BerryColonySpread.IsStep(dx, dz, species));
+        }
+
+        [Fact]
+        public void IsFrontier_ThirdPartyBerry_AirNeighbor_IsFrontier()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig
+                {
+                    EnableThirdPartyParticipants = true,
+                    EnableBerryColonySpread = true,
+                };
+
+                Block air = new Block { BlockId = 0, Code = new AssetLocation("game:air") };
+                Block bdBlueberry = ThirdPartyBerryBlock("bdshrub", "blueberry", 1);
+                var acc = new EcologyTestBlockAccessor(new[] { air, bdBlueberry });
+                var pos = new BlockPos(10, 64, 10);
+                acc.SetBlock(1, pos);
+
+                Assert.True(BerryColonySpread.IsFrontier(acc, pos, "blueberry"));
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
+        }
+
+        [Fact]
+        public void IsFrontier_ThirdPartyBerry_SurroundedBySameSpecies_NotFrontier()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig
+                {
+                    EnableThirdPartyParticipants = true,
+                    EnableBerryColonySpread = true,
+                };
+
+                Block air = new Block { BlockId = 0, Code = new AssetLocation("game:air") };
+                Block bdBlueberry = ThirdPartyBerryBlock("bdshrub", "blueberry", 1);
+                var acc = new EcologyTestBlockAccessor(new[] { air, bdBlueberry });
+                var center = new BlockPos(10, 64, 10);
+                acc.SetBlock(1, center);
+                acc.SetBlock(1, new BlockPos(11, 64, 10));
+                acc.SetBlock(1, new BlockPos(9, 64, 10));
+                acc.SetBlock(1, new BlockPos(10, 64, 11));
+                acc.SetBlock(1, new BlockPos(10, 64, 9));
+
+                Assert.False(BerryColonySpread.IsFrontier(acc, center, "blueberry"));
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
+        }
+
+        static Block ThirdPartyBerryBlock(string domain, string species, int id)
+        {
+            JsonObject attrs = JsonObject.FromJson($@"{{
+                ""ecologyParticipant"": true,
+                ""ecologySpecies"": ""{species}"",
+                ""ecologySpreadBlock"": ""fruitingbush-{species}-empty""
+            }}");
+            return new Block
+            {
+                BlockId = id,
+                Code = new AssetLocation(domain, $"fruitingbush-{species}-ripe"),
+                Attributes = attrs,
+            };
+        }
+
+        [Fact]
+        public void IsThirdPartyEcologyBlock_RecognizesPatchLikeAttrs()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig { EnableThirdPartyParticipants = true };
+                Block block = ThirdPartyBerryBlock("bdshrub", "blueberry", 1);
+                Assert.True(PlantCodeHelper.IsThirdPartyEcologyBlock(block));
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
         }
 
         [Fact]
