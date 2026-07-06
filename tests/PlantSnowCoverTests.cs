@@ -100,6 +100,82 @@ namespace WildFarming.Tests
             Assert.False(PlantSnowCover.BlockHasCoverVariant("fern-eaglefern-normal"));
         }
 
+        [Fact]
+        public void BlockHasCoverVariant_IgnoresVanillaBuildingCoverVariants()
+        {
+            Assert.False(PlantSnowCover.BlockHasCoverVariant(
+                new AssetLocation("game:woodenfence-oak-east-free")));
+            Assert.False(PlantSnowCover.BlockHasCoverVariant(
+                new AssetLocation("game:plankslab-oak-down-free")));
+            Assert.False(PlantSnowCover.BlockHasCoverVariant(
+                new AssetLocation("game:plankstairs-oak-up-north-free")));
+        }
+
+        [Fact]
+        public void ResolveWantsSnowCover_ShelteredIndoors_IgnoresSnowAccum()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block freePhase = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("ecosystemflora:flowerphase-cornflower-dormant-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, freePhase })
+            {
+                Temperature = -8f,
+            };
+            var pos = new BlockPos(4, 64, 4);
+            acc.SetBlock(1, pos);
+            acc.SetRainHeight(pos.X, pos.Z, 70);
+            SetSnowAccum(acc, pos, 0.5f);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.False(PlantSnowCover.IsExposedToSky(acc, pos));
+            Assert.False(PlantSnowCover.ResolveWantsSnowCover(api.Object, pos));
+        }
+
+        [Fact]
+        public void TrySyncCover_IgnoresVanillaFenceOnChunkLoad()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block fenceFree = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:woodenfence-oak-east-free"),
+            };
+            Block fenceSnow = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:woodenfence-oak-east-snow"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, fenceFree, fenceSnow })
+            {
+                Temperature = -8f,
+            };
+            var pos = new BlockPos(2, 64, 2);
+            acc.SetBlock(1, pos);
+            SetSnowAccum(acc, pos, 0.5f);
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                .Returns((AssetLocation loc) =>
+                {
+                    if (loc.Path.Contains("-snow")) return fenceSnow;
+                    if (loc.Path.Contains("-free")) return fenceFree;
+                    return air;
+                });
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.False(PlantSnowCoverSync.TrySyncCover(api.Object, pos));
+            Assert.Equal("game:woodenfence-oak-east-free", acc.GetBlock(pos).Code.ToString());
+        }
+
         [Theory]
         [InlineData("ecosystemflora:fernphase-eaglefern-dormant", "ecosystemflora:fernphase-eaglefern-dormant-free")]
         [InlineData("ecosystemflora:fernphase-cinnamonfern-dieback", "ecosystemflora:fernphase-cinnamonfern-dieback-free")]

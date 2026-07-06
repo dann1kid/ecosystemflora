@@ -17,9 +17,21 @@ namespace WildFarming.Ecosystem
             return !string.IsNullOrEmpty(path) && path.EndsWith("-snow", System.StringComparison.Ordinal);
         }
 
-        public static bool BlockHasCoverVariant(string path)
+        public static bool BlockHasCoverVariant(AssetLocation code) =>
+            code != null && BlockHasCoverVariant(code.Domain, code.Path);
+
+        /// <summary>Path-only helper for tests; assumes <c>ecosystemflora</c> domain.</summary>
+        public static bool BlockHasCoverVariant(string path) =>
+            BlockHasCoverVariant("ecosystemflora", path);
+
+        /// <summary>
+        /// Mod ecology phase blocks only — not vanilla <c>cover</c> variants (fences, stairs, slabs).
+        /// </summary>
+        public static bool BlockHasCoverVariant(string domain, string path)
         {
-            if (string.IsNullOrEmpty(path)) return false;
+            if (string.IsNullOrEmpty(path) || domain != "ecosystemflora") return false;
+            if (!IsManagedEcologyPhasePath(path)) return false;
+
             if (path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal)
                 || path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
             {
@@ -27,6 +39,25 @@ namespace WildFarming.Ecosystem
             }
 
             return IsLegacyBareFernPhasePath(path);
+        }
+
+        static bool IsManagedEcologyPhasePath(string path)
+        {
+            return path.StartsWith("flowerphase-", System.StringComparison.Ordinal)
+                || path.StartsWith("fernphase-", System.StringComparison.Ordinal)
+                || path.StartsWith("tallgrassphase-", System.StringComparison.Ordinal)
+                || path.StartsWith("sedgephase-", System.StringComparison.Ordinal)
+                || path.StartsWith("juvenile-flower-", System.StringComparison.Ordinal)
+                || path.StartsWith("juvenile-fern-", System.StringComparison.Ordinal)
+                || path.StartsWith("juvenile-sedge-", System.StringComparison.Ordinal);
+        }
+
+        /// <summary>Open to rain/snow at this cell (rain heightmap).</summary>
+        public static bool IsExposedToSky(IBlockAccessor acc, BlockPos pos)
+        {
+            if (acc == null || pos == null) return false;
+            int rainY = acc.GetRainMapHeightAt(pos.X, pos.Z);
+            return pos.Y > rainY;
         }
 
         /// <summary>Bare <c>fernphase-*-{dormant|dieback|sporulating}</c> without cover suffix (pre-unification saves).</summary>
@@ -68,7 +99,9 @@ namespace WildFarming.Ecosystem
         public static bool ResolveWantsSnowCover(ICoreAPI api, BlockPos plantPos)
         {
             if (api?.World?.BlockAccessor == null || plantPos == null) return false;
-            if (BlockFluidHelper.ExcludesSnowCover(api.World.BlockAccessor, plantPos)) return false;
+            IBlockAccessor acc = api.World.BlockAccessor;
+            if (BlockFluidHelper.ExcludesSnowCover(acc, plantPos)) return false;
+            if (!IsExposedToSky(acc, plantPos)) return false;
             if (!ClimateWantsSnowCover(api, plantPos)) return false;
             return SurroundingsHaveSnow(api, plantPos);
         }

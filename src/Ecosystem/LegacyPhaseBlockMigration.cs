@@ -41,7 +41,7 @@ namespace WildFarming.Ecosystem
                         Block block = acc.GetBlock(pos);
                         TryRemapAt(acc, pos, block);
                         block = acc.GetBlock(pos);
-                        if (PlantSnowCover.BlockHasCoverVariant(block?.Code?.Path))
+                        if (PlantSnowCover.BlockHasCoverVariant(block?.Code))
                         {
                             PlantSnowCoverSync.TrySyncCover(api, pos, block);
                         }

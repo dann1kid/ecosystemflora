@@ -16,7 +16,7 @@ namespace WildFarming.Ecosystem
 
             current ??= api.World.BlockAccessor.GetBlock(pos);
             if (current?.Code == null || current.Id == 0) return false;
-            if (!PlantSnowCover.BlockHasCoverVariant(current.Code.Path)) return false;
+            if (!PlantSnowCover.BlockHasCoverVariant(current.Code)) return false;
 
             bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
             bool hasSnow = PlantSnowCover.PathHasSnowCover(current.Code.Path);
