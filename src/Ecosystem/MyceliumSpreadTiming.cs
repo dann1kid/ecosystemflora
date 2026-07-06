@@ -28,12 +28,12 @@ namespace WildFarming.Ecosystem
                     if (intervalHours < minHours) intervalHours = minHours;
                 }
 
-                return intervalHours;
+                return CalendarSpeedHelper.ScaleCalendarHours(intervalHours, api?.World?.Calendar);
             }
 
             double baseHours = cfg.ReproduceIntervalHours > 0 ? cfg.ReproduceIntervalHours : 24;
             float rate = cfg.MyceliumSpreadRate > 0f ? cfg.MyceliumSpreadRate : 0.12f;
-            return baseHours / rate;
+            return CalendarSpeedHelper.ScaleCalendarHours(baseHours / rate, api?.World?.Calendar);
         }
 
         public static float EffectiveChance(EcosystemConfig cfg, PlantRequirements requirements)

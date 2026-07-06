@@ -31,21 +31,25 @@ namespace WildFarming.Ecosystem
 
         public static double MaturationHours(ICoreAPI api, BlockPos pos, string species, EcosystemConfig cfg)
         {
+            double hours;
             if (SpeciesEcologyRegistry.IsLoaded
                 && SpeciesEcologyRegistry.TryGetBerryMaturationHours(species, out double csvHours))
             {
-                return csvHours * (cfg?.GrowthHoursMultiplier ?? 1f);
+                hours = csvHours * (cfg?.GrowthHoursMultiplier ?? 1f);
             }
-
-            if (!SpeciesEcologyLegacyAccess.TryGetBerrySpreadRate(species, out float spreadRate))
+            else if (!SpeciesEcologyLegacyAccess.TryGetBerrySpreadRate(species, out float spreadRate))
             {
-                return DefaultMaturationHours * (cfg?.GrowthHoursMultiplier ?? 1f);
+                hours = DefaultMaturationHours * (cfg?.GrowthHoursMultiplier ?? 1f);
+            }
+            else
+            {
+                hours = DefaultMaturationHours / System.Math.Max(
+                    0.25f,
+                    WildSpreadBalance.ScaleSpeciesSpreadRate(species, spreadRate, cfg));
+                hours *= cfg?.GrowthHoursMultiplier ?? 1f;
             }
 
-            double baseHours = DefaultMaturationHours / System.Math.Max(
-                0.25f,
-                WildSpreadBalance.ScaleSpeciesSpreadRate(species, spreadRate, cfg));
-            return baseHours * (cfg?.GrowthHoursMultiplier ?? 1f);
+            return CalendarSpeedHelper.ScaleCalendarHours(hours, api?.World?.Calendar);
         }
     }
 }

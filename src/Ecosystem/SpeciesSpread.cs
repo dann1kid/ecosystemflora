@@ -27,7 +27,7 @@ namespace WildFarming.Ecosystem
                 else interval *= 20;
             }
 
-            return interval;
+            return CalendarSpeedHelper.ScaleCalendarHours(interval, api?.World?.Calendar);
         }
 
         static double EffectiveIntervalHoursCalendar(IGameCalendar cal, EcosystemConfig cfg, PlantRequirements requirements)

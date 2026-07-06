@@ -332,9 +332,10 @@ namespace WildFarming.Ecosystem
             }
 
             api.Logger.Notification(
-                "[ecosystemflora] Calendar: {0} days/year, {1} h/day; spread base {2} attempts/year (calendar-scaled={3})",
+                "[ecosystemflora] Calendar: {0} days/year, {1} h/day, speed {2:0.###}×; spread base {3} attempts/year (calendar-scaled={4})",
                 cal.DaysPerYear,
                 cal.HoursPerDay,
+                CalendarSpeedHelper.GetSpeedMultiplier(cal),
                 attemptsPerYear,
                 cfg.UseCalendarScaledSpread);
         }
@@ -414,7 +415,12 @@ namespace WildFarming.Ecosystem
             if (!EcosystemConfig.Loaded.EcosystemEnabled || api == null || pos == null) return;
             if (!EcosystemConfig.Loaded.EnableEventDrivenSpread) return;
 
-            registry.WakeAround(pos, EcologyWake.ResolveRadiusBlocks(EcosystemConfig.Loaded), api.World.Calendar.TotalHours, EcosystemConfig.Loaded);
+            registry.WakeAround(
+                pos,
+                EcologyWake.ResolveRadiusBlocks(EcosystemConfig.Loaded),
+                api.World.Calendar.TotalHours,
+                EcosystemConfig.Loaded,
+                api.World.Calendar);
         }
 
         public bool CanSurviveAt(BlockPos plantPos, PlantRequirements requirements)

@@ -115,7 +115,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (hours < clamps.MaturationFloor) hours = clamps.MaturationFloor;
-            return hours;
+            return CalendarSpeedHelper.ScaleCalendarHours(hours, api?.World?.Calendar);
         }
 
         public double PostSpreadAttemptCooldownHours(ICoreAPI api, BlockPos pos, PlantRequirements requirements, EcosystemConfig cfg)
@@ -139,7 +139,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (hours < clamps.CooldownFloor) hours = clamps.CooldownFloor;
-            return hours;
+            return CalendarSpeedHelper.ScaleCalendarHours(hours, api?.World?.Calendar);
         }
 
         public double FailedSpreadAttemptCooldownHours(ICoreAPI api, BlockPos pos, PlantRequirements requirements, EcosystemConfig cfg)
@@ -163,7 +163,7 @@ namespace WildFarming.Ecosystem
 
             if (hours < clamps.FailedFloor) hours = clamps.FailedFloor;
             if (hours > clamps.FailedCap) hours = clamps.FailedCap;
-            return hours;
+            return CalendarSpeedHelper.ScaleCalendarHours(hours, api?.World?.Calendar);
         }
 
         public bool TryApplySpreadAttemptCooldown(

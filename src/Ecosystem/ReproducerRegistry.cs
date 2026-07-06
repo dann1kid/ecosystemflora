@@ -103,7 +103,12 @@ namespace WildFarming.Ecosystem
             return woken;
         }
 
-        public void WakeAround(BlockPos center, int radiusBlocks, double now = 0, EcosystemConfig cfg = null)
+        public void WakeAround(
+            BlockPos center,
+            int radiusBlocks,
+            double now = 0,
+            EcosystemConfig cfg = null,
+            IGameCalendar calendar = null)
         {
             if (center == null || radiusBlocks <= 0 || entries.Count == 0) return;
 
@@ -116,6 +121,7 @@ namespace WildFarming.Ecosystem
             double wakeRetryHours = cfg != null && cfg.EventWakeRetryHours > 0
                 ? cfg.EventWakeRetryHours
                 : 6;
+            wakeRetryHours = CalendarSpeedHelper.ScaleCalendarHours(wakeRetryHours, calendar);
 
             long radiusSq = (long)radiusBlocks * radiusBlocks;
             int cs = GlobalConstants.ChunkSize;
