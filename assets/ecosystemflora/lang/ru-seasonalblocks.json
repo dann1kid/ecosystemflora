@@ -47,6 +47,10 @@
     "block-sedgephase-dormant-snow":  "Коричневая осока (покой)",
     "block-tallgrassphase-dieback-free":  "Высокая трава (отмирание)",
     "block-tallgrassphase-dieback-snow":  "Высокая трава (отмирание)",
+    "block-tallgrassphase-dieback-snow2":  "Высокая трава (отмирание)",
+    "block-tallgrassphase-dieback-snow3":  "Высокая трава (отмирание)",
     "block-tallgrassphase-dormant-free":  "Высокая трава (покой)",
-    "block-tallgrassphase-dormant-snow":  "Высокая трава (покой)"
+    "block-tallgrassphase-dormant-snow":  "Высокая трава (покой)",
+    "block-tallgrassphase-dormant-snow2":  "Высокая трава (покой)",
+    "block-tallgrassphase-dormant-snow3":  "Высокая трава (покой)"
 }

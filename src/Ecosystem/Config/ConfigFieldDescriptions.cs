@@ -588,8 +588,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше проверок сирот за проход чанка (0 = без лимита). Меньше: медленнее уборка.");
 
             D(nameof(EcosystemConfig.OrphanFoliageFireChunkHours),
-                "Hours after fire to prioritize orphan-prune chunk passes. 0 = no fire priority window.",
-                "Часов после пожара с приоритетом уборки сирот в чанке. 0 = без окна приоритета.");
+                "Hours after fire to prioritize orphan-prune chunk passes. Higher: longer priority window. Lower: shorter. 0 = off.",
+                "Часов после пожара с приоритетом уборки сирот в чанке. Больше: дольше окно приоритета. Меньше: короче. 0 = выкл.");
 
             D(nameof(EcosystemConfig.CanopyActivityScale),
                 "Higher: faster seasonal defoliation and budding curves. Lower: subtler canopy seasons. 1.0 = default.",

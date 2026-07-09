@@ -14,6 +14,8 @@ obj/
 # Temp analysis
 _wfr_extract/
 _wfr_temp.zip
+_zip_extract/
+_zipcheck/
 
 # OS
 Thumbs.db

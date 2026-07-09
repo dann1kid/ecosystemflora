@@ -320,7 +320,7 @@ namespace WildFarming.Ecosystem
 
         static Block ResolveBlockForPhase(ICoreAPI api, ReproducerEntry entry, Block current)
         {
-            bool snow = PlantSnowCover.ResolveWantsSnowCover(api, entry.Origin);
+            bool snow = PlantSnowCover.ClimateWantsSnowCover(api, entry.Origin);
 
             if (entry.PhenologyPhase == FlowerPhenologyPhase.Bloom)
             {

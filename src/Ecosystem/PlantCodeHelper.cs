@@ -7,13 +7,21 @@ namespace WildFarming.Ecosystem
 {
     public static class PlantCodeHelper
     {
-        /// <summary>True when attributes declare a reproducible ecology plant from any mod domain (v3.1).</summary>
-        public static bool IsThirdPartyEcologyBlock(Block block)
+        /// <summary>True when JSON declares <c>ecologyParticipant</c> on the block type.</summary>
+        public static bool HasDeclaredEcologyParticipant(Block block)
         {
             if (!EcosystemConfig.Loaded.EnableThirdPartyParticipants || block?.Attributes == null || block.Code == null) return false;
             if (!block.Attributes["ecologyParticipant"].AsBool(false)) return false;
             if (string.IsNullOrWhiteSpace(block.Attributes["ecologySpecies"].AsString(null))) return false;
             return !string.IsNullOrWhiteSpace(block.Attributes["ecologySpreadBlock"].AsString(null));
+        }
+
+        /// <summary>True when attributes declare a reproducible ecology plant from any mod domain (v3.1).</summary>
+        public static bool IsThirdPartyEcologyBlock(Block block)
+        {
+            if (!EcosystemConfig.Loaded.EnableThirdPartyParticipants || block?.Code == null) return false;
+            if (HasDeclaredEcologyParticipant(block)) return true;
+            return WildcraftFruitBerryEcology.IsWildBerryBlock(block);
         }
 
         /// <summary>Reads <c>ecologySpecies</c> when <c>ecologyParticipant</c> is enabled; otherwise vanilla path rules.</summary>
@@ -24,6 +32,12 @@ namespace WildFarming.Ecosystem
             {
                 string declared = block.Attributes["ecologySpecies"].AsString(null)?.Trim();
                 if (!string.IsNullOrEmpty(declared)) return declared;
+            }
+
+            if (EcosystemConfig.Loaded.EnableThirdPartyParticipants
+                && WildcraftFruitBerryEcology.TryGetEcologySpecies(block, out string wcSpecies))
+            {
+                return wcSpecies;
             }
 
             return GetEcologySpecies(block?.Code);
@@ -465,8 +479,18 @@ namespace WildFarming.Ecosystem
 
             if (IsThirdPartyEcologyBlock(block))
             {
-                AssetLocation spread = ResolveEcologyAsset(block.Attributes["ecologySpreadBlock"].AsString(""), block.Code.Domain);
-                return spread?.Path?.Length > 0 ? spread : null;
+                if (HasDeclaredEcologyParticipant(block))
+                {
+                    AssetLocation spread = ResolveEcologyAsset(block.Attributes["ecologySpreadBlock"].AsString(""), block.Code.Domain);
+                    if (spread?.Path?.Length > 0) return spread;
+                }
+
+                if (WildcraftFruitBerryEcology.TryGetSpreadBlock(block, out AssetLocation wcSpread))
+                {
+                    return wcSpread;
+                }
+
+                return null;
             }
 
             string wood = GetTreeWood(block);

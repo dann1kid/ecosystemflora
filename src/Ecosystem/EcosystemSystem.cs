@@ -681,7 +681,7 @@ namespace WildFarming.Ecosystem
                 }
 
                 Block spreadBlock = api.World.GetBlock(spreadBlockCode);
-                if (spreadBlock == null)
+                if (spreadBlock == null || spreadBlock.Id == 0)
                 {
                     if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
                     {
@@ -690,6 +690,15 @@ namespace WildFarming.Ecosystem
                             spreadBlockCode,
                             origin);
                     }
+                    else if (cfg.ReproduceDebug && PlantCodeHelper.IsThirdPartyEcologyBlock(matureBlock))
+                    {
+                        api.Logger.Warning(
+                            "[ecosystemflora] Third-party spread block missing: {0} (origin {1}, mature {2})",
+                            spreadBlockCode,
+                            origin,
+                            matureBlock?.Code);
+                    }
+
                     return;
                 }
 

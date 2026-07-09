@@ -151,7 +151,7 @@ namespace WildFarming.Ecosystem
             float minForest = attrs != null ? attrs["minForest"].AsFloat(float.NaN) : float.NaN;
             float maxForest = attrs != null ? attrs["maxForest"].AsFloat(float.NaN) : float.NaN;
             float spreadRate = attrs != null ? attrs["ecologySpreadRate"].AsFloat(float.NaN) : float.NaN;
-            bool thirdPartyParticipant = PlantCodeHelper.IsThirdPartyEcologyBlock(block);
+            bool declaredThirdParty = PlantCodeHelper.HasDeclaredEcologyParticipant(block);
             string species = PlantCodeHelper.ResolveEcologySpecies(block);
             EcologyHabitat habitat = EcologyHabitat.Terrestrial;
             int maxWaterDepth = 0;
@@ -194,7 +194,7 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            if (thirdPartyParticipant && attrs != null)
+            if (declaredThirdParty && attrs != null)
             {
                 habitat = PlantCodeHelper.ParseEcologyHabitat(attrs["ecologyHabitat"].AsString("Terrestrial"));
 
@@ -264,7 +264,7 @@ namespace WildFarming.Ecosystem
                         break;
                 }
             }
-            else if (!thirdPartyParticipant
+            else if (!declaredThirdParty
                 && !string.IsNullOrEmpty(species)
                 && SpeciesEcologyRegistry.IsLoaded
                 && SpeciesEcologyRegistry.TryGet(species, out SpeciesEcologyCsvRow registryRow))
@@ -554,6 +554,15 @@ namespace WildFarming.Ecosystem
             RhizomeSpread.ApplyTo(requirements);
             SurfaceMatSpread.ApplyTo(requirements);
             FernRhizomeSpread.ApplyTo(requirements);
+
+            if (declaredThirdParty
+                && !string.IsNullOrEmpty(requirements.Species)
+                && EcologyBerrySpecies.IsKnown(requirements.Species)
+                && requirements.SpreadMode == SpreadMode.Independent)
+            {
+                SpeciesEcologyLegacyAccess.ApplyBerryColonySpreadLegacy(requirements);
+            }
+
             BerryColonySpread.ApplyTo(requirements);
             ShoreSedgeMatSpread.ApplyTo(requirements);
             return requirements;

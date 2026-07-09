@@ -478,6 +478,52 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void TrySyncCover_IgnoresVanillaTallgrassSoEngineOwnsCover()
+        {
+            Block air = new Block { BlockId = 0 };
+            Block grassFree = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:tallgrass-veryshort-free"),
+            };
+            Block grassSnow = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:tallgrass-veryshort-snow"),
+            };
+            Block snowLayer = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:snowlayer-1"),
+                BlockMaterial = EnumBlockMaterial.Snow,
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, grassFree, grassSnow, snowLayer })
+            {
+                Temperature = -6f,
+            };
+            var pos = new BlockPos(8, 64, 8);
+            acc.SetBlock(2, pos);
+            acc.SetBlock(3, pos.UpCopy());
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.BlockAccessor).Returns(acc);
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                .Returns((AssetLocation loc) =>
+                {
+                    if (loc.Path.Contains("-snow")) return grassSnow;
+                    if (loc.Path.Contains("-free")) return grassFree;
+                    return air;
+                });
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            Assert.True(PlantSnowCover.IsVanillaTallgrassCoverBlock(grassSnow.Code));
+            Assert.False(PlantSnowCover.ShouldSyncCoverVariant(grassSnow.Code));
+            Assert.False(PlantSnowCoverSync.TrySyncCover(api.Object, pos));
+            Assert.True(PlantSnowCover.PathHasSnowCover(acc.GetBlock(pos).Code.Path));
+        }
+
+        [Fact]
         public void ShouldUseSnowVariant_DoesNotInheritParentSnowInWarmWeather()
         {
             Block air = new Block { BlockId = 0 };

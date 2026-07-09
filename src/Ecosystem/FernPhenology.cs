@@ -155,9 +155,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (FernPhenologyBlocks.PhaseFromCode(block.Code) != phase) return false;
-
-            bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
-            return PlantSnowCover.PathHasSnowCover(block.Code.Path) == wantSnow;
+            return true;
         }
 
         public static bool SyncBlockToPhase(

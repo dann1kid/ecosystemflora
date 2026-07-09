@@ -1,24 +1,30 @@
 ﻿{
   "code": "tallgrassphase-dieback",
   "variantgroups": [
-    { "code": "cover", "states": ["free", "snow"] }
+    { "code": "cover", "states": ["free", "snow", "snow2", "snow3"] }
   ],
   "class": "BlockPlant",
   "enabled": true,
   "renderpass": "OpaqueNoCull",
   "blockmaterial": "Plant",
   "blockmaterialByType": {
-    "*-snow": "Snow"
+    "*-snow": "Snow",
+    "*-snow2": "Snow",
+    "*-snow3": "Snow"
   },
   "drawtype": "JSON",
   "drawtypeByType": {
-    "*-snow": "crossandsnowlayer"
+    "*-snow": "crossandsnowlayer",
+    "*-snow2": "crossandsnowlayer_2",
+    "*-snow3": "crossandsnowlayer_3"
   },
   "randomizeRotations": true,
   "randomDrawOffset": true,
   "shapeByType": {
     "*-free": { "base": "game:block/basic/cross" },
-    "*-snow": { "base": "game:block/basic/cross" }
+    "*-snow": { "base": "game:block/basic/cross" },
+    "*-snow2": { "base": "game:block/basic/cross" },
+    "*-snow3": { "base": "game:block/basic/cross" }
   },
   "shape": { "base": "game:block/basic/cross" },
   "texturesByType": {
@@ -27,6 +33,14 @@
       "south": { "base": "game:block/plant/tallgrass/free/veryshort-south", "tint": "#8b7355" }
     },
     "*-snow": {
+      "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north" },
+      "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south" }
+    },
+    "*-snow2": {
+      "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north" },
+      "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south" }
+    },
+    "*-snow3": {
       "north": { "base": "game:block/plant/tallgrass/snow/veryshort-north" },
       "south": { "base": "game:block/plant/tallgrass/snow/veryshort-south" }
     }
@@ -42,6 +56,18 @@
       "overrideRandomDrawOffset": 2,
       "allowOverlays": false,
       "allowStepWhenStuck": true
+    },
+    "*-snow2": {
+      "drawnHeight": 8,
+      "overrideRandomDrawOffset": 2,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
+    },
+    "*-snow3": {
+      "drawnHeight": 8,
+      "overrideRandomDrawOffset": 2,
+      "allowOverlays": false,
+      "allowStepWhenStuck": true
     }
   },
   "vertexFlagsByType": {
@@ -53,11 +79,23 @@
       "zOffset": 3,
       "windMode": "ExtraWeakWind",
       "windData": 2
+    },
+    "*-snow2": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
+    },
+    "*-snow3": {
+      "zOffset": 3,
+      "windMode": "ExtraWeakWind",
+      "windData": 2
     }
   },
   "faceCullModeByType": {
     "*-free": "Default",
-    "*-snow": "MergeSnowLayer"
+    "*-snow": "MergeSnowLayer",
+    "*-snow2": "MergeSnowLayer",
+    "*-snow3": "MergeSnowLayer"
   },  "climateColorMap": "climatePlantTint",
   "seasonColorMap": "seasonalGrass",
   "sideopaque": { "all": false },

@@ -49,6 +49,8 @@
     <None Remove="tools\**" />
     <Compile Remove="_compatcheck\**" />
     <None Remove="_compatcheck\**" />
+    <Compile Remove="_zipcheck\**" />
+    <None Remove="_zipcheck\**" />
     <Compile Remove="community\**" />
     <None Remove="community\**" />
   </ItemGroup>

@@ -43,7 +43,8 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+                Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
+                PlantSnowCoverSync.TrySyncCover(api, entry.Origin, block);
             }
         }
     }

@@ -299,7 +299,7 @@
   "ecosystemflora:config-field-OnlyActivateNearPlayers": "Только у игроков (тест)",
   "ecosystemflora:config-field-OnlyActivateNearPlayers-desc": "Вкл.: распространение, стресс, деревья и обходы только в радиусе игрока (~192 блока). Выкл.: все загруженные участки.",
   "ecosystemflora:config-field-OrphanFoliageFireChunkHours": "Приоритет после пожара (часы)",
-  "ecosystemflora:config-field-OrphanFoliageFireChunkHours-desc": "Часов после пожара с приоритетом уборки сирот в чанке. 0 = без окна приоритета.",
+  "ecosystemflora:config-field-OrphanFoliageFireChunkHours-desc": "Часов после пожара с приоритетом уборки сирот в чанке. Больше: дольше окно приоритета. Меньше: короче. 0 = выкл.",
   "ecosystemflora:config-field-OrphanFoliageMaxBfsDepth": "Поиск опоры для сирот (блоки)",
   "ecosystemflora:config-field-OrphanFoliageMaxBfsDepth-desc": "Больше: длиннее поиск опоры перед снятием. Меньше: быстрее, возможны пропуски.",
   "ecosystemflora:config-field-OrphanFoliageMaxChecksPerChunkPass": "Проверок сирот за проход чанка",

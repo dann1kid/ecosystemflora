@@ -25,6 +25,11 @@ namespace WildFarming.Ecosystem
                 && SpeciesEcologyRegistry.TryGet(req.Species, out SpeciesEcologyCsvRow row))
             {
                 if (row.Taxon != "berry") return;
+                if (req.SpreadMode != SpreadMode.BerryColonyMat)
+                {
+                    SpeciesEcologyLegacyAccess.ApplyBerryColonySpreadLegacy(req);
+                }
+
                 ApplyPolicyGates(req);
                 return;
             }
@@ -97,8 +102,13 @@ namespace WildFarming.Ecosystem
 
             if (PlantCodeHelper.IsThirdPartyEcologyBlock(block))
             {
-                return EcologyBerrySpecies.IsKnown(species)
-                    && string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase);
+                if (!string.Equals(PlantCodeHelper.ResolveEcologySpecies(block), species, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (EcologyBerrySpecies.IsKnown(species)) return true;
+                return WildcraftFruitBerryEcology.IsWildBerryBlock(block);
             }
 
             return PlantCodeHelper.IsWildBerryBushBlock(block)

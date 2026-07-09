@@ -152,12 +152,20 @@ namespace WildFarming.Ecosystem
             Block current = api.World.BlockAccessor.GetBlock(pos);
             if (BlockMatchesPhase(api, pos, requirements, current, phase))
             {
-                PlantSnowCoverSync.TrySyncCover(api, pos, current);
+                if (IsShoreSedge(requirements))
+                {
+                    PlantSnowCoverSync.TrySyncCover(api, pos, current);
+                }
+
                 return false;
             }
 
             bool changed = SyncBlockToPhase(api, pos, requirements, phase);
-            PlantSnowCoverSync.TrySyncCover(api, pos);
+            if (IsShoreSedge(requirements))
+            {
+                PlantSnowCoverSync.TrySyncCover(api, pos);
+            }
+
             return changed;
         }
 
@@ -192,9 +200,7 @@ namespace WildFarming.Ecosystem
             if (!SedgePhenologyBlocks.IsPhaseBlock(block)) return false;
             if (!SedgePhenologyBlocks.TryGetPhase(block, out TallgrassPhenologyPhase blockPhase)) return false;
             if (blockPhase != phase) return false;
-
-            bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
-            return PlantSnowCover.PathHasSnowCover(block.Code.Path) == wantSnow;
+            return true;
         }
 
         static bool BlockMatchesTallgrassPhase(
@@ -213,13 +219,14 @@ namespace WildFarming.Ecosystem
             }
             else
             {
-                if (!TallgrassPhenologyBlocks.IsPhaseBlock(block)) return false;
-                TallgrassPhenologyPhase? blockPhase = TallgrassPhenologyBlocks.PhaseFromBlock(block);
-                if (blockPhase != phase) return false;
+                // Radical: tallgrass phenology no longer swaps to custom phase blocks.
+                // Keep vanilla tallgrass and let the engine manage snow cover variants.
+                // Back-compat: old worlds may already contain tallgrassphase-* blocks;
+                // treat them as matching so they persist without being replaced.
+                if (TallgrassPhenologyBlocks.IsPhaseBlock(block)) return true;
+                if (PlantCodeHelper.ResolveEcologySpecies(block) != "tallgrass") return false;
             }
-
-            bool wantSnow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
-            return PlantSnowCover.PathHasSnowCover(block.Code.Path) == wantSnow;
+            return true;
         }
 
         public static bool SyncBlockToPhase(
@@ -249,7 +256,7 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            bool snow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
+            bool snow = PlantSnowCover.ClimateWantsSnowCover(api, pos);
 
             if (phase == TallgrassPhenologyPhase.Active)
             {
@@ -281,45 +288,9 @@ namespace WildFarming.Ecosystem
 
         static bool SyncTallgrassBlockToPhase(ICoreAPI api, BlockPos pos, TallgrassPhenologyPhase phase)
         {
-            Block current = api.World.BlockAccessor.GetBlock(pos);
-            if (current == null || current.Id == 0) return false;
-            if (PlantCodeHelper.ResolveEcologySpecies(current) != "tallgrass"
-                && !TallgrassPhenologyBlocks.IsPhaseBlock(current))
-            {
-                return false;
-            }
-
-            if (phase == TallgrassPhenologyPhase.Active)
-            {
-                if (TallgrassPhenologyBlocks.IsPhaseBlock(current))
-                {
-                    bool snow = PlantSnowCover.ResolveWantsSnowCover(api, pos);
-                    AssetLocation veryshortCode = PlantSnowCover.CodeWithCover(
-                        new AssetLocation("game:tallgrass-veryshort-free"),
-                        snow);
-                    Block veryshort = api.World.GetBlock(veryshortCode);
-                    if (veryshort == null || veryshort.Id == 0) return false;
-                    if (current.BlockId == veryshort.BlockId) return false;
-                    api.World.BlockAccessor.SetBlock(veryshort.BlockId, pos);
-                    api.World.BlockAccessor.MarkBlockDirty(pos);
-                    return true;
-                }
-
-                return false;
-            }
-
-            AssetLocation code = TallgrassPhenologyBlocks.CodeForPhase(
-                phase,
-                snow: PlantSnowCover.ResolveWantsSnowCover(api, pos));
-            if (code == null) return false;
-
-            Block target = api.World.GetBlock(code);
-            if (target == null || target.Id == 0) return false;
-            if (current.BlockId == target.BlockId) return false;
-
-            api.World.BlockAccessor.SetBlock(target.BlockId, pos);
-            api.World.BlockAccessor.MarkBlockDirty(pos);
-            return true;
+            // Radical (new behavior): do not swap tallgrass into custom tallgrassphase-* blocks.
+            // Back-compat: leave any existing tallgrassphase-* blocks untouched.
+            return false;
         }
     }
 }

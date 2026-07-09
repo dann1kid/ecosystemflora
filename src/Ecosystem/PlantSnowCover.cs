@@ -14,7 +14,10 @@ namespace WildFarming.Ecosystem
 
         public static bool PathHasSnowCover(string path)
         {
-            return !string.IsNullOrEmpty(path) && path.EndsWith("-snow", System.StringComparison.Ordinal);
+            if (string.IsNullOrEmpty(path)) return false;
+            return path.EndsWith("-snow", System.StringComparison.Ordinal)
+                || path.EndsWith("-snow2", System.StringComparison.Ordinal)
+                || path.EndsWith("-snow3", System.StringComparison.Ordinal);
         }
 
         public static bool BlockHasCoverVariant(AssetLocation code) =>
@@ -33,12 +36,31 @@ namespace WildFarming.Ecosystem
             if (!IsManagedEcologyPhasePath(path)) return false;
 
             if (path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal)
-                || path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
+                || PathHasSnowCover(path))
             {
                 return true;
             }
 
             return IsLegacyBareFernPhasePath(path);
+        }
+
+        public static bool ShouldSyncCoverVariant(AssetLocation code) =>
+            BlockHasCoverVariant(code);
+
+        /// <summary>
+        /// Legacy helper kept for tests; vanilla tallgrass cover is engine-owned after the radical phenology change.
+        /// </summary>
+        public static bool IsVanillaTallgrassCoverBlock(AssetLocation code) =>
+            code != null && IsVanillaTallgrassCoverPath(code.Domain, code.Path);
+
+        public static bool IsVanillaTallgrassCoverPath(string domain, string path)
+        {
+            if (string.IsNullOrEmpty(path) || domain != "game") return false;
+            if (!path.StartsWith("tallgrass-", System.StringComparison.Ordinal)) return false;
+            if (path.StartsWith("tallgrass-eaten", System.StringComparison.Ordinal)) return false;
+
+            return path.EndsWith(JuvenileBlockNaming.FreeSuffix, System.StringComparison.Ordinal)
+                || PathHasSnowCover(path);
         }
 
         static bool IsManagedEcologyPhasePath(string path)
@@ -57,7 +79,9 @@ namespace WildFarming.Ecosystem
         {
             if (acc == null || pos == null) return false;
             int rainY = acc.GetRainMapHeightAt(pos.X, pos.Z);
-            return pos.Y > rainY;
+            // Rain map height is the first Y that blocks precipitation in this column.
+            // Plants at the exposed surface commonly sit exactly at this height, so use >=.
+            return pos.Y >= rainY;
         }
 
         /// <summary>Bare <c>fernphase-*-{dormant|dieback|sporulating}</c> without cover suffix (pre-unification saves).</summary>
@@ -157,7 +181,7 @@ namespace WildFarming.Ecosystem
 
             if (snow)
             {
-                if (path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
+                if (PathHasSnowCover(path))
                 {
                     return code;
                 }
@@ -178,9 +202,13 @@ namespace WildFarming.Ecosystem
                 return code;
             }
 
-            if (path.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal))
+            if (PathHasSnowCover(path))
             {
-                string bare = path.Substring(0, path.Length - JuvenileBlockNaming.SnowSuffix.Length);
+                string bare = path;
+                if (bare.EndsWith("-snow3", System.StringComparison.Ordinal)) bare = bare.Substring(0, bare.Length - "-snow3".Length);
+                else if (bare.EndsWith("-snow2", System.StringComparison.Ordinal)) bare = bare.Substring(0, bare.Length - "-snow2".Length);
+                else if (bare.EndsWith(JuvenileBlockNaming.SnowSuffix, System.StringComparison.Ordinal)) bare = bare.Substring(0, bare.Length - JuvenileBlockNaming.SnowSuffix.Length);
+
                 if (IsLegacyBareFernPhasePath(bare))
                 {
                     return new AssetLocation(code.Domain, bare + JuvenileBlockNaming.FreeSuffix);

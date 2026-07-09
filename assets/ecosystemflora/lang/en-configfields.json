@@ -299,7 +299,7 @@
   "ecosystemflora:config-field-OnlyActivateNearPlayers": "Only near players (playtest)",
   "ecosystemflora:config-field-OnlyActivateNearPlayers-desc": "On: spread, stress, trees, and chunk scans only within player radius (~192 blocks). Off: all loaded chunks.",
   "ecosystemflora:config-field-OrphanFoliageFireChunkHours": "Fire chunk orphan-prune priority (hours)",
-  "ecosystemflora:config-field-OrphanFoliageFireChunkHours-desc": "Hours after fire to prioritize orphan-prune chunk passes. 0 = no fire priority window.",
+  "ecosystemflora:config-field-OrphanFoliageFireChunkHours-desc": "Hours after fire to prioritize orphan-prune chunk passes. Higher: longer priority window. Lower: shorter. 0 = off.",
   "ecosystemflora:config-field-OrphanFoliageMaxBfsDepth": "Orphan foliage support search (blocks)",
   "ecosystemflora:config-field-OrphanFoliageMaxBfsDepth-desc": "Higher: longer support search before pruning (safer, more CPU). Lower: faster, may miss edge cases.",
   "ecosystemflora:config-field-OrphanFoliageMaxChecksPerChunkPass": "Orphan foliage checks per chunk pass",
