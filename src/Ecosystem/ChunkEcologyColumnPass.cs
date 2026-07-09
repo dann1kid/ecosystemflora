@@ -230,7 +230,7 @@ namespace WildFarming.Ecosystem
                             && PlantCodeHelper.IsTreeLogGrownBlock(block))
                         {
                             string wood = PlantCodeHelper.GetTreeWood(block);
-                            if (!string.IsNullOrEmpty(wood) && WildTreeEcology.TryGet(wood, out _))
+                            if (!string.IsNullOrEmpty(wood))
                             {
                                 BlockPos basePos = RegistrationColumnScan.GetTreeTrunkBase(view, scanScratch);
                                 Block trunk = view.GetBlock(basePos.X, basePos.Y, basePos.Z);

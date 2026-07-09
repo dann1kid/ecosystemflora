@@ -359,7 +359,9 @@ namespace WildFarming.Ecosystem
                 int dash = rest.IndexOf('-');
                 if (dash > 0) rest = rest.Substring(0, dash);
                 if (rest == "aged") return null;
-                return EcologyTreeSpecies.IsKnown(rest) ? rest : null;
+                // Floral Zones and other content mods extend game:log-grown-* woods without updating our
+                // vanilla wood allowlist. Treat any non-aged wood id as a valid tree species id.
+                return rest;
             }
 
             if (path.StartsWith("sapling-"))
@@ -367,7 +369,7 @@ namespace WildFarming.Ecosystem
                 string rest = path.Substring("sapling-".Length);
                 int dash = rest.IndexOf('-');
                 if (dash > 0) rest = rest.Substring(0, dash);
-                return EcologyTreeSpecies.IsKnown(rest) ? rest : null;
+                return rest;
             }
 
             return null;

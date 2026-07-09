@@ -28,7 +28,7 @@ namespace WildFarming.Tests
         {
             Assert.True(PlantCodeHelper.IsAnyLogGrownTrunkBlock(Block("game:log-grown-moddedwood-ud")));
             Assert.False(PlantCodeHelper.IsAnyLogGrownTrunkBlock(Block("game:log-grown-aged-oak-ud")));
-            Assert.False(PlantCodeHelper.IsTreeLogGrownBlock(Block("game:log-grown-moddedwood-ud")));
+            Assert.True(PlantCodeHelper.IsTreeLogGrownBlock(Block("game:log-grown-moddedwood-ud")));
         }
 
         [Fact]

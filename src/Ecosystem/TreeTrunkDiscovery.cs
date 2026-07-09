@@ -169,10 +169,7 @@ namespace WildFarming.Ecosystem
                 if (PlantCodeHelper.IsTreeLogGrownBlock(block))
                 {
                     wood = PlantCodeHelper.GetTreeWood(block);
-                    if (string.IsNullOrEmpty(wood) || !WildTreeEcology.TryGet(wood, out _))
-                    {
-                        return false;
-                    }
+                    if (string.IsNullOrEmpty(wood)) return false;
 
                     basePos = PlantCodeHelper.GetTreeTrunkBase(acc, scanScratch);
                     return true;

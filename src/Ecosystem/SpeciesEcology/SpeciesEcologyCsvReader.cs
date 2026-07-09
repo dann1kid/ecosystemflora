@@ -67,7 +67,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
                 if (validateContractSpecies
                     && issues != null
-                    && !SpeciesEcologyCatalogIndex.IsContractSpecies(species))
+                    && !SpeciesEcologyCatalogIndex.IsKnownSpecies(species))
                 {
                     issues.Add(new CsvRowIssue(CsvRowIssueKind.UnknownSpecies, lineIndex + 1, species));
                 }

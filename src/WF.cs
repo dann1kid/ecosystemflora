@@ -18,6 +18,11 @@ namespace WildFarming
             api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);
+            if (api.Side == EnumAppSide.Server)
+            {
+                DiscoveredSpeciesStore.Load(api);
+                SpeciesEcologyCatalogIndex.SeedDiscoveredFromStore(DiscoveredSpeciesStore.All());
+            }
             SpeciesEcologyLoadService.LoadAll(api, SpeciesEcologyLoadService.ResolveModRoot(), syncUserFiles: api.Side == EnumAppSide.Server);
 
             if (api.Side == EnumAppSide.Server)
@@ -31,6 +36,11 @@ namespace WildFarming
         {
             base.AssetsFinalize(api);
             WildcraftFruitEcologyBootstrap.Apply(api);
+            WildcraftFruitFruitingVineEcologyBootstrap.Apply(api);
+            WildcraftFruitWorldgenEcologyBootstrap.Apply(api);
+            WildcraftTreeEcologyBootstrap.Apply(api);
+            FloralZonesEcologyBootstrap.Apply(api);
+            DynamicSpeciesAutoCurves.Apply(api);
             FlowerDrygrassDrops.Apply(api);
         }
 

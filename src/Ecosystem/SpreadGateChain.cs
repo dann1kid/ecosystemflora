@@ -66,6 +66,15 @@ namespace WildFarming.Ecosystem
         }
     }
 
+    /// <summary>Climate-only participants set <c>ecologySpreadRate</c> to zero.</summary>
+    internal sealed class ZeroSpreadRateGate : ISpreadGate
+    {
+        public bool BlocksSpread(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            return entry?.Requirements != null && entry.Requirements.SpreadRate <= 0f;
+        }
+    }
+
     /// <summary>
     /// Ordered set of pre-spawn gates evaluated once. Previously the phenology + sporulation checks
     /// were duplicated in both the spread tick callback and <c>TrySpawnOffspring</c>; senescence sat
@@ -84,7 +93,8 @@ namespace WildFarming.Ecosystem
             new YoungTreeSpreadGate(),
             new PhenologyGate(),
             new FernSpreadGate(),
-            new TallgrassPhenologyGate());
+            new TallgrassPhenologyGate(),
+            new ZeroSpreadRateGate());
 
         readonly ISpreadGate[] gates;
 
