@@ -215,27 +215,34 @@ namespace WildFarming.Ecosystem
             cfg.DisplacementHoldMargin = 1f;
             cfg.EnableEventDrivenSpread = false;
 
-            cfg.ReproduceTickIntervalMs = 100;
+            // Smoother CPU: 4× tick rate, ¼ batch caps (~same aggregate spread throughput).
+            cfg.ReproduceTickIntervalMs = 25;
+            cfg.ChunkScanTickIntervalMs = 17;
+            cfg.StressTickIntervalMs = 1375;
             cfg.TickBudgetMs = 0;
             cfg.SpreadBudgetMs = 0;
             cfg.RegistrationBudgetMs = 0;
-            cfg.MaxReproduceAttemptsPerTick = 8192;
+            cfg.MaxReproduceAttemptsPerTick = 2048;
             cfg.MaxSpreadChunksVisitedPerTick = 512;
-            cfg.MaxSpreadAttemptsPerChunkPerTick = 64;
-            cfg.MaxSpreadCommitsPerTick = 8192;
+            cfg.MaxSpreadAttemptsPerChunkPerTick = 16;
+            cfg.MaxSpreadCommitsPerTick = 2048;
             cfg.MaxSpreadCommitChunksVisitedPerTick = 512;
-            cfg.MaxSpreadCommitsPerChunkPerTick = 64;
-            cfg.MaxRegistrationsPerTick = 8192;
-            cfg.MaxRegistryAppliesPerTick = 8192;
-            cfg.MaxRegistryAppliesPerChunkPerTick = 512;
-            cfg.MaxPriorityRegistrationsPerTick = 8192;
-            cfg.MaxPriorityRegistryAppliesPerTick = 8192;
-            cfg.MaxFloraRescanColumnsPerTick = 512;
-            cfg.MaxPendingFlowerMaturationChecksPerTick = 512;
-            cfg.MaxPendingTallgrassPromotionChecksPerTick = 512;
-            cfg.MaxPendingFernMaturationChecksPerTick = 512;
-            cfg.MaxPendingBerryMaturationChecksPerTick = 512;
-            cfg.MaxTreeGrowthAttemptsPerTick = 128;
+            cfg.MaxSpreadCommitsPerChunkPerTick = 16;
+            cfg.MaxRegistrationsPerTick = 2048;
+            cfg.MaxRegistryAppliesPerTick = 2048;
+            cfg.MaxRegistryAppliesPerChunkPerTick = 128;
+            cfg.MaxPriorityRegistrationsPerTick = 2048;
+            cfg.MaxPriorityRegistryAppliesPerTick = 2048;
+            cfg.MaxChunkColumnsScannedPerTick = 128;
+            cfg.MaxPriorityChunkScansPerTick = 48;
+            cfg.MaxRegistrationSnapshotCellsPerTick = 2048;
+            cfg.MaxStressChecksPerTick = 16;
+            cfg.MaxFloraRescanColumnsPerTick = 128;
+            cfg.MaxPendingFlowerMaturationChecksPerTick = 128;
+            cfg.MaxPendingTallgrassPromotionChecksPerTick = 128;
+            cfg.MaxPendingFernMaturationChecksPerTick = 128;
+            cfg.MaxPendingBerryMaturationChecksPerTick = 128;
+            cfg.MaxTreeGrowthAttemptsPerTick = 32;
             cfg.TreeGrowthActivityScale = 10f;
         }
     }

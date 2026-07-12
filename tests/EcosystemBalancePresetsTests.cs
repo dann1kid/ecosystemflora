@@ -46,8 +46,10 @@ namespace WildFarming.Tests
             Assert.True(cfg.EnableChunkFairSpread);
             Assert.Equal(1f, cfg.DisplacementHoldMargin);
             Assert.False(cfg.EnableEventDrivenSpread);
-            Assert.Equal(8192, cfg.MaxReproduceAttemptsPerTick);
-            Assert.Equal(100, cfg.ReproduceTickIntervalMs);
+            Assert.Equal(2048, cfg.MaxReproduceAttemptsPerTick);
+            Assert.Equal(16, cfg.MaxSpreadAttemptsPerChunkPerTick);
+            Assert.Equal(25, cfg.ReproduceTickIntervalMs);
+            Assert.Equal(17, cfg.ChunkScanTickIntervalMs);
         }
 
         [Fact]
