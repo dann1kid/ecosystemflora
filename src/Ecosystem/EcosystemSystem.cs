@@ -747,6 +747,18 @@ namespace WildFarming.Ecosystem
 
                 spreadBlockCode = spreadBlock.Code.Clone();
 
+                if (requirements.Species == "tallgrass"
+                    && TallgrassSpreadMaturation.UsesMaturation(cfg)
+                    && !TallgrassSpreadMaturation.CanReproduceFrom(matureBlock, api, origin))
+                {
+                    if (!playerPlaced && TallgrassEstablishment.ShouldQueueAfterPlacement(api, origin, matureBlock))
+                    {
+                        maturationQueues.AddTallgrassPromotion(api, origin);
+                    }
+
+                    return false;
+                }
+
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
                 if (cfg.StaggerReproduceAttempts)
@@ -1642,11 +1654,33 @@ namespace WildFarming.Ecosystem
             return pendingRegistrations.IsScanCompleted(chunkCoord);
         }
 
+        /// <summary>Enqueue tallgrass growth when inspect finds grass below spread height.</summary>
+        public bool TryQueueTallgrassPromotionAtInspect(BlockPos pos, Block block)
+        {
+            if (api == null || api.Side != EnumAppSide.Server || pos == null || block == null) return false;
+            if (!TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block)) return false;
+
+            maturationQueues.AddTallgrassPromotion(api, pos);
+            return true;
+        }
+
         /// <summary>One-shot registration when a player inspects an eligible but missed plant.</summary>
         public bool TryRegisterEligiblePlantAtInspect(BlockPos pos, Block block)
         {
             if (api == null || api.Side != EnumAppSide.Server || pos == null || block == null) return false;
             if (registry.Contains(pos)) return true;
+
+            if (TallgrassSpreadMaturation.UsesMaturation(EcosystemConfig.Loaded)
+                && PlantCodeHelper.ResolveEcologySpecies(block) == "tallgrass"
+                && !TallgrassSpreadMaturation.CanReproduceFrom(block, api, pos))
+            {
+                if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block))
+                {
+                    maturationQueues.AddTallgrassPromotion(api, pos);
+                }
+
+                return false;
+            }
 
             if (!EcosystemParticipant.TryCreateForRegistration(api, pos, block, out IEcosystemParticipant participant)) return false;
 

@@ -206,15 +206,20 @@ namespace WildFarming.Ecosystem
             string registerAt = TallgrassEstablishmentInspect.StageLabel(snap.RegisterStageIndex);
             string target = TallgrassEstablishmentInspect.StageLabel(snap.TargetStageIndex);
 
+            AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-queue-header");
+
             switch (snap.Phase)
             {
                 case TallgrassEstablishmentInspect.Phase.Growing:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-queue-active");
                     AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-growing");
                     break;
                 case TallgrassEstablishmentInspect.Phase.WaitingForScan:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-queue-not-enqueued");
                     AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-waiting-scan");
                     break;
                 case TallgrassEstablishmentInspect.Phase.RegistrationPending:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-queue-finished");
                     AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-registration-pending");
                     AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-height-now", current);
                     return true;
@@ -288,10 +293,25 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos contextPos = ResolveInspectContextPos(acc, pos, block, req);
 
+            bool tallgrassMaturation = species == "tallgrass"
+                && TallgrassSpreadMaturation.UsesMaturation(cfg);
+            bool tallgrassSpreadReady = !tallgrassMaturation
+                || TallgrassSpreadMaturation.CanReproduceFrom(block, api, contextPos);
+
             EcosystemSystem eco = EcosystemSystem.Instance;
             if (eco != null && api.Side == EnumAppSide.Server && !eco.RegistryContains(pos))
             {
-                eco.TryRegisterEligiblePlantAtInspect(pos, block);
+                if (tallgrassMaturation && !tallgrassSpreadReady)
+                {
+                    if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block))
+                    {
+                        eco.TryQueueTallgrassPromotionAtInspect(pos, block);
+                    }
+                }
+                else
+                {
+                    eco.TryRegisterEligiblePlantAtInspect(pos, block);
+                }
             }
 
             ReproducerEntry registryEntry = null;
@@ -351,8 +371,9 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (!inRegistry
-                && species == "tallgrass"
+            if (species == "tallgrass"
+                && tallgrassMaturation
+                && !tallgrassSpreadReady
                 && TryAppendTallgrassEstablishmentInspect(api, pos, block, lines))
             {
                 return;

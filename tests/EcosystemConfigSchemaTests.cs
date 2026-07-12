@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using WildFarming.Ecosystem;
 using WildFarming.Ecosystem.Config;
 using Xunit;
@@ -51,6 +52,43 @@ namespace WildFarming.Tests
             EcosystemConfigSchema.MarkCustomIfPresetFieldEdited(cfg, nameof(EcosystemConfig.ReproduceChance));
 
             Assert.Equal(EcosystemBalancePresets.Custom, cfg.BalancePreset);
+        }
+
+        [Fact]
+        public void Schema_ReproduceDebug_IsAdvancedCategory()
+        {
+            EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(nameof(EcosystemConfig.ReproduceDebug));
+            Assert.NotNull(field);
+            Assert.Equal("advanced", field.Category);
+        }
+
+        [Fact]
+        public void Schema_SpreadCategory_OpensWithCoreSpreadTuning()
+        {
+            IReadOnlyList<EcosystemConfigFieldDescriptor> fields = EcosystemConfigSchema.GetCategoryFields("spread");
+            Assert.NotEmpty(fields);
+            Assert.Equal(nameof(EcosystemConfig.ReproduceRadius), fields[0].Name);
+            Assert.Contains(fields, f => f.Name == nameof(EcosystemConfig.EnableTallgrassSpreadMaturation));
+        }
+
+        [Fact]
+        public void Schema_MasterCategory_GroupsInspectNearTop()
+        {
+            IReadOnlyList<EcosystemConfigFieldDescriptor> fields = EcosystemConfigSchema.GetCategoryFields("master");
+            int preset = IndexOf(fields, nameof(EcosystemConfig.BalancePreset));
+            int inspect = IndexOf(fields, nameof(EcosystemConfig.EnableEcologyInspect));
+            Assert.True(preset >= 0);
+            Assert.True(inspect > preset);
+        }
+
+        static int IndexOf(IReadOnlyList<EcosystemConfigFieldDescriptor> fields, string name)
+        {
+            for (int i = 0; i < fields.Count; i++)
+            {
+                if (fields[i].Name == name) return i;
+            }
+
+            return -1;
         }
     }
 }

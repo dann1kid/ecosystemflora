@@ -47,7 +47,15 @@ namespace WildFarming.Ecosystem.Config
             ("HarshWildPlants", "master"),
             ("ApplyWorldgenRainForest", "master"),
             ("EnableThirdPartyParticipants", "master"),
-            ("Reproduce", "spread"),
+            ("ReproduceDebug", "advanced"),
+            ("ReproduceTickProfiling", "perf"),
+            ("ReproduceTickIntervalMs", "perf"),
+            ("ReproduceRadius", "spread"),
+            ("ReproduceVerticalSearch", "spread"),
+            ("ReproduceChance", "spread"),
+            ("ReproduceIntervalHours", "spread"),
+            ("ReproduceAttemptsPerYear", "spread"),
+            ("StaggerReproduce", "spread"),
             ("MinFitness", "spread"),
             ("MinSpeciesReproduce", "spread"),
             ("UseCalendarScaledSpread", "spread"),
@@ -263,8 +271,8 @@ namespace WildFarming.Ecosystem.Config
                     Property = prop,
                     Name = prop.Name,
                     Kind = kind.Value,
-                    Category = attr?.Category ?? InferCategory(prop.Name),
-                    Order = attr?.Order ?? 100,
+                    Category = ResolveCategory(prop.Name, attr),
+                    Order = ResolveOrder(prop.Name, attr),
                     Scope = scope,
                     Min = min,
                     Max = max,
@@ -284,6 +292,20 @@ namespace WildFarming.Ecosystem.Config
             if (type == typeof(double)) return ConfigFieldKind.Double;
             if (type == typeof(string)) return ConfigFieldKind.String;
             return null;
+        }
+
+        static string ResolveCategory(string name, ConfigFieldAttribute attr)
+        {
+            if (!string.IsNullOrEmpty(attr?.Category)) return attr.Category;
+            if (ConfigFieldOrder.TryGetCategory(name, out string category)) return category;
+            return InferCategory(name);
+        }
+
+        static int ResolveOrder(string name, ConfigFieldAttribute attr)
+        {
+            if (attr != null && attr.Order != 100) return attr.Order;
+            if (ConfigFieldOrder.TryGetOrder(name, out int order)) return order;
+            return 9000;
         }
 
         static string InferCategory(string name)

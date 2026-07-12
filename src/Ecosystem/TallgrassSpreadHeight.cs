@@ -110,10 +110,10 @@ namespace WildFarming.Ecosystem
             return -1;
         }
 
-        /// <summary>Minimum height index before tallgrass may spread (half of environment target, rounded up).</summary>
+        /// <summary>Minimum height index before tallgrass may spread (half of environment target, rounded up; at least short).</summary>
         internal static int MinSpreadStageIndex(int targetStageIndex)
         {
-            if (targetStageIndex <= 0) return 0;
+            if (targetStageIndex <= 0) return 1;
             return (targetStageIndex + 1) / 2;
         }
 
@@ -184,7 +184,7 @@ namespace WildFarming.Ecosystem
                 ? new System.Random(StablePosSeed(pos))
                 : new System.Random(0);
 
-            if (api == null || pos == null)
+            if (api?.World?.BlockAccessor == null || pos == null)
             {
                 return PickStageIndex(in DefaultOpenContext, rand);
             }

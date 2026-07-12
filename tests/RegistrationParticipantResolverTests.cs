@@ -41,6 +41,41 @@ namespace WildFarming.Tests
             Assert.Equal(phase.Code, spread);
             Assert.Equal(phase.Code, mature);
         }
+
+        [Fact]
+        public void TryFromLiveBlock_TallgrassVeryshort_BlockedWhenMaturationEnabled()
+        {
+            Block grass = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:tallgrass-veryshort-free"),
+                Replaceable = 3000,
+                BlockMaterial = EnumBlockMaterial.Plant,
+            };
+
+            var world = new Mock<IWorldAccessor>();
+            world.Setup(w => w.GetBlock(It.IsAny<AssetLocation>())).Returns(grass);
+            var api = new Mock<ICoreAPI>();
+            api.Setup(a => a.World).Returns(world.Object);
+
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+
+            PlantRequirements requirements = null;
+            AssetLocation spread = null;
+            AssetLocation mature = null;
+
+            bool ok = RegistrationParticipantResolver.TryFromLiveBlock(
+                api.Object,
+                new BlockPos(8, 64, 8),
+                grass,
+                ref requirements,
+                ref spread,
+                ref mature);
+
+            Assert.False(ok);
+
+            EcosystemConfig.Loaded = new EcosystemConfig();
+        }
     }
 
     public class ReproducerEntrySpeciesMatchTests

@@ -10,7 +10,7 @@ namespace WildFarming.Tests
             new Vintagestory.API.Common.Block { Code = new Vintagestory.API.Common.AssetLocation("game", path) };
 
         [Theory]
-        [InlineData(0, 0)]
+        [InlineData(0, 1)]
         [InlineData(1, 1)]
         [InlineData(2, 1)]
         [InlineData(3, 2)]
