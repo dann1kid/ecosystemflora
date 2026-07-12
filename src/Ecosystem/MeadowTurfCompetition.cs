@@ -21,6 +21,14 @@ namespace WildFarming.Ecosystem
                 return score;
             }
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (cfg != null
+                && !string.IsNullOrWhiteSpace(cfg.BalancePreset)
+                && cfg.BalancePreset.Equals(EcosystemBalancePresets.Timelapse, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return score;
+            }
+
             if (incumbentSpecies == "tallgrass"
                 && IsMeadowFlower(challengerSpecies))
             {

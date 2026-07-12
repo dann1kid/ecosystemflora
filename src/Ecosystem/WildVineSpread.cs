@@ -21,18 +21,19 @@ namespace WildFarming.Ecosystem
             Block vineBlock = acc.GetBlock(entry.Origin);
             if (!WildVineHelper.TryParse(vineBlock, out WildVineInfo info)) return false;
 
+            eco.PruneWildVineColumn(entry.Origin);
+            if (!WildVineHelper.IsVineBlock(acc.GetBlock(entry.Origin))) return false;
+
             WildVineHelper.DedupeColumnEnds(acc, api.World, entry.Origin);
 
-            int maxHangDepth = cfg.WildVineMaxHangDepth;
-
             if (WildVineHelper.TryFindMobileTip(acc, entry.Origin, info, out BlockPos mobileTip)
-                && WildVineHelper.CanContinueDownward(acc, api.World, mobileTip, info, maxHangDepth)
-                && TryExtendDown(eco, api, acc, mobileTip, info, maxHangDepth))
+                && WildVineHelper.CanContinueDownward(acc, api.World, mobileTip, info)
+                && TryExtendDown(eco, api, acc, mobileTip, info))
             {
                 return true;
             }
 
-            if (TrySpawnTipsBelowNetworkSections(eco, api, acc, entry.Origin, info, maxHangDepth))
+            if (TrySpawnTipsBelowNetworkSections(eco, api, acc, entry.Origin, info))
             {
                 return true;
             }
@@ -45,8 +46,7 @@ namespace WildFarming.Ecosystem
             ICoreAPI api,
             IBlockAccessor acc,
             BlockPos tip,
-            in WildVineInfo info,
-            int maxHangDepth)
+            in WildVineInfo info)
         {
             if (!LandClaimGuard.AllowsEcologyChange(api, tip)) return false;
 
@@ -54,7 +54,7 @@ namespace WildFarming.Ecosystem
             if (!acc.IsValidPos(below)) return false;
             if (!LandClaimGuard.AllowsEcologyChange(api, below)) return false;
 
-            if (!WildVineHelper.CanContinueDownward(acc, api.World, tip, info, maxHangDepth)) return false;
+            if (!WildVineHelper.CanContinueDownward(acc, api.World, tip, info)) return false;
 
             Block section = WildVineHelper.ResolveSectionBlock(api.World, info.Tropical, info.Facing);
             Block end = WildVineHelper.ResolveEndBlock(api.World, info.Tropical, info.Facing);
@@ -336,7 +336,7 @@ namespace WildFarming.Ecosystem
             }
             else if (WildVineHelper.TryParse(acc.GetBlock(newVine), out WildVineInfo spawnedInfo))
             {
-                TrySpawnTipBelowSection(eco, api, acc, newVine, spawnedInfo, EcosystemConfig.Loaded.WildVineMaxHangDepth);
+                TrySpawnTipBelowSection(eco, api, acc, newVine, spawnedInfo);
             }
 
             return true;
@@ -347,8 +347,7 @@ namespace WildFarming.Ecosystem
             ICoreAPI api,
             IBlockAccessor acc,
             BlockPos origin,
-            in WildVineInfo startInfo,
-            int maxHangDepth)
+            in WildVineInfo startInfo)
         {
             var visited = new HashSet<BlockPos>();
             var queue = new Queue<BlockPos>();
@@ -364,7 +363,7 @@ namespace WildFarming.Ecosystem
                 if (!WildVineHelper.TryParse(block, out WildVineInfo info)) continue;
 
                 if (WildVineHelper.IsSectionBlock(block, info)
-                    && TrySpawnTipBelowSection(eco, api, acc, pos, info, maxHangDepth))
+                    && TrySpawnTipBelowSection(eco, api, acc, pos, info))
                 {
                     return true;
                 }
@@ -401,10 +400,9 @@ namespace WildFarming.Ecosystem
             ICoreAPI api,
             IBlockAccessor acc,
             BlockPos sectionPos,
-            in WildVineInfo info,
-            int maxHangDepth)
+            in WildVineInfo info)
         {
-            if (!WildVineHelper.NeedsTipBelowSection(acc, api.World, sectionPos, info, maxHangDepth)) return false;
+            if (!WildVineHelper.NeedsTipBelowSection(acc, api.World, sectionPos, info)) return false;
 
             BlockPos below = sectionPos.DownCopy();
             if (!LandClaimGuard.AllowsEcologyChange(api, below)) return false;

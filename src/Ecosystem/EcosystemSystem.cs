@@ -627,6 +627,11 @@ namespace WildFarming.Ecosystem
             FloraContext?.InvalidateAround(pos, 2);
             InvalidateEnvironmentAround(pos);
 
+            if (EcosystemConfig.Loaded.EnableWildVineEcology)
+            {
+                OnWildVineHostChanged(pos);
+            }
+
             if (EcosystemConfig.Loaded.VerboseLogging && EcosystemConfig.Loaded.ReproduceDebug && !string.IsNullOrEmpty(reason))
             {
                 api.Logger.Notification(
@@ -760,11 +765,17 @@ namespace WildFarming.Ecosystem
                 }
 
                 double now = api.World.Calendar.TotalHours;
+                double spreadInterval = SpeciesSpread.EffectiveIntervalHours(api, origin, cfg, requirements);
                 double nextAttempt = now;
                 if (cfg.StaggerReproduceAttempts)
                 {
-                    double staggerSpan = SpeciesSpread.EffectiveIntervalHours(api, origin, cfg, requirements);
-                    nextAttempt = now + api.World.Rand.NextDouble() * staggerSpan;
+                    nextAttempt = now + api.World.Rand.NextDouble() * spreadInterval;
+                }
+                else if (!playerPlaced && spreadInterval > 0)
+                {
+                    // Spread offspring wait one interval before their first attempt so expanding
+                    // frontiers do not monopolize ticks over older nearby colonies.
+                    nextAttempt = now + spreadInterval;
                 }
 
                 double stressDelay = cfg.StressRecheckHours > 0 ? cfg.StressRecheckHours : 18;
@@ -783,6 +794,11 @@ namespace WildFarming.Ecosystem
                     EstablishedAtHours = now,
                     NextStressCheckAt = now + stressDelay,
                 };
+
+                if (!playerPlaced && spreadInterval > 0)
+                {
+                    SpreadWakeThrottle.ApplyCalendarCadenceFloor(entry, now, spreadInterval);
+                }
 
                 registry.Add(entry);
                 SpacingIndex?.AddOrUpdate(api.World.BlockAccessor, origin);
@@ -1153,7 +1169,13 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && EcosystemConfig.Loaded.EnableSymbiosis)
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (cfg.EnableWildVineEcology)
+            {
+                OnWildVineHostChanged(pos);
+            }
+
+            if (PlantCodeHelper.IsEcologySpreadParent(oldBlock) && cfg.EnableSymbiosis)
             {
                 FloraSymbiosis.NotifyHostRemoved(api, pos, oldBlock);
             }
@@ -1188,7 +1210,6 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            EcosystemConfig cfg = EcosystemConfig.Loaded;
             bool ecologyPlant = PlantCodeHelper.CountsAsEcologyPlantRemovalForWake(oldBlock);
             bool forestNeighbor = FloraContextSampler.IsForestNeighborBlock(oldBlock);
             bool inRegistry = registry.Contains(pos);
@@ -1220,6 +1241,31 @@ namespace WildFarming.Ecosystem
             {
                 WakeEcologyAround(pos);
             }
+        }
+
+        void OnWildVineHostChanged(BlockPos changedPos)
+        {
+            WildVineColumnSupport.OnStructuralChange(api, changedPos, OnWildVineCellRemoved);
+        }
+
+        void OnWildVineCellRemoved(BlockPos pos)
+        {
+            if (pos == null) return;
+
+            registry.Remove(pos);
+            SpacingIndex?.Remove(pos);
+            InvalidateEnvironmentAround(pos);
+        }
+
+        internal void PruneWildVineColumn(BlockPos anyInColumn)
+        {
+            if (api == null || anyInColumn == null) return;
+
+            WildVineColumnSupport.PruneUnsupportedColumn(
+                api.World.BlockAccessor,
+                api.World,
+                anyInColumn,
+                OnWildVineCellRemoved);
         }
 
         void OnChunkScanTick(float dt)

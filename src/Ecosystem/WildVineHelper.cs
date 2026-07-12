@@ -85,7 +85,7 @@ namespace WildFarming.Ecosystem
             if (acc == null || vineSample == null || hostPos == null || vineFacing == null) return false;
 
             Block host = acc.GetBlock(hostPos);
-            if (host.Id == 0) return false;
+            if (host == null || (host.Id == 0 && host.BlockId == 0)) return false;
             if (!IsStructuralWallHost(host, vineFacing)) return false;
 
             return host.CanAttachBlockAt(acc, vineSample, hostPos, vineFacing);
@@ -94,7 +94,8 @@ namespace WildFarming.Ecosystem
         /// <summary>Plants and loose blocks cannot host spread; soil is allowed on vertical faces only.</summary>
         public static bool IsStructuralWallHost(Block host, BlockFacing vineFacing = null)
         {
-            if (host == null || host.Id == 0) return false;
+            if (host == null) return false;
+            if (host.Id == 0 && host.BlockId == 0) return false;
             if (host.BlockMaterial == EnumBlockMaterial.Plant) return false;
             if (PlantCodeHelper.IsEcologyPlant(host)) return false;
             if (host.Replaceable >= SuitabilityEvaluator.ReproduceMinReplaceable) return false;
@@ -567,38 +568,12 @@ namespace WildFarming.Ecosystem
             return CanHostVine(acc, vineSample, host, info.Facing);
         }
 
-        /// <summary>Unsupported vine cells from the column foot up to the first wall-backed segment.</summary>
-        public static int HangingRunFromColumnFoot(
-            IBlockAccessor acc,
-            IWorldAccessor world,
-            BlockPos anyInColumn,
-            in WildVineInfo info)
-        {
-            if (acc == null || world == null || anyInColumn == null) return 0;
-
-            BlockPos bottom = FindLowestColumnCell(acc, anyInColumn, info);
-            BlockPos top = FindHighestColumnCell(acc, anyInColumn, info);
-
-            int hang = 0;
-            for (int y = bottom.Y; y <= top.Y; y++)
-            {
-                BlockPos pos = new BlockPos(top.X, y, top.Z);
-                if (!MatchesColumn(acc.GetBlock(pos), info)) break;
-
-                if (HasStructuralSupportBehind(acc, world, pos, info)) break;
-
-                hang++;
-            }
-
-            return hang;
-        }
-
+        /// <summary>Air below is allowed while the column top still attaches to a block; else wall step down.</summary>
         public static bool CanContinueDownward(
             IBlockAccessor acc,
             IWorldAccessor world,
             BlockPos vinePos,
-            in WildVineInfo info,
-            int maxHangDepth)
+            in WildVineInfo info)
         {
             if (acc == null || world == null || vinePos == null) return false;
 
@@ -608,10 +583,7 @@ namespace WildFarming.Ecosystem
 
             if (HasWallContinuationBelow(acc, world, vinePos, info)) return true;
 
-            if (maxHangDepth <= 0) return false;
-            if (!MatchesColumn(acc.GetBlock(vinePos), info)) return false;
-
-            return HangingRunFromColumnFoot(acc, world, vinePos, info) < maxHangDepth;
+            return WildVineColumnSupport.IsColumnTopAnchored(acc, world, vinePos, info);
         }
 
         public static bool HasWallContinuationBelow(
@@ -633,13 +605,11 @@ namespace WildFarming.Ecosystem
             return CanHostVine(acc, vineSample, hostBelow, info.Facing);
         }
 
-        /// <summary>Section with no vine directly below; wall or hanging continuation below.</summary>
         public static bool NeedsTipBelowSection(
             IBlockAccessor acc,
             IWorldAccessor world,
             BlockPos sectionPos,
-            in WildVineInfo info,
-            int maxHangDepth)
+            in WildVineInfo info)
         {
             if (acc == null || world == null || sectionPos == null) return false;
             if (!IsSectionBlock(acc.GetBlock(sectionPos), info)) return false;
@@ -648,16 +618,7 @@ namespace WildFarming.Ecosystem
             if (!acc.IsValidPos(below)) return false;
             if (MatchesColumn(acc.GetBlock(below), info)) return false;
 
-            return CanContinueDownward(acc, world, sectionPos, info, maxHangDepth);
-        }
-
-        public static bool NeedsTipBelowSection(
-            IBlockAccessor acc,
-            IWorldAccessor world,
-            BlockPos sectionPos,
-            in WildVineInfo info)
-        {
-            return NeedsTipBelowSection(acc, world, sectionPos, info, EcosystemConfig.Loaded.WildVineMaxHangDepth);
+            return CanContinueDownward(acc, world, sectionPos, info);
         }
 
         /// <summary>New vine on a perpendicular corner starts as end when growth can continue below.</summary>
@@ -665,25 +626,14 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc,
             IWorldAccessor world,
             BlockPos vinePos,
-            in WildVineInfo info,
-            int maxHangDepth)
+            in WildVineInfo info)
         {
             if (acc == null || world == null || vinePos == null) return false;
 
             BlockPos below = vinePos.DownCopy();
             if (acc.IsValidPos(below) && MatchesColumn(acc.GetBlock(below), info)) return false;
 
-            return CanContinueDownward(acc, world, vinePos, info, maxHangDepth);
-        }
-
-        /// <summary>New vine on a face should start as end when nothing is below on that column and growth can continue.</summary>
-        public static bool ShouldPlaceAsEndAt(
-            IBlockAccessor acc,
-            IWorldAccessor world,
-            BlockPos vinePos,
-            in WildVineInfo info)
-        {
-            return ShouldPlaceAsEndAt(acc, world, vinePos, info, EcosystemConfig.Loaded.WildVineMaxHangDepth);
+            return CanContinueDownward(acc, world, vinePos, info);
         }
 
         /// <summary>Mobile tip at the wall foot that can seed perpendicular faces at a junction.</summary>
@@ -715,7 +665,7 @@ namespace WildFarming.Ecosystem
             return IsSectionBlock(block, info);
         }
 
-        /// <summary>End at the top of the vine column that stays while the mobile tip grows below.</summary>
+        /// <summary>Fixed end at the column top while a lower mobile tip grows below (requires vine below the top end).</summary>
         public static bool IsSurfaceAnchorEnd(
             IBlockAccessor acc,
             IWorldAccessor world,
@@ -728,12 +678,7 @@ namespace WildFarming.Ecosystem
             if (vinePos.Y != top.Y || !IsEndBlock(acc.GetBlock(top))) return false;
 
             BlockPos below = top.DownCopy();
-            if (acc.IsValidPos(below) && MatchesColumn(acc.GetBlock(below), info))
-            {
-                return true;
-            }
-
-            return world != null && HasWallContinuationBelow(acc, world, vinePos, info);
+            return acc.IsValidPos(below) && MatchesColumn(acc.GetBlock(below), info);
         }
 
         /// <summary>Lowest end in the column — the tip that crawls downward.</summary>
@@ -805,10 +750,10 @@ namespace WildFarming.Ecosystem
         }
 
         public static BlockPos HostPos(BlockPos vinePos, BlockFacing vineFacing) =>
-            vinePos.AddCopy(vineFacing.Opposite);
+            vinePos.Copy().AddCopy(vineFacing.Opposite);
 
         public static BlockPos VinePosForHost(BlockPos hostPos, BlockFacing vineFacing) =>
-            hostPos.AddCopy(vineFacing);
+            hostPos.Copy().AddCopy(vineFacing);
 
         public static BlockPos FindLowestEnd(IBlockAccessor acc, BlockPos start, in WildVineInfo info) =>
             TryFindMobileTip(acc, start, info, out BlockPos tip) ? tip : FindLowestColumnCell(acc, start, info);

@@ -9,7 +9,8 @@ namespace WildFarming.Ecosystem
     internal sealed class SpreadChunkScheduler
     {
         readonly List<Vec2i> roundRobin = new List<Vec2i>();
-        readonly Dictionary<Vec2i, int> chunkEntryCursor = new Dictionary<Vec2i, int>();
+        readonly Dictionary<Vec2i, int> chunkDueRoundRobin = new Dictionary<Vec2i, int>();
+        readonly List<ReproducerEntry> dueScratch = new List<ReproducerEntry>();
         int roundRobinIndex;
         int lastRegistryCount;
         int lastChunkCount;
@@ -71,28 +72,31 @@ namespace WildFarming.Ecosystem
 
                 visited++;
 
+                dueScratch.Clear();
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (ReproducerRegistry.IsEntryDue(list[i], now, eventDriven))
-                    {
-                        dueQueueSize++;
-                    }
+                    ReproducerEntry entry = list[i];
+                    if (!registry.IsLiveEntry(entry)) continue;
+                    if (!ReproducerRegistry.IsEntryDue(entry, now, eventDriven)) continue;
+
+                    dueScratch.Add(entry);
                 }
 
-                if (!chunkEntryCursor.TryGetValue(chunk, out int cursor)) cursor = 0;
+                dueQueueSize += dueScratch.Count;
+                if (dueScratch.Count == 0) continue;
+
+                if (!chunkDueRoundRobin.TryGetValue(chunk, out int start)) start = 0;
                 int attemptsThisChunk = 0;
-                int scanned = 0;
-                int scanBudget = list.Count;
+                int offset = 0;
 
                 while (attemptsThisChunk < maxAttemptsPerChunk
                        && processed < maxTotalAttempts
-                       && scanned < scanBudget)
+                       && offset < dueScratch.Count)
                 {
                     if (budgetTicks > 0 && budgetWatch != null && budgetWatch.ElapsedTicks >= budgetTicks) break;
 
-                    if (cursor >= list.Count) cursor = 0;
-                    ReproducerEntry entry = list[cursor++];
-                    scanned++;
+                    ReproducerEntry entry = dueScratch[(start + offset) % dueScratch.Count];
+                    offset++;
 
                     if (!registry.IsLiveEntry(entry)) continue;
                     if (!ReproducerRegistry.IsEntryDue(entry, now, eventDriven)) continue;
@@ -112,7 +116,10 @@ namespace WildFarming.Ecosystem
                     processed++;
                 }
 
-                chunkEntryCursor[chunk] = cursor;
+                chunkDueRoundRobin[chunk] = dueScratch.Count > 0
+                    ? (start + offset) % dueScratch.Count
+                    : 0;
+
                 if (attemptsThisChunk > peakAttemptsInChunk)
                 {
                     peakAttemptsInChunk = attemptsThisChunk;
@@ -139,7 +146,7 @@ namespace WildFarming.Ecosystem
             lastRegistryCount = registryCount;
             lastChunkCount = chunkCount;
             roundRobin.Clear();
-            chunkEntryCursor.Clear();
+            chunkDueRoundRobin.Clear();
 
             if (scopeChunks != null)
             {

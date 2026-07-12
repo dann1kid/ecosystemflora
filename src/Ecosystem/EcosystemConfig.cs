@@ -500,7 +500,7 @@ namespace WildFarming.Ecosystem
         /// <summary>Vertical scan span when capturing adjacent wall faces.</summary>
         public int WildVineWallCaptureHeight { get; set; } = 6;
 
-        /// <summary>Max vine blocks that may dangle in air below the last wall-backed cell (0 = wall only).</summary>
+        /// <summary>Legacy: no longer limits hang length (top anchor + prune govern columns). Kept for old JSON.</summary>
         public int WildVineMaxHangDepth { get; set; } = 8;
 
         /// <summary>Trunk segments left during ferntree snag senescence year.</summary>

@@ -168,6 +168,73 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void IsSurfaceAnchorEnd_FalseForSolitaryWallTip()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block[] blocks =
+            {
+                air,
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                stone,
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var info = new WildVineInfo(false, false, BlockFacing.NORTH);
+            var tip = new BlockPos(0, 64, 0);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(2, tip);
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            Assert.False(WildVineHelper.IsSurfaceAnchorEnd(acc, world, tip, info));
+        }
+
+        [Fact]
+        public void IsSurfaceAnchorEnd_TrueOnlyForTopEndWithColumnBelow()
+        {
+            Block[] blocks =
+            {
+                new Block { BlockId = 0, Code = new AssetLocation("game", "air") },
+                new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var info = new WildVineInfo(false, false, BlockFacing.NORTH);
+            acc.SetBlock(2, new BlockPos(0, 62, 0));
+            acc.SetBlock(1, new BlockPos(0, 61, 0));
+            acc.SetBlock(2, new BlockPos(0, 60, 0));
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            Assert.True(WildVineHelper.IsSurfaceAnchorEnd(acc, world, new BlockPos(0, 62, 0), info));
+            Assert.False(WildVineHelper.IsSurfaceAnchorEnd(acc, world, new BlockPos(0, 60, 0), info));
+        }
+
+        [Fact]
+        public void ExtendDown_ConvertsFormerTipToSection()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block section = new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") };
+            Block end = new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") };
+            Block[] blocks = { air, section, end, stone };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var info = new WildVineInfo(false, false, BlockFacing.NORTH);
+            var tip = new BlockPos(0, 64, 0);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(2, tip);
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            Assert.False(WildVineHelper.IsSurfaceAnchorEnd(acc, world, tip, info));
+            acc.SetBlock(section.BlockId, tip);
+            acc.SetBlock(end.BlockId, tip.DownCopy());
+
+            Assert.True(WildVineHelper.IsSectionBlock(acc.GetBlock(tip), info));
+            Assert.True(WildVineHelper.IsEndBlock(acc.GetBlock(tip.DownCopy())));
+        }
+
+        [Fact]
         public void TouchesVineNetworkForSpread_IncludesCornerDiagonal()
         {
             Block[] blocks =
@@ -518,8 +585,35 @@ namespace WildFarming.Tests
 
             IWorldAccessor world = CreateVineResolveWorld(blocks);
 
-            Assert.True(WildVineHelper.CanContinueDownward(acc, world, new BlockPos(0, 62, 0), info, maxHangDepth: 8));
-            Assert.False(WildVineHelper.CanContinueDownward(acc, world, new BlockPos(0, 62, 0), info, maxHangDepth: 1));
+            Assert.True(WildVineHelper.CanContinueDownward(acc, world, new BlockPos(0, 62, 0), info));
+        }
+
+        [Fact]
+        public void CanContinueDownward_AllowsLongHangWhenTopAnchored()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block[] blocks =
+            {
+                air,
+                new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                stone,
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var info = new WildVineInfo(false, false, BlockFacing.NORTH);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(1, new BlockPos(0, 64, 0));
+            for (int y = 63; y >= 50; y--)
+            {
+                acc.SetBlock(1, new BlockPos(0, y, 0));
+            }
+
+            acc.SetBlock(2, new BlockPos(0, 49, 0));
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            Assert.True(WildVineHelper.CanContinueDownward(acc, world, new BlockPos(0, 49, 0), info));
         }
 
         [Fact]
@@ -560,7 +654,7 @@ namespace WildFarming.Tests
 
             IWorldAccessor world = CreateVineResolveWorld(blocks);
 
-            Assert.True(WildVineHelper.NeedsTipBelowSection(acc, world, new BlockPos(0, 63, 0), info, maxHangDepth: 8));
+            Assert.True(WildVineHelper.NeedsTipBelowSection(acc, world, new BlockPos(0, 63, 0), info));
         }
 
         [Fact]
@@ -671,6 +765,93 @@ namespace WildFarming.Tests
             Assert.True(host.Eco.Test_TryGetRegistryEntry(pos, out ReproducerEntry entry));
             Assert.Equal(EcologyHabitat.WildVine, entry.Requirements.Habitat);
             Assert.False(host.Eco.Test_TryGetRegistryEntry(pos.UpCopy(), out _));
+        }
+
+        [Fact]
+        public void PruneUnsupportedColumn_RemovesVinesWhenHostIsGone()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block[] blocks =
+            {
+                air,
+                new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                stone,
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            var info = new WildVineInfo(false, false, BlockFacing.NORTH);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(1, new BlockPos(0, 64, 0));
+            acc.SetBlock(1, new BlockPos(0, 63, 0));
+            acc.SetBlock(2, new BlockPos(0, 62, 0));
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            acc.SetBlock(0, new BlockPos(0, 64, 1));
+
+            int removed = WildVineColumnSupport.PruneUnsupportedColumn(acc, world, new BlockPos(0, 64, 0));
+
+            Assert.Equal(3, removed);
+            Assert.Equal(0, acc.GetBlock(new BlockPos(0, 64, 0)).Id);
+            Assert.Equal(0, acc.GetBlock(new BlockPos(0, 63, 0)).Id);
+            Assert.Equal(0, acc.GetBlock(new BlockPos(0, 62, 0)).Id);
+        }
+
+        [Fact]
+        public void PruneUnsupportedColumn_KeepsHangingBelowSupportedTop()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block[] blocks =
+            {
+                air,
+                new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                stone,
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(1, new BlockPos(0, 64, 0));
+            acc.SetBlock(1, new BlockPos(0, 63, 0));
+            acc.SetBlock(2, new BlockPos(0, 62, 0));
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            int removed = WildVineColumnSupport.PruneUnsupportedColumn(acc, world, new BlockPos(0, 64, 0));
+
+            Assert.Equal(0, removed);
+            Assert.True(WildVineHelper.IsVineBlock(acc.GetBlock(new BlockPos(0, 62, 0))));
+        }
+
+        [Fact]
+        public void PruneUnsupportedColumn_KeepsLongHangWhenTopIsAnchored()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block stone = new Block { BlockId = 3, BlockMaterial = EnumBlockMaterial.Stone, Replaceable = 0 };
+            Block[] blocks =
+            {
+                air,
+                new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                stone,
+            };
+            var acc = new EcologyTestBlockAccessor(blocks);
+            acc.SetBlock(3, new BlockPos(0, 64, 1));
+            acc.SetBlock(1, new BlockPos(0, 64, 0));
+            for (int y = 63; y >= 55; y--)
+            {
+                acc.SetBlock(1, new BlockPos(0, y, 0));
+            }
+
+            acc.SetBlock(2, new BlockPos(0, 54, 0));
+
+            IWorldAccessor world = CreateVineResolveWorld(blocks);
+
+            int removed = WildVineColumnSupport.PruneUnsupportedColumn(acc, world, new BlockPos(0, 64, 0));
+
+            Assert.Equal(0, removed);
+            Assert.True(WildVineHelper.IsVineBlock(acc.GetBlock(new BlockPos(0, 54, 0))));
         }
 
         static IWorldAccessor CreateVineResolveWorld(Block[] blocks)

@@ -20,8 +20,8 @@ namespace WildFarming.Ecosystem.Config
             void D(string n, string en, string ru) => m[n] = (en, ru);
 
             D(nameof(EcosystemConfig.BalancePreset),
-                "natural/lush/sparse apply bundled spread values on each server start. custom keeps your manual spread tuning.",
-                "natural/lush/sparse задают набор параметров распространения при каждом старте сервера. custom сохраняет ваши ручные значения.");
+                "natural/lush/sparse/timelapse apply bundled spread values on each server start. timelapse = max spread + perf for stress tests. custom keeps your manual spread tuning.",
+                "natural/lush/sparse/timelapse задают набор параметров распространения при каждом старте сервера. timelapse — макс. spread и perf для стресс-тестов. custom сохраняет ваши ручные значения.");
 
             D(nameof(EcosystemConfig.EcosystemEnabled),
                 "On: spread, competition, stress, and most ecology ticks run. Off: mod ecology idle.",

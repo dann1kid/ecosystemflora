@@ -12,6 +12,7 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.MaxCanopyUpdateOpsPerTick),
             nameof(EcosystemConfig.CanopyBudgetMs),
             nameof(EcosystemConfig.RegistrationBudgetPerWorkerMigrated),
+            nameof(EcosystemConfig.WildVineMaxHangDepth),
         };
 
         static readonly HashSet<string> PresetFields = new HashSet<string>(StringComparer.Ordinal)
@@ -219,6 +220,7 @@ namespace WildFarming.Ecosystem.Config
             EcosystemBalancePresets.Lush,
             EcosystemBalancePresets.Sparse,
             EcosystemBalancePresets.VanillaMinimal,
+            EcosystemBalancePresets.Timelapse,
             EcosystemBalancePresets.Custom,
         };
 

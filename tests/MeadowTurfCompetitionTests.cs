@@ -40,5 +40,27 @@ namespace WildFarming.Tests
             Assert.True(colonizer.SpreadRate > matrix.SpreadRate);
             Assert.True(matrix.SpreadRate < 1.5f);
         }
+
+        [Fact]
+        public void TimelapsePreset_NeutralizesFlowerTurfPenalties()
+        {
+            var cfg = new EcosystemConfig { BalancePreset = EcosystemBalancePresets.Timelapse };
+            EcosystemConfig.Loaded = cfg;
+
+            try
+            {
+                float flowerBonus = MeadowTurfCompetition.AdjustChallengerSpreadScore(
+                    1f, "wilddaisy", "tallgrass");
+                float grassPenalty = MeadowTurfCompetition.AdjustChallengerSpreadScore(
+                    1f, "tallgrass", "cornflower");
+
+                Assert.Equal(1f, flowerBonus);
+                Assert.Equal(1f, grassPenalty);
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig();
+            }
+        }
     }
 }

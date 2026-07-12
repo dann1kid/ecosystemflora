@@ -13,6 +13,10 @@ namespace WildFarming.Ecosystem
         public const string Lush = "lush";
         public const string Sparse = "sparse";
         public const string VanillaMinimal = "vanilla-minimal";
+        /// <summary>Stress / timelapse: aggressive spread pacing and high per-tick budgets.</summary>
+        public const string Timelapse = "timelapse";
+        /// <summary>Extra spread-rate multiplier for tallgrass only (table 1.35 vs colonizer flowers ~2.8).</summary>
+        public const float TimelapseTallgrassSpreadMultiplier = 3f;
         public const string Custom = "custom";
 
         static readonly Dictionary<string, EcosystemConfig> filePresets =
@@ -27,6 +31,7 @@ namespace WildFarming.Ecosystem
                 || preset.Equals(Lush, StringComparison.OrdinalIgnoreCase)
                 || preset.Equals(Sparse, StringComparison.OrdinalIgnoreCase)
                 || preset.Equals(VanillaMinimal, StringComparison.OrdinalIgnoreCase)
+                || preset.Equals(Timelapse, StringComparison.OrdinalIgnoreCase)
                 || filePresets.ContainsKey(preset);
         }
 
@@ -83,6 +88,12 @@ namespace WildFarming.Ecosystem
             if (preset.Equals(VanillaMinimal, StringComparison.OrdinalIgnoreCase))
             {
                 ApplyVanillaMinimal(cfg);
+                return;
+            }
+
+            if (preset.Equals(Timelapse, StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyTimelapse(cfg);
                 return;
             }
 
@@ -165,6 +176,67 @@ namespace WildFarming.Ecosystem
             cfg.EnableFlowerPhenology = false;
             cfg.EnableFernPhenology = false;
             cfg.EnableTallgrassPhenology = false;
+        }
+
+        static void ApplyTimelapse(EcosystemConfig cfg)
+        {
+            cfg.UseCalendarScaledSpread = true;
+            cfg.UseSpeciesSpreadRates = true;
+            cfg.SpeciesSpreadRateScale = 10f;
+            cfg.ReproduceAttemptsPerYear = 100000;
+            cfg.ReproduceChance = 1f;
+            cfg.MinFitness = 0.1f;
+            cfg.DefaultSameSpeciesSpacing = 0;
+            cfg.DefaultOtherSpeciesSpacing = 0;
+            cfg.ReproduceRadius = 8;
+            cfg.MinSpeciesReproduceIntervalDays = 0;
+            cfg.MinSpeciesReproduceIntervalHours = 0;
+            cfg.StaggerReproduceAttempts = false;
+            cfg.GrowthHoursMultiplier = 10f;
+            cfg.HarshWildPlants = false;
+            cfg.PlantSpacingEnabled = false;
+            cfg.UseSeasonalEcology = false;
+
+            cfg.EnableFlowerSpreadMaturation = false;
+            cfg.EnableFernSpreadMaturation = false;
+            cfg.EnableTallgrassSpreadMaturation = false;
+            cfg.EnableBerrySpreadMaturation = false;
+            cfg.EnableFlowerPhenology = false;
+            cfg.EnableFernPhenology = false;
+            cfg.EnableTallgrassPhenology = false;
+            cfg.EnableFernSporulationGate = false;
+            cfg.EnableFlowerSpreadAttemptCooldown = false;
+            cfg.EnableFernSpreadAttemptCooldown = false;
+
+            cfg.EnableTwoPhaseSpreadPlacement = false;
+            cfg.EnableBackgroundSpreadSolve = false;
+            cfg.EnableChunkFairSpread = true;
+            cfg.UseCellDisplacement = true;
+            cfg.DisplacementHoldMargin = 1f;
+            cfg.EnableEventDrivenSpread = false;
+
+            cfg.ReproduceTickIntervalMs = 100;
+            cfg.TickBudgetMs = 0;
+            cfg.SpreadBudgetMs = 0;
+            cfg.RegistrationBudgetMs = 0;
+            cfg.MaxReproduceAttemptsPerTick = 8192;
+            cfg.MaxSpreadChunksVisitedPerTick = 512;
+            cfg.MaxSpreadAttemptsPerChunkPerTick = 64;
+            cfg.MaxSpreadCommitsPerTick = 8192;
+            cfg.MaxSpreadCommitChunksVisitedPerTick = 512;
+            cfg.MaxSpreadCommitsPerChunkPerTick = 64;
+            cfg.MaxRegistrationsPerTick = 8192;
+            cfg.MaxRegistryAppliesPerTick = 8192;
+            cfg.MaxRegistryAppliesPerChunkPerTick = 512;
+            cfg.MaxPriorityRegistrationsPerTick = 8192;
+            cfg.MaxPriorityRegistryAppliesPerTick = 8192;
+            cfg.MaxFloraRescanColumnsPerTick = 512;
+            cfg.MaxPendingFlowerMaturationChecksPerTick = 512;
+            cfg.MaxPendingTallgrassPromotionChecksPerTick = 512;
+            cfg.MaxPendingFernMaturationChecksPerTick = 512;
+            cfg.MaxPendingBerryMaturationChecksPerTick = 512;
+            cfg.MaxTreeGrowthAttemptsPerTick = 128;
+            cfg.TreeGrowthActivityScale = 10f;
         }
     }
 }

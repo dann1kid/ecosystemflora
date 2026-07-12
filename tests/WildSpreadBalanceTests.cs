@@ -61,5 +61,22 @@ namespace WildFarming.Tests
 
             Assert.Equal(0.5f * (1.65f / 3f), chance, 3);
         }
+
+        [Fact]
+        public void TimelapsePreset_BoostsTallgrassSpreadRate()
+        {
+            var cfg = new EcosystemConfig
+            {
+                BalancePreset = EcosystemBalancePresets.Timelapse,
+                SpeciesSpreadRateScale = 10f,
+            };
+
+            float flower = WildSpreadBalance.ScaleSpeciesSpreadRate("cornflower", 2f, cfg);
+            float grass = WildSpreadBalance.ScaleSpeciesSpreadRate("tallgrass", 1.35f, cfg);
+
+            Assert.Equal(20f, flower, 3);
+            Assert.Equal(1.35f * 10f * EcosystemBalancePresets.TimelapseTallgrassSpreadMultiplier, grass, 3);
+            Assert.True(grass > flower);
+        }
     }
 }

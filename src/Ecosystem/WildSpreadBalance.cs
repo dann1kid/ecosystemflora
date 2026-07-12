@@ -14,7 +14,19 @@ namespace WildFarming.Ecosystem
             float scale = cfg?.SpeciesSpreadRateScale ?? DefaultSpeciesSpreadRateScale;
             if (scale <= 0f) return 0f;
 
-            return spreadRate * scale;
+            float effective = spreadRate * scale;
+            if (IsTimelapsePreset(cfg)
+                && string.Equals(species, "tallgrass", System.StringComparison.Ordinal))
+            {
+                effective *= EcosystemBalancePresets.TimelapseTallgrassSpreadMultiplier;
+            }
+
+            return effective;
         }
+
+        static bool IsTimelapsePreset(EcosystemConfig cfg) =>
+            cfg != null
+            && !string.IsNullOrWhiteSpace(cfg.BalancePreset)
+            && cfg.BalancePreset.Equals(EcosystemBalancePresets.Timelapse, System.StringComparison.OrdinalIgnoreCase);
     }
 }

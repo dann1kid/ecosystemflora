@@ -118,9 +118,7 @@ namespace WildFarming.Ecosystem
             bool pullRetry = now > 0
                 && cfg != null
                 && cfg.EnableEventDrivenSpread;
-            double wakeRetryHours = cfg != null && cfg.EventWakeRetryHours > 0
-                ? cfg.EventWakeRetryHours
-                : 6;
+            double wakeRetryHours = cfg != null ? cfg.EventWakeRetryHours : 6;
             wakeRetryHours = CalendarSpeedHelper.ScaleCalendarHours(wakeRetryHours, calendar);
 
             long radiusSq = (long)radiusBlocks * radiusBlocks;
@@ -145,7 +143,9 @@ namespace WildFarming.Ecosystem
 
                         entry.WakeGeneration = ecologyWakeGeneration;
 
-                        if (pullRetry && now >= entry.NextSpawnAllowedAtHours)
+                        if (pullRetry
+                            && wakeRetryHours > 0
+                            && now >= entry.NextSpawnAllowedAtHours)
                         {
                             double earliest = now + wakeRetryHours;
                             if (entry.NextAttemptHours > earliest)
