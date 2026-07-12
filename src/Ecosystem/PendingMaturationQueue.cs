@@ -26,9 +26,9 @@ namespace WildFarming.Ecosystem
 
         protected abstract string SpeciesFromJuvenile(Block block);
 
-        /// <summary>Called once a juvenile is due, validated, and its mature block resolved. The
-        /// entry is always removed afterwards, mirroring the original per-species behavior.</summary>
-        protected abstract void OnMature(
+        /// <summary>Called once a juvenile is due and validated. Return true when the queue entry
+        /// may be removed (registered or permanently stale); false to retry on a later tick.</summary>
+        protected abstract bool OnMature(
             ICoreAPI api,
             EcosystemSystem ecosystem,
             IBlockAccessor acc,
@@ -124,8 +124,10 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                OnMature(api, ecosystem, acc, entry.Pos, species, mature, entry.MatureCode);
-                remove.Add(entry.Pos);
+                if (OnMature(api, ecosystem, acc, entry.Pos, species, mature, entry.MatureCode))
+                {
+                    remove.Add(entry.Pos);
+                }
             }
 
             for (int r = 0; r < remove.Count; r++)

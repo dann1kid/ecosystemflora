@@ -11,6 +11,7 @@ namespace WildFarming.Ecosystem.Config
         {
             nameof(EcosystemConfig.MaxCanopyUpdateOpsPerTick),
             nameof(EcosystemConfig.CanopyBudgetMs),
+            nameof(EcosystemConfig.RegistrationBudgetPerWorkerMigrated),
         };
 
         static readonly HashSet<string> PresetFields = new HashSet<string>(StringComparer.Ordinal)

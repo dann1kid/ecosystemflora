@@ -189,6 +189,58 @@ namespace WildFarming.Ecosystem
             list.Add(new InspectLineLite { Key = key, Args = args });
         }
 
+        static bool TryAppendTallgrassEstablishmentInspect(
+            ICoreAPI api,
+            BlockPos pos,
+            Block block,
+            List<InspectLineLite> lines)
+        {
+            EcosystemSystem eco = EcosystemSystem.Instance;
+            if (eco == null) return false;
+            if (!TallgrassEstablishmentInspect.TryBuild(api, pos, block, eco, out TallgrassEstablishmentInspect.Snapshot snap))
+            {
+                return false;
+            }
+
+            string current = TallgrassEstablishmentInspect.StageLabel(snap.CurrentStageIndex);
+            string registerAt = TallgrassEstablishmentInspect.StageLabel(snap.RegisterStageIndex);
+            string target = TallgrassEstablishmentInspect.StageLabel(snap.TargetStageIndex);
+
+            switch (snap.Phase)
+            {
+                case TallgrassEstablishmentInspect.Phase.Growing:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-growing");
+                    break;
+                case TallgrassEstablishmentInspect.Phase.WaitingForScan:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-waiting-scan");
+                    break;
+                case TallgrassEstablishmentInspect.Phase.RegistrationPending:
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-registration-pending");
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-height-now", current);
+                    return true;
+            }
+
+            AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-height-now", current);
+            AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-height-register", registerAt);
+            AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-height-target", target);
+
+            int stepsLeft = snap.RegisterStageIndex - snap.CurrentStageIndex;
+            if (stepsLeft > 0)
+            {
+                AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-steps-left", stepsLeft.ToString());
+            }
+
+            if (snap.Phase == TallgrassEstablishmentInspect.Phase.Growing
+                && snap.HoursUntilNextStage >= 0
+                && api.World?.Calendar != null)
+            {
+                double days = snap.HoursUntilNextStage / api.World.Calendar.HoursPerDay;
+                AddInspectLine(lines, "ecosystemflora:inspect-line-tallgrass-next-stage", days.ToString("0.#"));
+            }
+
+            return true;
+        }
+
         static void AppendStaticProfile(List<InspectLineLite> lines, string species)
         {
             AddInspectLine(lines, "ecosystemflora:inspect-line-dominance", "L:" + SpeciesEcologyDisplay.GetDominanceLabelLangKey(species));
@@ -236,13 +288,17 @@ namespace WildFarming.Ecosystem
             IBlockAccessor acc = api.World.BlockAccessor;
             BlockPos contextPos = ResolveInspectContextPos(acc, pos, block, req);
 
+            EcosystemSystem eco = EcosystemSystem.Instance;
+            if (eco != null && api.Side == EnumAppSide.Server && !eco.RegistryContains(pos))
+            {
+                eco.TryRegisterEligiblePlantAtInspect(pos, block);
+            }
+
             ReproducerEntry registryEntry = null;
-            bool inRegistry = EcosystemSystem.Instance != null
-                && EcosystemSystem.Instance.TryGetReproducer(pos, out registryEntry);
+            bool inRegistry = eco != null && eco.TryGetReproducer(pos, out registryEntry);
 
             if (FlowerJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
             {
-                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
                 AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
 
                 if (api.World?.Calendar != null
@@ -261,7 +317,6 @@ namespace WildFarming.Ecosystem
 
             if (FernJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
             {
-                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
                 AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
 
                 if (api.World?.Calendar != null
@@ -280,7 +335,6 @@ namespace WildFarming.Ecosystem
 
             if (ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block) && !inRegistry)
             {
-                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
                 AddInspectLine(lines, "ecosystemflora:inspect-line-flower-establishing");
 
                 if (api.World?.Calendar != null
@@ -294,6 +348,13 @@ namespace WildFarming.Ecosystem
                         daysLeft.ToString("0.#"));
                 }
 
+                return;
+            }
+
+            if (!inRegistry
+                && species == "tallgrass"
+                && TryAppendTallgrassEstablishmentInspect(api, pos, block, lines))
+            {
                 return;
             }
 
@@ -379,7 +440,26 @@ namespace WildFarming.Ecosystem
             }
             else
             {
-                AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
+                if (eco != null && eco.IsRegistrationPendingAt(pos))
+                {
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-registration-pending");
+                }
+                else if (eco != null
+                         && !eco.IsChunkRegistrationFinished(ReproducerRegistry.ToChunkCoord(pos)))
+                {
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-waiting-scan");
+                }
+                else
+                {
+                    AddInspectLine(lines, "ecosystemflora:inspect-line-not-registered");
+                    if (block?.Code != null)
+                    {
+                        AddInspectLine(
+                            lines,
+                            "ecosystemflora:inspect-line-block-code",
+                            block.Code.Domain + ":" + block.Code.Path);
+                    }
+                }
             }
 
             if (cfg.UseSeasonalEcology && api.World?.Calendar != null)

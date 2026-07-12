@@ -106,7 +106,17 @@ namespace WildFarming.Ecosystem
             if (FernPhenology.IsRegisteredPlantBlock(this, block)) return true;
             if (TallgrassPhenology.IsRegisteredPlantBlock(this, block)) return true;
             if (FernJuvenileBlocks.MatchesJuvenileBlock(block, Requirements)) return true;
-            return IsMatureBlock(block);
+            if (IsMatureBlock(block)) return true;
+            return MatchesRegisteredSpecies(block);
+        }
+
+        /// <summary>Cover/phase drift: same ecology species still occupies the origin.</summary>
+        internal bool MatchesRegisteredSpecies(Block block)
+        {
+            if (block == null || block.Id == 0 || Requirements == null) return false;
+            string liveSpecies = PlantCodeHelper.ResolveEcologySpecies(block);
+            return liveSpecies != null
+                && string.Equals(liveSpecies, Requirements.Species, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

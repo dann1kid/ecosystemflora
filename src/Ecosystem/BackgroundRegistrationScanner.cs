@@ -67,7 +67,7 @@ namespace WildFarming.Ecosystem
         public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount)
         {
             blocks = blockRegistry;
-            int count = ResolveWorkerCount(workerCount);
+            int count = RegistrationWorkerScale.Resolve(workerCount);
             lock (startLock)
             {
                 if (workers != null) return;
@@ -147,18 +147,6 @@ namespace WildFarming.Ecosystem
         }
 
         long nextToken;
-
-        static int ResolveWorkerCount(int configured)
-        {
-            if (configured <= 0)
-            {
-                configured = System.Environment.ProcessorCount / 2;
-            }
-
-            if (configured < 1) configured = 1;
-            if (configured > 8) configured = 8;
-            return configured;
-        }
 
         void WorkerLoop(int workerIndex)
         {

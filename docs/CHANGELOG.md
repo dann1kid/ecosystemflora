@@ -2,35 +2,79 @@
 
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
-**Last public release:** **3.1.12** (ModDB)  
-**This release:** **4.5.4**
+**Last public release:** **4.7.0** (ModDB)  
+**Next release:** unreleased (Floral Zones Cape + Cosmopolitan)
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## Unreleased — Wildfire foliage
+## Unreleased — Floral Zones (Cape + Cosmopolitan)
+
+- **Floral Zones ecology** — runtime climate/spread injection for **Cape Region** and **Cosmopolitan Region** (211 worldgen-derived entries across all **seven** regional mods; was 142 in 4.7.0).
+- **NZ mushroom** — `mushroom-asteliahastata` included when the worldgen patch omits `maxRain`.
+
+## Planned — v5.0 Phase 7 (not in code)
+
+Design only: [`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md).
+
+- Ecology continues in **unloaded** chunk columns (not only loaded).
+- Compact snapshot export on chunk unload; per-world ecology database.
+- Optional external `ecology-sim` worker (Go); mod spawns/stops process on server lifecycle.
+- Game applies accumulated block changes on chunk load (main thread); no spread math for distant zones in-process.
+
+---
+
+## 4.7.0 — Third-party wild ecology and simulation polish
+
+**Since 4.5.4**
+
+### Wildcraft Fruit, Wildcraft Trees, Floral Zones
+
+- **Wildcraft Fruit** — worldgen climate and spread attrs injected at asset finalize (berries, herbs, flowers, fruit trees from worldgen patches).
+- **Wildcraft Trees** — climate envelope from tree worldgen patches for modded `log-grown` / `sapling` woods.
+- **Floral Zones** — five regional mods at release (Caribbean, Central Australia, East Asia, Mediterranean, Neozeylandic); climate from worldgen patches, no JSON patch to parent mods.
+- **Fruiting vines (Herbarium)** — **climate and stress only**; `ecologySpreadRate: 0` keeps growth on vanilla/Herbarium BE; no `WildVineEcology` spread.
+- **B+ auto-curves** — discovered third-party species auto-append to user `ecology.csv` / `season.csv` with generated defaults (`DiscoveredSpeciesStore`, `DynamicSpeciesAutoCurves`).
+
+Optional companion: **`ecosystemfloracompat`** submodule (`community/`) — JSON patches for Biodiversity shrubs/herbs; not required for Wildcraft or Floral Zones.
+
+### Meadow, trees, vines, snow
+
+- **Wild tree spread** — mature `log-grown` places **log-grown seedlings** (not saplings) with yearly maturation.
+- **Tree spread guard** — meadow spread skips `log-grown` trunks, player saplings, and fruit-tree stems; column cache clears on nearby player placement.
+- **Wild vines** — hanging growth, corner wrap, wall latch on spread.
+- **Seasonal snow** — ecology meadow plants swap `-free` / `-snow` from climate and snow layer; brown sedge dormant/dieback via tallgrass phenology; underwater plant snow cover; sync limited to ecology blocks with sky exposure.
+- **Fern phase saves** — legacy `fernphase-*-dieback` codes restored; chunk migration for mistaken `-free` variants.
+
+### Wildfire canopy
 
 - **No budding near active fire** — ecology stops placing `leaves-grown` / `leavesbranchy` while fire blocks are nearby (seasonal sync, tree growth, spread seedlings). Works with vanilla lightning and mods such as Pyrogenesis.
 - **Orphan foliage prune** — during foliage chunk sync, wild leaves with no BFS path to `log-grown` of the same wood are stripped (`EnableOrphanFoliagePrune`). Skips player `leaves-placed`.
 - **Fire-touched chunks** — chunks that recently had fire are prioritized for orphan-prune passes for **48** game hours (`OrphanFoliageFireChunkHours`). See [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md).
 
+### Fixes and tuning
+
+- **Berry mat** — third-party berry blocks participate in colony mat-edge spread when attrs are injected.
+- **Calendar speed** — spread and maturation delays scale with the world calendar speed multiplier.
+- **Crowfoot** — spread footing and meadow trunk protection fixes; brownsedge scythe harvest.
+- **Flower phenology** — hand harvest on phase blocks; ghost pipe seasonal textures.
+
+**ModDB short paste**
+
+```
+4.7.0 — third-party wild ecology (since 4.5.4)
+
+• Wildcraft Fruit, Wildcraft Trees, Floral Zones (5 regions) — climate/spread injected at load; fruiting vines climate-only (no ecosystem spread). B+ species auto-append to user ecology/season CSV.
+
+• Wild trees spread log-grown seedlings; meadow no longer overwrites trunks. Seasonal snow on meadow plants; wildfire canopy guard + orphan foliage prune. Wild vine hang/corner spread.
+
+Vintage Story 1.22+. Do not run alongside Wild Farming Revival.
+```
+
 ---
 
-## Unreleased — Tree spread guard
-
-- **Meadow grass no longer replaces tree bases** — spread skips log-grown trunks, player saplings, and fruit-tree stems; sync spread re-checks the cell before `SetBlock`.
-- Spread column cache clears when the player places a block nearby.
-
----
-
-## Unreleased — Seasonal snow & fern saves
-
-- **Winter snow on meadow plants** — phase/juvenile blocks swap `-free` / `-snow` from climate and snow layer; round-robin sync at runtime.
-- **Brown sedge seasons** — dormant/dieback via tallgrass phenology (`sedgephase-*` blocks).
-- **Fern phase save fix** — legacy `fernphase-*-dieback` codes restored (no `-free` suffix); chunk migration for mistaken `-free` variants.
-
----
+## 4.5.4 — CSV hardening and config reference
 
 - **Shipped CSV parity tests** — CI fails if `assets/ecosystemflora/species/ecology.csv` or `season.csv` drift from exporters (`tools/Export-SpeciesEcologyCsv.ps1`, `Export-SpeciesSeasonCsv.ps1`).
 - **Load warnings** — duplicate species rows and unknown species in user ModConfig CSV (server log; unknown rows skipped).
@@ -45,6 +89,21 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Wildgrass ecology patches** — `dependsOn` for `wildgrass` / `wildgrasscontinued`; `addmerge` instead of `add` on `/attributesByType`. Stops log spam when Wildgrass is not installed and avoids patch failures when the target file already has attributes.
 - **Wildgrass handbook patches** — explicit per-species file paths instead of `plant/*` glob (nine blocktypes × two mod ids).
 - Maintainer: `tools/generate_wildgrass_patches.py` regenerates both patch files.
+
+---
+
+## 4.5.2 — Fern spread and stability
+
+- **Fern rhizome placement** — fix crash on invalid placement cells.
+- **Fern phase textures** — restore correct seasonal visuals on phase blocks.
+- **Spread null guards** — harden spread pipeline against null/air edge cases.
+
+---
+
+## 4.5.1 — Shore sedge harvest
+
+- **Brownsedge knife harvest** — fix crash when harvesting with a knife.
+- **Harvested root break** — correct visuals when breaking harvested sedge roots.
 
 ---
 

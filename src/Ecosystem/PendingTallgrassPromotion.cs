@@ -61,6 +61,18 @@ namespace WildFarming.Ecosystem
             indexByPos.Remove(removed);
         }
 
+        public bool TryGetQueuedEntry(BlockPos pos, out int targetStageIndex, out double nextAdvanceAtHours)
+        {
+            targetStageIndex = -1;
+            nextAdvanceAtHours = 0;
+            if (pos == null || !indexByPos.TryGetValue(pos, out int index)) return false;
+
+            Entry entry = entries[index];
+            targetStageIndex = entry.TargetStageIndex;
+            nextAdvanceAtHours = entry.NextAdvanceAtHours;
+            return true;
+        }
+
         public void Process(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
         {
             if (entries.Count == 0 || api == null || ecosystem == null || maxChecks <= 0) return;
@@ -145,24 +157,30 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        static void TryRegister(EcosystemSystem ecosystem, IBlockAccessor acc, BlockPos pos, List<BlockPos> remove)
+        static bool TryRegister(EcosystemSystem ecosystem, IBlockAccessor acc, BlockPos pos, List<BlockPos> remove)
         {
             if (ecosystem.RegistryContains(pos))
             {
                 remove.Add(pos);
-                return;
+                return true;
             }
 
             Block block = acc.GetBlock(pos);
             if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
             {
                 remove.Add(pos);
-                return;
+                return true;
             }
 
-            ecosystem.RegisterReproducer(pos, participant, spawnBurst: false);
+            if (!ecosystem.RegisterReproducer(pos, participant, spawnBurst: false)
+                || !ecosystem.RegistryContains(pos))
+            {
+                return false;
+            }
+
             ecosystem.InvalidateEnvironmentAround(pos);
             remove.Add(pos);
+            return true;
         }
     }
 }

@@ -84,6 +84,108 @@ namespace WildFarming.Tests
             }
         }
 
+        [Fact]
+        public void TryFindTopReproducer_FindsEaglefernNormalVariant()
+        {
+            var fernCode = new AssetLocation("game:fern-eaglefern-normal-free");
+            var fern = new Block
+            {
+                BlockId = 5,
+                Code = fernCode,
+                Replaceable = 3000,
+                BlockMaterial = EnumBlockMaterial.Plant,
+            };
+
+            var soil = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:soil-medium-normal"),
+                Replaceable = 100,
+                BlockMaterial = EnumBlockMaterial.Soil,
+            };
+            soil.SideSolid[BlockFacing.UP.Index] = true;
+
+            var view = new TestColumnView(
+                columnTop: 255,
+                blocks: new Dictionary<(int x, int y, int z), Block>
+                {
+                    [(0, 64, 0)] = fern,
+                    [(0, 63, 0)] = soil,
+                });
+
+            bool found = RegistrationColumnFlowerScan.TryFindTopReproducer(
+                view,
+                api: null,
+                x: 0,
+                z: 0,
+                scanTopY: 255,
+                out Block block,
+                out BlockPos pos,
+                out bool needsEstablishment);
+
+            Assert.True(found);
+            Assert.False(needsEstablishment);
+            Assert.Equal(fernCode, block.Code);
+            Assert.Equal(64, pos.Y);
+            Assert.True(EcosystemParticipant.TryFromBlock(block, out _));
+        }
+
+        [Fact]
+        public void TryFindTopReproducer_FindsFernUnderTreeTrunk()
+        {
+            var logCode = new AssetLocation("game:log-grown-oak-ud");
+            var log = new Block
+            {
+                BlockId = 4,
+                Code = logCode,
+                Replaceable = 100,
+                BlockMaterial = EnumBlockMaterial.Wood,
+            };
+
+            var fernCode = new AssetLocation("game:fern-eaglefern-normal-free");
+            var fern = new Block
+            {
+                BlockId = 5,
+                Code = fernCode,
+                Replaceable = 3000,
+                BlockMaterial = EnumBlockMaterial.Plant,
+            };
+
+            var soil = new Block
+            {
+                BlockId = 3,
+                Code = new AssetLocation("game:soil-medium-normal"),
+                Replaceable = 100,
+                BlockMaterial = EnumBlockMaterial.Soil,
+            };
+            soil.SideSolid[BlockFacing.UP.Index] = true;
+
+            var view = new TestColumnView(
+                columnTop: 255,
+                blocks: new Dictionary<(int x, int y, int z), Block>
+                {
+                    [(0, 66, 0)] = log,
+                    [(0, 65, 0)] = log,
+                    [(0, 64, 0)] = fern,
+                    [(0, 63, 0)] = soil,
+                });
+
+            bool found = RegistrationColumnFlowerScan.TryFindTopReproducer(
+                view,
+                api: null,
+                x: 0,
+                z: 0,
+                scanTopY: 255,
+                out Block block,
+                out BlockPos pos,
+                out bool needsEstablishment);
+
+            Assert.True(found);
+            Assert.False(needsEstablishment);
+            Assert.Equal(fernCode, block.Code);
+            Assert.Equal(64, pos.Y);
+        }
+
         sealed class TestColumnView : IRegistrationColumnView
         {
             readonly int columnTop;

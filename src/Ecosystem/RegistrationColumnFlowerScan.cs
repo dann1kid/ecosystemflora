@@ -41,6 +41,18 @@ namespace WildFarming.Ecosystem
 
                 if (EcologyAttributes.ReproduceEnabled(block))
                 {
+                    if (PlantCodeHelper.IsTreeLogGrownBlock(block)
+                        || PlantCodeHelper.IsFerntreeTrunkBlock(block)
+                        || WildVineHelper.IsVineBlock(block))
+                    {
+                        if (ChunkColumnWalker.ContinueColumnScan(block))
+                        {
+                            continue;
+                        }
+
+                        return false;
+                    }
+
                     pos = scratch.Copy();
                     if (api != null && EcosystemConfig.Loaded.EnableTallgrassPhenology)
                     {
@@ -50,7 +62,7 @@ namespace WildFarming.Ecosystem
                     return true;
                 }
 
-                if (!PlantVacancyRules.IsPassThroughForColumnScan(block))
+                if (!ChunkColumnWalker.ContinueColumnScan(block))
                 {
                     return false;
                 }

@@ -60,19 +60,22 @@ Main thread — PendingRegistrationQueue.Drain
 |-----------|--------|--------|
 | Player-vicinity priority | `EnablePlayerPriorityRegistration`, `PlayerRegistrationPriorityRadiusBlocks` | Chunks near players dequeue first |
 | Load burst | `EnableBurstRegistrationNearPlayers`, `BurstRegistrationBudgetMs` | Extra scan budget after chunk load near players |
-| Per-tick caps | `MaxRegistryAppliesPerTick`, `MaxRegistryAppliesPerChunkPerTick`, `MaxPriorityRegistryAppliesPerTick` | Smooth registry inserts |
+| Per-tick caps | `MaxRegistryAppliesPerTick`, `MaxRegistryAppliesPerChunkPerTick`, `MaxPriorityRegistryAppliesPerTick`, … | **Per worker** — effective limit = config value × resolved worker count (`RegistrationWorkerCount`, 0 = half CPU cores) |
 
 When `EnableBackgroundRegistrationScan` is **off**, the same column pass runs **synchronously** on the main thread during chunk scan (legacy path).
+
+**Upgrade migration:** existing `ecosystemflora.json` files from before per-worker budgets are converted once on load (`RegistrationBudgetPerWorkerMigrated`). Absolute totals are divided by the resolved worker count so effective throughput stays the same; the file is rewritten with per-worker values.
 
 ---
 
 ## Worker pool
 
-| Key | Default | Notes |
-|-----|---------|-------|
+| Key | Default (per worker) | Notes |
+|-----|---------------------|-------|
 | `EnableBackgroundRegistrationScan` | **true** | Snapshot → worker classify |
-| `RegistrationWorkerCount` | **0** (= half CPU cores, max 8) | Parallel classify workers |
-| `MaxRegistrationSnapshotCellsPerTick` | see CONFIGURATION | Main-thread snapshot copy budget |
+| `RegistrationWorkerCount` | **0** (= half CPU cores, max 8) | Parallel classify workers; throughput keys scale with this |
+| `MaxRegistrationSnapshotCellsPerTick` | **2048** | Main-thread snapshot copy budget (× workers) |
+| `MaxRegistryAppliesPerTick` | **128** | Paced registry apply budget (× workers) |
 
 Foliage phenology: with background scan on, **`FoliageChunkSyncPass`** runs on main after worker results; worker pass sets `SyncFoliage: false` on the column pass request.
 
@@ -104,6 +107,6 @@ Registration discovers **who can spread**. Actual spread scoring may use **`Back
 | Symptom | Check |
 |---------|--------|
 | Flowers/grass never register | `EcosystemEnabled`, chunk scan tick, `EnableCyclicFloraDiscovery`, registry caps not exhausted |
-| Slow registry near player | Raise `MaxPriorityRegistryAppliesPerTick` or burst budget |
+| Slow registry near player | Raise per-worker caps or `RegistrationWorkerCount`; check workers are fed (`MaxRegistrationSnapshotCellsPerTick` × workers) |
 | Worker idle, main spikes | Lower `MaxRegistrationSnapshotCellsPerTick` or worker count |
 | Tallgrass registers but does not spread | `EnableTallgrassSpreadMaturation`, height vs `MinSpreadStageIndex` — [`TALLGRASS_SPREAD_MATURATION.md`](TALLGRASS_SPREAD_MATURATION.md) |

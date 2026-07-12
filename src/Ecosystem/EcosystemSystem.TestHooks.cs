@@ -27,6 +27,9 @@ namespace WildFarming.Ecosystem
 
         internal void Test_TryRegisterPlacedBlock(BlockPos pos) => TryRegisterPlacedBlock(pos);
 
+        internal void Test_AddTallgrassPromotion(BlockPos pos) =>
+            maturationQueues.AddTallgrassPromotion(api, pos);
+
         internal void Test_FlushRegistration()
         {
             if (api?.World?.BlockAccessor == null) return;

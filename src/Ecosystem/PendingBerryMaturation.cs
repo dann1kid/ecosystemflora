@@ -88,7 +88,12 @@ namespace WildFarming.Ecosystem
                     continue;
                 }
 
-                ecosystem.RegisterReproducer(entry.Pos, participant, spawnBurst: false);
+                if (!ecosystem.RegisterReproducer(entry.Pos, participant, spawnBurst: false)
+                    || !ecosystem.RegistryContains(entry.Pos))
+                {
+                    continue;
+                }
+
                 ecosystem.InvalidateEnvironmentAround(entry.Pos);
                 EcologyHistoryRecorder.RecordSpread(api, entry.Pos, entry.Species);
                 remove.Add(entry.Pos);

@@ -1,4 +1,4 @@
-﻿{
+{
   "code": "tallgrassphase-dormant",
   "variantgroups": [
     { "code": "cover", "states": ["free", "snow", "snow2", "snow3"] }

@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
@@ -44,6 +45,35 @@ namespace WildFarming.Ecosystem
 
             AssetLocation mature = PlantCodeHelper.MatureBlockLocation(block) ?? spread;
             participant = new EcosystemParticipant(block, PlantRequirements.FromBlock(block), spread, mature);
+            return true;
+        }
+
+        /// <summary>Strict <see cref="TryFromBlock"/> first, then path-based fallback for phase/cover drift.</summary>
+        public static bool TryCreateForRegistration(
+            ICoreAPI api,
+            BlockPos pos,
+            Block block,
+            out IEcosystemParticipant participant)
+        {
+            participant = null;
+            if (block == null || pos == null) return false;
+            if (TryFromBlock(block, out participant)) return true;
+
+            PlantRequirements requirements = null;
+            AssetLocation spreadBlockCode = null;
+            AssetLocation matureBlockCode = null;
+            if (!RegistrationParticipantResolver.TryFromLiveBlock(
+                    api,
+                    pos,
+                    block,
+                    ref requirements,
+                    ref spreadBlockCode,
+                    ref matureBlockCode))
+            {
+                return false;
+            }
+
+            participant = new EcosystemParticipant(block, requirements, spreadBlockCode, matureBlockCode);
             return true;
         }
     }

@@ -10,7 +10,7 @@ namespace WildFarming.Ecosystem
 
         protected override string SpeciesFromJuvenile(Block block) => FlowerJuvenileBlocks.SpeciesFromJuvenile(block);
 
-        protected override void OnMature(
+        protected override bool OnMature(
             ICoreAPI api,
             EcosystemSystem ecosystem,
             IBlockAccessor acc,
@@ -30,29 +30,29 @@ namespace WildFarming.Ecosystem
                 acc.MarkBlockDirty(pos);
             }
 
-            if (!EcosystemParticipant.TryFromBlock(mature, out IEcosystemParticipant participant))
+            Block live = acc.GetBlock(pos);
+            if (!EcosystemParticipant.TryFromBlock(live, out IEcosystemParticipant participant))
             {
-                return;
+                return true;
             }
 
-            if (phenology)
-            {
-                ecosystem.RegisterReproducer(
+            bool registered = phenology
+                ? ecosystem.RegisterReproducer(
                     pos,
                     participant.SpreadBlockCode,
                     participant.MatureBlockCode,
                     participant.Requirements,
                     spawnBurst: false,
-                    flowerSpreadEstablished: true);
-            }
-            else
+                    flowerSpreadEstablished: true)
+                : ecosystem.RegisterReproducer(pos, participant, spawnBurst: false);
+
+            if (!registered || !ecosystem.RegistryContains(pos))
             {
-                acc.SetBlock(mature.BlockId, pos);
-                acc.MarkBlockDirty(pos);
-                ecosystem.RegisterReproducer(pos, participant, spawnBurst: false);
+                return false;
             }
 
             ecosystem.InvalidateEnvironmentAround(pos);
+            return true;
         }
     }
 }

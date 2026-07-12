@@ -61,6 +61,31 @@ namespace WildFarming.Ecosystem.Testing
                 b.BlockMaterial = EnumBlockMaterial.Plant;
                 b.Replaceable = 3000;
             }));
+            blocks = Expand(blocks, Make("game:fern-eaglefern-normal-free", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
+            blocks = Expand(blocks, Make("game:fern-eaglefern-free", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
+            blocks = Expand(blocks, Make("ecosystemflora:fernphase-eaglefern-sporulating-free", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
+            blocks = Expand(blocks, Make("ecosystemflora:fernphase-eaglefern-dormant-free", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
+            blocks = Expand(blocks, Make("ecosystemflora:fernphase-eaglefern-dieback-free", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Plant;
+                b.Replaceable = 3000;
+            }));
 
             for (int i = 0; i < blocks.Length; i++)
             {

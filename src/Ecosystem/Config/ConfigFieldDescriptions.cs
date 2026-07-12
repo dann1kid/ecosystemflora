@@ -483,6 +483,10 @@ namespace WildFarming.Ecosystem.Config
                 "On: register anchors; niche stress and death on mycelium. Off: vanilla mycelium only.",
                 "Вкл.: регистрация якорей, стресс и гибель грибницы. Выкл.: только ваниль.");
 
+            D(nameof(EcosystemConfig.EnableMyceliumCapDisplacement),
+                "On: Harmony patch lets vanilla cap regrowth displace meadow grass/flowers in growRange. Off: vanilla air-only placement.",
+                "Вкл.: патч Harmony — респавн шляпок может вытеснять луговую траву/цветы. Выкл.: только air, как в ванилле.");
+
             D(nameof(EcosystemConfig.MyceliumTreeHostRadius),
                 "Higher: search farther for tree host required by forest mycelium. Lower: stricter host proximity.",
                 "Больше: дальше поиск дерева-хозяина для лесной грибницы. Меньше: ближе нужно дерево.");
@@ -676,12 +680,12 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше оценок распространения за тик (быстрее, выше процессор). Меньше: мягче темп распространения.");
 
             D(nameof(EcosystemConfig.MaxChunkColumnsScannedPerTick),
-                "Higher: more sync column scans when background scan off. Lower: slower registration catch-up.",
-                "Больше: больше синхронных обходов колонок без фонового обхода. Меньше: медленнее догонка.");
+                "Per worker (× worker count). Higher: more sync column scans when background scan off. Lower: slower registration catch-up.",
+                "На поток (× число потоков). Больше: больше синхронных обходов колонок без фонового обхода. Меньше: медленнее догонка.");
 
             D(nameof(EcosystemConfig.MaxRegistrationsPerTick),
-                "Higher: more sync registrations when background scan off. Lower: slower registry fill.",
-                "Больше: больше синхронизация-регистраций без фонового обхода. Меньше: медленнее заполнение реестра.");
+                "Per worker (× worker count). Higher: more sync registrations when background scan off. Lower: slower registry fill.",
+                "На поток (× число потоков). Больше: больше синхронизация-регистраций без фонового обхода. Меньше: медленнее заполнение реестра.");
 
             D(nameof(EcosystemConfig.EnablePlayerPriorityRegistration),
                 "On: drain player-vicinity chunks before background registration queue. Off: uniform queue order.",
@@ -696,12 +700,12 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: шире зона приоритетной/пакетный регистрации. Меньше: уже зона.");
 
             D(nameof(EcosystemConfig.MaxPriorityChunkScansPerTick),
-                "Higher: more priority queue passes per chunk-scan tick. Lower: slower player-vicinity registration.",
-                "Больше: больше приоритетных проходов за тик обхода. Меньше: медленнее регистрация у игрока.");
+                "Per worker (× worker count). Higher: more priority queue passes per chunk-scan tick. Lower: slower player-vicinity registration.",
+                "На поток (× число потоков). Больше: больше приоритетных проходов за тик обхода. Меньше: медленнее регистрация у игрока.");
 
             D(nameof(EcosystemConfig.MaxPriorityRegistrationsPerTick),
-                "Higher: more registrations from priority queue per tick. Lower: slower near-player fill.",
-                "Больше: больше приоритетных регистраций за тик. Меньше: медленнее у игрока.");
+                "Per worker (× worker count). Higher: more registrations from priority queue per tick. Lower: slower near-player fill.",
+                "На поток (× число потоков). Больше: больше приоритетных регистраций за тик. Меньше: медленнее у игрока.");
 
             D(nameof(EcosystemConfig.PriorityRegistrationBudgetMs),
                 "Higher: more ms per priority registration pass (smoother, more CPU). Lower: stricter time cap.",
@@ -712,24 +716,24 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше мс на завершение пакетного участка. Меньше: меньшая доля.");
 
             D(nameof(EcosystemConfig.MaxBurstRegistrationsPerChunk),
-                "Higher: allow more registrations when finishing one burst chunk. Lower: cap burst chunk size.",
-                "Больше: больше регистраций при завершении пакетного участка. Меньше: ниже лимит.");
+                "Per worker (× worker count). Higher: allow more registrations when finishing one burst chunk. Lower: cap burst chunk size.",
+                "На поток (× число потоков). Больше: больше регистраций при завершении пакетного участка. Меньше: ниже лимит.");
 
             D(nameof(EcosystemConfig.MaxRegistryAppliesPerTick),
-                "Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing.",
-                "Больше: больше регистрация за тик обхода. Меньше: медленнее темп.");
+                "Per worker (× worker count). Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing.",
+                "На поток (× число потоков). Больше: больше регистрация за тик обхода. Меньше: медленнее темп.");
 
             D(nameof(EcosystemConfig.MaxRegistryAppliesPerChunkPerTick),
-                "Higher: more registry inserts from one chunk per drain pass. Lower: fairer but slower single-chunk meadows.",
-                "Больше: больше вставки из одного участока за проход очереди. Меньше: честнее по очереди, но медленнее луга.");
+                "Per worker (× worker count). Higher: more registry inserts from one chunk per drain pass. Lower: fairer but slower single-chunk meadows.",
+                "На поток (× число потоков). Больше: больше вставки из одного участка за проход очереди. Меньше: честнее по очереди, но медленнее луга.");
 
             D(nameof(EcosystemConfig.RegistrationWorkerCount),
-                "Higher: more background column-classification threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
-                "Больше: больше потоков классификации (макс. 8). 0 = половина ядер. Снимок и установка блока — в основном потоке.");
+                "Higher: more background column-classification threads (max 8). 0 = half CPU cores. Registration throughput keys are per worker and scale with this count. Lower: fewer parallel scans. Snapshot and SetBlock stay on main thread.",
+                "Больше: больше потоков классификации (макс. 8). 0 = половина ядер. Лимиты регистрации — на поток и умножаются на это число. Меньше: меньше параллельных обходов. Снимок и установка блока — в основном потоке.");
 
             D(nameof(EcosystemConfig.MaxPriorityRegistryAppliesPerTick),
-                "Higher: more extra applies for player-vicinity chunks. Lower: slower near-player registry.",
-                "Больше: больше приоритетных вставок у игрока за тик. Меньше: медленнее реестр у игрока.");
+                "Per worker (× worker count). Higher: more extra applies for player-vicinity chunks. Lower: slower near-player registry.",
+                "На поток (× число потоков). Больше: больше приоритетных вставок у игрока за тик. Меньше: медленнее реестр у игрока.");
 
             D(nameof(EcosystemConfig.EnableBackgroundRegistrationScan),
                 "On: classify columns on worker from main-thread snapshot. Off: sync scan on main thread only.",
@@ -744,8 +748,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше потоков оценки распространения (макс. 8). 0 = половина ядер. Снимок и установка блока — в основном потоке.");
 
             D(nameof(EcosystemConfig.MaxRegistrationSnapshotCellsPerTick),
-                "Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed.",
-                "Больше: больше идентификаторов блоков в снимок за тик. Меньше: медленнее подача данных фоновому обходу.");
+                "Per worker (× worker count). Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed.",
+                "На поток (× число потоков). Больше: больше идентификаторов блоков в снимок за тик. Меньше: медленнее подача данных фоновому обходу.");
 
             D(nameof(EcosystemConfig.TickBudgetMs),
                 "Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited.",

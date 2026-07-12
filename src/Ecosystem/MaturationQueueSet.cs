@@ -56,6 +56,12 @@ namespace WildFarming.Ecosystem
         public bool TryGetShoreSedgeHoursLeft(BlockPos pos, double nowHours, out double hoursLeft)
             => shoreSedgeMaturation.TryGetHoursUntilMature(pos, nowHours, out hoursLeft);
 
+        public bool TryGetTallgrassPromotionState(
+            BlockPos pos,
+            out int targetStageIndex,
+            out double nextAdvanceAtHours)
+            => tallgrassPromotion.TryGetQueuedEntry(pos, out targetStageIndex, out nextAdvanceAtHours);
+
         public void ProcessTreeSaplings(ICoreAPI api, EcosystemSystem ecosystem, double nowHours, int maxChecks)
             => treeSaplings.Process(api, ecosystem, nowHours, maxChecks);
 

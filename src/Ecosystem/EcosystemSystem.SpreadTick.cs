@@ -70,9 +70,14 @@ namespace WildFarming.Ecosystem
                         return true;
                     }
 
-                    if (block.Id == 0 || !entry.IsRegisteredPlantBlock(block))
+                    if (block.Id == 0)
                     {
                         return false;
+                    }
+
+                    if (!entry.IsRegisteredPlantBlock(block))
+                    {
+                        return entry.MatchesRegisteredSpecies(block);
                     }
 
                     if (entry.Requirements?.Species == "tallgrass"

@@ -28,5 +28,13 @@
       <HintPath>$(APPDATA)\Vintagestory\Lib\protobuf-net.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(APPDATA)\Vintagestory\Lib\0Harmony.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="VSSurvivalMod">
+      <HintPath>$(APPDATA)\Vintagestory\Mods\VSSurvivalMod.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 </Project>

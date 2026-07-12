@@ -62,6 +62,21 @@ namespace WildFarming.Ecosystem
             return byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state) && state.Items.Count > 0;
         }
 
+        public bool HasPendingAt(BlockPos pos)
+        {
+            if (pos == null) return false;
+            Vec2i chunk = ReproducerRegistry.ToChunkCoord(pos);
+            if (!byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state)) return false;
+
+            for (int i = 0; i < state.Items.Count; i++)
+            {
+                PendingRegistration item = state.Items[i];
+                if (item.Pos != null && item.Pos.Equals(pos)) return true;
+            }
+
+            return false;
+        }
+
         public bool IsScanCompleted(Vec2i chunk)
         {
             return byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state) && state.ScanCompleted;
@@ -168,30 +183,59 @@ namespace WildFarming.Ecosystem
                     }
                 }
 
-                int chunkApplied = 0;
-                while (applied < maxApplies
-                       && chunkApplied < maxAppliesPerChunk
-                       && state.Items.Count > 0)
-                {
-                    if (eco.TryApplyPendingRegistration(acc, state.Items[0], out bool stale))
-                    {
-                        applied++;
-                        LastDrainApplied++;
-                    }
-                    else if (stale)
-                    {
-                        LastDrainStale++;
-                    }
+                applied += DrainChunkState(eco, acc, chunk, state, maxApplies - applied, maxAppliesPerChunk);
+            }
 
+            return applied;
+        }
+
+        int DrainChunkState(
+            EcosystemSystem eco,
+            IBlockAccessor acc,
+            Vec2i chunk,
+            ChunkState state,
+            int appliesBudget,
+            int maxAppliesPerChunk)
+        {
+            if (appliesBudget <= 0 || state == null || state.Items.Count == 0) return 0;
+
+            if (maxAppliesPerChunk <= 0)
+            {
+                maxAppliesPerChunk = appliesBudget;
+            }
+
+            int applied = 0;
+            int chunkApplied = 0;
+            while (applied < appliesBudget
+                   && chunkApplied < maxAppliesPerChunk
+                   && state.Items.Count > 0)
+            {
+                PendingRegistration item = state.Items[0];
+                if (eco.TryApplyPendingRegistration(acc, item, out bool stale))
+                {
+                    applied++;
+                    LastDrainApplied++;
                     state.Items.RemoveAt(0);
-                    chunkApplied++;
+                }
+                else if (stale)
+                {
+                    LastDrainStale++;
+                    state.Items.RemoveAt(0);
+                }
+                else
+                {
+                    state.Items.RemoveAt(0);
+                    state.Items.Add(item);
+                    break;
                 }
 
-                if (state.Items.Count == 0 && state.ScanCompleted)
-                {
-                    byChunk.Remove(key);
-                    eco.OnPendingChunkDrained(chunk);
-                }
+                chunkApplied++;
+            }
+
+            if (state.Items.Count == 0 && state.ScanCompleted)
+            {
+                byChunk.Remove(ChunkKey(chunk));
+                eco.OnPendingChunkDrained(chunk);
             }
 
             return applied;

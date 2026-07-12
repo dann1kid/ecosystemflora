@@ -5,7 +5,19 @@ namespace WildFarming.Ecosystem
     public static class EcologyAttributes
     {
         /// <summary>Block participates in wild ecology (capabilities via <see cref="IEcosystemParticipant"/>).</summary>
-        public static bool ReproduceEnabled(Block block) => EcosystemParticipant.TryFromBlock(block, out _);
+        public static bool ReproduceEnabled(Block block)
+        {
+            if (block == null || block.Id == 0) return false;
+            if (EcosystemParticipant.TryFromBlock(block, out _)) return true;
+
+            if (block.Attributes != null && !block.Attributes["ecologyReproduce"].AsBool(true)) return false;
+
+            string path = block.Code?.Path;
+            if (path != null && path.Contains("-harvested-")) return false;
+
+            return PlantCodeHelper.ResolveEcologySpecies(block) != null
+                && PlantCodeHelper.IsEcologyPlant(block);
+        }
 
         public static bool CodeMatchesPattern(string codePath, string pattern)
         {

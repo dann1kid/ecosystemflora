@@ -130,9 +130,13 @@ namespace WildFarming.Ecosystem
             Block block = acc.GetBlock(basePos);
             if (PlantCodeHelper.IsFerntreeTrunkBlock(block) && !cfg.EnableFerntreeEcology) return false;
 
-            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
+            if (!EcosystemParticipant.TryCreateForRegistration(api, basePos, block, out IEcosystemParticipant participant)) return false;
 
-            RegisterReproducer(basePos, participant, spawnBurst: false);
+            if (!RegisterReproducer(basePos, participant, spawnBurst: false))
+            {
+                return false;
+            }
+
             registrationsLeft--;
             return true;
         }
@@ -163,10 +167,40 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
-            if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant)) return false;
+            if (TryQueueFernDiscoveryMaturation(pos, block))
+            {
+                registrationsLeft--;
+                return true;
+            }
 
-            RegisterReproducer(anchor, participant, spawnBurst: false);
+            if (!EcosystemParticipant.TryCreateForRegistration(api, pos, block, out IEcosystemParticipant participant)) return false;
+
+            if (!RegisterReproducer(anchor, participant, spawnBurst: false))
+            {
+                return false;
+            }
+
             registrationsLeft--;
+            return true;
+        }
+
+        bool TryQueueFernDiscoveryMaturation(BlockPos pos, Block block)
+        {
+            if (api == null || pos == null || block == null) return false;
+
+            PlantRequirements requirements = PlantRequirements.FromBlock(block);
+            if (requirements == null || !FernSpreadMaturation.ShouldQueueMaturation(block, requirements))
+            {
+                return false;
+            }
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            double nowHours = api.World.Calendar.TotalHours;
+            AssetLocation matureCode = FernJuvenileBlocks.ResolveMatureCode(api, pos, requirements.Species);
+            if (matureCode == null) return false;
+
+            double matureAt = nowHours + WildFernSpread.MaturationHours(api, pos, requirements.Species, cfg);
+            maturationQueues.AddFern(pos, matureCode, requirements.Species, matureAt);
             return true;
         }
     }

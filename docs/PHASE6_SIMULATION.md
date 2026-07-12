@@ -2,6 +2,8 @@
 
 > План на **v3.8+**. Цель: **полная экология во всех loaded chunks** на мощном железе — за счёт умного планировщика и инкрементального состояния, а не geographic cutoffs и урезанных preset’ов.
 
+**Следующий этап (unloaded chunks):** [PHASE7_EXTERNAL_SIMULATION.md](PHASE7_EXTERNAL_SIMULATION.md) — v5.0+, внешнее хранилище + optional Go worker.
+
 См. также: [PROJECT_VISION.md §12](PROJECT_VISION.md#12-производительность-roadmap), [PROGRESS.md](PROGRESS.md), [GAPS.md §8](GAPS.md#8-производительность-и-масштаб).
 
 ---

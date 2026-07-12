@@ -1,5 +1,6 @@
 using Vintagestory.API.Common;
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.Harmony;
 using WildFarming.Ecosystem.SpeciesEcology;
 using WildFarming.Blocks;
 using WildFarming.Handbook;
@@ -18,6 +19,7 @@ namespace WildFarming
             api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);
+            EcosystemHarmony.TryApply(api);
             if (api.Side == EnumAppSide.Server)
             {
                 DiscoveredSpeciesStore.Load(api);

@@ -76,5 +76,6 @@ namespace WildFarming.Tests.Harness
         public SimColumnBuilder Air(int y) => At(y, "game:air");
         public SimColumnBuilder Flower(string species, int y) => At(y, "game:flower-" + species + "-free");
         public SimColumnBuilder Tallgrass(string stage, int y) => At(y, "game:tallgrass-" + stage + "-free");
+        public SimColumnBuilder Eaglefern(int y) => At(y, "game:fern-eaglefern-normal-free");
     }
 }

@@ -89,7 +89,9 @@ namespace WildFarming.Ecosystem
             if (FernJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (ShoreSedgeJuvenileBlocks.IsJuvenileBlock(block)) return true;
             if (FlowerPhenologyBlocks.IsPhaseBlock(block)) return true;
+            if (FernPhenologyBlocks.IsPhaseBlock(block)) return true;
             if (SedgePhenologyBlocks.IsPhaseBlock(block)) return true;
+            if (TallgrassPhenologyBlocks.IsPhaseBlock(block)) return true;
             if (block.Code.Domain != "game") return false;
             if (TryGetEcologySpecies(block.Code, out _)) return true;
             return IsTreeSaplingBlock(block) || IsWildBerryBushBlock(block);
@@ -216,10 +218,8 @@ namespace WildFarming.Ecosystem
 
             if (path.StartsWith("fern-"))
             {
-                string fernType = path.Substring("fern-".Length);
-                if (fernType.EndsWith("-free")) fernType = fernType.Substring(0, fernType.Length - "-free".Length);
-                else if (fernType.EndsWith("-snow")) fernType = fernType.Substring(0, fernType.Length - "-snow".Length);
-                if (EcologyFernSpecies.IsKnown(fernType)) return fernType;
+                string species = VanillaFernSpeciesParser.TryParseSpeciesFromPath(path);
+                if (species != null) return species;
             }
 
             if (path != null && path.StartsWith("ferntree-normal-"))
@@ -515,11 +515,14 @@ namespace WildFarming.Ecosystem
                 return new AssetLocation("game", path);
             }
 
-            string phaseSpecies = FlowerPhenologyBlocks.SpeciesFromPhaseBlock(block);
-            if (phaseSpecies != null)
+            if (FlowerPhenologyBlocks.SpeciesFromPhaseBlock(block) != null)
             {
-                AssetLocation mature = FlowerJuvenileBlocks.MatureVanillaCode(phaseSpecies);
-                return mature ?? block.Code;
+                return block.Code;
+            }
+
+            if (FernPhenologyBlocks.SpeciesFromPhaseCode(block.Code) != null)
+            {
+                return block.Code;
             }
 
             if (!IsEcologyPlant(block)) return null;

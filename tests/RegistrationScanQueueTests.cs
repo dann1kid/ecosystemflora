@@ -25,22 +25,32 @@ namespace WildFarming.Tests
             var cfg = new EcosystemConfig();
             Assert.True(cfg.EnablePlayerPriorityRegistration);
             Assert.True(cfg.EnableBurstRegistrationNearPlayers);
-            Assert.Equal(16, cfg.PlayerRegistrationPriorityRadiusBlocks);
-            Assert.Equal(48, cfg.MaxPriorityChunkScansPerTick);
-            Assert.Equal(8192, cfg.MaxPriorityRegistrationsPerTick);
+            Assert.Equal(64, cfg.PlayerRegistrationPriorityRadiusBlocks);
+            Assert.Equal(24, cfg.MaxPriorityChunkScansPerTick);
+            Assert.Equal(2048, cfg.MaxPriorityRegistrationsPerTick);
         }
 
         [Fact]
-        public void RegistrationThroughput_DefaultsRaised()
+        public void RegistrationThroughput_PerWorkerDefaults()
         {
             var cfg = new EcosystemConfig();
-            Assert.Equal(16, cfg.MaxChunkColumnsScannedPerTick);
-            Assert.Equal(2048, cfg.MaxRegistrationsPerTick);
-            Assert.Equal(80, cfg.BurstRegistrationBudgetMs);
+            Assert.Equal(64, cfg.MaxChunkColumnsScannedPerTick);
+            Assert.Equal(256, cfg.MaxRegistrationsPerTick);
+            Assert.Equal(120, cfg.BurstRegistrationBudgetMs);
             Assert.Equal(512, cfg.MaxRegistryAppliesPerTick);
-            Assert.Equal(2048, cfg.MaxPriorityRegistryAppliesPerTick);
+            Assert.Equal(512, cfg.MaxPriorityRegistryAppliesPerTick);
             Assert.True(cfg.EnableBackgroundRegistrationScan);
-            Assert.Equal(8192, cfg.MaxRegistrationSnapshotCellsPerTick);
+            Assert.Equal(4096, cfg.MaxRegistrationSnapshotCellsPerTick);
+            Assert.Equal(0, cfg.RegistrationWorkerCount);
+            Assert.Equal(30, cfg.ChunkScanTickIntervalMs);
+        }
+
+        [Fact]
+        public void RegistrationThroughput_EffectiveScalesWithWorkers()
+        {
+            var cfg = new EcosystemConfig { RegistrationWorkerCount = 4 };
+            Assert.Equal(2048, cfg.EffectiveMaxRegistryAppliesPerTick());
+            Assert.Equal(16384, cfg.EffectiveMaxRegistrationSnapshotCellsPerTick());
         }
     }
 }

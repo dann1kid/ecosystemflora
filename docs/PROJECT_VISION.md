@@ -284,6 +284,7 @@ docs/
 - [x] **v3.6.0** — **Wild tree maturation** + phased senescence — [`TREE_AGING.md`](TREE_AGING.md) — ✅.
 - [x] **v3.7.0** — **Tree fern**, canopy sticks/age branches, **wild vines** — [`FERNTREE.md`](FERNTREE.md), [`WILD_VINE.md`](WILD_VINE.md) — ✅ (playtest).
 - [x] **v3.8.0** — **Phase 6 simulation engine** — chunk-fair spread, wake, column cache, two-phase placement, registration priority, empty-first spread — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md) — ✅.
+- [ ] **v5.0 Phase 7** — external ecology sim for **unloaded** chunks (DB + optional Go worker) — [`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md) — 📋 design.
 - [ ] **Crowfoot / de handbook / dominant UX** — см. [`GAPS.md`](GAPS.md).
 - [x] **v3.1.8** — `LegacyBlockEntityMigration` (EcoSystemLife + EcosystemPlant); fix ecology inspect dialog — ✅.
 - [x] Chunk-scan без BE в патчах — `ChunkFlowerScanner`; legacy BE strip on load — ✅.
@@ -497,7 +498,21 @@ OnStressTick      → round-robin stress по реестру
 
 Все четыре фазы завершены (2026-05-26); Phase 6 + registration worker — 2026-06.
 
-### 12.6. Конфиг-throttle
+### 12.6. Phase 7 — unloaded chunks (planned v5.0)
+
+Phase 6 покрывает **loaded** chunk columns. При unload registry и column state **сбрасываются** — экология в далёких зонах заморожена.
+
+**Цель Phase 7:** compact ecology snapshot → per-world DB → optional Go worker fast-forward → paced `SetBlock` on chunk load. Игра не считает spread для выгруженных зон; **применяет** накопленные ops на main thread.
+
+Полный дизайн: **[`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md)**.
+
+| Loaded (Phase 6) | Unloaded (Phase 7) |
+|------------------|-------------------|
+| In-process C# workers | External DB + optional Go sim |
+| Live `BlockAccessor` snapshots | Exported column snapshot |
+| Immediate spread commit | Pending ops → catch-up on load |
+
+### 12.7. Конфиг-throttle
 
 `OnlyActivateNearPlayers` (default **false** since v3.6; true = playtest radius for spread/stress/trees/**and chunk scans**), `LimitSpreadNearPlayers` (default **false**; true = spread/stress/tree aging near players only; **registration unchanged**), `TickBudgetMs` (default **30**), `SpreadBudgetMs` (default **30**), `ReproduceTickIntervalMs` / `ChunkScanTickIntervalMs` / `StressTickIntervalMs` (2000 / 2300 / 5500), `MaxReproduceAttemptsPerTick`, `MaxStressChecksPerTick`, `FloraContextCacheHours`, `ReproduceRadius` — см. таблицу в PROGRESS.
 

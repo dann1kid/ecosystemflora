@@ -281,7 +281,7 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             HashSet<long> chunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
             IBlockAccessor acc = api.World.BlockAccessor;
-            int left = cfg.MaxRegistrationsPerTick * 4;
+            int left = cfg.EffectiveMaxRegistrationsPerTick() * 4;
             foreach (long key in chunks)
             {
                 if (left <= 0) break;
@@ -491,6 +491,19 @@ namespace WildFarming.Ecosystem
                 out hoursLeft);
         }
 
+        internal bool TryGetTallgrassPromotionState(
+            BlockPos pos,
+            out int targetStageIndex,
+            out double nextAdvanceAtHours)
+        {
+            targetStageIndex = -1;
+            nextAdvanceAtHours = 0;
+            return maturationQueues.TryGetTallgrassPromotionState(
+                pos,
+                out targetStageIndex,
+                out nextAdvanceAtHours);
+        }
+
         internal void NotifySpreadSolveNoWinners(BlockPos origin, PlantRequirements requirements)
         {
             if (origin == null || requirements == null) return;
@@ -624,63 +637,85 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        public void RegisterReproducer(BlockPos origin, IEcosystemParticipant participant, bool spawnBurst = false, bool playerPlaced = false)
+        public bool RegisterReproducer(
+            BlockPos origin,
+            IEcosystemParticipant participant,
+            bool spawnBurst = false,
+            bool playerPlaced = false,
+            bool ignorePlayerProximity = false)
         {
-            if (participant == null || api == null) return;
+            if (participant == null || api == null) return false;
 
             BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(
                 api.World.BlockAccessor, origin, participant.BlockCode);
 
-            RegisterReproducer(
+            return RegisterReproducer(
                 anchor,
                 participant.SpreadBlockCode,
                 participant.MatureBlockCode,
                 participant.Requirements,
                 spawnBurst,
-                playerPlaced);
+                playerPlaced,
+                flowerSpreadEstablished: false,
+                ignorePlayerProximity);
         }
 
-        public void RegisterReproducer(
+        public bool RegisterReproducer(
             BlockPos origin,
             AssetLocation spreadBlockCode,
             AssetLocation matureBlockCode,
             PlantRequirements requirements,
             bool spawnBurst = false,
             bool playerPlaced = false,
-            bool flowerSpreadEstablished = false)
+            bool flowerSpreadEstablished = false,
+            bool ignorePlayerProximity = false)
         {
-            if (api == null || api.Side != EnumAppSide.Server) return;
-            if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            if (spreadBlockCode == null || matureBlockCode == null || requirements == null) return;
+            if (api == null || api.Side != EnumAppSide.Server) return false;
+            if (!EcosystemConfig.Loaded.EcosystemEnabled) return false;
+            if (spreadBlockCode == null || matureBlockCode == null || requirements == null) return false;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (requirements.Habitat == EcologyHabitat.Ferntree && !cfg.EnableFerntreeEcology) return;
-            if (requirements.Habitat == EcologyHabitat.WildVine && !cfg.EnableWildVineEcology) return;
-            if (cfg.OnlyActivateNearPlayers && !PlayerProximity.IsNearAnyPlayer(api, origin, cfg.PlayerActivationRadiusBlocks))
+            if (requirements.Habitat == EcologyHabitat.Ferntree && !cfg.EnableFerntreeEcology) return false;
+            if (requirements.Habitat == EcologyHabitat.WildVine && !cfg.EnableWildVineEcology) return false;
+            if (!ignorePlayerProximity
+                && cfg.OnlyActivateNearPlayers
+                && !PlayerProximity.IsNearAnyPlayer(api, origin, cfg.PlayerActivationRadiusBlocks))
             {
-                return;
+                return false;
             }
 
             try
             {
                 Block matureBlock = api.World.BlockAccessor.GetBlock(origin);
-                if (!EcosystemParticipant.TryFromBlock(matureBlock, out _))
+                if (!RegistrationParticipantResolver.TryFromLiveBlock(
+                        api,
+                        origin,
+                        matureBlock,
+                        ref requirements,
+                        ref spreadBlockCode,
+                        ref matureBlockCode))
                 {
-                    Block codeBlock = api.World.GetBlock(matureBlockCode);
-                    if (codeBlock == null || !EcosystemParticipant.TryFromBlock(codeBlock, out _))
+                    if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
                     {
-                        if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
-                        {
-                            api.Logger.Warning(
-                                "[ecosystemflora] Tree not registrable at {0}: block={1}",
-                                origin,
-                                matureBlock?.Code);
-                        }
-                        return;
+                        api.Logger.Warning(
+                            "[ecosystemflora] Tree not registrable at {0}: block={1}",
+                            origin,
+                            matureBlock?.Code);
                     }
+                    else if (cfg.ReproduceDebug && EcologyFernSpecies.IsKnown(requirements?.Species))
+                    {
+                        api.Logger.Warning(
+                            "[ecosystemflora] Fern not registrable at {0}: live={1} spread={2}",
+                            origin,
+                            matureBlock?.Code,
+                            spreadBlockCode);
+                    }
+
+                    return false;
                 }
 
-                Block spreadBlock = api.World.GetBlock(spreadBlockCode);
+                matureBlock = api.World.BlockAccessor.GetBlock(origin);
+                Block spreadBlock = EcologySpreadBlockResolver.Resolve(api, spreadBlockCode, origin, matureBlock);
                 if (spreadBlock == null || spreadBlock.Id == 0)
                 {
                     if (cfg.ReproduceDebug && requirements.Habitat == EcologyHabitat.TerrestrialTree)
@@ -698,9 +733,19 @@ namespace WildFarming.Ecosystem
                             origin,
                             matureBlock?.Code);
                     }
+                    else if (cfg.ReproduceDebug && EcologyFernSpecies.IsKnown(requirements.Species))
+                    {
+                        api.Logger.Warning(
+                            "[ecosystemflora] Fern spread block missing: {0} (origin {1}, live {2})",
+                            spreadBlockCode,
+                            origin,
+                            matureBlock?.Code);
+                    }
 
-                    return;
+                    return false;
                 }
+
+                spreadBlockCode = spreadBlock.Code.Clone();
 
                 double now = api.World.Calendar.TotalHours;
                 double nextAttempt = now;
@@ -783,10 +828,13 @@ namespace WildFarming.Ecosystem
                 {
                     TrySpawnOffspring(entry, skipChanceRoll: true, maxSpawns: 3);
                 }
+
+                return true;
             }
             catch (System.Exception ex)
             {
                 api.Logger.Error("[ecosystemflora] RegisterReproducer failed at {0}: {1}", origin, ex);
+                return false;
             }
         }
 
@@ -930,7 +978,7 @@ namespace WildFarming.Ecosystem
                 cfg,
                 chunkCoord,
                 registrationScanQueue,
-                cfg.MaxBurstRegistrationsPerChunk,
+                cfg.EffectiveMaxBurstRegistrationsPerChunk(),
                 cfg.BurstRegistrationBudgetMs,
                 cfg.ResolvePriorityRegistrationBudgetMs());
         }
@@ -1223,8 +1271,8 @@ namespace WildFarming.Ecosystem
 
             if (cfg.EnablePlayerPriorityRegistration)
             {
-                int priorityPassesLeft = cfg.MaxPriorityChunkScansPerTick;
-                int priorityRegistrationsLeft = cfg.MaxPriorityRegistrationsPerTick;
+                int priorityPassesLeft = cfg.EffectiveMaxPriorityChunkScansPerTick();
+                int priorityRegistrationsLeft = cfg.EffectiveMaxPriorityRegistrationsPerTick();
                 int priorityPassBudgetMs = cfg.ResolvePriorityRegistrationBudgetMs();
                 if (cfg.FoliageChunkSyncBudgetMs > priorityPassBudgetMs)
                 {
@@ -1246,8 +1294,8 @@ namespace WildFarming.Ecosystem
                     preferPriority: true);
             }
 
-            int passesLeft = cfg.MaxChunkColumnsScannedPerTick;
-            int registrationsLeft = cfg.MaxRegistrationsPerTick;
+            int passesLeft = cfg.EffectiveMaxChunkColumnsScannedPerTick();
+            int registrationsLeft = cfg.EffectiveMaxRegistrationsPerTick();
             int passBudgetMs = cfg.ResolveRegistrationBudgetMs();
             if (cfg.FoliageChunkSyncBudgetMs > passBudgetMs)
             {
@@ -1324,25 +1372,25 @@ namespace WildFarming.Ecosystem
                     api, cfg.PlayerRegistrationPriorityRadiusBlocks);
             }
 
-            int appliesLeft = cfg.MaxPriorityRegistryAppliesPerTick;
+            int appliesLeft = cfg.EffectiveMaxPriorityRegistryAppliesPerTick();
             if (appliesLeft > 0 && priorityChunks != null && priorityChunks.Count > 0)
             {
                 pendingRegistrations.Drain(
                     this,
                     acc,
                     appliesLeft,
-                    cfg.MaxRegistryAppliesPerChunkPerTick,
+                    cfg.EffectiveMaxRegistryAppliesPerChunkPerTick(),
                     priorityChunks);
             }
 
-            appliesLeft = cfg.MaxRegistryAppliesPerTick;
+            appliesLeft = cfg.EffectiveMaxRegistryAppliesPerTick();
             if (appliesLeft > 0)
             {
                 pendingRegistrations.Drain(
                     this,
                     acc,
                     appliesLeft,
-                    cfg.MaxRegistryAppliesPerChunkPerTick,
+                    cfg.EffectiveMaxRegistryAppliesPerChunkPerTick(),
                     priorityChunks);
             }
         }
@@ -1377,7 +1425,7 @@ namespace WildFarming.Ecosystem
             }
 
             if (item.BlockCode != null && block.Code != null
-                && !block.Code.Equals(item.BlockCode))
+                && !RegistrationBlockMatch.MatchesSnapshot(block, item.BlockCode))
             {
                 stale = true;
                 return false;
@@ -1394,7 +1442,7 @@ namespace WildFarming.Ecosystem
                     }
 
                     RegisterReproducer(item.Pos, treeParticipant, spawnBurst: false);
-                    return true;
+                    return registry.Contains(item.Pos);
 
                 case PendingRegistrationKind.Vine:
                     if (registry.Contains(item.Pos)) return true;
@@ -1406,16 +1454,21 @@ namespace WildFarming.Ecosystem
                     }
 
                     RegisterReproducer(item.Pos, vineParticipant, spawnBurst: false);
-                    return true;
+                    return registry.Contains(item.Pos);
 
                 default:
                     if (registry.Contains(item.Pos)) return true;
 
-                    if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant participant))
+                    if (!EcosystemParticipant.TryCreateForRegistration(api, item.Pos, block, out IEcosystemParticipant participant))
                     {
                         if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, item.Pos, block))
                         {
                             maturationQueues.AddTallgrassPromotion(api, item.Pos);
+                            return true;
+                        }
+
+                        if (TryQueueFernDiscoveryMaturation(item.Pos, block))
+                        {
                             return true;
                         }
 
@@ -1427,7 +1480,7 @@ namespace WildFarming.Ecosystem
                     if (registry.Contains(anchor)) return true;
 
                     RegisterReproducer(anchor, participant, spawnBurst: false);
-                    return true;
+                    return registry.Contains(anchor);
             }
         }
 
@@ -1588,6 +1641,29 @@ namespace WildFarming.Ecosystem
             if (pendingRegistrations.HasPending(chunkCoord)) return false;
             return pendingRegistrations.IsScanCompleted(chunkCoord);
         }
+
+        /// <summary>One-shot registration when a player inspects an eligible but missed plant.</summary>
+        public bool TryRegisterEligiblePlantAtInspect(BlockPos pos, Block block)
+        {
+            if (api == null || api.Side != EnumAppSide.Server || pos == null || block == null) return false;
+            if (registry.Contains(pos)) return true;
+
+            if (!EcosystemParticipant.TryCreateForRegistration(api, pos, block, out IEcosystemParticipant participant)) return false;
+
+            BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(api.World.BlockAccessor, pos, block.Code);
+            if (registry.Contains(anchor)) return true;
+
+            if (RegisterReproducer(anchor, participant, spawnBurst: false, ignorePlayerProximity: true))
+            {
+                return true;
+            }
+
+            EnqueueChunkScan(ReproducerRegistry.ToChunkCoord(anchor), highPriority: true);
+            return false;
+        }
+
+        public bool IsRegistrationPendingAt(BlockPos pos) =>
+            pos != null && pendingRegistrations.HasPendingAt(pos);
 
         readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
         readonly PlayerProximity.Snapshot tramplingSnapshot = new PlayerProximity.Snapshot();

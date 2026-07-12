@@ -49,5 +49,22 @@ namespace WildFarming.Tests
             Assert.False(queue.TryEnqueueTree(chunk, basePos, code, registry));
             Assert.Equal(1, queue.TotalPending);
         }
+
+        [Fact]
+        public void HasPendingAt_MatchesExactPosition()
+        {
+            var queue = new PendingRegistrationQueue();
+            var chunk = new Vec2i(0, 0);
+            var pos = new BlockPos(8, 64, 8);
+            var hits = new List<ChunkFlowerHit>
+            {
+                new ChunkFlowerHit(pos, new Vintagestory.API.Common.AssetLocation("game", "fern-eaglefern-normal-free")),
+            };
+
+            queue.EnqueueHits(chunk, hits, PendingRegistrationKind.Flower);
+
+            Assert.True(queue.HasPendingAt(pos));
+            Assert.False(queue.HasPendingAt(new BlockPos(9, 64, 8)));
+        }
     }
 }

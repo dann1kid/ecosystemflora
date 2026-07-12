@@ -76,7 +76,7 @@ namespace WildFarming.Ecosystem
                 if (!work.Builder.Advance(
                         acc,
                         mapChunk,
-                        cfg.MaxRegistrationSnapshotCellsPerTick,
+                        cfg.EffectiveMaxRegistrationSnapshotCellsPerTick(),
                         deadlineTicks))
                 {
                     needsRequeue = true;
