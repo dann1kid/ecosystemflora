@@ -276,8 +276,8 @@ namespace WildFarming.Ecosystem.Config
             if (name == nameof(EcosystemConfig.TramplingSoilDegradation))
             {
                 return BoolOnOff(
-                    "On: degrade soil when a plant dies from trampling. Off: trampling kills plants only.",
-                    "Вкл.: почва деградирует при гибели от протаптывания. Выкл.: только гибель растения.");
+                    "On: traffic syncs grass coverage (normal↔verysparse) on the same fertility soil; abandoned trails restore as pressure fades. Off: plants only.",
+                    "Вкл.: трафик синхронизирует покров (normal↔verysparse); заброшенные тропы зарастают со спадом давления. Выкл.: только растения.");
             }
 
             if (name == nameof(EcosystemConfig.MyceliumSkipSoilSuccession))

@@ -349,6 +349,8 @@ namespace WildFarming.Ecosystem
                         groundSolid = true;
                     }
 
+                    float trafficMult = SampleTrafficMult(api, plantPos, cfg);
+
                     request.Cells.Add(new SpreadSolveCell(
                         plantPos,
                         snap.Space?.Id ?? 0,
@@ -367,7 +369,8 @@ namespace WildFarming.Ecosystem
                         nicheMoisture,
                         nicheLight,
                         myceliumMult,
-                        spacingOk: true));
+                        spacingOk: true,
+                        trafficFitnessMult: trafficMult));
                 }
             }
         }
@@ -577,7 +580,21 @@ namespace WildFarming.Ecosystem
                 1f,
                 spacingOk: true,
                 matVacancyOk,
-                waterColumnDepth));
+                waterColumnDepth,
+                SampleTrafficMult(api, plantPos, cfg)));
+        }
+
+        static float SampleTrafficMult(ICoreAPI api, BlockPos plantPos, EcosystemConfig cfg)
+        {
+            if (cfg == null || !cfg.EnableTrampling || plantPos == null) return 1f;
+            ColumnTrafficStore store = EcosystemSystem.Instance?.ColumnTraffic;
+            if (store == null) return 1f;
+
+            IGameCalendar cal = api?.World?.Calendar;
+            double now = cal?.TotalHours ?? 0;
+            float hoursPerDay = cal != null && cal.HoursPerDay > 0 ? cal.HoursPerDay : 24f;
+            float pressure01 = store.GetPressure01(plantPos, now, hoursPerDay, cfg.FootTrafficDecayPerDay);
+            return EcologySpreadFitness.TrafficMultiplierFor(pressure01, cfg.FootTrafficMinSpreadMultiplier);
         }
     }
 }

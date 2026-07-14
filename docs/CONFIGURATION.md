@@ -156,16 +156,25 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 |-----|------|---------|-------|-------------|
 | `EnableStressDeath` | bool | **true** | server | On: remove plants after repeated failed survival checks. Off: plants never removed by stress. |
 | `EnableSymbiosis` | bool | **true** | server | On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off. |
-| `EnableTrampling` | bool | false | server | On: player proximity accumulates trampling stress on plants. Off: no trampling stress. |
+| `EnableTrampling` | bool | **true** | server | On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology. |
+| `EnableAnimalFootTraffic` | bool | false | server | On: large animals near players also compact columns. Off: players only. |
+| `FootTrafficStepsToFullCoverageWear` | int | `20` | server | Footsteps on one column to reach `verysparse`. Primary tempo. Set `0` to use advanced `FootTrafficSoilWearPressureStep`. |
+| `FootTrafficDecayPerDay` | float | `6` | server | Higher: abandoned trails heal faster. Lower: packed paths linger longer. Aged for all columns on world save. |
+| `FootTrafficMinSpreadMultiplier` | float | `0.2` | server | At full pressure, spread/hold fitness × this floor. Lower: harder reclaim. |
+| `FootTrafficPressurePerStep` | int | `8` | server | Higher: trails pack faster (0–255 pressure). Lower: need more traffic. |
+| `FootTrafficAnimalStrideBlocks` | float | `1.15` | server | Higher: animals leave traffic less often per distance. Lower: denser animal trails. |
+| `FootTrafficAnimalPlayerRadiusBlocks` | int | `128` | server | Higher: animals farther from players still leave trails. Lower: only nearby fauna. `0` = all loaded. |
+| `FootTrafficSampleIntervalMs` | int | `1000` | server | Unused legacy — animals use physics stride hooks; players use `OnFootStep`. |
+| `FootTrafficSoilWearPressureStep` | byte | `0` | server | Advanced: pressure per coverage stage when Steps=0. When Steps>0, derived as `PressurePerStep × Steps / 2` (≤127). |
 | `MaxFailedSurvivalChecks` | int | `5` | server | Higher: more failed checks tolerated before stress removal. Lower: plants die sooner from stress. |
 | `SeasonalStressEnabled` | bool | **true** | server | On: seasonal stress die-off rolls for terrestrial plants. Off: no extra seasonal die-off. |
 | `StressBudgetMs` | int | `0` | server | Higher: more ms for stress phase (0 = TickBudgetMs). Lower: tighter stress cap. |
 | `StressRecheckHours` | double | `18` | server | Higher: slower stress evaluations per plant (less CPU). Lower: faster stress reactions. |
 | `StressTickIntervalMs` | int | `5500` | server | Higher: less frequent stress ticks (less CPU). Lower: more frequent stress updates. |
 | `SymbiosisCascadeRadius` | int | `4` | server | Higher: wider host-cache invalidation and ecology wake when a symbiosis host is removed. Lower: tighter radius. |
-| `TramplingRadius` | int | `1` | server | Higher: players affect plants farther away. Lower: must stand closer to trample. |
-| `TramplingSoilDegradation` | bool | false | server | On: degrade soil when plant dies from trampling. Off: trampling kills plants only. |
-| `TramplingStressThreshold` | int | `8` | server | Higher: more exposure ticks before trampling counts as failed survival. Lower: faster trample kill. |
+| `TramplingRadius` | int | `0` | server | Higher: plants beside the foot cell also wear. `0` = only the cell underfoot. |
+| `TramplingSoilDegradation` | bool | **true** | server | On: paced grass-coverage compaction on wild `soil-*` (same fertility tier). Off: plants only. Never changes farmland. |
+| `TramplingStressThreshold` | int | `5` | server | Higher: more footsteps on a flower before removal. Tallgrass shortens one stage per step first. |
 | `UseSeasonalEcology` | bool | **true** | server | On: monthly spread multipliers from WildSpeciesSeason profiles. Off: uniform spread year-round. |
 
 ### Soil succession & farmland
@@ -332,9 +341,11 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `VerboseLogging` | bool | false | server | On: extra notification and warning logs (CPU cost). Off: errors and startup only. |
 
 
-### Trampling
+### Trampling / foot traffic
 
-See **Stress** section in key reference (`EnableTrampling`, `TramplingRadius`, …).
+Ecological trails (not path blocks): players use `EntityPlayer.OnFootStep`; animals (optional) use `EntityBehaviorFootTraffic` + physics stride. Footsteps raise per-column pressure (savegame-persisted), wear tallgrass height / remove other terrestrial plants after enough steps, sync wild soil grass coverage to pressure (`normal`↔`verysparse`, not bare `none`; same fertility — restores as pressure fades), and multiply spread/hold fitness down to `FootTrafficMinSpreadMultiplier` at full pressure. Abandoned columns decay via `FootTrafficDecayPerDay` (lazy on access + age/prune on world save; coverage sync only when soil mark is stale, budget-capped).
+
+See **Stress** section keys (`EnableTrampling`, `FootTraffic*`, …).
 
 ### Legacy JSON aliases
 

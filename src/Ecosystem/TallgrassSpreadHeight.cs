@@ -139,6 +139,28 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
+        /// <summary>Lowers one vanilla height stage (e.g. tall → medium). Preserves cover and snow/free.</summary>
+        public static bool TryRetreatOneStage(ICoreAPI api, IBlockAccessor acc, BlockPos pos)
+        {
+            if (api == null || acc == null || pos == null) return false;
+
+            Block current = acc.GetBlock(pos);
+            if (current?.Code?.Path == null) return false;
+            if (!TryParsePath(current.Code.Path, out TallgrassPathParts parts)) return false;
+            if (string.IsNullOrEmpty(parts.Height)) return false;
+
+            int idx = GetHeightStageIndex(parts.Height);
+            if (idx <= 0) return false;
+
+            int prevIdx = idx - 1;
+            Block prev = ResolveBlock(api, current, parts.WithHeight(HeightStages[prevIdx]), prevIdx);
+            if (prev == null || prev.Id == 0 || prev.Id == current.Id) return false;
+
+            acc.SetBlock(prev.BlockId, pos);
+            acc.MarkBlockDirty(pos);
+            return true;
+        }
+
         static bool parentPosInvalid(Block parentBlock) =>
             parentBlock?.Code?.Path == null;
 

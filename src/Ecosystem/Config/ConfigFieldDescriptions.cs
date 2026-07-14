@@ -812,20 +812,56 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: логировать попытки распространения (вместе с «Подробные логи»). Выкл.: без лога распространения.");
 
             D(nameof(EcosystemConfig.EnableTrampling),
-                "On: player proximity accumulates trampling stress on plants. Off: no trampling stress.",
-                "Вкл.: близость игрока накапливает стресс протаптывания. Выкл.: без протаптывания.");
+                "On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology.",
+                "Вкл.: шаги уплотняют колонки, изнашивают растения и замедляют зарастание. Выкл.: троп нет.");
 
             D(nameof(EcosystemConfig.TramplingRadius),
-                "Higher: players affect plants farther away. Lower: must stand closer to trample.",
-                "Больше: игрок влияет издалека. Меньше: нужно стоять ближе.");
+                "Higher: plants next to the foot cell also wear. 0 = only the cell you stand in.",
+                "Больше: изнашиваются и соседние растения. 0 = только клетка под ногами.");
 
             D(nameof(EcosystemConfig.TramplingStressThreshold),
-                "Higher: more exposure ticks before trampling counts as failed survival. Lower: faster trample kill.",
-                "Больше: больше тиков экспозиции до неудачи. Меньше: быстрее гибель от протаптывания.");
+                "Higher: more footsteps on a flower/fern before removal. Tallgrass shortens one stage each step first.",
+                "Больше: больше шагов по цветку до снятия. Трава сначала теряет ступень высоты.");
 
             D(nameof(EcosystemConfig.TramplingSoilDegradation),
-                "On: degrade soil when plant dies from trampling. Off: trampling kills plants only.",
-                "Вкл.: почва деградирует при гибели от протаптывания. Выкл.: только гибель растения.");
+                "On: traffic syncs grass coverage (normal↔verysparse) on the same fertility soil; abandoned trails restore as pressure fades. Off: plants only. Never drains farmland.",
+                "Вкл.: трафик синхронизирует покров (normal↔verysparse) при том же плодородии; заброшенные тропы зарастают со спадом давления. Выкл.: только растения. Пашню не трогает.");
+
+            D(nameof(EcosystemConfig.FootTrafficStepsToFullCoverageWear),
+                "How many footsteps on one column to reach verysparse (default 20). Set 0 to use the advanced pressure-step override.",
+                "Сколько шагов по одной колонке до verysparse (дефолт 20). 0 — использовать доп. pressure-step.");
+
+            D(nameof(EcosystemConfig.FootTrafficPressurePerStep),
+                "Higher: trails pack faster (0–255 column pressure). Lower: need more traffic for the same wear.",
+                "Больше: тропа уплотняется быстрее (давление 0–255). Меньше: нужно больше проходов.");
+
+            D(nameof(EcosystemConfig.FootTrafficDecayPerDay),
+                "Higher: abandoned trails heal faster. Lower: packed paths linger longer.",
+                "Больше: заброшенные тропы зарастают быстрее. Меньше: колея держится дольше.");
+
+            D(nameof(EcosystemConfig.FootTrafficMinSpreadMultiplier),
+                "Higher: easier reclaim at full pressure. Lower: harder for plants to reclaim the trail (fitness floor).",
+                "Больше: легче зарастить колею при полном давлении. Меньше: сложнее вернуть луг (пол fitness).");
+
+            D(nameof(EcosystemConfig.FootTrafficSoilWearPressureStep),
+                "Advanced override when StepsToFullCoverageWear is 0. Pressure points per coverage stage (≤127). Unused when Steps > 0.",
+                "Доп. режим, если StepsToFullCoverageWear = 0. Пункты давления на ступень покрова (≤127). При Steps > 0 не используется.");
+
+            D(nameof(EcosystemConfig.FootTrafficAnimalStrideBlocks),
+                "Higher: animals leave traffic less often per distance. Lower: denser animal trails.",
+                "Больше: животные реже оставляют след на метр пути. Меньше: гуще тропы животных.");
+
+            D(nameof(EcosystemConfig.FootTrafficAnimalPlayerRadiusBlocks),
+                "Higher: animals farther from players still leave trails. Lower: only nearby fauna. 0 = all loaded creatures.",
+                "Больше: тропы животных дальше от игроков. Меньше: только рядом. 0 = все загруженные.");
+
+            D(nameof(EcosystemConfig.FootTrafficSampleIntervalMs),
+                "Unused legacy key — kept for config merge. Higher/lower values have no effect; animals use physics stride, players OnFootStep.",
+                "Не используется (legacy). Больше/меньше не влияют: животные — physics stride, игроки — OnFootStep.");
+
+            D(nameof(EcosystemConfig.EnableAnimalFootTraffic),
+                "On: large creatures near players get physics stride trail hooks. Off: players only via OnFootStep.",
+                "Вкл.: крупные существа у игроков — physics stride. Выкл.: только игроки (OnFootStep).");
 
             D(nameof(EcosystemConfig.EnableFlowerDrygrass),
                 "On: empty hand harvests flower block; knife/scythe yields drygrass. Off: vanilla harvest only.",

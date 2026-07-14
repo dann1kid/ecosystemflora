@@ -53,6 +53,8 @@ namespace WildFarming.Ecosystem
         readonly PlantSnowCoverScheduler plantSnowCoverScheduler = new PlantSnowCoverScheduler();
         readonly StumpDecayScheduler stumpDecayScheduler = new StumpDecayScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
+        readonly ColumnTrafficStore columnTrafficStore = new ColumnTrafficStore();
+        FootTrafficService footTraffic;
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         readonly FoliagePlayerVacancySuppressor foliagePlayerVacancies = new FoliagePlayerVacancySuppressor();
         bool calendarDebugLogged;
@@ -62,6 +64,7 @@ namespace WildFarming.Ecosystem
         internal FoliageCellScheduler FoliageCells => foliageCells;
         internal StumpDecayScheduler StumpDecay => stumpDecayScheduler;
         internal FoliagePlayerVacancySuppressor FoliagePlayerVacancies => foliagePlayerVacancies;
+        internal ColumnTrafficStore ColumnTraffic => columnTrafficStore;
         internal FloraContextSampler FloraContext { get; private set; }
         internal NicheSampler Niche { get; private set; }
         internal EcologySpacingIndex SpacingIndex { get; private set; }
@@ -128,6 +131,8 @@ namespace WildFarming.Ecosystem
             stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, chunkScanInterval);
 
+            footTraffic = new FootTrafficService(columnTrafficStore);
+
             foliageCells.RequestEcologyScan = coord => EnqueueChunkScan(coord);
 
             if (api is ICoreServerAPI sapi)
@@ -151,6 +156,8 @@ namespace WildFarming.Ecosystem
 
                 treeCalendarAgeStore.Bind(sapi, registry);
                 stumpDecayScheduler.Bind(sapi);
+                columnTrafficStore.Bind(sapi);
+                footTraffic.Bind(sapi, this);
             }
 
             SpeciesEcologyLegacyAccess.LogMissingContractSpecies(api);
@@ -347,6 +354,10 @@ namespace WildFarming.Ecosystem
                 treeCalendarAgeStore.Unbind(sapi);
                 treeCalendarAgeStore.Clear();
                 stumpDecayScheduler.Unbind(sapi);
+                columnTrafficStore.Unbind(sapi);
+                columnTrafficStore.Clear();
+                footTraffic?.Unbind();
+                footTraffic?.Clear();
 
                 if (chunkLoadedHandler != null) sapi.Event.ChunkColumnLoaded -= chunkLoadedHandler;
                 if (chunkUnloadedHandler != null) sapi.Event.ChunkColumnUnloaded -= chunkUnloadedHandler;
@@ -1745,8 +1756,8 @@ namespace WildFarming.Ecosystem
         public bool IsRegistrationPendingAt(BlockPos pos) =>
             pos != null && pendingRegistrations.HasPendingAt(pos);
 
-        readonly HashSet<BlockPos> trampledScratch = new HashSet<BlockPos>();
-        readonly PlayerProximity.Snapshot tramplingSnapshot = new PlayerProximity.Snapshot();
+        /// <summary>Re-attach or detach animal trail physics hooks after config changes.</summary>
+        public void RefreshFootTrafficAnimals() => footTraffic?.RefreshAnimalAttachments();
 
         void ProcessStress(double now, int maxChecks, ICollection<Vec2i> activeChunks, long budgetTicks = 0)
         {
@@ -1755,11 +1766,6 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EnableStressDeath && !cfg.EnableMyceliumEcology) return;
             IBlockAccessor acc = api.World.BlockAccessor;
-            trampledScratch.Clear();
-
-            bool trampling = cfg.EnableTrampling;
-            int tramplingRadius = cfg.TramplingRadius;
-            if (trampling) tramplingSnapshot.Refresh(api, tramplingRadius);
 
             registry.ProcessStress(
                 maxChecks,
@@ -1826,23 +1832,8 @@ namespace WildFarming.Ecosystem
                     {
                         entry.FailedSurvivalChecks++;
                     }
-                    else if (trampling
-                        && tramplingSnapshot.IsNearChunk(entry.Origin)
-                        && tramplingSnapshot.IsNear(entry.Origin, tramplingRadius))
-                    {
-                        entry.TramplingExposure++;
-                        if (entry.TramplingExposure >= cfg.TramplingStressThreshold)
-                        {
-                            entry.FailedSurvivalChecks++;
-                        }
-                        entry.NextStressCheckAt = now + cfg.StressRecheckHours;
-                        if (entry.FailedSurvivalChecks < cfg.MaxFailedSurvivalChecks) return false;
-                        trampledScratch.Add(entry.Origin);
-                        return true;
-                    }
                     else
                     {
-                        if (entry.TramplingExposure > 0) entry.TramplingExposure--;
                         entry.FailedSurvivalChecks = 0;
                         entry.NextStressCheckAt = now + cfg.StressRecheckHours;
                         if (cfg.EnableFallowRestoration)
@@ -1863,24 +1854,21 @@ namespace WildFarming.Ecosystem
                     if (TryGetReproducer(pos, out ReproducerEntry entry)
                         && entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
                     {
-                        RemoveMyceliumAnchor(pos, trampledScratch.Remove(pos) ? "trampled" : "mycelium-stress");
+                        RemoveMyceliumAnchor(pos, "mycelium-stress");
                         return;
                     }
 
-                    bool trampled = trampledScratch.Remove(pos);
                     string species = TryGetReproducer(pos, out ReproducerEntry dying)
                         ? dying.Requirements?.Species
                         : PlantCodeHelper.ResolveEcologySpecies(api.World.BlockAccessor.GetBlock(pos));
-                    if (!trampled && !string.IsNullOrEmpty(species))
+                    if (!string.IsNullOrEmpty(species))
                     {
                         EcologyHistoryRecorder.RecordStressDeath(api, pos, species);
                     }
 
                     RemoveEcologyPlant(pos, cascadeSymbiosis: true,
-                        reason: trampled ? "trampled" : "stress",
-                        soilEvent: trampled && cfg.TramplingSoilDegradation
-                            ? SoilSuccessionEvent.Trampled
-                            : SoilSuccessionEvent.Death);
+                        reason: "stress",
+                        soilEvent: SoilSuccessionEvent.Death);
                 },
                 activeChunks);
         }

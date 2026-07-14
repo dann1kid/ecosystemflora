@@ -18,6 +18,7 @@ namespace WildFarming
             api.RegisterBlockClass("BlockReedsSafe", typeof(BlockReedsSafe));
             api.RegisterCollectibleBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
             api.RegisterBlockBehaviorClass("ecosystemHandbook", typeof(EcologyHandbookBehavior));
+            api.RegisterEntityBehaviorClass(EntityBehaviorFootTraffic.BehaviorCode, typeof(EntityBehaviorFootTraffic));
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: api.Side == EnumAppSide.Server);
             EcosystemHarmony.TryApply(api);
             if (api.Side == EnumAppSide.Server)

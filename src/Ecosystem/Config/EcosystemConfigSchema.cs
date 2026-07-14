@@ -120,6 +120,8 @@ namespace WildFarming.Ecosystem.Config
             ("SeasonalStressEnabled", "stress"),
             ("EnableTrampling", "stress"),
             ("Trampling", "stress"),
+            ("FootTraffic", "stress"),
+            ("EnableAnimalFootTraffic", "stress"),
             ("EnableTree", "trees"),
             ("Tree", "trees"),
             ("EnableTreeSeralSuccession", "trees"),

@@ -26,6 +26,7 @@ namespace WildFarming.Ecosystem.Config
 
             EcosystemConfig.Loaded = EcosystemConfigCopier.Clone(cfg);
             api.StoreModConfig(EcosystemConfig.Loaded, EcosystemConfig.ConfigFileName);
+            EcosystemSystem.Instance?.RefreshFootTrafficAnimals();
             return true;
         }
 

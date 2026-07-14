@@ -134,6 +134,14 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.TramplingRadius),
             nameof(EcosystemConfig.TramplingStressThreshold),
             nameof(EcosystemConfig.TramplingSoilDegradation),
+            nameof(EcosystemConfig.FootTrafficStepsToFullCoverageWear),
+            nameof(EcosystemConfig.FootTrafficPressurePerStep),
+            nameof(EcosystemConfig.FootTrafficDecayPerDay),
+            nameof(EcosystemConfig.FootTrafficMinSpreadMultiplier),
+            nameof(EcosystemConfig.FootTrafficSoilWearPressureStep),
+            nameof(EcosystemConfig.FootTrafficAnimalStrideBlocks),
+            nameof(EcosystemConfig.FootTrafficAnimalPlayerRadiusBlocks),
+            nameof(EcosystemConfig.EnableAnimalFootTraffic),
         };
 
         static readonly string[] TreeFields =

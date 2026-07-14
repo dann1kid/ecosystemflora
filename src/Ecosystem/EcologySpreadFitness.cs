@@ -44,6 +44,33 @@ namespace WildFarming.Ecosystem
             return baseFitness * NicheMultiplierFor(req, local);
         }
 
+        /// <summary>Penalty from persisted foot-traffic pressure (ecological trails).</summary>
+        public static float ApplyTraffic(ICoreAPI api, BlockPos targetPos, float baseFitness)
+        {
+            if (baseFitness <= 0f || targetPos == null) return baseFitness;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            if (!cfg.EnableTrampling) return baseFitness;
+
+            ColumnTrafficStore store = EcosystemSystem.Instance?.ColumnTraffic;
+            if (store == null) return baseFitness;
+
+            IGameCalendar cal = api?.World?.Calendar;
+            double now = cal?.TotalHours ?? 0;
+            float hoursPerDay = cal != null && cal.HoursPerDay > 0 ? cal.HoursPerDay : 24f;
+            float pressure01 = store.GetPressure01(targetPos, now, hoursPerDay, cfg.FootTrafficDecayPerDay);
+            return baseFitness * TrafficMultiplierFor(pressure01, cfg.FootTrafficMinSpreadMultiplier);
+        }
+
+        public static float TrafficMultiplierFor(float pressure01, float minMultiplier)
+        {
+            if (pressure01 <= 0f) return 1f;
+            if (pressure01 > 1f) pressure01 = 1f;
+            if (minMultiplier < 0f) minMultiplier = 0f;
+            if (minMultiplier > 1f) minMultiplier = 1f;
+            return 1f - pressure01 * (1f - minMultiplier);
+        }
+
         public static float NicheMultiplierFor(PlantRequirements req, LocalNiche local)
         {
             if (req == null || !req.HasNicheProfile) return 1f;

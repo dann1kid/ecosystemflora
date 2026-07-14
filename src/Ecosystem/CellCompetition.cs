@@ -36,6 +36,7 @@ namespace WildFarming.Ecosystem
             fitness = EcologySpreadFitness.ApplyContext(api, challenger, targetPos, fitness);
             fitness = EcologySpreadFitness.ApplyNiche(api, challenger, targetPos, fitness);
             fitness = MyceliumZone.ApplySpreadFitness(api, challenger, targetPos, fitness);
+            fitness = EcologySpreadFitness.ApplyTraffic(api, targetPos, fitness);
             return fitness;
         }
 
@@ -86,6 +87,7 @@ namespace WildFarming.Ecosystem
             }
 
             fitness *= cell.MyceliumFitnessMult;
+            fitness *= cell.TrafficFitnessMult;
             return fitness;
         }
 
@@ -132,6 +134,7 @@ namespace WildFarming.Ecosystem
             float hold = SuitabilityEvaluator.ReproduceFitness(incumbent, ctx);
             hold = EcologySpreadFitness.ApplyContext(api, incumbent, targetPos, hold);
             hold = EcologySpreadFitness.ApplyNiche(api, incumbent, targetPos, hold);
+            hold = EcologySpreadFitness.ApplyTraffic(api, targetPos, hold);
             if (incumbent.HoldStrength > 0f)
             {
                 hold *= incumbent.HoldStrength;
@@ -246,6 +249,7 @@ namespace WildFarming.Ecosystem
             else
             {
                 incumbentScore = IncumbentHoldScoreFromContext(null, incumbent, targetPos, harshClimate, ctx);
+                incumbentScore *= cell.TrafficFitnessMult;
             }
 
             if (challengerScore <= 0f) return false;

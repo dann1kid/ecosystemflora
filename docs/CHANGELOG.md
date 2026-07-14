@@ -3,14 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** unreleased (Floral Zones Cape + Cosmopolitan)
+**Next release:** **4.8.2** (unreleased) — ecological trails + Floral Zones Cape/Cosmopolitan
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## Unreleased — Floral Zones (Cape + Cosmopolitan)
+## Unreleased — 4.8.2
 
+- **Ecological trails** — foot traffic syncs wild soil grass coverage (`normal`↔`verysparse`, not bare `none`) to column pressure; abandoned trails restore as pressure fades (footstep + world-save age when soil mark is stale, budget-capped). Tempo via `FootTrafficStepsToFullCoverageWear` (default 20). Never drains fertility or farmland.
 - **Floral Zones ecology** — runtime climate/spread injection for **Cape Region** and **Cosmopolitan Region** (211 worldgen-derived entries across all **seven** regional mods; was 142 in 4.7.0).
 - **NZ mushroom** — `mushroom-asteliahastata` included when the worldgen patch omits `maxRain`.
 

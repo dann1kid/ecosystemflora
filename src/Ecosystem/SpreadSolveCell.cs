@@ -25,6 +25,7 @@ namespace WildFarming.Ecosystem
         public readonly int NicheMoisture;
         public readonly int NicheLight;
         public readonly float MyceliumFitnessMult;
+        public readonly float TrafficFitnessMult;
         public readonly bool SpacingOk;
         public readonly bool MatVacancyOk;
         /// <summary>Contiguous water layers at crowfoot column base (0 when N/A).</summary>
@@ -50,7 +51,8 @@ namespace WildFarming.Ecosystem
             float myceliumFitnessMult,
             bool spacingOk,
             bool matVacancyOk = true,
-            int waterColumnDepth = 0)
+            int waterColumnDepth = 0,
+            float trafficFitnessMult = 1f)
         {
             X = pos.X;
             Y = pos.Y;
@@ -71,6 +73,7 @@ namespace WildFarming.Ecosystem
             NicheMoisture = nicheMoisture;
             NicheLight = nicheLight;
             MyceliumFitnessMult = myceliumFitnessMult <= 0f ? 1f : myceliumFitnessMult;
+            TrafficFitnessMult = trafficFitnessMult <= 0f ? 0f : trafficFitnessMult;
             SpacingOk = spacingOk;
             MatVacancyOk = matVacancyOk;
             WaterColumnDepth = waterColumnDepth;

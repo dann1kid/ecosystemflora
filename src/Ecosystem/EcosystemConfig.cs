@@ -746,19 +746,56 @@ namespace WildFarming.Ecosystem
             set => FoliageBudgetMs = value;
         }
 
-        // --- Trampling (v2.6) ---
+        // --- Foot traffic / trampling trails (v2.6 → ecological trails) ---
 
-        /// <summary>Plants near frequently-visited positions accumulate trampling stress and die.</summary>
-        public bool EnableTrampling { get; set; } = false;
+        /// <summary>On: footsteps compact columns, wear plants, and slow recolonization.</summary>
+        public bool EnableTrampling { get; set; } = true;
 
-        /// <summary>Horizontal distance (blocks) at which a player causes trampling exposure.</summary>
-        public int TramplingRadius { get; set; } = 1;
+        /// <summary>Extra horizontal radius around the foot cell affected for plant wear (0 = feet only).</summary>
+        public int TramplingRadius { get; set; } = 0;
 
-        /// <summary>Cumulative near-player stress ticks before trampling counts as a failed survival check.</summary>
-        public int TramplingStressThreshold { get; set; } = 8;
+        /// <summary>Footsteps on a non-tallgrass plant before it is removed (tallgrass retreats one stage per step first).</summary>
+        public int TramplingStressThreshold { get; set; } = 5;
 
-        /// <summary>Apply soil degradation when a plant is trampled to death.</summary>
-        public bool TramplingSoilDegradation { get; set; } = false;
+        /// <summary>On: paced grass-coverage compaction on wild soil (same fertility; never farmland).</summary>
+        public bool TramplingSoilDegradation { get; set; } = true;
+
+        /// <summary>
+        /// Approximate footsteps on one column to reach max worn coverage (verysparse).
+        /// Primary tempo knob; wear pressure step is derived unless this is 0.
+        /// </summary>
+        public int FootTrafficStepsToFullCoverageWear { get; set; } = 20;
+
+        /// <summary>Pressure points added to a column per footstep (0–255 scale).</summary>
+        public int FootTrafficPressurePerStep { get; set; } = 8;
+
+        /// <summary>Pressure points decayed per game day when a column is not walked.</summary>
+        public float FootTrafficDecayPerDay { get; set; } = 6f;
+
+        /// <summary>At full pressure, spread/hold fitness is multiplied by this floor (0–1).</summary>
+        public float FootTrafficMinSpreadMultiplier { get; set; } = 0.2f;
+
+        /// <summary>
+        /// Advanced: pressure points per coverage stage when <see cref="FootTrafficStepsToFullCoverageWear"/> is 0.
+        /// Otherwise derived as PressurePerStep × Steps / 2. Keep ≤127.
+        /// </summary>
+        public byte FootTrafficSoilWearPressureStep { get; set; } = 0;
+
+        /// <summary>
+        /// Horizontal meters an animal must walk (physics stride) before one foot-traffic apply.
+        /// </summary>
+        public float FootTrafficAnimalStrideBlocks { get; set; } = 1.15f;
+
+        /// <summary>
+        /// Animals only accumulate trail pressure within this horizontal radius of a player (0 = everywhere loaded).
+        /// </summary>
+        public int FootTrafficAnimalPlayerRadiusBlocks { get; set; } = 128;
+
+        /// <summary>Legacy unused — animal trails use physics stride hooks, not polling.</summary>
+        public int FootTrafficSampleIntervalMs { get; set; } = 1000;
+
+        /// <summary>On: attach physics stride hooks to large creatures near players. Off: players only via OnFootStep.</summary>
+        public bool EnableAnimalFootTraffic { get; set; } = false;
 
         // --- Flower drygrass drops (v2.5) ---
 

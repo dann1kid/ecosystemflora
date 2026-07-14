@@ -199,8 +199,8 @@ namespace WildFarming.Ecosystem
 
         static readonly SoilImpact TrampledImpact = new SoilImpact
         {
-            MoistureDelta = -8f,
-            FertilityTierDelta = -0.25f,
+            MoistureDelta = 0f,
+            FertilityTierDelta = 0f,
         };
 
         public static bool TryGetImpact(string species, SoilSuccessionEvent evt, out SoilImpact impact)
@@ -219,5 +219,8 @@ namespace WildFarming.Ecosystem
             impact = evt == SoilSuccessionEvent.Spread ? profile.SpreadImpact : profile.DeathImpact;
             return true;
         }
+
+        /// <summary>Legacy no-op impact for <see cref="SoilSuccessionEvent.Trampled"/> (trails use coverage sync).</summary>
+        public static SoilImpact GetTrampledImpact() => TrampledImpact;
     }
 }

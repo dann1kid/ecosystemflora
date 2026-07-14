@@ -397,13 +397,48 @@ namespace WildFarming.Ecosystem
                     AddInspectLine(lines, "ecosystemflora:inspect-line-stress-ok");
                 }
 
-                if (cfg.EnableTrampling && entry.TramplingExposure > 0)
+                if (cfg.EnableTrampling)
                 {
-                    AddInspectLine(
-                        lines,
-                        "ecosystemflora:inspect-line-trample",
-                        entry.TramplingExposure.ToString(),
-                        cfg.TramplingStressThreshold.ToString());
+                    ColumnTrafficStore traffic = EcosystemSystem.Instance?.ColumnTraffic;
+                    if (traffic != null && api.World?.Calendar != null)
+                    {
+                        double hoursPerDay = api.World.Calendar.HoursPerDay > 0
+                            ? api.World.Calendar.HoursPerDay : 24;
+                        if (traffic.TryGetRecordSnapshot(
+                            entry.Origin,
+                            api.World.Calendar.TotalHours,
+                            (float)hoursPerDay,
+                            cfg.FootTrafficDecayPerDay,
+                            out byte pressure,
+                            out byte plantHits,
+                            out _))
+                        {
+                            AddInspectLine(
+                                lines,
+                                "ecosystemflora:inspect-line-traffic",
+                                pressure.ToString(),
+                                "255",
+                                EcologySpreadFitness.TrafficMultiplierFor(
+                                    pressure / 255f,
+                                    cfg.FootTrafficMinSpreadMultiplier).ToString("0.##"));
+                            if (plantHits > 0)
+                            {
+                                AddInspectLine(
+                                    lines,
+                                    "ecosystemflora:inspect-line-trample",
+                                    plantHits.ToString(),
+                                    cfg.TramplingStressThreshold.ToString());
+                            }
+                        }
+                    }
+                    else if (entry.TramplingExposure > 0)
+                    {
+                        AddInspectLine(
+                            lines,
+                            "ecosystemflora:inspect-line-trample",
+                            entry.TramplingExposure.ToString(),
+                            cfg.TramplingStressThreshold.ToString());
+                    }
                 }
 
                 AppendTreeAgingInspect(api, entry, lines);
