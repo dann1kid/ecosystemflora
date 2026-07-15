@@ -65,12 +65,6 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (!EcosystemConfigValidator.TryValidate(incoming, out _))
-            {
-                SendSaveResponse(player, false, "ecosystemflora:config-error-invalid", null);
-                return;
-            }
-
             if (!EcosystemConfigSaveService.TryApplyAndPersist(player.Entity.Api, incoming, out _))
             {
                 SendSaveResponse(player, false, "ecosystemflora:config-error-save", null);

@@ -27,6 +27,8 @@ Per-species maturation/cooldown hours: `WildFlowerMaturation.cs` (`BySpecies` ov
 
 Juvenile assets for croton/rafflesia use vanilla **croton/rafflesia shapes** (not meadow `petal/*` textures).
 
+`drawnHeight` must match vanilla flower heights (typically **48**, or species-specific 16–40). A low value like `11` clips petal/stem composites and looks like “half a flower”; size comes from shape `scale: 0.45`, not drawnHeight.
+
 ## Timing
 
 - **Maturation:** `speciesBaseMaturationHours / GrowthHoursMultiplier` (min 6 game hours; season can shorten).

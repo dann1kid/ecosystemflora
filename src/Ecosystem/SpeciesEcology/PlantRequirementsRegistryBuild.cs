@@ -48,6 +48,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 spreadMode, seedDispersalChance, seedDispersalRadius, spreadRadius);
 
             ApplySpreadPolicies(requirements, row);
+            TreeSpacingDefaults.EnsureOn(requirements);
             return requirements;
         }
 

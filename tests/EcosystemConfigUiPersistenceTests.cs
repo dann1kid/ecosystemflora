@@ -52,6 +52,34 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void Normalize_ClampsOutOfRangeChanceToMax()
+        {
+            var cfg = new EcosystemConfig { ReproduceChance = 2f };
+            int changed = EcosystemConfigValidator.NormalizeInPlace(cfg);
+            Assert.True(changed > 0);
+            Assert.Equal(1f, cfg.ReproduceChance);
+            Assert.True(EcosystemConfigValidator.TryValidate(cfg, out string[] errors));
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Normalize_MapsUnknownPresetToNearestAllowed()
+        {
+            var cfg = new EcosystemConfig { BalancePreset = "lushh" };
+            EcosystemConfigValidator.NormalizeInPlace(cfg);
+            Assert.Equal(EcosystemBalancePresets.Lush, cfg.BalancePreset);
+            Assert.True(EcosystemConfigValidator.TryValidate(cfg, out _));
+        }
+
+        [Fact]
+        public void Normalize_ClampsBelowMinRadius()
+        {
+            var cfg = new EcosystemConfig { ReproduceRadius = -5 };
+            EcosystemConfigValidator.NormalizeInPlace(cfg);
+            Assert.Equal(0, cfg.ReproduceRadius);
+        }
+
+        [Fact]
         public void Validator_AcceptsFreshDefaults()
         {
             EcosystemConfigValidator.TryValidate(new EcosystemConfig(), out string[] errors);

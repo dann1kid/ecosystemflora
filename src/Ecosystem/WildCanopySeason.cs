@@ -64,32 +64,33 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        // Early deciduous: birch, maples — Sep drop, Mar bud; airy crown, early fill-in
+        // Early deciduous: birch, maples — Sep–Nov drop (not Jul), Mar–Jun bud.
+        // Jul/Aug stay Idle/full leaf so warm months do not drip-strip.
         static readonly Profile EarlyDeciduous = new Profile(
-            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0.1f, 0.5f, 1.4f, 1.8f, 1.2f, 0.4f },
-            new float[] { 0f, 0.15f, 1.6f, 1.8f, 1.2f, 0.5f, 0.1f, 0f, 0f, 0f, 0f, 0f },
-            branchyCatchUpScale: 0.74f,
-            leafCatchUpScale: 0.84f,
-            maxBranchyNearLog: 7,
-            maxRegularNearBranchy: 4);
+            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.15f, 0.9f, 1.7f, 1.5f, 0.5f },
+            new float[] { 0f, 0f, 1.8f, 2.0f, 1.6f, 0.9f, 0f, 0f, 0f, 0f, 0f, 0f },
+            branchyCatchUpScale: 0.92f,
+            leafCatchUpScale: 0.98f,
+            maxBranchyNearLog: 14,
+            maxRegularNearBranchy: 10);
 
-        // Mid: oak, walnut — Oct–Nov drop, Apr bud; bushy oak skeleton
+        // Mid: oak, walnut — Sep–Nov drop; Jul Idle keeps summer canopy.
         static readonly Profile MidDeciduous = new Profile(
-            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0.05f, 0.25f, 0.9f, 1.6f, 1.8f, 0.8f },
-            new float[] { 0f, 0f, 0.4f, 1.2f, 1.8f, 1.3f, 0.4f, 0.1f, 0f, 0f, 0f, 0f },
-            branchyCatchUpScale: 0.58f,
-            leafCatchUpScale: 0.68f,
-            maxBranchyNearLog: 10,
-            maxRegularNearBranchy: 5);
+            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.1f, 0.55f, 1.4f, 1.8f, 0.9f },
+            new float[] { 0f, 0f, 0.5f, 1.4f, 2.0f, 1.4f, 0f, 0f, 0f, 0f, 0f, 0f },
+            branchyCatchUpScale: 0.85f,
+            leafCatchUpScale: 0.95f,
+            maxBranchyNearLog: 16,
+            maxRegularNearBranchy: 12);
 
-        // Late / warm-tolerant: acacia, kapok — Nov–Dec, May bud; sparser late crown
+        // Late / warm-tolerant: acacia, kapok — Oct–Dec drop, Mar–Jul bud
         static readonly Profile LateDeciduous = new Profile(
-            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.15f, 0.5f, 1.2f, 1.7f, 1.5f },
-            new float[] { 0f, 0f, 0.2f, 0.7f, 1.4f, 1.9f, 1.2f, 0.4f, 0f, 0f, 0f, 0f },
-            branchyCatchUpScale: 0.46f,
-            leafCatchUpScale: 0.54f,
-            maxBranchyNearLog: 6,
-            maxRegularNearBranchy: 3);
+            new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0.25f, 1.0f, 1.7f, 1.4f },
+            new float[] { 0f, 0f, 0.3f, 0.9f, 1.6f, 2.0f, 1.2f, 0f, 0f, 0f, 0f, 0f },
+            branchyCatchUpScale: 0.72f,
+            leafCatchUpScale: 0.82f,
+            maxBranchyNearLog: 12,
+            maxRegularNearBranchy: 8);
 
         static readonly Dictionary<string, Profile> ByWood = Build();
 

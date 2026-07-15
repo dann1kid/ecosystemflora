@@ -37,9 +37,14 @@ namespace WildFarming.Ecosystem
             int ops = OpsForSizeIndex(sizeIndex, trunkBase, wood, gameYear);
             if (ops <= 0) return 0;
 
+            // Seasonal canopy: do not push leaves/branchy during autumn strip or winter bare
+            // window — otherwise yearly aging fights Dec–Feb force-strip and looks like waves.
+            bool allowFoliageGrowth = AllowsSeasonalFoliageGrowth(api, trunkBase, wood);
+
             int placed = 0;
             bool canExtendTrunk = metrics.TrunkTop.Y + 1 < acc.MapSizeY - 1;
-            bool needSpread = metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius;
+            bool needSpread = allowFoliageGrowth
+                && metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius;
             float trunkVsRef = TreeGrowthTargets.TrunkVsReference(metrics.TrunkHeight, profile);
 
             for (int i = 0; i < ops; i++)
@@ -58,6 +63,8 @@ namespace WildFarming.Ecosystem
                     }
                 }
 
+                if (!allowFoliageGrowth) continue;
+
                 if (needSpread && TrySpreadBranchy(api, acc, trunkBase, wood, metrics, gameYear))
                 {
                     placed++;
@@ -73,6 +80,17 @@ namespace WildFarming.Ecosystem
             }
 
             return placed;
+        }
+
+        static bool AllowsSeasonalFoliageGrowth(ICoreAPI api, BlockPos trunkBase, string wood)
+        {
+            if (!EcosystemConfig.Loaded.EnableSeasonalFoliage) return true;
+            if (!CanopyBlockHelper.IsDeciduousTreeWood(wood)) return true;
+
+            CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, trunkBase, wood, out _);
+            if (phase == CanopySeasonPhase.Autumn) return false;
+            if (CanopyFoliageRules.IsBareCrownSeason(api, trunkBase, wood)) return false;
+            return true;
         }
 
         static int OpsForSizeIndex(

@@ -228,40 +228,31 @@ namespace WildFarming.Ecosystem
 
             FoliageCellKind kind = Classify(block);
 
-            if (kind != FoliageCellKind.BranchyLeaf) return false;
+            if (kind != FoliageCellKind.BranchyLeaf && kind != FoliageCellKind.LogGrown) return false;
 
-
-
-            string wood = CanopyBlockHelper.GetWoodFromFoliageBlock(block);
+            string wood = kind == FoliageCellKind.LogGrown
+                ? PlantCodeHelper.GetTreeWood(block)
+                : CanopyBlockHelper.GetWoodFromFoliageBlock(block);
 
             if (string.IsNullOrEmpty(wood)) return false;
 
-
-
             if (!ShouldCatchUpBud(api, pos, wood, kind, out float activity)) return false;
-
-
+            if (!NeedsSpringCatchUp(acc, pos, wood, kind)) return false;
 
             WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
-
-            activity *= profile.LeafCatchUpScale;
-
-
+            bool budBranchy = kind == FoliageCellKind.LogGrown;
+            activity *= budBranchy ? profile.BranchyCatchUpScale : profile.LeafCatchUpScale;
 
             int gameYear = CanopyEcology.GameYear(api.World.Calendar);
 
             if (!CanopyEcology.RollCatchUpBudAttempt(api, pos, wood, activity, gameYear)) return false;
 
-
+            if (budBranchy && !IsLogInCrownZone(acc, pos, wood)) return false;
 
             return TryBudFromSource(
-
                 api, acc, pos, block, wood, activity, gameYear, index,
-
-                budBranchy: false,
-
+                budBranchy: budBranchy,
                 forcePlace: true);
-
         }
 
 
@@ -442,6 +433,12 @@ namespace WildFarming.Ecosystem
 
 
 
+        /// <summary>Dec / Jan / Feb — winter bare skeleton / force leaf strip months (0 = January).</summary>
+        internal static bool IsWinterBareMonth(int month)
+        {
+            return month == 11 || month == 0 || month == 1;
+        }
+
         internal static bool IsBareCrownSeason(ICoreAPI api, BlockPos pos, string wood)
         {
             CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out _);
@@ -450,16 +447,28 @@ namespace WildFarming.Ecosystem
 
             IGameCalendar cal = api.World.Calendar;
             float yearProgress = cal.DayOfYearf / cal.DaysPerYear;
-            return IsBareCrownSeasonForProgress(yearProgress, phase, EcosystemConfig.Loaded.CanopyActivityScale);
+            return IsBareCrownSeasonForProgress(
+                yearProgress,
+                phase,
+                EcosystemConfig.Loaded.CanopyActivityScale,
+                wood);
         }
 
-        /// <summary>Winter dormant window — not active autumn defoliation.</summary>
-        internal static bool IsBareCrownSeasonForProgress(float yearProgress, CanopySeasonPhase phase, float activityScale)
+        /// <summary>Winter dormant window — not active autumn defoliation, not summer Idle gaps.</summary>
+        internal static bool IsBareCrownSeasonForProgress(
+            float yearProgress,
+            CanopySeasonPhase phase,
+            float activityScale,
+            string wood = "oak")
         {
             if (phase == CanopySeasonPhase.Autumn || phase == CanopySeasonPhase.Spring) return false;
             if (phase != CanopySeasonPhase.Idle) return false;
 
-            WildCanopySeason.Profile profile = WildCanopySeason.Resolve("oak");
+            int month = ((int)(yearProgress * 12f)) % 12;
+            if (month < 0) month += 12;
+            if (!IsWinterBareMonth(month)) return false;
+
+            WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
             float defol = profile.DefoliateInterpolated(yearProgress) * activityScale;
             float bud = profile.BudInterpolated(yearProgress) * activityScale;
             return bud < 0.1f && defol < 0.1f;
@@ -541,6 +550,16 @@ namespace WildFarming.Ecosystem
             IGameCalendar cal = api.World.Calendar;
 
             float yearProgress = cal.DayOfYearf / cal.DaysPerYear;
+
+            int month = ((int)(yearProgress * 12f)) % 12;
+
+            if (month < 0) month += 12;
+
+            // Summer Idle (both curves near zero after spring buds end) must NOT strip —
+            // that looked like leaves vanishing in warm weather.
+            if (!IsWinterBareMonth(month)) return false;
+
+
 
             WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
 
@@ -646,14 +665,20 @@ namespace WildFarming.Ecosystem
 
 
                 case FoliageCellKind.BranchyLeaf when phase == CanopySeasonPhase.Spring:
-
+                    if (!NeedsSpringCatchUp(acc, pos, wood, FoliageCellKind.BranchyLeaf)) return false;
                     return TryBudFromSource(
-
                         api, acc, pos, block, wood, activity, gameYear, index,
-
                         budBranchy: false);
 
-
+                case FoliageCellKind.LogGrown when phase == CanopySeasonPhase.Spring:
+                    if (!IsLogInCrownZone(acc, pos, wood)) return false;
+                    if (!NeedsSpringCatchUp(acc, pos, wood, FoliageCellKind.LogGrown)) return false;
+                    activity *= WildCanopySeason.Resolve(wood).BranchyCatchUpScale;
+                    // forcePlace: Option B blocked non-forced log→branchy; spring scaffold needs it.
+                    return TryBudFromSource(
+                        api, acc, pos, block, wood, activity, gameYear, index,
+                        budBranchy: true,
+                        forcePlace: true);
 
                 default:
 

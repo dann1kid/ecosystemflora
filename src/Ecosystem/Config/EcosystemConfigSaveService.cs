@@ -13,6 +13,8 @@ namespace WildFarming.Ecosystem.Config
                 return false;
             }
 
+            EcosystemConfigValidator.NormalizeInPlace(cfg);
+
             if (!EcosystemConfigValidator.TryValidate(cfg, out _))
             {
                 errorCode = "config-invalid";

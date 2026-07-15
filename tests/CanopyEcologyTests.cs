@@ -35,6 +35,35 @@ namespace WildFarming.Tests
             Assert.True(springBirch > springOak);
         }
 
+        [Theory]
+        [InlineData("birch")]
+        [InlineData("maple")]
+        [InlineData("oak")]
+        public void TemperateBud_NoFebruaryAndNoLateSummerTail(string wood)
+        {
+            var profile = WildCanopySeason.Resolve(wood);
+            // Start of February / July (interpolation into next month may ramp later)
+            Assert.True(profile.BudInterpolated(1f / 12f) < 0.05f);
+            Assert.True(profile.BudInterpolated(6f / 12f) < 0.05f);
+        }
+
+        [Fact]
+        public void ResolvePhase_AutumnWinsEqualActivityTie()
+        {
+            CanopySeasonPhase phase = CanopyEcology.ResolvePhaseFromActivity(
+                defol: 0.1f, bud: 0.1f, out float activity);
+            Assert.Equal(CanopySeasonPhase.Autumn, phase);
+            Assert.Equal(0.1f, activity);
+        }
+
+        [Fact]
+        public void ResolvePhase_SpringWhenBudClearlyLeads()
+        {
+            Assert.Equal(
+                CanopySeasonPhase.Spring,
+                CanopyEcology.ResolvePhaseFromActivity(0.05f, 0.4f, out _));
+        }
+
         [Fact]
         public void SpringCatchUpProfiles_DifferBySpeciesRealism()
         {
@@ -46,6 +75,15 @@ namespace WildFarming.Tests
             Assert.True(birch.LeafCatchUpScale > kapok.LeafCatchUpScale);
             Assert.True(oak.MaxBranchyNearLog > kapok.MaxBranchyNearLog);
             Assert.True(oak.MaxBranchyNearLog > birch.MaxBranchyNearLog);
+        }
+
+        [Fact]
+        public void DeciduousProfiles_AllowDenseLocalLeafFill()
+        {
+            var oak = WildCanopySeason.Resolve("oak");
+            Assert.True(oak.MaxRegularNearBranchy >= 10);
+            Assert.True(oak.LeafCatchUpScale >= 0.9f);
+            Assert.True(oak.BranchyCatchUpScale >= 0.8f);
         }
     }
 
@@ -151,9 +189,10 @@ namespace WildFarming.Tests
         }
 
         [Theory]
-        [InlineData(9, true)]
-        [InlineData(10, true)]
-        [InlineData(11, false)]
+        [InlineData(9, true)]   // Oct
+        [InlineData(10, true)]  // Nov
+        [InlineData(8, true)]   // Sep
+        [InlineData(11, false)] // Dec → winter force path
         [InlineData(0, false)]
         [InlineData(1, false)]
         public void ShouldUsePatchyRegularLeafStrip_AutumnPhase_ByMonth(int month, bool expectPatchy)
@@ -167,6 +206,15 @@ namespace WildFarming.Tests
         public void ShouldUsePatchyRegularLeafStrip_IdlePhase_NeverPatchy()
         {
             Assert.False(CanopySeasonSync.ShouldUsePatchyRegularLeafStripForMonth(CanopySeasonPhase.Idle, 5));
+            Assert.False(CanopySeasonSync.ShouldUsePatchyRegularLeafStripForMonth(CanopySeasonPhase.Spring, 4));
+        }
+
+        [Theory]
+        [InlineData(5)] // June
+        [InlineData(6)] // July
+        public void SummerIdle_IsNotWinterBareMonth(int month)
+        {
+            Assert.False(CanopyFoliageRules.IsWinterBareMonth(month));
         }
     }
 
@@ -219,18 +267,36 @@ namespace WildFarming.Tests
         [Theory]
         [InlineData(0.05f, true)]   // Jan dormant
         [InlineData(0.15f, false)]  // Mar — bud rising
+        [InlineData(0.55f, false)]  // Jul — warm Idle must NOT be bare/strip season
         public void IsBareCrownSeasonForProgress_WinterIdleOnly(float yearProgress, bool expected)
         {
             Assert.Equal(
                 expected,
-                CanopyFoliageRules.IsBareCrownSeasonForProgress(yearProgress, CanopySeasonPhase.Idle, 1f));
+                CanopyFoliageRules.IsBareCrownSeasonForProgress(
+                    yearProgress, CanopySeasonPhase.Idle, 1f, "oak"));
+        }
+
+        [Fact]
+        public void Birch_MidSummer_IsIdleNotAutumn()
+        {
+            // Warm mid-summer must keep full canopy (was early Jul defol → patchy strip).
+            float midJulyStart = 6f / 12f;
+            float defol = WildCanopySeason.Resolve("birch").DefoliateInterpolated(midJulyStart);
+            float bud = WildCanopySeason.Resolve("birch").BudInterpolated(midJulyStart);
+            Assert.True(defol < 0.02f);
+            Assert.True(bud < 0.02f);
+            Assert.Equal(
+                CanopySeasonPhase.Idle,
+                CanopyEcology.ResolvePhaseFromActivity(defol, bud, out _));
         }
 
         [Fact]
         public void IsBareCrownSeasonForProgress_NotDuringAutumnOrSpring()
         {
-            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(0.05f, CanopySeasonPhase.Autumn, 1f));
-            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(0.2f, CanopySeasonPhase.Spring, 1f));
+            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(
+                0.05f, CanopySeasonPhase.Autumn, 1f, "oak"));
+            Assert.False(CanopyFoliageRules.IsBareCrownSeasonForProgress(
+                0.2f, CanopySeasonPhase.Spring, 1f, "oak"));
         }
 
         [Fact]

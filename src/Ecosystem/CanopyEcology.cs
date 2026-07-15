@@ -39,7 +39,19 @@ namespace WildFarming.Ecosystem
             defol *= latMult;
             bud *= latMult * TemperatureBudMultiplier(temp, cfg.CanopyBudMinTemperature);
 
-            if (defol > 0.02f && defol > bud)
+            return ResolvePhaseFromActivity(defol, bud, out activity);
+        }
+
+        /// <summary>
+        /// Autumn wins ties / residual bud tails so late-summer curves cannot re-enter Spring
+        /// and fight Dec–Feb bare-strip / real spring fill-in (leave → strip → leave waves).
+        /// </summary>
+        internal static CanopySeasonPhase ResolvePhaseFromActivity(float defol, float bud, out float activity)
+        {
+            activity = 0f;
+
+            // Prefer autumn on ties (previously defol > bud left equal Jul tails in Spring).
+            if (defol > 0.02f && defol >= bud)
             {
                 activity = defol;
                 return CanopySeasonPhase.Autumn;

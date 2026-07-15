@@ -586,10 +586,10 @@ namespace WildFarming.Client
 
         bool OnApplyClicked()
         {
-            if (!EcosystemConfigValidator.TryValidate(working, out _))
+            if (EcosystemConfigValidator.NormalizeInPlace(working) > 0)
             {
-                capi.ShowChatMessage(L("config-ui-error-invalid"));
-                return true;
+                capi.ShowChatMessage(L("config-ui-clamped"));
+                RequestRecompose();
             }
 
             OnApplyRequested?.Invoke(working);

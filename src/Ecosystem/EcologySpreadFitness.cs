@@ -53,7 +53,7 @@ namespace WildFarming.Ecosystem
             if (!cfg.EnableTrampling) return baseFitness;
 
             ColumnTrafficStore store = EcosystemSystem.Instance?.ColumnTraffic;
-            if (store == null) return baseFitness;
+            if (store == null || store.Count == 0) return baseFitness;
 
             IGameCalendar cal = api?.World?.Calendar;
             double now = cal?.TotalHours ?? 0;

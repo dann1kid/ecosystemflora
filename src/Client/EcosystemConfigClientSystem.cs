@@ -96,11 +96,7 @@ namespace WildFarming.Client
         {
             if (working == null) return;
 
-            if (!EcosystemConfigValidator.TryValidate(working, out _))
-            {
-                capi.ShowChatMessage(Lang.Get("ecosystemflora:config-ui-error-invalid"));
-                return;
-            }
+            EcosystemConfigValidator.NormalizeInPlace(working);
 
             if (CanSaveOnLocalServer())
             {

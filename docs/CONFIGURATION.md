@@ -12,9 +12,9 @@ On load, **missing keys are added** with defaults and the file is rewritten (ser
 
 ## Balance presets
 
-`BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite spread bundle fields including `SpeciesSpreadRateScale`, attempts/year, chance, fitness, spacing, and (for `vanilla-minimal`) maturation/phenology toggles.
+`BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite the spread bundle and feature toggles listed for that preset. Default preset is **`natural`**.
 
-Use `"custom"` to keep your own spread values across restarts.
+Use `"custom"` to keep your own values across restarts.
 
 | Preset | Attempts/year | Chance | MinFitness | Same/other spacing | `SpeciesSpreadRateScale` |
 |--------|---------------|--------|------------|--------------------|---------------------------|
@@ -24,7 +24,9 @@ Use `"custom"` to keep your own spread values across restarts.
 | `vanilla-minimal` | same as `natural` | | | | 0.333 |
 | `custom` | — | — | — | — | — |
 
-`vanilla-minimal` also sets `EnableFlowerSpreadMaturation`, `EnableFernSpreadMaturation`, `EnableTallgrassSpreadMaturation`, `EnableBerrySpreadMaturation`, and all three phenology flags to **false**.
+`natural` turns **on** full ecology features (juvenile maturation, phenology, seasons, trampling trails, tree aging/senescence, vines, mycelium, symbiosis, soil succession, chunk-fair spread, third-party participants, etc.).
+
+`vanilla-minimal` starts from `natural` then sets `EnableFlowerSpreadMaturation`, `EnableFernSpreadMaturation`, `EnableTallgrassSpreadMaturation`, `EnableBerrySpreadMaturation`, and all three phenology flags to **false**.
 
 Optional custom JSON presets: `ModConfig/ecosystemflora.presets/*.json` (filename = preset code). File presets copy the same spread bundle fields as above.
 
@@ -62,7 +64,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | Key | Type | Default | Scope | Description |
 |-----|------|---------|-------|-------------|
 | `ApplyWorldgenRainForest` | bool | **true** | server | On: spread fitness uses worldgen rainfall map. Off: rainfall gate ignored (forest cover still uses neighbor trees). |
-| `BalancePreset` | string | `natural` | server | natural/lush/sparse apply bundled spread values on each server start. custom keeps your manual spread tuning. |
+| `BalancePreset` | string | `natural` | server | natural (default) = full ecology on + balanced spread. lush/sparse retune density. vanilla-minimal disables juvenile/phenology. custom keeps manual tuning. |
 | `EcosystemEnabled` | bool | **true** | server | On: spread, competition, stress, and most ecology ticks run. Off: mod ecology idle. |
 | `EnableEcologyHistoryHint` | bool | **true** | server | On: inspect (I) includes recent ecology events at the bottom of the report. Off: no history lines. |
 | `EnableThirdPartyParticipants` | bool | **true** | server | On: blocks with ecologyParticipant JSON from other mods join ecology. Off: vanilla blocks only. |
@@ -131,8 +133,8 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | Key | Type | Default | Scope | Description |
 |-----|------|---------|-------|-------------|
 | `ApplyCrossHabitatSpacing` | bool | **true** | server | On: terrestrial and aquatic plants share spacing rules. Off: spacing only within same habitat. |
-| `DefaultOtherSpeciesSpacing` | int | `1` | server | Higher: different species need more distance. Lower: mixed stands can be denser. |
-| `DefaultSameSpeciesSpacing` | int | `1` | server | Higher: same species must stay farther apart (patchier). Lower: denser same-species stands. |
+| `DefaultSameSpeciesSpacing` | int | `1` | server | Fallback only when a **non-tree** species leaves same-spacing unset. Flowers with `same_species_spacing=0` in CSV stay patch-forming. **Trees** use per-wood CSV / crown size and never treat 0 as “adjacent trunks”. Do not set to `0` for normal play. |
+| `DefaultOtherSpeciesSpacing` | int | `1` | server | Fallback for other-species distance when species row is unset/0. Trees use per-wood crown-grounded values. |
 | `DisplacementHoldMargin` | float | `1.18` | server | Higher: incumbent harder to displace (needs much stronger challenger). Lower: easier takeovers. |
 | `EmptySpreadFitnessMultiplier` | float | `2.5` | server | Higher: empty cells much more attractive when prefer-empty is on. Lower: weaker empty bias. |
 | `EnableEmptyFirstSpreadCollect` | bool | **true** | server | On: collect empty-cell candidates before displacement pass. Off: single combined pass. |
@@ -157,7 +159,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `EnableStressDeath` | bool | **true** | server | On: remove plants after repeated failed survival checks. Off: plants never removed by stress. |
 | `EnableSymbiosis` | bool | **true** | server | On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off. |
 | `EnableTrampling` | bool | **true** | server | On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology. |
-| `EnableAnimalFootTraffic` | bool | false | server | On: large animals near players also compact columns. Off: players only. |
+| `EnableAnimalFootTraffic` | bool | **true** | server | On: large animals near players also compact columns. Off: players only. |
 | `FootTrafficStepsToFullCoverageWear` | int | `20` | server | Footsteps on one column to reach `verysparse`. Primary tempo. Set `0` to use advanced `FootTrafficSoilWearPressureStep`. |
 | `FootTrafficDecayPerDay` | float | `6` | server | Higher: abandoned trails heal faster. Lower: packed paths linger longer. Aged for all columns on world save. |
 | `FootTrafficMinSpreadMultiplier` | float | `0.2` | server | At full pressure, spread/hold fitness × this floor. Lower: harder reclaim. |

@@ -70,7 +70,7 @@ Header (42 columns):
 | `mat_connectivity` | `Orthogonal4` or `Chebyshev8` (berry mats) |
 | `seed_dispersal_chance`, `seed_dispersal_radius` | Mat species seed jumps |
 | `mat_spread_radius`, `independent_spread_radius`, `spread_radius` | Horizontal reach (trees/saplings use `spread_radius`) |
-| `same_species_spacing`, `other_species_spacing` | Chebyshev spacing (0 = patch-forming) |
+| `same_species_spacing`, `other_species_spacing` | Chebyshev spacing. For meadow/colonizers, `same=0` = patch-forming clumps. **Trees must not use 0** — if CSV has 0, runtime substitutes crown-aware defaults from `WildTreeGrowthProfiles` / `WildTreeEcology` (typical mature crown radius + seral bias). |
 | `spacing_from_species` | Per-other-species overrides: `wilddaisy=3\|catmint=3` |
 | `min_sunlight` | Spread cell light floor (0 = skip) |
 | `habitat` | `Terrestrial`, `TerrestrialTree`, `ReedNearWater`, `WaterSurface`, … |

@@ -38,11 +38,26 @@ namespace WildFarming.Ecosystem
                 if (!CanopyFoliageRules.ShouldCatchUpStripRegularLeaf(api, pos, wood, out float activity)) return false;
 
                 CanopySeasonPhase phase = CanopyEcology.ResolvePhase(api, pos, wood, out _);
-                if (!ShouldUsePatchyRegularLeafStrip(api, phase))
+                int month = CalendarMonthIndex(api);
+
+                // Winter idle / Dec–Feb: force strip remaining leaves-grown (bare skeleton season).
+                // Never force-strip on summer Idle gaps — that was nuking warm-season canopy.
+                if (phase == CanopySeasonPhase.Idle)
+                {
+                    if (!CanopyFoliageRules.IsWinterBareMonth(month)) return false;
+                    return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
+                }
+
+                if (phase != CanopySeasonPhase.Autumn) return false;
+
+                if (CanopyFoliageRules.IsWinterBareMonth(month))
                 {
                     return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
                 }
 
+                // Active autumn (typically Aug–Nov): patchy strip. Ignore tiny curve ramps
+                // so early-warm months do not drip-strip a full crown.
+                if (activity < MinPatchyAutumnStripActivity) return false;
                 if (!PassesDeterministicGate(api, acc, pos, wood, gameYear, activity, stripScale: 0.55f)) return false;
                 return CanopyFoliageRules.TryStripForced(api, acc, pos, index);
             }
@@ -61,6 +76,7 @@ namespace WildFarming.Ecosystem
                 }
 
                 if (!CanopyFoliageRules.ShouldCatchUpBud(api, pos, wood, kind, out activity)) return false;
+                if (!CanopyFoliageRules.NeedsSpringCatchUp(acc, pos, wood, FoliageCellKind.BranchyLeaf)) return false;
 
                 activity *= profile.LeafCatchUpScale;
                 return CanopyFoliageRules.TryPlaceSeasonBudDeterministic(
@@ -88,18 +104,35 @@ namespace WildFarming.Ecosystem
                     }
                 }
 
+                // Spring: grow branchy scaffold from crown logs so branchy→leaf dress has enough anchors.
+                // (Without this, only sparse winter repair / aging feed leaves — crowns stay thin.)
+                CanopySeasonPhase logPhase = CanopyEcology.ResolvePhase(api, pos, wood, out float logActivity);
+                if (logPhase == CanopySeasonPhase.Spring
+                    && logActivity >= 0.08f
+                    && CanopyFoliageRules.IsLogInCrownZone(acc, pos, wood)
+                    && CanopyFoliageRules.NeedsSpringCatchUp(acc, pos, wood, FoliageCellKind.LogGrown))
+                {
+                    logActivity *= profile.BranchyCatchUpScale;
+                    return CanopyFoliageRules.TryPlaceSeasonBudDeterministic(
+                        api, acc, pos, block, wood, budBranchy: true, logActivity, gameYear, index);
+                }
+
                 return false;
             }
 
             return false;
         }
 
+        /// <summary>Below this autumn activity, month sync does not strip leaves (avoids tiny Jul ramps).</summary>
+        internal const float MinPatchyAutumnStripActivity = 0.28f;
+
         /// <summary>
-        /// Patchy strip only during active autumn (Oct–Nov). Dec–Feb and winter idle strip all leaves-grown.
+        /// Patchy strip only during active autumn months. Dec–Feb force-strip is handled separately
+        /// via winter Idle / winter autumn residual — never via this helper returning false for summer Idle.
         /// </summary>
         internal static bool ShouldUsePatchyRegularLeafStrip(ICoreAPI api, CanopySeasonPhase phase)
         {
-            if (api?.World?.Calendar == null) return phase != CanopySeasonPhase.Idle;
+            if (api?.World?.Calendar == null) return phase == CanopySeasonPhase.Autumn;
 
             float yearProgress = api.World.Calendar.DayOfYearf / api.World.Calendar.DaysPerYear;
             int month = ((int)(yearProgress * 12f)) % 12;
@@ -110,9 +143,18 @@ namespace WildFarming.Ecosystem
 
         internal static bool ShouldUsePatchyRegularLeafStripForMonth(CanopySeasonPhase phase, int month)
         {
-            if (phase == CanopySeasonPhase.Idle) return false;
-            if (month == 11 || month == 0 || month == 1) return false;
+            if (phase != CanopySeasonPhase.Autumn) return false;
+            if (CanopyFoliageRules.IsWinterBareMonth(month)) return false;
             return true;
+        }
+
+        static int CalendarMonthIndex(ICoreAPI api)
+        {
+            if (api?.World?.Calendar == null) return 0;
+            float yearProgress = api.World.Calendar.DayOfYearf / api.World.Calendar.DaysPerYear;
+            int month = ((int)(yearProgress * 12f)) % 12;
+            if (month < 0) month += 12;
+            return month;
         }
 
         static bool PassesDeterministicGate(

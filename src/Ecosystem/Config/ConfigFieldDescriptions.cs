@@ -20,8 +20,8 @@ namespace WildFarming.Ecosystem.Config
             void D(string n, string en, string ru) => m[n] = (en, ru);
 
             D(nameof(EcosystemConfig.BalancePreset),
-                "natural/lush/sparse/timelapse apply bundled spread values on each server start. timelapse = max spread + perf for stress tests. custom keeps your manual spread tuning.",
-                "natural/lush/sparse/timelapse задают набор параметров распространения при каждом старте сервера. timelapse — макс. spread и perf для стресс-тестов. custom сохраняет ваши ручные значения.");
+                "natural (default) = full ecology features on + balanced spread. lush/sparse retune spread density. vanilla-minimal = natural without juvenile/phenology blocks. timelapse = stress/test. custom keeps manual values across restarts.",
+                "natural (дефолт) = все фичи экологии вкл. + сбалансированный spread. lush/sparse — плотность. vanilla-minimal = natural без ювенильных/фенологии. timelapse = стресс-тест. custom сохраняет ручные значения.");
 
             D(nameof(EcosystemConfig.EcosystemEnabled),
                 "On: spread, competition, stress, and most ecology ticks run. Off: mod ecology idle.",
@@ -244,12 +244,12 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: наземные и водные учитывают дистанцию друг друга. Выкл.: дистанция только внутри среды.");
 
             D(nameof(EcosystemConfig.DefaultSameSpeciesSpacing),
-                "Higher: same species must stay farther apart (patchier). Lower: denser same-species stands.",
-                "Больше: дальше друг от друга один вид (пятнистее). Меньше: плотнее одновидовые группы.");
+                "Fallback when a species has no same-species spacing (flowers with 0 stay patch-forming). Trees use per-wood CSV / crown size — never 0. Higher: patchier; lower: denser.",
+                "Fallback, если у вида нет дистанции своего вида (у цветов 0 = пятно). Деревья — по породе в CSV / размеру кроны, не 0. Больше: реже; меньше: плотнее.");
 
             D(nameof(EcosystemConfig.DefaultOtherSpeciesSpacing),
-                "Higher: different species need more distance. Lower: mixed stands can be denser.",
-                "Больше: растения разных видов дальше друг от друга. Меньше: плотнее смешанные группы.");
+                "Fallback when a species has no other-species spacing. Trees use per-wood values grounded in crown radius.",
+                "Fallback, если у вида нет дистанции до других. У деревьев — свои значения от размера кроны.");
 
             D(nameof(EcosystemConfig.SpacingVerticalSearch),
                 "Higher: check spacing conflicts farther above/below. Lower: tighter vertical spacing scan.",

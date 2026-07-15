@@ -107,8 +107,21 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 row.MaxForest = 1f;
                 row.SpreadRate = 1f;
                 row.SpreadMode = SpreadMode.Independent.ToString();
-                row.SameSpeciesSpacing = 0;
+                // Flowers may be patch-forming (0). Never seed trees here without habitat evidence.
+                row.SameSpeciesSpacing = 1;
                 row.OtherSpeciesSpacing = 3;
+#pragma warning disable CS0618
+                if (WildTreeEcology.TryGet(species, out _))
+#pragma warning restore CS0618
+                {
+                    row.Taxon = "tree";
+                    row.Habitat = EcologyHabitat.TerrestrialTree.ToString();
+                    row.TreeSeralRole = "Mid";
+                    TreeSpacingDefaults.Resolve(species, out int same, out int other);
+                    row.SameSpeciesSpacing = same;
+                    row.OtherSpeciesSpacing = other;
+                }
+
                 return row;
             }
 
@@ -132,6 +145,9 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             if (row.Taxon == "tree")
             {
                 row.TreeSeralRole = "Mid";
+                TreeSpacingDefaults.Resolve(species, out int same, out int other);
+                if (row.SameSpeciesSpacing <= 0) row.SameSpeciesSpacing = same;
+                if (row.OtherSpeciesSpacing <= 0) row.OtherSpeciesSpacing = other;
             }
 
             return row;

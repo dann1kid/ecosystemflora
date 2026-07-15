@@ -106,11 +106,12 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 | Block | Autumn | Spring |
 |-------|--------|--------|
 | `leaves-grown` | strip → `air` | — |
-| `leavesbranchy` | stays (optional peak strip) | bud → adjacent air → `leaves-grown` |
-| `log-grown` | stays | bud → adjacent air → `leavesbranchy` |
+| `leavesbranchy` | stays (optional peak strip) | bud → adjacent air → `leaves-grown` (until near-crown density cap) |
+| `log-grown` | stays | bud → adjacent air → `leavesbranchy` in crown zone (scaffold; denser = fuller leaf dress) |
 
 - Only **orthogonal** neighbors; same `wood`, vacant air, land claims respected.
 - Activity + deterministic noise (patchy crown).
+- **Density caps** (`MaxBranchyNearLog` / `MaxRegularNearBranchy` per wood profile) stop catch-up when the local crown is already bushy enough.
 
 **Conifers** — no behaviour. **Not** `log-placed` / `leaves-placed`.
 
@@ -120,11 +121,17 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 
 | Period | `leaves-grown` strip |
 |--------|----------------------|
-| Oct–Nov (active autumn) | Patchy (~30–55% per pass via deterministic gate) |
+| Active autumn (≈ Aug–Nov, when defol activity ≥ ~0.28) | Patchy (~30–55% per pass via deterministic gate) |
 | Dec–Feb + winter idle | **Force strip all** regular leaves |
-| Mar–Sep | No autumn strip |
+| Mar–Jul (spring / warm Idle) | **No strip** |
 
 Ensures bare skeleton by winter even when chunk sync marks the month complete after a partial autumn pass.
+
+**Anti-wave rules (v4.9+):** temperate bud curves have **no February** and **no July residual bud** (those used to leave→strip→leave). Autumn wins phase ties (`defol >= bud`). Yearly tree aging (`TreeGrowthApplier`) does not place deciduous foliage during autumn or the bare winter window — only trunk height may advance then.
+
+**Fuller spring crowns (v4.8.2+):** chunk sync again grows **`log → leavesbranchy`** in the crown zone during Spring (was missing in Option B “branchy-only dress”, which left thin skeletons). Leaf/branchy catch-up scales and near-crown density caps were raised so trees fill more before summer idle.
+
+**Warm-season leaf keep (v4.8.2+):** summer Idle no longer force-strips (that looked like leaves vanishing in warm weather). Early/mid defol starts later (≈ Aug/Sep), and weak autumn ramps below `MinPatchyAutumnStripActivity` do not drip-strip.
 
 ---
 

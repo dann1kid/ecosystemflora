@@ -588,7 +588,7 @@ namespace WildFarming.Ecosystem
         {
             if (cfg == null || !cfg.EnableTrampling || plantPos == null) return 1f;
             ColumnTrafficStore store = EcosystemSystem.Instance?.ColumnTraffic;
-            if (store == null) return 1f;
+            if (store == null || store.Count == 0) return 1f;
 
             IGameCalendar cal = api?.World?.Calendar;
             double now = cal?.TotalHours ?? 0;

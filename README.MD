@@ -65,11 +65,12 @@ A reference template ships with the mod. The easiest way to tune the experience 
 
 | Preset | Feel | Spread attempts/year | Chance | Min fitness |
 |--------|------|---------------------|--------|-------------|
-| `natural` | Slow, realistic | 72 | 0.50 | 0.45 |
-| `lush` | Faster, greener | 120 | 0.65 | 0.35 |
-| `sparse` | Minimal, subtle | 36 | 0.30 | 0.60 |
+| `natural` (default) | Full ecology on, balanced | 72 | 0.50 | 0.45 |
+| `lush` | Same features, denser | 120 | 0.65 | 0.35 |
+| `sparse` | Same features, patchier | 36 | 0.30 | 0.60 |
+| `vanilla-minimal` | Natural without juvenile/phenology | 72 | 0.50 | 0.45 |
 
-Set `BalancePreset` to `custom` to use your own numeric fields.
+Set `BalancePreset` to `custom` to keep your own feature toggles and numbers across restarts.
 
 **Full key reference:** [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) (defaults match `EcosystemConfig.cs`). Example JSON: `assets/ecosystemflora/ecosystemflora.example.json`.
 

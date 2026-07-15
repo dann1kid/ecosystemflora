@@ -7,6 +7,54 @@ namespace WildFarming.Tests
     public class EcosystemBalancePresetsTests
     {
         [Fact]
+        public void DefaultBalancePreset_IsNatural()
+        {
+            Assert.Equal(EcosystemBalancePresets.Natural, new EcosystemConfig().BalancePreset);
+        }
+
+        [Fact]
+        public void Natural_EnablesCoreEcologyFeatures()
+        {
+            var cfg = new EcosystemConfig
+            {
+                EnableFlowerSpreadMaturation = false,
+                EnableFlowerPhenology = false,
+                EnableTrampling = false,
+                EnableAnimalFootTraffic = false,
+                EnableTreeAging = false,
+                EnableMyceliumEcology = false,
+                ApplyCrossHabitatSpacing = false,
+                BalancePreset = EcosystemBalancePresets.Natural,
+            };
+
+            EcosystemBalancePresets.Apply(cfg, EcosystemBalancePresets.Natural);
+
+            Assert.True(cfg.EnableFlowerSpreadMaturation);
+            Assert.True(cfg.EnableTallgrassSpreadMaturation);
+            Assert.True(cfg.EnableFernSpreadMaturation);
+            Assert.True(cfg.EnableBerrySpreadMaturation);
+            Assert.True(cfg.EnableFlowerPhenology);
+            Assert.True(cfg.EnableFernPhenology);
+            Assert.True(cfg.EnableTallgrassPhenology);
+            Assert.True(cfg.UseSeasonalEcology);
+            Assert.True(cfg.EnableSeasonalFoliage);
+            Assert.True(cfg.EnableTrampling);
+            Assert.True(cfg.TramplingSoilDegradation);
+            Assert.True(cfg.EnableAnimalFootTraffic);
+            Assert.True(cfg.EnableTreeAging);
+            Assert.True(cfg.EnableTreeSenescence);
+            Assert.True(cfg.EnableWildVineEcology);
+            Assert.True(cfg.EnableMyceliumEcology);
+            Assert.True(cfg.EnableSymbiosis);
+            Assert.True(cfg.UseSoilSuccession);
+            Assert.True(cfg.ApplyCrossHabitatSpacing);
+            Assert.True(cfg.EnableChunkFairSpread);
+            Assert.True(cfg.EnableEventDrivenSpread);
+            Assert.Equal(72, cfg.ReproduceAttemptsPerYear);
+            Assert.Equal(1f / 3f, cfg.SpeciesSpreadRateScale, 3);
+        }
+
+        [Fact]
         public void VanillaMinimal_DisablesPhenologyAndJuvenileSpread()
         {
             var cfg = new EcosystemConfig { BalancePreset = EcosystemBalancePresets.VanillaMinimal };

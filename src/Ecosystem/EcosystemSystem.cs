@@ -1932,6 +1932,21 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
+
+            if (cfg.EnableTrampling && cfg.TramplingSoilDegradation && columnTrafficStore.Count > 0)
+            {
+                float hoursPerDay = api.World.Calendar.HoursPerDay > 0
+                    ? api.World.Calendar.HoursPerDay
+                    : 24f;
+                columnTrafficStore.ProcessDeferredCoverageSync(
+                    api,
+                    now,
+                    hoursPerDay,
+                    cfg.FootTrafficDecayPerDay,
+                    FootTrafficWear.EffectiveWearStep(cfg),
+                    maxSyncs: 16);
+            }
+
             SeasonEcologyWake.TryWakeOnMonthChange(api, cfg, registry, ref lastSeasonWakeMonth);
             ICollection<Vec2i> spreadActiveChunks = BuildActiveRegistryChunks(cfg);
             ICollection<Vec2i> canopyActiveChunks = BuildActivePlayerChunks(cfg);

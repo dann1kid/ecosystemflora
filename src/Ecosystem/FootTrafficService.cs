@@ -183,6 +183,7 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EcosystemEnabled || !cfg.EnableTrampling || !cfg.EnableAnimalFootTraffic) return;
+            if (CalendarSpeedHelper.GetSpeedMultiplier(entity.World?.Calendar) > 8f) return;
             TryAttachAnimalBehavior(entity);
         }
 
@@ -326,6 +327,8 @@ namespace WildFarming.Ecosystem
                 {
                     store.ClearPlantHits(plantPos);
                     ecosystem.InvalidateEnvironmentAround(plantPos);
+                    // Height dropped below target — resume establishment growth.
+                    ecosystem.TryQueueTallgrassPromotionAtInspect(plantPos, acc.GetBlock(plantPos));
                     return;
                 }
             }

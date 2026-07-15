@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using WildFarming.Ecosystem.Config;
 
 // Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
 #pragma warning disable CS0618
@@ -44,6 +45,8 @@ namespace WildFarming.Ecosystem
                 Loaded = new EcosystemConfig();
             }
 
+            EcosystemConfigValidator.NormalizeInPlace(Loaded);
+
             EcosystemBalancePresets.TryLoadFilePresets(api);
             ApplyBalancePreset(Loaded);
 
@@ -69,7 +72,7 @@ namespace WildFarming.Ecosystem
         /// Spread tuning bundle: <c>natural</c>, <c>lush</c>, <c>sparse</c>, or <c>custom</c> (manual fields only).
         /// Applied on server start when not <c>custom</c>.
         /// </summary>
-        public string BalancePreset { get; set; } = EcosystemBalancePresets.Custom;
+        public string BalancePreset { get; set; } = EcosystemBalancePresets.Natural;
 
         public bool EcosystemEnabled { get; set; } = true;
 
@@ -420,10 +423,14 @@ namespace WildFarming.Ecosystem
         /// </summary>
         public bool ApplyCrossHabitatSpacing { get; set; } = false;
 
-        /// <summary>Used when species table has SameSpeciesSpacing 0.</summary>
+        /// <summary>
+        /// Fallback when a non-tree species leaves SameSpeciesSpacing unset.
+        /// Trees use per-wood CSV / crown defaults and never treat 0 as adjacent trunks.
+        /// Flower rows with SameSpeciesSpacing 0 remain patch-forming clumps.
+        /// </summary>
         public int DefaultSameSpeciesSpacing { get; set; } = 1;
 
-        /// <summary>Used when species table has OtherSpeciesSpacing 0.</summary>
+        /// <summary>Fallback when species table has OtherSpeciesSpacing 0 (trees use crown-grounded values).</summary>
         public int DefaultOtherSpeciesSpacing { get; set; } = 1;
 
         /// <summary>±Y when scanning for nearby flowers for spacing.</summary>
@@ -795,7 +802,7 @@ namespace WildFarming.Ecosystem
         public int FootTrafficSampleIntervalMs { get; set; } = 1000;
 
         /// <summary>On: attach physics stride hooks to large creatures near players. Off: players only via OnFootStep.</summary>
-        public bool EnableAnimalFootTraffic { get; set; } = false;
+        public bool EnableAnimalFootTraffic { get; set; } = true;
 
         // --- Flower drygrass drops (v2.5) ---
 

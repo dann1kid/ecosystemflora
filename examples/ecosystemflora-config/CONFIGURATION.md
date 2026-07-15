@@ -12,7 +12,7 @@ On load, **missing keys are added** with defaults and the file is rewritten (ser
 
 ## Balance presets
 
-`BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite spread bundle fields including `SpeciesSpreadRateScale`, attempts/year, chance, fitness, spacing, and (for `vanilla-minimal`) maturation/phenology toggles.
+`BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite the spread bundle and (for `natural` / `vanilla-minimal` / `timelapse`) ecology feature toggles. Default preset is **`natural`**.
 
 Use `"custom"` to keep your own spread values across restarts.
 
@@ -62,7 +62,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | Key | Type | Default | Scope | Description |
 |-----|------|---------|-------|-------------|
 | `ApplyWorldgenRainForest` | bool | **true** | server | On: spread fitness uses worldgen rainfall map. Off: rainfall gate ignored (forest cover still uses neighbor trees). |
-| `BalancePreset` | string | `natural` | server | natural/lush/sparse apply bundled spread values on each server start. custom keeps your manual spread tuning. |
+| `BalancePreset` | string | `natural` | server | natural (default) = full ecology on + balanced spread. lush/sparse retune density. vanilla-minimal disables juvenile/phenology. custom keeps manual tuning. |
 | `EcosystemEnabled` | bool | **true** | server | On: spread, competition, stress, and most ecology ticks run. Off: mod ecology idle. |
 | `EnableEcologyHistoryHint` | bool | **true** | server | On: inspect (I) includes recent ecology events at the bottom of the report. Off: no history lines. |
 | `EnableThirdPartyParticipants` | bool | **true** | server | On: blocks with ecologyParticipant JSON from other mods join ecology. Off: vanilla blocks only. |
@@ -156,16 +156,16 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 |-----|------|---------|-------|-------------|
 | `EnableStressDeath` | bool | **true** | server | On: remove plants after repeated failed survival checks. Off: plants never removed by stress. |
 | `EnableSymbiosis` | bool | **true** | server | On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off. |
-| `EnableTrampling` | bool | false | server | On: player proximity accumulates trampling stress on plants. Off: no trampling stress. |
+| `EnableTrampling` | bool | **true** | server | On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology. |
+| `TramplingRadius` | int | `0` | server | Extra horizontal radius for plant wear (0 = feet only). |
+| `TramplingStressThreshold` | int | `5` | server | Footsteps on a non-tallgrass plant before removal. |
+| `TramplingSoilDegradation` | bool | **true** | server | On: sync grass coverage on wild soil. Off: plants only. |
 | `MaxFailedSurvivalChecks` | int | `5` | server | Higher: more failed checks tolerated before stress removal. Lower: plants die sooner from stress. |
 | `SeasonalStressEnabled` | bool | **true** | server | On: seasonal stress die-off rolls for terrestrial plants. Off: no extra seasonal die-off. |
 | `StressBudgetMs` | int | `0` | server | Higher: more ms for stress phase (0 = TickBudgetMs). Lower: tighter stress cap. |
 | `StressRecheckHours` | double | `18` | server | Higher: slower stress evaluations per plant (less CPU). Lower: faster stress reactions. |
 | `StressTickIntervalMs` | int | `5500` | server | Higher: less frequent stress ticks (less CPU). Lower: more frequent stress updates. |
 | `SymbiosisCascadeRadius` | int | `4` | server | Higher: wider host-cache invalidation and ecology wake when a symbiosis host is removed. Lower: tighter radius. |
-| `TramplingRadius` | int | `1` | server | Higher: players affect plants farther away. Lower: must stand closer to trample. |
-| `TramplingSoilDegradation` | bool | false | server | On: degrade soil when plant dies from trampling. Off: trampling kills plants only. |
-| `TramplingStressThreshold` | int | `8` | server | Higher: more exposure ticks before trampling counts as failed survival. Lower: faster trample kill. |
 | `UseSeasonalEcology` | bool | **true** | server | On: monthly spread multipliers from WildSpeciesSeason profiles. Off: uniform spread year-round. |
 
 ### Soil succession & farmland

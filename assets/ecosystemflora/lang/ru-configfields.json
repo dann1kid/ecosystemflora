@@ -4,7 +4,7 @@
   "ecosystemflora:config-field-ApplyWorldgenRainForest": "Осадки генерации мира",
   "ecosystemflora:config-field-ApplyWorldgenRainForest-desc": "Вкл.: пригодность распространения учитывает карту осадков генерации мира. Выкл.: осадки игнорируются (лесность — по соседним деревьям).",
   "ecosystemflora:config-field-BalancePreset": "Пресет баланса",
-  "ecosystemflora:config-field-BalancePreset-desc": "natural/lush/sparse/timelapse задают набор параметров распространения при каждом старте сервера. timelapse — макс. spread и perf для стресс-тестов. custom сохраняет ваши ручные значения.",
+  "ecosystemflora:config-field-BalancePreset-desc": "natural (дефолт) = все фичи экологии вкл. + сбалансированный spread. lush/sparse — плотность. vanilla-minimal = natural без ювенильных/фенологии. timelapse = стресс-тест. custom сохраняет ручные значения.",
   "ecosystemflora:config-field-BerryTraitMutationChance": "Шанс мутации черт ягод",
   "ecosystemflora:config-field-BerryTraitMutationChance-desc": "Больше: чаще теряется случайная черта при распространении. 0 = без мутаций.",
   "ecosystemflora:config-field-BurstRegistrationBudgetMs": "Бюджет пакетной регистрации (мс)",

@@ -100,11 +100,46 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void NeedsEstablishment_ContinuesPastHalfTargetTowardFull()
+        {
+            EcosystemConfig.Loaded = new EcosystemConfig { EnableTallgrassSpreadMaturation = true };
+            // Seed chosen so open default context yields a tall target (> medium).
+            var pos = new BlockPos(3, 64, 7);
+            var req = new PlantRequirements { Species = "tallgrass" };
+            int target = TallgrassSpreadHeight.PickTargetStageIndex(null, pos, req);
+            int minSpread = TallgrassSpreadHeight.MinSpreadStageIndex(target);
+
+            Assert.True(target > minSpread, "test seed should pick target above half-spread stage");
+
+            string halfStage = TallgrassSpreadHeight.HeightStages[minSpread];
+            Assert.True(TallgrassEstablishment.IsReadyToRegister(
+                Block("tallgrass-" + halfStage + "-free"), target, null, pos));
+            Assert.True(TallgrassEstablishment.NeedsEstablishment(
+                null, pos, Block("tallgrass-" + halfStage + "-free"), out int stillTarget));
+            Assert.Equal(target, stillTarget);
+
+            string fullStage = TallgrassSpreadHeight.HeightStages[target];
+            Assert.False(TallgrassEstablishment.NeedsEstablishment(
+                null, pos, Block("tallgrass-" + fullStage + "-free"), out _));
+
+            EcosystemConfig.Loaded = new EcosystemConfig();
+        }
+
+        [Fact]
         public void GetHeightStageIndex_MatchesStageOrder()
         {
             Assert.Equal(0, TallgrassSpreadHeight.GetHeightStageIndex("veryshort"));
             Assert.Equal(1, TallgrassSpreadHeight.GetHeightStageIndex("short"));
             Assert.Equal(-1, TallgrassSpreadHeight.GetHeightStageIndex("eaten"));
+        }
+
+        [Fact]
+        public void StuckTimeout_RequiresPriorDueFailure_NotMereLateness()
+        {
+            const double timeout = 60 * 24 * 14;
+            Assert.False(PendingTallgrassPromotion.IsStuckPastTimeout(0, 1_000_000, timeout));
+            Assert.False(PendingTallgrassPromotion.IsStuckPastTimeout(100, 100 + timeout, timeout));
+            Assert.True(PendingTallgrassPromotion.IsStuckPastTimeout(100, 100 + timeout + 1, timeout));
         }
 
         [Fact]

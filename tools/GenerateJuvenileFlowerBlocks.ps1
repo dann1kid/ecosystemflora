@@ -31,6 +31,8 @@ function Write-Block($species, $shape, $textures, [hashtable]$extra = $null) {
     if (Test-Path $legacyPath) { Remove-Item $legacyPath -Force }
 
     $selY2 = 0.22
+    # Match vanilla flower drawnHeightByType — clipping to 11 left only stem stubs / half petals.
+    $drawnHeight = Get-DrawnHeightForShape $shape
     $texJson = ($textures.GetEnumerator() | ForEach-Object {
         "    `"$($_.Key)`": { `"base`": `"$($_.Value)`" }"
     }) -join ",`n"
@@ -46,6 +48,9 @@ function Write-Block($species, $shape, $textures, [hashtable]$extra = $null) {
         }
         if ($extra.ContainsKey("selectionY2")) {
             $selY2 = $extra["selectionY2"]
+        }
+        if ($extra.ContainsKey("drawnHeight")) {
+            $drawnHeight = $extra["drawnHeight"]
         }
     }
     if (-not $selY2) { $selY2 = 0.22 }
@@ -83,10 +88,10 @@ $texJson
   },
   "attributesByType": {
     "*-free": {
-      "drawnHeight": 11
+      "drawnHeight": $drawnHeight
     },
     "*-snow": {
-      "drawnHeight": 11,
+      "drawnHeight": $drawnHeight,
       "allowOverlays": false,
       "allowStepWhenStuck": true
     }
@@ -116,6 +121,16 @@ $texJson
 "@ | Set-Content -Path $path -Encoding UTF8
 }
 
+function Get-DrawnHeightForShape($shape) {
+    # Vanilla flower.json drawnHeightByType (VS 1.22 HiDPI petal/stem PNGs).
+    if ($shape -match "16x16") { return 32 }
+    if ($shape -match "lilyofthevalley") { return 48 }
+    if ($shape -match "lupine") { return 48 }
+    if ($shape -match "croton") { return 48 }
+    if ($shape -match "rafflesia") { return 48 }
+    return 48
+}
+
 function ThreePatch24($species) {
     $t = @{}
     foreach ($n in 1,2,3) {
@@ -124,7 +139,12 @@ function ThreePatch24($species) {
         $t["northTinted$n"] = "game:block/plant/flower/stem/${species}$n"
         $t["southTinted$n"] = "game:block/plant/flower/stem/${species}$n"
     }
-    Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t
+    $drawn = switch ($species) {
+        "goldenpoppy" { 32 }
+        "horsetail" { 40 }
+        default { 48 }
+    }
+    Write-Block $species "game:block/plant/flower/1patch-3faces-24x24" $t @{ drawnHeight = $drawn }
 }
 
 function MugwortBlock() {
@@ -155,7 +175,10 @@ function HeatherBlock() {
         flower2 = "game:block/plant/flower/petal/heather2"
         flower2Tinted = "game:block/plant/flower/stem/heather2"
     }
-    Write-Block "heather" "game:block/plant/flower/1patch-3faces-24x24" $t @{ randomDrawOffset = $true }
+    Write-Block "heather" "game:block/plant/flower/1patch-3faces-24x24" $t @{
+        randomDrawOffset = $true
+        drawnHeight = 28
+    }
 }
 
 function WesternGorseBlock() {
@@ -186,7 +209,8 @@ function CrossNumbered24($species) {
         northTinted1 = "game:block/plant/flower/stem/${species}*"
         southTinted1 = "game:block/plant/flower/stem/${species}*"
     }
-    Write-Block $species "game:block/plant/flower/1patch-cross-24x24" $t
+    $drawn = if ($species -eq "redtopgrass") { 38 } else { 48 }
+    Write-Block $species "game:block/plant/flower/1patch-cross-24x24" $t @{ drawnHeight = $drawn }
 }
 
 # Vanilla default texturesByType uses petal/{flower}* — single file (catmint) or wildcard pick.
@@ -228,7 +252,8 @@ function TwoVariant16($species) {
     $t["south3"] = "game:block/plant/flower/petal/${species}2"
     $t["northTinted3"] = "game:block/plant/flower/stem/${species}2"
     $t["southTinted3"] = "game:block/plant/flower/stem/${species}2"
-    Write-Block $species "game:block/plant/flower/1patch-3faces-16x16" $t
+    $drawn = if ($species -eq "forgetmenot") { 16 } elseif ($species -eq "edelweiss") { 36 } else { 32 }
+    Write-Block $species "game:block/plant/flower/1patch-3faces-16x16" $t @{ drawnHeight = $drawn }
 }
 
 function ThreePatch16($species) {

@@ -61,9 +61,9 @@ namespace WildFarming.Ecosystem.Config
                 return new ConfigFieldLangText
                 {
                     TitleEn = "Balance preset",
-                    DescEn = "natural/lush/sparse apply bundled spread values. custom keeps manual spread tuning across restarts.",
+                    DescEn = "natural (default) = full ecology features on + balanced spread. lush/sparse retune density. vanilla-minimal disables juvenile/phenology. custom keeps manual values across restarts.",
                     TitleRu = "Пресет баланса",
-                    DescRu = "natural/lush/sparse задают набор spread. custom сохраняет ваши ручные значения между перезапусками.",
+                    DescRu = "natural (дефолт) = все фичи экологии вкл. + сбалансированный spread. lush/sparse — плотность. vanilla-minimal без ювенильных/фенологии. custom сохраняет ручные значения.",
                 };
             }
 

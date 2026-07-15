@@ -24,6 +24,8 @@ Target height uses the same scoring as spread height selection (sun, forest, fer
 
 - **Each stage step:** 36 base game hours / `GrowthHoursMultiplier`, min 6 h; scaled slightly by seasonal spread activity (spring faster).
 - Growth continues until current stage index reaches the **full target**, not only until spread opens.
+- **Promotion fairness:** `PendingTallgrassPromotion` round-robins due cells; not-due entries do not burn `MaxPendingTallgrassPromotionChecksPerTick`. Timeout (~14 days) applies only after due work keeps failing (claim / SetBlock), not when the queue was simply backed up.
+- **Recovery:** cyclic flora discovery re-queues tallgrass below target even if it is already in the spread registry (half-target register). Trample height retreat also re-queues.
 
 ## Registration pipeline (3.9+)
 

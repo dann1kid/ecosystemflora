@@ -43,7 +43,8 @@ namespace WildFarming.Ecosystem
             ["crimsonkingmaple"] = new Profile(12, 5, 85, spreadMaturityAgeYears: 10),
             ["pine"] = new Profile(16, 3, 110, spreadMaturityAgeYears: 15),
             ["larch"] = new Profile(14, 3, 100, spreadMaturityAgeYears: 15),
-            ["redwood"] = new Profile(20, 4, 140, spreadMaturityAgeYears: 20),
+            // Crown 8 matches export spacing (wide coast redwood crowns in VS structures).
+            ["redwood"] = new Profile(20, 8, 140, spreadMaturityAgeYears: 20),
             ["baldcypress"] = new Profile(15, 4, 105, spreadMaturityAgeYears: 25),
             ["greenspirecypress"] = new Profile(14, 3, 88, spreadMaturityAgeYears: 10),
             ["acacia"] = new Profile(10, 4, 68, spreadMaturityAgeYears: 5),

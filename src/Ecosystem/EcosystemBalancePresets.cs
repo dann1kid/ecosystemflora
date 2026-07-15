@@ -140,12 +140,78 @@ namespace WildFarming.Ecosystem
             cfg.MinFitness = 0.45f;
             cfg.DefaultSameSpeciesSpacing = 1;
             cfg.DefaultOtherSpeciesSpacing = 1;
+
+            // Full natural ecology feature set (vanilla-minimal turns maturation/phenology back off).
+            cfg.EcosystemEnabled = true;
+            cfg.HarshWildPlants = true;
+            cfg.ApplyWorldgenRainForest = true;
+            cfg.EnableThirdPartyParticipants = true;
+
+            cfg.EnableFlowerSpreadMaturation = true;
+            cfg.EnableFernSpreadMaturation = true;
+            cfg.EnableTallgrassSpreadMaturation = true;
+            cfg.EnableBerrySpreadMaturation = true;
+            cfg.EnableFlowerPhenology = true;
+            cfg.EnableFernPhenology = true;
+            cfg.EnableTallgrassPhenology = true;
+            cfg.EnableFlowerSpreadAttemptCooldown = true;
+            cfg.EnableFernSpreadAttemptCooldown = true;
+            cfg.EnableFernSporulationGate = true;
+            cfg.EnableFernRhizomeSpread = true;
+            cfg.EnableBerryColonySpread = true;
+            cfg.EnableShoreSedgeMatSpread = true;
+
+            cfg.UseSeasonalEcology = true;
+            cfg.SeasonalStressEnabled = true;
+            cfg.EnableSeasonalFoliage = true;
+            cfg.EnableSeasonCoarseWake = true;
+
+            cfg.EnableTrampling = true;
+            cfg.TramplingSoilDegradation = true;
+            cfg.EnableAnimalFootTraffic = true;
+
+            cfg.EnableTreeAging = true;
+            cfg.EnableTreeSenescence = true;
+            cfg.EnableTreeSeralSuccession = true;
+            cfg.EnableTreeSenescenceRemains = true;
+            cfg.EnableFerntreeEcology = true;
+            cfg.EnableWildVineEcology = true;
+
+            cfg.EnableMyceliumEcology = true;
+            cfg.EnableMyceliumNiche = true;
+            cfg.EnableMyceliumNetworkSpread = true;
+            cfg.EnableMyceliumCapDisplacement = true;
+
+            cfg.EnableSymbiosis = true;
+            cfg.EnableStressDeath = true;
+            cfg.UseNicheContext = true;
+            cfg.UseSoilSuccession = true;
+            cfg.UseFarmlandNutrientBridge = true;
+            cfg.EnableFallowRestoration = true;
+
+            cfg.PlantSpacingEnabled = true;
+            cfg.ApplyCrossHabitatSpacing = true;
+            cfg.UseCellDisplacement = true;
+            cfg.EnableChunkFairSpread = true;
+            cfg.EnableEventDrivenSpread = true;
+            cfg.EnableBackgroundSpreadSolve = true;
+            cfg.EnableTwoPhaseSpreadPlacement = true;
+            cfg.EnableBackgroundRegistrationScan = true;
+            cfg.EnableCyclicFloraDiscovery = true;
+            cfg.EnableCyclicTreeDiscovery = true;
+
+            cfg.UseRhizomeSpreadForReeds = true;
+            cfg.UseSurfaceMatSpreadForLilies = true;
+            cfg.EnableStumpDecay = true;
+            cfg.EnableFlowerDrygrass = true;
+            cfg.EnableOrphanFoliagePrune = true;
+            cfg.EnableCanopyFallenSticks = true;
+            cfg.EnableSpringBranchyAgeBoost = true;
         }
 
         static void ApplyLush(EcosystemConfig cfg)
         {
-            cfg.UseCalendarScaledSpread = true;
-            cfg.UseSpeciesSpreadRates = true;
+            ApplyNatural(cfg);
             cfg.SpeciesSpreadRateScale = 0.45f;
             cfg.ReproduceAttemptsPerYear = 120;
             cfg.ReproduceChance = 0.65f;
@@ -156,8 +222,7 @@ namespace WildFarming.Ecosystem
 
         static void ApplySparse(EcosystemConfig cfg)
         {
-            cfg.UseCalendarScaledSpread = true;
-            cfg.UseSpeciesSpreadRates = true;
+            ApplyNatural(cfg);
             cfg.SpeciesSpreadRateScale = 0.2f;
             cfg.ReproduceAttemptsPerYear = 36;
             cfg.ReproduceChance = 0.3f;
@@ -186,8 +251,10 @@ namespace WildFarming.Ecosystem
             cfg.ReproduceAttemptsPerYear = 100000;
             cfg.ReproduceChance = 1f;
             cfg.MinFitness = 0.1f;
-            cfg.DefaultSameSpeciesSpacing = 0;
-            cfg.DefaultOtherSpeciesSpacing = 0;
+            // PlantSpacingEnabled is off below — keep non-zero fallbacks so a later custom
+            // re-enable does not inherit “allow adjacent trunks/plants” from this preset.
+            cfg.DefaultSameSpeciesSpacing = 1;
+            cfg.DefaultOtherSpeciesSpacing = 1;
             cfg.ReproduceRadius = 8;
             cfg.MinSpeciesReproduceIntervalDays = 0;
             cfg.MinSpeciesReproduceIntervalHours = 0;
@@ -214,6 +281,11 @@ namespace WildFarming.Ecosystem
             cfg.UseCellDisplacement = true;
             cfg.DisplacementHoldMargin = 1f;
             cfg.EnableEventDrivenSpread = false;
+
+            // Timelapse recording: spread/foliage load only — trails add save scans, soil SetBlock, and animal physics hooks.
+            cfg.EnableTrampling = false;
+            cfg.TramplingSoilDegradation = false;
+            cfg.EnableAnimalFootTraffic = false;
 
             // Smoother CPU: 4× tick rate, ¼ batch caps (~same aggregate spread throughput).
             cfg.ReproduceTickIntervalMs = 25;

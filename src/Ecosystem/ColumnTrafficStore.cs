@@ -43,6 +43,8 @@ namespace WildFarming.Ecosystem
 
         ICoreServerAPI sapi;
 
+        int deferredSyncIndex;
+
         public int Count => records.Count;
 
         public void Bind(ICoreServerAPI serverApi)
@@ -353,6 +355,73 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        /// <summary>
+        /// Spread stale soil coverage sync across ticks (replaces save-time SetBlock bursts).
+        /// </summary>
+        public int ProcessDeferredCoverageSync(
+            ICoreAPI api,
+            double nowHours,
+            float hoursPerDay,
+            float decayPerDay,
+            byte wearStep,
+            int maxSyncs)
+        {
+            if (maxSyncs <= 0 || api == null || records.Count == 0) return 0;
+            if (!EcosystemConfig.Loaded.TramplingSoilDegradation) return 0;
+
+            int count = records.Count;
+            if (deferredSyncIndex >= count) deferredSyncIndex = 0;
+
+            int synced = 0;
+            int walked = 0;
+
+            foreach (KeyValuePair<long, ColumnTrafficRecord> kv in records)
+            {
+                if (walked < deferredSyncIndex)
+                {
+                    walked++;
+                    continue;
+                }
+
+                ColumnTrafficRecord rec = kv.Value;
+                if (rec == null)
+                {
+                    walked++;
+                    continue;
+                }
+
+                ApplyLazyDecay(rec, nowHours, hoursPerDay, decayPerDay);
+
+                byte targetMark = FootTrafficWear.MarkForWearIndex(
+                    FootTrafficWear.TargetWearIndex(rec.Pressure, wearStep),
+                    wearStep);
+
+                if (rec.LastSoilPressure != targetMark
+                    && IsColumnChunkLoaded(api, rec.X, rec.Z, rec.Dimension)
+                    && TrafficCoverageSync.SyncColumnXZ(
+                        api,
+                        rec.X,
+                        rec.Z,
+                        rec.Dimension,
+                        rec.Pressure,
+                        wearStep))
+                {
+                    rec.LastSoilPressure = targetMark;
+                    synced++;
+                }
+
+                walked++;
+                if (synced >= maxSyncs)
+                {
+                    deferredSyncIndex = walked >= count ? 0 : walked;
+                    return synced;
+                }
+            }
+
+            deferredSyncIndex = 0;
+            return synced;
+        }
+
         static bool IsColumnChunkLoaded(ICoreAPI api, int x, int z, int dimension)
         {
             IBlockAccessor acc = api?.World?.BlockAccessor;
@@ -430,12 +499,13 @@ namespace WildFarming.Ecosystem
                 bool syncSoil = cfg.EcosystemEnabled
                     && cfg.EnableTrampling
                     && cfg.TramplingSoilDegradation;
+                // Decay on save only — coverage catch-up runs on footstep / deferred tick (avoids save/menu stalls).
                 AgeAllAndPrune(
                     sapi,
                     cal.TotalHours,
                     hoursPerDay,
                     cfg.FootTrafficDecayPerDay,
-                    syncSoil,
+                    syncCoverage: false,
                     FootTrafficWear.EffectiveWearStep(cfg));
             }
 

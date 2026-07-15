@@ -71,13 +71,13 @@ namespace WildFarming.Ecosystem
 
         static readonly Dictionary<string, Profile> ByWood = new Dictionary<string, Profile>
         {
-            // Pioneers — disturbed open ground; vanilla seed spacing ~2–3 (birch), ~6+ (acacia).
+            // Pioneers — disturbed open ground; spacing ~ crown + open bias (see TreeSpacingDefaults).
             ["birch"] = P(-12, 28, 0.35f, 1f, 0f, 0.38f, 0.70f, 9, 5, 4,
                 TreeSeralRole.Pioneer, 11, seralPeak: 0.08f, seralHalf: 0.18f, seralFloor: 0.14f),
             ["acacia"] = P(18, 44, 0.12f, 0.55f, 0f, 0.35f, 0.46f, 11, 7, 5,
                 TreeSeralRole.Pioneer, 11, seralPeak: 0.06f, seralHalf: 0.16f, seralFloor: 0.12f),
 
-            // Mid-seral — edges, riparian, semi-open woodland; vanilla spacing ~4–5 blocks.
+            // Mid-seral — edges, riparian, semi-open woodland; spacing ~ ReferenceCrownRadius + 1.
             ["oak"] = P(-2, 30, 0.35f, 0.78f, 0f, 0.75f, 0.50f, 9, 6, 4,
                 TreeSeralRole.Mid, 11, seralPeak: 0.35f, seralHalf: 0.28f, seralFloor: 0.16f),
             ["maple"] = P(-7, 28, 0.35f, 0.95f, 0.08f, 0.82f, 0.52f, 9, 6, 4,
@@ -93,7 +93,7 @@ namespace WildFarming.Ecosystem
             ["purpleheart"] = P(22, 48, 0.28f, 0.88f, 0.22f, 0.88f, 0.36f, 10, 7, 5,
                 TreeSeralRole.Mid, 9, seralPeak: 0.34f, seralHalf: 0.26f, seralFloor: 0.18f),
 
-            // Climax — mature forest; shade-tolerant seedlings where noted (vanilla wiki).
+            // Climax — mature forest; dense conifers keep tighter trunks (pine 3 ≈ crown 3).
             ["pine"] = P(-20, 22, 0.38f, 1f, 0.12f, 1f, 0.48f, 10, 3, 3,
                 TreeSeralRole.Climax, 9, seralPeak: 0.48f, seralHalf: 0.34f, seralFloor: 0.20f),
             ["larch"] = P(-26, 12, 0.32f, 1f, 0.14f, 0.92f, 0.38f, 10, 4, 4,

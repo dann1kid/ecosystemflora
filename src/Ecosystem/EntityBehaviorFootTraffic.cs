@@ -69,7 +69,9 @@ namespace WildFarming.Ecosystem
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EcosystemEnabled || !cfg.EnableTrampling || !cfg.EnableAnimalFootTraffic) return;
-            if (entity == null || prevPos == null) return;
+            if (entity == null || entity is EntityPlayer) return;
+            if (CalendarSpeedHelper.GetSpeedMultiplier(entity.World?.Calendar) > 8f) return;
+            if (prevPos == null) return;
             if (!entity.OnGround || entity.Swimming) return;
             if (entity.State != EnumEntityState.Active) return;
 

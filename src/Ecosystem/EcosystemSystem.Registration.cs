@@ -151,21 +151,28 @@ namespace WildFarming.Ecosystem
             if (registrationsLeft <= 0 || pos == null || block == null) return false;
 
             BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(acc, pos, block.Code);
+
+            // Tallgrass below target must re-enter promotion even when already registered for spread
+            // (half-target register + dropped queue previously left meadows stuck mid-height).
+            bool needsTallgrassPromotion = needsEstablishment
+                || TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block);
+            if (needsTallgrassPromotion)
+            {
+                bool wasQueued = maturationQueues.TryGetTallgrassPromotionState(pos, out _, out _);
+                maturationQueues.AddTallgrassPromotion(api, pos);
+                bool newlyQueued = !wasQueued
+                    && maturationQueues.TryGetTallgrassPromotionState(pos, out _, out _);
+                if (newlyQueued)
+                {
+                    registrationsLeft--;
+                }
+
+                // Establishing grass is only registered for spread from the promotion loop at half-target.
+                // Already-queued cells return false so discovery budget is not burned every rescan.
+                return newlyQueued;
+            }
+
             if (registry.Contains(anchor) || registry.Contains(pos)) return false;
-
-            if (needsEstablishment)
-            {
-                maturationQueues.AddTallgrassPromotion(api, pos);
-                registrationsLeft--;
-                return true;
-            }
-
-            if (TallgrassEstablishment.ShouldQueueAfterPlacement(api, pos, block))
-            {
-                maturationQueues.AddTallgrassPromotion(api, pos);
-                registrationsLeft--;
-                return true;
-            }
 
             if (TryQueueFernDiscoveryMaturation(pos, block))
             {

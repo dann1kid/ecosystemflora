@@ -105,8 +105,18 @@ namespace WildFarming.Ecosystem
             int required;
             if (otherSpecies == Species)
             {
-                // 0 = patch-forming species allows tight clumps (colonizers).
-                return SameSpeciesSpacing;
+                if (SameSpeciesSpacing > 0) return SameSpeciesSpacing;
+
+                // Trees never use “patch clump” spacing 0 — fall back to crown-aware defaults,
+                // then config default (never leave trunk spacing at zero).
+                if (TreeSpacingDefaults.IsTreeLike(Habitat))
+                {
+                    TreeSpacingDefaults.Resolve(Species, out int treeSame, out _);
+                    return treeSame;
+                }
+
+                // 0 = meadow / colonizer patch-forming — do not apply config default.
+                return 0;
             }
 
             if (SpacingFromSpecies != null && SpacingFromSpecies.TryGetValue(otherSpecies, out int specific))
@@ -115,6 +125,10 @@ namespace WildFarming.Ecosystem
             }
 
             required = OtherSpeciesSpacing;
+            if (required <= 0 && TreeSpacingDefaults.IsTreeLike(Habitat))
+            {
+                TreeSpacingDefaults.Resolve(Species, out _, out required);
+            }
             if (required <= 0 && cfg != null) required = cfg.DefaultOtherSpeciesSpacing;
 
             return required;
@@ -124,9 +138,20 @@ namespace WildFarming.Ecosystem
         {
             if (cfg == null || !cfg.PlantSpacingEnabled) return 0;
 
-            int max = SameSpeciesSpacing;
-            int otherBase = OtherSpeciesSpacing > 0 ? OtherSpeciesSpacing : cfg.DefaultOtherSpeciesSpacing;
-            if (otherBase > max) max = otherBase;
+            int same = SameSpeciesSpacing;
+            if (same <= 0 && TreeSpacingDefaults.IsTreeLike(Habitat))
+            {
+                TreeSpacingDefaults.Resolve(Species, out same, out _);
+            }
+
+            int otherBase = OtherSpeciesSpacing;
+            if (otherBase <= 0 && TreeSpacingDefaults.IsTreeLike(Habitat))
+            {
+                TreeSpacingDefaults.Resolve(Species, out _, out otherBase);
+            }
+            if (otherBase <= 0) otherBase = cfg.DefaultOtherSpeciesSpacing;
+
+            int max = same > otherBase ? same : otherBase;
 
             if (SpacingFromSpecies != null)
             {
@@ -565,6 +590,7 @@ namespace WildFarming.Ecosystem
 
             BerryColonySpread.ApplyTo(requirements);
             ShoreSedgeMatSpread.ApplyTo(requirements);
+            TreeSpacingDefaults.EnsureOn(requirements);
             return requirements;
         }
     }

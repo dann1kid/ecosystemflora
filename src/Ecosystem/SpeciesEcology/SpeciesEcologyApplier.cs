@@ -133,6 +133,8 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             {
                 req.SpreadRadius = row.IndependentSpreadRadius;
             }
+
+            TreeSpacingDefaults.EnsureOn(req);
         }
     }
 }

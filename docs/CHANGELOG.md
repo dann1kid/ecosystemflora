@@ -11,7 +11,12 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ## Unreleased — 4.8.2
 
+- **Juvenile flower textures** — seedlings used `drawnHeight: 11`, which clipped vanilla petal/stem composites into half-flowers; now uses vanilla heights (seedlings stay small via shape `scale: 0.45`).
+- **Tree spacing** — trees keep per-wood Chebyshev distances (CSV / `WildTreeEcology`); spacing `0` no longer means “adjacent trunks” (crown-aware fallback). Timelapse no longer writes global spacing defaults of `0`. Redwood reference crown aligned to 8.
+- **Fuller deciduous canopies** — spring chunk sync grows `log → leavesbranchy` again (Option B had left thin skeletons); higher leaf/branchy catch-up scales and local density caps so crowns fill more without restoring leave→strip→leave waves.
+- **Warm-season leaf keep** — summer Idle no longer force-strips leaves; early/mid autumn defol starts later (≈ Aug/Sep); weak early autumn activity does not drip-strip.
 - **Ecological trails** — foot traffic syncs wild soil grass coverage (`normal`↔`verysparse`, not bare `none`) to column pressure; abandoned trails restore as pressure fades (footstep + world-save age when soil mark is stale, budget-capped). Tempo via `FootTrafficStepsToFullCoverageWear` (default 20). Never drains fertility or farmland.
+- **Tallgrass height fix** — establishing grass keeps growing to full environment target after half-target registry (was stuck around `medium`).
 - **Floral Zones ecology** — runtime climate/spread injection for **Cape Region** and **Cosmopolitan Region** (211 worldgen-derived entries across all **seven** regional mods; was 142 in 4.7.0).
 - **NZ mushroom** — `mushroom-asteliahastata` included when the worldgen patch omits `maxRain`.
 

@@ -33,10 +33,10 @@
   },
   "attributesByType": {
     "*-free": {
-      "drawnHeight": 11
+      "drawnHeight": 38
     },
     "*-snow": {
-      "drawnHeight": 11,
+      "drawnHeight": 38,
       "allowOverlays": false,
       "allowStepWhenStuck": true
     }
