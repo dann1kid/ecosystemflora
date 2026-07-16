@@ -37,15 +37,23 @@ namespace WildFarming.Ecosystem
     internal sealed class ColumnTrafficStore
     {
         const string SaveKey = "ecosystemflora-column-traffic-v1";
-        const int MaxRecords = 65536;
+        /// <summary>Hard cap — flat/creative worlds used to accumulate toward 65k ghost columns and hitch every save.</summary>
+        const int MaxRecords = 2048;
 
         readonly Dictionary<long, ColumnTrafficRecord> records = new Dictionary<long, ColumnTrafficRecord>();
+        /// <summary>Stable order for O(1) deferred round-robin (Dictionary foreach + skip was O(N) per tick).</summary>
+        readonly List<long> keyOrder = new List<long>();
+        readonly Dictionary<long, int> keyIndex = new Dictionary<long, int>();
+        readonly BlockPos chunkProbe = new BlockPos(0);
 
         ICoreServerAPI sapi;
 
         int deferredSyncIndex;
 
         public int Count => records.Count;
+
+        /// <summary>Test helper — keyOrder must stay aligned with <see cref="records"/>.</summary>
+        internal int OrderedKeyCountForTests => keyOrder.Count;
 
         public void Bind(ICoreServerAPI serverApi)
         {
@@ -62,7 +70,41 @@ namespace WildFarming.Ecosystem
             sapi = null;
         }
 
-        public void Clear() => records.Clear();
+        public void Clear() => ClearAllRecords();
+
+        void ClearAllRecords()
+        {
+            records.Clear();
+            keyOrder.Clear();
+            keyIndex.Clear();
+            deferredSyncIndex = 0;
+        }
+
+        void InsertRecord(long key, ColumnTrafficRecord rec)
+        {
+            records[key] = rec;
+            if (keyIndex.ContainsKey(key)) return;
+            keyIndex[key] = keyOrder.Count;
+            keyOrder.Add(key);
+        }
+
+        void RemoveRecord(long key)
+        {
+            if (!records.Remove(key)) return;
+            if (!keyIndex.TryGetValue(key, out int idx)) return;
+
+            keyIndex.Remove(key);
+            int last = keyOrder.Count - 1;
+            if (idx < last)
+            {
+                long moved = keyOrder[last];
+                keyOrder[idx] = moved;
+                keyIndex[moved] = idx;
+            }
+
+            keyOrder.RemoveAt(last);
+            if (deferredSyncIndex > keyOrder.Count) deferredSyncIndex = 0;
+        }
 
         public float GetPressure01(BlockPos pos, double nowHours, float hoursPerDay, float decayPerDay)
         {
@@ -78,11 +120,9 @@ namespace WildFarming.Ecosystem
             ApplyLazyDecay(rec, nowHours, hoursPerDay, decayPerDay);
             if (rec.Pressure == 0)
             {
-                if (rec.LastSoilPressure == 0 && rec.PlantStepHits == 0)
-                {
-                    records.Remove(key);
-                }
-
+                // Drop spent columns immediately — keeping LastSoilPressure orphans grew the save
+                // to tens of thousands of records and stalled GameWorldSave / calendar scrub.
+                RemoveRecord(key);
                 return 0f;
             }
 
@@ -98,11 +138,7 @@ namespace WildFarming.Ecosystem
             ApplyLazyDecay(rec, nowHours, hoursPerDay, decayPerDay);
             if (rec.Pressure == 0)
             {
-                if (rec.LastSoilPressure == 0 && rec.PlantStepHits == 0)
-                {
-                    records.Remove(key);
-                }
-
+                RemoveRecord(key);
                 return 0;
             }
 
@@ -130,7 +166,7 @@ namespace WildFarming.Ecosystem
                     Dimension = pos.dimension,
                     LastDecayHours = nowHours,
                 };
-                records[key] = rec;
+                InsertRecord(key, rec);
             }
             else
             {
@@ -202,9 +238,9 @@ namespace WildFarming.Ecosystem
             if (!records.TryGetValue(key, out ColumnTrafficRecord rec)) return false;
 
             ApplyLazyDecay(rec, nowHours, hoursPerDay, decayPerDay);
-            if (rec.Pressure == 0 && rec.PlantStepHits == 0 && rec.LastSoilPressure == 0)
+            if (rec.Pressure == 0 && rec.PlantStepHits == 0)
             {
-                records.Remove(key);
+                RemoveRecord(key);
                 return false;
             }
 
@@ -218,7 +254,7 @@ namespace WildFarming.Ecosystem
         internal void SetPressureForTests(int x, int z, int dimension, byte pressure)
         {
             long key = Key(x, z, dimension);
-            records[key] = new ColumnTrafficRecord
+            InsertRecord(key, new ColumnTrafficRecord
             {
                 X = x,
                 Z = z,
@@ -226,7 +262,7 @@ namespace WildFarming.Ecosystem
                 Pressure = pressure,
                 LastTouchedHours = 0,
                 LastDecayHours = 0,
-            };
+            });
         }
 
         void EnsureRecord(
@@ -248,7 +284,7 @@ namespace WildFarming.Ecosystem
                     Dimension = pos.dimension,
                     LastDecayHours = nowHours,
                 };
-                records[key] = rec;
+                InsertRecord(key, rec);
             }
             else
             {
@@ -256,12 +292,26 @@ namespace WildFarming.Ecosystem
             }
         }
 
+        /// <summary>
+        /// Calendar-coupled decay, but a scrub/jump larger than one game-day is absorbed
+        /// without collapsing pressure (creative time slider used to nuke every column at once).
+        /// </summary>
         static void ApplyLazyDecay(ColumnTrafficRecord rec, double nowHours, float hoursPerDay, float decayPerDay)
         {
             if (rec == null || decayPerDay <= 0f || hoursPerDay <= 0f) return;
             if (nowHours <= rec.LastDecayHours) return;
 
             double days = (nowHours - rec.LastDecayHours) / hoursPerDay;
+            if (days <= 0) return;
+
+            // Time slider /sleep mega-jumps: advance the decay clock, do not apply N days at once.
+            const double MaxDaysPerAccess = 1.0;
+            if (days > MaxDaysPerAccess)
+            {
+                rec.LastDecayHours = nowHours;
+                return;
+            }
+
             int decay = (int)(days * decayPerDay);
             if (decay <= 0) return;
 
@@ -271,7 +321,7 @@ namespace WildFarming.Ecosystem
             if (rec.Pressure == 0)
             {
                 rec.PlantStepHits = 0;
-                // LastSoilPressure kept until TrafficCoverageSync restores coverage (on step or save).
+                rec.LastSoilPressure = 0;
             }
         }
 
@@ -343,7 +393,7 @@ namespace WildFarming.Ecosystem
                     }
                 }
 
-                if (rec.Pressure == 0 && rec.PlantStepHits == 0 && rec.LastSoilPressure == 0)
+                if (rec.Pressure == 0 && rec.PlantStepHits == 0)
                 {
                     remove.Add(kv.Key);
                 }
@@ -351,12 +401,13 @@ namespace WildFarming.Ecosystem
 
             for (int i = 0; i < remove.Count; i++)
             {
-                records.Remove(remove[i]);
+                RemoveRecord(remove[i]);
             }
         }
 
         /// <summary>
         /// Spread stale soil coverage sync across ticks (replaces save-time SetBlock bursts).
+        /// Round-robins at most <paramref name="maxSyncs"/> syncs and a capped examine budget — never O(N) skip.
         /// </summary>
         public int ProcessDeferredCoverageSync(
             ICoreAPI api,
@@ -366,30 +417,34 @@ namespace WildFarming.Ecosystem
             byte wearStep,
             int maxSyncs)
         {
-            if (maxSyncs <= 0 || api == null || records.Count == 0) return 0;
+            if (maxSyncs <= 0 || api == null || keyOrder.Count == 0) return 0;
             if (!EcosystemConfig.Loaded.TramplingSoilDegradation) return 0;
 
-            int count = records.Count;
+            const int MaxExaminePerTick = 48;
+            int count = keyOrder.Count;
             if (deferredSyncIndex >= count) deferredSyncIndex = 0;
 
             int synced = 0;
-            int walked = 0;
+            int examined = 0;
+            int idx = deferredSyncIndex;
+            int startIdx = deferredSyncIndex;
 
-            foreach (KeyValuePair<long, ColumnTrafficRecord> kv in records)
+            while (examined < MaxExaminePerTick && synced < maxSyncs)
             {
-                if (walked < deferredSyncIndex)
+                count = keyOrder.Count;
+                if (count == 0) break;
+                if (idx >= count) idx = 0;
+
+                long key = keyOrder[idx];
+                if (!records.TryGetValue(key, out ColumnTrafficRecord rec) || rec == null)
                 {
-                    walked++;
+                    RemoveRecord(key);
+                    if (keyOrder.Count == 0) break;
+                    if (idx >= keyOrder.Count) idx = 0;
                     continue;
                 }
 
-                ColumnTrafficRecord rec = kv.Value;
-                if (rec == null)
-                {
-                    walked++;
-                    continue;
-                }
-
+                examined++;
                 ApplyLazyDecay(rec, nowHours, hoursPerDay, decayPerDay);
 
                 byte targetMark = FootTrafficWear.MarkForWearIndex(
@@ -410,19 +465,16 @@ namespace WildFarming.Ecosystem
                     synced++;
                 }
 
-                walked++;
-                if (synced >= maxSyncs)
-                {
-                    deferredSyncIndex = walked >= count ? 0 : walked;
-                    return synced;
-                }
+                idx++;
+                if (idx >= keyOrder.Count) idx = 0;
+                if (idx == startIdx) break;
             }
 
-            deferredSyncIndex = 0;
+            deferredSyncIndex = idx;
             return synced;
         }
 
-        static bool IsColumnChunkLoaded(ICoreAPI api, int x, int z, int dimension)
+        bool IsColumnChunkLoaded(ICoreAPI api, int x, int z, int dimension)
         {
             IBlockAccessor acc = api?.World?.BlockAccessor;
             if (acc == null) return false;
@@ -438,8 +490,9 @@ namespace WildFarming.Ecosystem
                 return false;
             }
 
-            var pos = new BlockPos(x, y, z, dimension);
-            return acc.GetChunkAtBlockPos(pos) != null;
+            chunkProbe.Set(x, y, z);
+            chunkProbe.dimension = dimension;
+            return acc.GetChunkAtBlockPos(chunkProbe) != null;
         }
 
         void EvictLowest()
@@ -456,7 +509,7 @@ namespace WildFarming.Ecosystem
                 }
             }
 
-            if (worstPressure < 256) records.Remove(worstKey);
+            if (worstPressure < 256) RemoveRecord(worstKey);
         }
 
         static long Key(int x, int z, int dimension) =>
@@ -464,8 +517,23 @@ namespace WildFarming.Ecosystem
 
         void OnSaveGameLoaded()
         {
-            records.Clear();
+            ClearAllRecords();
             if (sapi?.WorldManager?.SaveGame == null) return;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            // Trails disabled: drop any legacy blob so calendar/save never pay for ghost columns.
+            if (cfg == null || !cfg.EcosystemEnabled || !cfg.EnableTrampling)
+            {
+                try
+                {
+                    sapi.WorldManager.SaveGame.StoreData(SaveKey, Array.Empty<byte>());
+                }
+                catch
+                {
+                }
+
+                return;
+            }
 
             byte[] data = sapi.WorldManager.SaveGame.GetData(SaveKey);
             if (data == null || data.Length == 0) return;
@@ -477,8 +545,9 @@ namespace WildFarming.Ecosystem
                 foreach (ColumnTrafficRecord rec in root.Records)
                 {
                     if (rec == null) continue;
-                    if (rec.Pressure == 0 && rec.LastSoilPressure == 0) continue;
-                    records[Key(rec.X, rec.Z, rec.Dimension)] = rec;
+                    if (rec.Pressure == 0) continue;
+                    InsertRecord(Key(rec.X, rec.Z, rec.Dimension), rec);
+                    if (records.Count >= MaxRecords) break;
                 }
             }
             catch (Exception e)
@@ -492,29 +561,20 @@ namespace WildFarming.Ecosystem
             if (sapi?.WorldManager?.SaveGame == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            IGameCalendar cal = sapi.World?.Calendar;
-            if (cal != null && cfg != null)
+            if (cfg == null || !cfg.EcosystemEnabled || !cfg.EnableTrampling)
             {
-                float hoursPerDay = cal.HoursPerDay > 0 ? cal.HoursPerDay : 24f;
-                bool syncSoil = cfg.EcosystemEnabled
-                    && cfg.EnableTrampling
-                    && cfg.TramplingSoilDegradation;
-                // Decay on save only — coverage catch-up runs on footstep / deferred tick (avoids save/menu stalls).
-                AgeAllAndPrune(
-                    sapi,
-                    cal.TotalHours,
-                    hoursPerDay,
-                    cfg.FootTrafficDecayPerDay,
-                    syncCoverage: false,
-                    FootTrafficWear.EffectiveWearStep(cfg));
+                ClearAllRecords();
+                sapi.WorldManager.SaveGame.StoreData(SaveKey, Array.Empty<byte>());
+                return;
             }
 
+            // Snapshot only — never AgeAllAndPrune here. Save must stay off the calendar-scrub path.
             var root = new ColumnTrafficSaveRoot();
             foreach (ColumnTrafficRecord rec in records.Values)
             {
-                if (rec == null) continue;
-                if (rec.Pressure == 0 && rec.LastSoilPressure == 0) continue;
+                if (rec == null || rec.Pressure == 0) continue;
                 root.Records.Add(rec);
+                if (root.Records.Count >= MaxRecords) break;
             }
 
             sapi.WorldManager.SaveGame.StoreData(SaveKey, SerializerUtil.Serialize(root));

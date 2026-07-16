@@ -19,13 +19,31 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void LazyDecay_calendar_scrub_does_not_collapse_pressure()
+        {
+            var store = new ColumnTrafficStore();
+            var pos = new Vintagestory.API.MathTools.BlockPos(3, 70, 4);
+
+            store.AddPressure(pos, 200, nowHours: 0, hoursPerDay: 24f, decayPerDay: 6f);
+            // Jump a full year in one access (time slider) — must absorb, not wipe.
+            float after = store.GetPressure01(pos, nowHours: 24f * 365f, hoursPerDay: 24f, decayPerDay: 6f);
+            Assert.InRange(after, 0.75f, 1f);
+        }
+
+        [Fact]
         public void LazyDecay_reduces_pressure_over_game_days()
         {
             var store = new ColumnTrafficStore();
             var pos = new Vintagestory.API.MathTools.BlockPos(3, 70, 4);
 
             store.AddPressure(pos, 120, nowHours: 0, hoursPerDay: 24f, decayPerDay: 0f);
-            float after = store.GetPressure01(pos, nowHours: 24f * 10f, hoursPerDay: 24f, decayPerDay: 6f);
+            // Advance one day at a time — scrub-absorb must not block gradual playtime decay.
+            float after = 120f / 255f;
+            for (int d = 1; d <= 10; d++)
+            {
+                after = store.GetPressure01(pos, nowHours: 24f * d, hoursPerDay: 24f, decayPerDay: 6f);
+            }
+
             // 10 days × 6 = 60 points → 120-60 = 60 → ~0.235
             Assert.InRange(after, 0.22f, 0.25f);
         }
@@ -37,7 +55,12 @@ namespace WildFarming.Tests
             var pos = new Vintagestory.API.MathTools.BlockPos(1, 1, 1);
 
             store.AddPressure(pos, 12, nowHours: 0, hoursPerDay: 24f, decayPerDay: 0f);
-            float after = store.GetPressure01(pos, nowHours: 24f * 3f, hoursPerDay: 24f, decayPerDay: 6f);
+            float after = 1f;
+            for (int d = 1; d <= 3; d++)
+            {
+                after = store.GetPressure01(pos, nowHours: 24f * d, hoursPerDay: 24f, decayPerDay: 6f);
+            }
+
             Assert.Equal(0f, after);
             Assert.Equal(0, store.Count);
         }
@@ -93,37 +116,41 @@ namespace WildFarming.Tests
             store.AddPressure(pos, 12, nowHours: 0, hoursPerDay: 24f, decayPerDay: 0f);
             Assert.Equal(1, store.Count);
 
-            store.AgeAllAndPrune(
-                api: null,
-                nowHours: 24f * 3f,
-                hoursPerDay: 24f,
-                decayPerDay: 6f,
-                syncCoverage: false,
-                wearStep: 80);
+            for (int d = 1; d <= 3; d++)
+            {
+                store.AgeAllAndPrune(
+                    api: null,
+                    nowHours: 24f * d,
+                    hoursPerDay: 24f,
+                    decayPerDay: 6f,
+                    syncCoverage: false,
+                    wearStep: 80);
+            }
 
             Assert.Equal(0, store.Count);
         }
 
         [Fact]
-        public void AgeAllAndPrune_keeps_zero_pressure_until_soil_mark_cleared()
+        public void AgeAllAndPrune_drops_zero_pressure_even_with_soil_mark()
         {
             var store = new ColumnTrafficStore();
             var pos = new Vintagestory.API.MathTools.BlockPos(11, 11, 11);
             store.AddPressure(pos, 12, nowHours: 0, hoursPerDay: 24f, decayPerDay: 0f);
             store.SetLastSoilPressure(pos, 160);
 
-            store.AgeAllAndPrune(
-                api: null,
-                nowHours: 24f * 3f,
-                hoursPerDay: 24f,
-                decayPerDay: 6f,
-                syncCoverage: false,
-                wearStep: 80);
+            // Step day-by-day so scrub-absorb does not freeze pressure.
+            for (int d = 1; d <= 3; d++)
+            {
+                store.AgeAllAndPrune(
+                    api: null,
+                    nowHours: 24f * d,
+                    hoursPerDay: 24f,
+                    decayPerDay: 6f,
+                    syncCoverage: false,
+                    wearStep: 80);
+            }
 
-            Assert.Equal(1, store.Count);
-            Assert.True(store.TryGetRecordSnapshot(pos, 24f * 3f, 24f, 0f, out byte p, out _, out byte last));
-            Assert.Equal(0, p);
-            Assert.Equal(160, last);
+            Assert.Equal(0, store.Count);
         }
 
         [Fact]
@@ -147,6 +174,51 @@ namespace WildFarming.Tests
             Assert.True(store.TryGetRecordSnapshot(pos, 1, 24f, 0f, out byte p, out _, out byte last));
             Assert.Equal(80, p);
             Assert.Equal(80, last);
+        }
+
+        [Fact]
+        public void KeyOrder_stays_aligned_after_add_decay_remove()
+        {
+            var store = new ColumnTrafficStore();
+            for (int i = 0; i < 200; i++)
+            {
+                store.SetPressureForTests(i, 0, 0, 12);
+            }
+
+            Assert.Equal(200, store.Count);
+            Assert.Equal(200, store.OrderedKeyCountForTests);
+
+            var pos = new Vintagestory.API.MathTools.BlockPos(50, 1, 0);
+            for (int d = 1; d <= 3; d++)
+            {
+                store.GetPressure01(pos, nowHours: 24f * d, hoursPerDay: 24f, decayPerDay: 6f);
+            }
+
+            Assert.Equal(store.Count, store.OrderedKeyCountForTests);
+            Assert.True(store.Count < 200);
+        }
+
+        [Fact]
+        public void ProcessDeferredCoverageSync_returns_quickly_with_large_store_without_api()
+        {
+            var store = new ColumnTrafficStore();
+            for (int i = 0; i < 8000; i++)
+            {
+                store.SetPressureForTests(i, 0, 0, 40);
+            }
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            int synced = store.ProcessDeferredCoverageSync(
+                api: null,
+                nowHours: 1,
+                hoursPerDay: 24f,
+                decayPerDay: 0f,
+                wearStep: 80,
+                maxSyncs: 4);
+            sw.Stop();
+
+            Assert.Equal(0, synced);
+            Assert.True(sw.ElapsedMilliseconds < 20, $"deferred sync took {sw.ElapsedMilliseconds}ms");
         }
     }
 

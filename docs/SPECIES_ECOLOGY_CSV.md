@@ -81,6 +81,7 @@ Header (42 columns):
 | `moisture`, `light`, `niche_bonus` | Niche profile (`Mesic`, `Shade`, …) |
 | `season_explicit` | `true` if species has a dedicated season row in C# (informational) |
 | `flower_maturation_h`, `flower_cooldown_h` | Juvenile / post-spread cooldown (flowers, sedge) |
+| `flower_phenology_life_cycles` | Dieback life-cycles before senescence (flowers / grass colonizers); empty/`0` = global `MaxFlowerPhenologyLifeCycles` |
 | `fern_maturation_h`, `fern_cooldown_h` | Fern spread maturation |
 | `berry_maturation_h` | Berry bush calendar maturation base |
 | `tree_seral_role` | `Pioneer`, `Mid`, `Climax` |

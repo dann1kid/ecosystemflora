@@ -42,7 +42,7 @@ namespace WildFarming.Tests
             Assert.True(cfg.EnableBackgroundRegistrationScan);
             Assert.Equal(4096, cfg.MaxRegistrationSnapshotCellsPerTick);
             Assert.Equal(0, cfg.RegistrationWorkerCount);
-            Assert.Equal(30, cfg.ChunkScanTickIntervalMs);
+            Assert.Equal(1000, cfg.ChunkScanTickIntervalMs);
         }
 
         [Fact]

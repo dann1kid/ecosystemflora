@@ -53,6 +53,9 @@ namespace WildFarming.Ecosystem
         readonly PlantSnowCoverScheduler plantSnowCoverScheduler = new PlantSnowCoverScheduler();
         readonly StumpDecayScheduler stumpDecayScheduler = new StumpDecayScheduler();
         readonly TreeCalendarAgeStore treeCalendarAgeStore = new TreeCalendarAgeStore();
+        readonly FlowerPhenologyLifeStore flowerPhenologyLifeStore = new FlowerPhenologyLifeStore();
+
+        internal FlowerPhenologyLifeStore FlowerPhenologyLife => flowerPhenologyLifeStore;
         readonly ColumnTrafficStore columnTrafficStore = new ColumnTrafficStore();
         FootTrafficService footTraffic;
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
@@ -127,6 +130,31 @@ namespace WildFarming.Ecosystem
             int chunkScanInterval = tickCfg.ChunkScanTickIntervalMs > 0
                 ? tickCfg.ChunkScanTickIntervalMs : 2300;
 
+            // Timelapse leftover in custom JSON (25ms) freezes the time slider when calendar jumps.
+            // Explicit BalancePreset=timelapse keeps the fast cadence.
+            bool timelapsePreset = !string.IsNullOrEmpty(tickCfg.BalancePreset)
+                && tickCfg.BalancePreset.Equals(
+                    EcosystemBalancePresets.Timelapse,
+                    System.StringComparison.OrdinalIgnoreCase);
+
+            if (!timelapsePreset && reproduceInterval < 100)
+            {
+                api.Logger.Warning(
+                    "[ecosystemflora] ReproduceTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 2000 for play.",
+                    reproduceInterval,
+                    tickCfg.BalancePreset);
+                reproduceInterval = 2000;
+            }
+
+            if (!timelapsePreset && chunkScanInterval < 100)
+            {
+                api.Logger.Warning(
+                    "[ecosystemflora] ChunkScanTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 1000 for play.",
+                    chunkScanInterval,
+                    tickCfg.BalancePreset);
+                chunkScanInterval = 1000;
+            }
+
             reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, reproduceInterval);
             stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
             chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, chunkScanInterval);
@@ -155,6 +183,7 @@ namespace WildFarming.Ecosystem
                 sapi.Event.PlayerJoin += playerJoinHandler;
 
                 treeCalendarAgeStore.Bind(sapi, registry);
+                flowerPhenologyLifeStore.Bind(sapi);
                 stumpDecayScheduler.Bind(sapi);
                 columnTrafficStore.Bind(sapi);
                 footTraffic.Bind(sapi, this);
@@ -353,6 +382,8 @@ namespace WildFarming.Ecosystem
             {
                 treeCalendarAgeStore.Unbind(sapi);
                 treeCalendarAgeStore.Clear();
+                flowerPhenologyLifeStore.Unbind(sapi);
+                flowerPhenologyLifeStore.Clear();
                 stumpDecayScheduler.Unbind(sapi);
                 columnTrafficStore.Unbind(sapi);
                 columnTrafficStore.Clear();
@@ -633,6 +664,7 @@ namespace WildFarming.Ecosystem
 
             registry.Remove(pos);
             SpacingIndex?.Remove(pos);
+            flowerPhenologyLifeStore.Remove(pos);
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
             FloraContext?.InvalidateAround(pos, 2);
@@ -1933,19 +1965,8 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             double now = api.World.Calendar.TotalHours;
 
-            if (cfg.EnableTrampling && cfg.TramplingSoilDegradation && columnTrafficStore.Count > 0)
-            {
-                float hoursPerDay = api.World.Calendar.HoursPerDay > 0
-                    ? api.World.Calendar.HoursPerDay
-                    : 24f;
-                columnTrafficStore.ProcessDeferredCoverageSync(
-                    api,
-                    now,
-                    hoursPerDay,
-                    cfg.FootTrafficDecayPerDay,
-                    FootTrafficWear.EffectiveWearStep(cfg),
-                    maxSyncs: 16);
-            }
+            // Trail soil sync is footstep-only. Calendar ticks must not walk the column store —
+            // creative time scrub used to mass-decay + SetBlock via ProcessDeferredCoverageSync.
 
             SeasonEcologyWake.TryWakeOnMonthChange(api, cfg, registry, ref lastSeasonWakeMonth);
             ICollection<Vec2i> spreadActiveChunks = BuildActiveRegistryChunks(cfg);

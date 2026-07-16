@@ -58,6 +58,9 @@ namespace WildFarming.Ecosystem
         public static void RecordStressDeath(ICoreAPI api, BlockPos pos, string species) =>
             Record(api, pos, "ecosystemflora:history-stress-death", species ?? string.Empty);
 
+        public static void RecordPhenologySenescence(ICoreAPI api, BlockPos pos, string species) =>
+            Record(api, pos, "ecosystemflora:history-phenology-senescence", species ?? string.Empty);
+
         public static void RecordSpread(ICoreAPI api, BlockPos pos, string species) =>
             Record(api, pos, "ecosystemflora:history-spread", species ?? string.Empty);
 

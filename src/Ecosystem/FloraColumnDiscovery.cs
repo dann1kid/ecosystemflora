@@ -106,6 +106,10 @@ namespace WildFarming.Ecosystem
                 return workerPass;
             }
 
+            // Completed empty worker already walked the chunk — live re-scan doubled GetBlock cost
+            // on every empty flat column load (tilde lag / slow gen).
+            if (workerPass.Completed) return workerPass;
+
             var flowerHits = new List<ChunkFlowerHit>();
             var establishingHits = new List<ChunkFlowerHit>();
             IBlockAccessor acc = api.World.BlockAccessor;

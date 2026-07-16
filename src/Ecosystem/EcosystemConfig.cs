@@ -149,7 +149,7 @@ namespace WildFarming.Ecosystem
         /// <summary>Min local °C to enter or sustain bloom.</summary>
         public float FlowerBloomMinTemperature { get; set; } = 5f;
 
-        /// <summary>Local °C above which flowers enter dieback.</summary>
+        /// <summary>Local °C above which flowers accumulate heat dieback stress.</summary>
         public float FlowerBloomMaxTemperature { get; set; } = 32f;
 
         /// <summary>Vegetative energy required before bloom (arbitrary units).</summary>
@@ -157,6 +157,35 @@ namespace WildFarming.Ecosystem
 
         /// <summary>Vegetative energy gained per game day at season activity 1.0.</summary>
         public float FlowerPhenologyEnergyGainPerDay { get; set; } = 0.15f;
+
+        /// <summary>
+        /// Stress needed to enter dieback (deferred). Frost, winter, heat, and bloom-exit push toward this.
+        /// </summary>
+        public float FlowerPhenologyStressEnterDieback { get; set; } = 1f;
+
+        /// <summary>Stress must fall to this (or below) before dieback/dormant can recover — hysteresis.</summary>
+        public float FlowerPhenologyStressExitDieback { get; set; } = 0.3f;
+
+        /// <summary>
+        /// Per-day stress gain while frost (&lt; bloom min °C) or winter season envelope. Same rate for both
+        /// so a hard freeze packs winter-class debt.
+        /// </summary>
+        public float FlowerPhenologyColdStressGainPerDay { get; set; } = 0.25f;
+
+        /// <summary>Per-day stress gain while above bloom max °C.</summary>
+        public float FlowerPhenologyHeatStressGainPerDay { get; set; } = 0.35f;
+
+        /// <summary>Per-day stress gain while bloom is fading (season exit / energy collapse).</summary>
+        public float FlowerPhenologySeasonExitStressGainPerDay { get; set; } = 0.15f;
+
+        /// <summary>Per-day stress decay in good growing conditions.</summary>
+        public float FlowerPhenologyStressDecayPerDay { get; set; } = 0.12f;
+
+        /// <summary>
+        /// Dieback life-cycles a flower may survive (each winter/frost/heat dieback entry counts once).
+        /// Next dieback attempt after the cap removes the plant. 0 = unlimited.
+        /// </summary>
+        public int MaxFlowerPhenologyLifeCycles { get; set; } = 4;
 
         /// <summary>Phenology state advances per reproduce tick (round-robin).</summary>
         public int MaxFlowerPhenologyChecksPerTick { get; set; } = 48;
@@ -361,7 +390,7 @@ namespace WildFarming.Ecosystem
         /// Real-time ms between deferred chunk-registration ticks.
         /// Use a value not divisible by <see cref="ReproduceTickIntervalMs"/> to avoid aligned CPU spikes.
         /// </summary>
-        public int ChunkScanTickIntervalMs { get; set; } = 30;
+        public int ChunkScanTickIntervalMs { get; set; } = 1000;
 
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;
@@ -654,7 +683,7 @@ namespace WildFarming.Ecosystem
         public bool EnableSeasonalFoliage { get; set; } = true;
 
         /// <summary>Random foliage cells ticked per reproduce pass (hybrid/random modes; 0 = off).</summary>
-        public int MaxFoliageCellsTickedPerTick { get; set; } = 0;
+        public int MaxFoliageCellsTickedPerTick { get; set; } = 48;
 
         /// <summary>Wall-time cap for foliage random-tick per reproduce pass (0 = no extra cap).</summary>
         public int FoliageBudgetMs { get; set; } = 10;
@@ -672,10 +701,14 @@ namespace WildFarming.Ecosystem
         public bool FoliageCatchUpOnChunkLoad { get; set; } = true;
 
         /// <summary>Max catch-up ops (strip + bud) per chunk per scan pass (0 = unlimited).</summary>
-        public int MaxFoliageCatchUpPerChunk { get; set; } = 2048;
+        public int MaxFoliageCatchUpPerChunk { get; set; } = 256;
 
         /// <summary>Column scan depth above rain heightmap (0 = full world height).</summary>
-        public int FoliageColumnScanHeightAboveSurface { get; set; } = 0;
+        /// <summary>
+        /// Extra blocks above rain surface for column ecology scans.
+        /// 0 historically meant full MapSizeY (disastrous on empty flat); default now bounds the walk.
+        /// </summary>
+        public int FoliageColumnScanHeightAboveSurface { get; set; } = 48;
 
         /// <summary>Peak autumn activity before optional branchy strip (0 = keep branchy skeleton).</summary>
         public float FoliagePeakAutumnBranchyStripActivity { get; set; } = 0.35f;
@@ -756,7 +789,7 @@ namespace WildFarming.Ecosystem
         // --- Foot traffic / trampling trails (v2.6 → ecological trails) ---
 
         /// <summary>On: footsteps compact columns, wear plants, and slow recolonization.</summary>
-        public bool EnableTrampling { get; set; } = true;
+        public bool EnableTrampling { get; set; } = false;
 
         /// <summary>Extra horizontal radius around the foot cell affected for plant wear (0 = feet only).</summary>
         public int TramplingRadius { get; set; } = 0;
@@ -791,18 +824,21 @@ namespace WildFarming.Ecosystem
         /// <summary>
         /// Horizontal meters an animal must walk (physics stride) before one foot-traffic apply.
         /// </summary>
-        public float FootTrafficAnimalStrideBlocks { get; set; } = 1.15f;
+        public float FootTrafficAnimalStrideBlocks { get; set; } = 1.5f;
 
         /// <summary>
         /// Animals only accumulate trail pressure within this horizontal radius of a player (0 = everywhere loaded).
         /// </summary>
-        public int FootTrafficAnimalPlayerRadiusBlocks { get; set; } = 128;
+        public int FootTrafficAnimalPlayerRadiusBlocks { get; set; } = 64;
 
         /// <summary>Legacy unused — animal trails use physics stride hooks, not polling.</summary>
         public int FootTrafficSampleIntervalMs { get; set; } = 1000;
 
-        /// <summary>On: attach physics stride hooks to large creatures near players. Off: players only via OnFootStep.</summary>
-        public bool EnableAnimalFootTraffic { get; set; } = true;
+        /// <summary>
+        /// On: attach physics stride hooks to large creatures near players.
+        /// Off (default): players only via OnFootStep — animal hooks hitch SSP ticks when herds walk.
+        /// </summary>
+        public bool EnableAnimalFootTraffic { get; set; } = false;
 
         // --- Flower drygrass drops (v2.5) ---
 

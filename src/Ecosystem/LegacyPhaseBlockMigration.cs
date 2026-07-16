@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -7,11 +6,14 @@ namespace WildFarming.Ecosystem
 {
     /// <summary>
     /// Remaps legacy bare fern phase block codes (pre cover-variant migration)
-    /// to <c>-free</c> cover variants.
+    /// to <c>-free</c> cover variants. Scans only a band around the rain surface —
+    /// never the full MapSizeY volume (that hitch froze SSP on every chunk load).
     /// </summary>
     internal static class LegacyPhaseBlockMigration
     {
         internal const int RemapDelayMs = 250;
+        const int BandBelowSurface = 2;
+        const int BandAboveSurface = 8;
 
         public static void ScheduleRemapColumn(ICoreAPI api, Vec2i chunkCoord)
         {
@@ -29,16 +31,32 @@ namespace WildFarming.Ecosystem
             int cs = GlobalConstants.ChunkSize;
             int baseX = chunkCoord.X * cs;
             int baseZ = chunkCoord.Y * cs;
-            int maxY = acc.MapSizeY;
+            IMapChunk mapChunk = acc.GetMapChunk(chunkCoord.X, chunkCoord.Y);
+            ushort[] heightmap = mapChunk?.RainHeightMap;
+            int mapTop = acc.MapSizeY - 1;
+            var pos = new BlockPos(0);
 
-            for (int y = 0; y < maxY; y++)
+            for (int lx = 0; lx < cs; lx++)
             {
-                for (int lx = 0; lx < cs; lx++)
+                for (int lz = 0; lz < cs; lz++)
                 {
-                    for (int lz = 0; lz < cs; lz++)
+                    int surfaceY = 64;
+                    if (heightmap != null && heightmap.Length >= cs * cs)
                     {
-                        var pos = new BlockPos(baseX + lx, y, baseZ + lz);
+                        surfaceY = heightmap[lz * cs + lx];
+                    }
+
+                    int yMin = surfaceY - BandBelowSurface;
+                    if (yMin < 0) yMin = 0;
+                    int yMax = surfaceY + BandAboveSurface;
+                    if (yMax > mapTop) yMax = mapTop;
+
+                    for (int y = yMin; y <= yMax; y++)
+                    {
+                        pos.Set(baseX + lx, y, baseZ + lz);
                         Block block = acc.GetBlock(pos);
+                        if (block == null || block.Id == 0) continue;
+
                         TryRemapAt(acc, pos, block);
                         block = acc.GetBlock(pos);
                         if (PlantSnowCover.ShouldSyncCoverVariant(block?.Code))

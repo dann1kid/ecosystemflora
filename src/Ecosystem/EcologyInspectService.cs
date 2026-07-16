@@ -604,6 +604,22 @@ namespace WildFarming.Ecosystem
                 "ecosystemflora:inspect-line-flower-energy",
                 (entry.PhenologyEnergy / Math.Max(0.01f, cfg.FlowerBloomEnergyThreshold)).ToString("0.##"));
 
+            float enter = Math.Max(0.01f, cfg.FlowerPhenologyStressEnterDieback);
+            AddInspectLine(
+                lines,
+                "ecosystemflora:inspect-line-flower-stress",
+                (entry.PhenologyStress / enter).ToString("0.##"));
+
+            int maxCycles = FlowerPhenology.ResolveMaxLifeCycles(entry.Requirements?.Species, cfg);
+            if (maxCycles > 0)
+            {
+                AddInspectLine(
+                    lines,
+                    "ecosystemflora:inspect-line-flower-life-cycles",
+                    entry.PhenologyLifeCycles.ToString(),
+                    maxCycles.ToString());
+            }
+
             if (entry.PhenologyPhase == FlowerPhenologyPhase.Vegetative && api?.World?.Calendar != null)
             {
                 double hoursLeft = EstimateBloomHoursRemaining(api, entry, cfg);

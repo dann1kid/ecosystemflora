@@ -49,6 +49,8 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
         public double FlowerMaturationHours;
         public double FlowerCooldownHours;
+        /// <summary>Dieback life-cycles before senescence; 0 = use global MaxFlowerPhenologyLifeCycles.</summary>
+        public int FlowerPhenologyLifeCycles;
         public double FernMaturationHours;
         public double FernCooldownHours;
         public double BerryMaturationHours;

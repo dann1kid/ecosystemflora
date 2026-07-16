@@ -9,12 +9,18 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
-## Unreleased — 4.8.2
+## Unreleased — 4.9.13
 
+- **Main-thread chunk-load hitch** — legacy fern remaps scan only a rain-surface band (±2 / +8), not full `MapSizeY`; empty worker flora no longer triggers a second live column rescan on flat/empty chunks.
+- **Playable scan defaults** — `ChunkScanTickIntervalMs` 1000 (was 30), foliage scan height 48, `MaxFoliageCellsTickedPerTick` 48; `natural` preset resets these so timelapse leftovers cannot stick.
+- **Trail calendar scrub fix** — decay no longer collapses every column when `TotalHours` jumps (time slider); save only snapshots (no full Age/prune); soil sync is **footstep-only**, not on ecology ticks.
+- **Timelapse leftover guard** — `ReproduceTickIntervalMs` / `ChunkScanTickIntervalMs` below 100 under non-`timelapse` presets are clamped (custom JSON after timelapse was freezing the time slider at 25ms ecology ticks).
+- **Canopy catch-up hitch** — chunk-load budget lowered (`MaxFoliageCatchUpPerChunk` 256); catch-up scales dialed back from the 4.9.12 spike.
 - **Juvenile flower textures** — seedlings used `drawnHeight: 11`, which clipped vanilla petal/stem composites into half-flowers; now uses vanilla heights (seedlings stay small via shape `scale: 0.45`).
 - **Tree spacing** — trees keep per-wood Chebyshev distances (CSV / `WildTreeEcology`); spacing `0` no longer means “adjacent trunks” (crown-aware fallback). Timelapse no longer writes global spacing defaults of `0`. Redwood reference crown aligned to 8.
 - **Fuller deciduous canopies** — spring chunk sync grows `log → leavesbranchy` again (Option B had left thin skeletons); higher leaf/branchy catch-up scales and local density caps so crowns fill more without restoring leave→strip→leave waves.
 - **Warm-season leaf keep** — summer Idle no longer force-strips leaves; early/mid autumn defol starts later (≈ Aug/Sep); weak early autumn activity does not drip-strip.
+- **Flower phenology stress + senescence** — dieback is deferred via accumulating stress (frost = winter rate, hysteresis exit); plants die after dieback life-cycles (`flower_phenology_life_cycles` in species CSV, else `MaxFlowerPhenologyLifeCycles`, default 4) so perennial meadows turn over.
 - **Ecological trails** — foot traffic syncs wild soil grass coverage (`normal`↔`verysparse`, not bare `none`) to column pressure; abandoned trails restore as pressure fades (footstep + world-save age when soil mark is stale, budget-capped). Tempo via `FootTrafficStepsToFullCoverageWear` (default 20). Never drains fertility or farmland.
 - **Tallgrass height fix** — establishing grass keeps growing to full environment target after half-target registry (was stuck around `medium`).
 - **Floral Zones ecology** — runtime climate/spread injection for **Cape Region** and **Cosmopolitan Region** (211 worldgen-derived entries across all **seven** regional mods; was 142 in 4.7.0).

@@ -45,18 +45,21 @@ Written into `en.json` / `ru.json` / `de.json` and `*-flowerphases.json` by the 
 1. **Season envelope** — monthly spread curve from `WildSpeciesSeason` (same profiles as spread seasonality).
 2. **Local temperature** — `FlowerBloomMinTemperature` / `FlowerBloomMaxTemperature` (defaults 5 °C / 32 °C).
 3. **Bloom energy** — vegetative plants accumulate `FlowerPhenologyEnergyGainPerDay` × season activity until `FlowerBloomEnergyThreshold`.
+4. **Deferred stress** — heat, frost, winter season, and post-bloom fade accumulate `PhenologyStress` over days. Dieback applies only after the enter threshold; recovery needs stress to fall below the exit threshold (hysteresis — no flicker).
+5. **Life-cycles** — each enter into dieback counts once. Cap is per-species `flower_phenology_life_cycles` in `ecology.csv` when set; otherwise `MaxFlowerPhenologyLifeCycles`. After the cap, the next dieback attempt **removes** the plant (senescence). Frost and winter share the same stress gain rate so a hard freeze packs winter-class debt.
 
-Transitions are advanced on the reproduce tick (`FlowerPhenologyScheduler`, round-robin over registry).
+Transitions are advanced on the reproduce tick (`FlowerPhenologyScheduler`, round-robin over registry). Stress/cycles persist via `FlowerPhenologyLifeStore` (savegame).
 
 ## Integration
 
 | Path | Behaviour |
 |------|-----------|
-| Chunk scan / worldgen | Register → `InferInitialPhase` → `SyncBlock` |
+| Chunk scan / worldgen | Register → restore life store / `InferInitialPhase` → `SyncBlock` |
 | Spread juvenile maturation | Juvenile → register **Vegetative** (`flowerSpreadEstablished`) → phase block |
 | Spread attempt | Gated to **Bloom** only |
 | Hand harvest | Flower block drop only in **Bloom** |
-| Inspect (I) | Phase, energy, bloom ETA |
+| Inspect (I) | Phase, energy, stress, life-cycles, bloom ETA |
+| Senescence death | After max dieback cycles — block removed (`phenology-senescence`) |
 
 Disable with `EnableFlowerPhenology: false` — spread/harvest behave as before; blocks stay on whatever code is in the world.
 
@@ -69,6 +72,13 @@ Disable with `EnableFlowerPhenology: false` — spread/harvest behave as before;
 | `FlowerBloomMaxTemperature` | `32` |
 | `FlowerBloomEnergyThreshold` | `1` |
 | `FlowerPhenologyEnergyGainPerDay` | `0.15` |
+| `FlowerPhenologyStressEnterDieback` | `1` |
+| `FlowerPhenologyStressExitDieback` | `0.3` |
+| `FlowerPhenologyColdStressGainPerDay` | `0.25` |
+| `FlowerPhenologyHeatStressGainPerDay` | `0.35` |
+| `FlowerPhenologySeasonExitStressGainPerDay` | `0.15` |
+| `FlowerPhenologyStressDecayPerDay` | `0.12` |
+| `MaxFlowerPhenologyLifeCycles` | `4` (`0` = unlimited; species CSV overrides when set) |
 | `MaxFlowerPhenologyChecksPerTick` | `48` |
 
 Full reference: [`CONFIGURATION.md`](CONFIGURATION.md). Works alongside `EnableFlowerSpreadMaturation` (juvenile spread offspring still establish before joining registry).
@@ -78,7 +88,9 @@ Full reference: [`CONFIGURATION.md`](CONFIGURATION.md). Works alongside `EnableF
 | Component | File |
 |-----------|------|
 | Phase enum | `FlowerPhenologyPhase.cs` |
+| Stress / life-cycle persistence | `FlowerPhenologyLifeStore.cs` |
 | State machine + block sync | `FlowerPhenology.cs` |
+| Export-seed life-cycle table | `WildFlowerPhenologyLife.cs` → CSV `flower_phenology_life_cycles` |
 | Phase block codes | `FlowerPhenologyBlocks.cs` |
 | Tick scheduler | `FlowerPhenologyScheduler.cs` |
 | Entry fields | `ReproducerEntry.cs` |

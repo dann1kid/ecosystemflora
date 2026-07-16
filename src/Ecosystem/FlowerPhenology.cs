@@ -5,7 +5,8 @@ using Vintagestory.API.MathTools;
 namespace WildFarming.Ecosystem
 {
     /// <summary>
-    /// Meadow flower life phases driven by season curves, local temperature, and stored energy.
+    /// Meadow flower life phases driven by season curves, local temperature, stored energy,
+    /// deferred stress (dieback hysteresis), and a limited number of dieback life-cycles.
     /// Spread and harvest are gated to <see cref="FlowerPhenologyPhase.Bloom"/>; blocks mirror phase.
     /// </summary>
     internal static class FlowerPhenology
@@ -77,13 +78,29 @@ namespace WildFarming.Ecosystem
             double now = api.World.Calendar.TotalHours;
             entry.LastPhenologyUpdateHours = now;
 
-            Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
-            entry.PhenologyPhase = ResolveRegisterPhase(api, entry, block, cfg, spreadEstablished);
-            entry.PhenologyEnergy = entry.PhenologyPhase == FlowerPhenologyPhase.Bloom
-                ? cfg.FlowerBloomEnergyThreshold
-                : spreadEstablished ? 0.25f : 0.12f;
+            FlowerPhenologyLifeStore store = EcosystemSystem.Instance?.FlowerPhenologyLife;
+            bool restored = store != null && store.TryRestore(entry);
+
+            if (!restored)
+            {
+                Block block = api.World.BlockAccessor.GetBlock(entry.Origin);
+                entry.PhenologyPhase = ResolveRegisterPhase(api, entry, block, cfg, spreadEstablished);
+                entry.PhenologyEnergy = entry.PhenologyPhase == FlowerPhenologyPhase.Bloom
+                    ? cfg.FlowerBloomEnergyThreshold
+                    : spreadEstablished ? 0.25f : 0.12f;
+                entry.PhenologyStress = entry.PhenologyPhase == FlowerPhenologyPhase.Dieback
+                    ? cfg.FlowerPhenologyStressEnterDieback
+                    : 0f;
+                entry.PhenologyLifeCycles = 0;
+            }
+            else if (entry.PhenologyPhase == FlowerPhenologyPhase.Bloom
+                     && entry.PhenologyEnergy < cfg.FlowerBloomEnergyThreshold * 0.5f)
+            {
+                entry.PhenologyEnergy = cfg.FlowerBloomEnergyThreshold;
+            }
 
             SyncBlock(api, entry, cfg);
+            store?.Capture(entry);
             PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
         }
 
@@ -146,7 +163,7 @@ namespace WildFarming.Ecosystem
                 return FlowerPhenologyPhase.Bloom;
             }
 
-            if (temp > cfg.FlowerBloomMaxTemperature) return FlowerPhenologyPhase.Dieback;
+            // Deferred stress applies over time; do not snap to dieback on register for a hot tick.
             return FlowerPhenologyPhase.Vegetative;
         }
 
@@ -171,20 +188,34 @@ namespace WildFarming.Ecosystem
             ResolveSeasonInputs(api, entry.Origin, entry.Requirements.Species, out float season, out float temp);
             FlowerPhenologyPhase previous = entry.PhenologyPhase;
 
-            switch (entry.PhenologyPhase)
+            UpdateStress(entry, season, temp, cfg, deltaDays);
+
+            if (TryApplyDiebackFromStress(api, entry, cfg))
             {
-                case FlowerPhenologyPhase.Dormant:
-                    AdvanceDormant(entry, season, temp, cfg, deltaDays);
-                    break;
-                case FlowerPhenologyPhase.Vegetative:
-                    AdvanceVegetative(entry, season, temp, cfg, deltaDays);
-                    break;
-                case FlowerPhenologyPhase.Bloom:
-                    AdvanceBloom(entry, season, temp, cfg, deltaDays);
-                    break;
-                case FlowerPhenologyPhase.Dieback:
-                    AdvanceDieback(entry, season, temp, cfg, deltaDays);
-                    break;
+                // Senescence death removes the registry entry — stop immediately.
+                if (EcosystemSystem.Instance == null
+                    || !EcosystemSystem.Instance.TryGetReproducer(entry.Origin, out _))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                switch (entry.PhenologyPhase)
+                {
+                    case FlowerPhenologyPhase.Dormant:
+                        AdvanceDormant(entry, season, temp, cfg, deltaDays);
+                        break;
+                    case FlowerPhenologyPhase.Vegetative:
+                        AdvanceVegetative(entry, season, temp, cfg, deltaDays);
+                        break;
+                    case FlowerPhenologyPhase.Bloom:
+                        AdvanceBloom(entry, season, temp, cfg, deltaDays);
+                        break;
+                    case FlowerPhenologyPhase.Dieback:
+                        AdvanceDieback(entry, season, temp, cfg, deltaDays);
+                        break;
+                }
             }
 
             if (entry.PhenologyPhase != previous)
@@ -200,7 +231,150 @@ namespace WildFarming.Ecosystem
                 }
             }
 
+            EcosystemSystem.Instance?.FlowerPhenologyLife?.Capture(entry);
             PlantSnowCoverSync.TrySyncCover(api, entry.Origin);
+        }
+
+        /// <summary>
+        /// Accumulates cold/heat/season-exit stress; decays under good growing conditions.
+        /// Frost and winter share the same gain rate so a hard freeze packs winter-class debt.
+        /// </summary>
+        internal static void UpdateStress(
+            ReproducerEntry entry,
+            float season,
+            float temp,
+            EcosystemConfig cfg,
+            double deltaDays)
+        {
+            if (entry == null || cfg == null || deltaDays <= 0) return;
+
+            float gain = SampleStressGainPerDay(entry.PhenologyPhase, season, temp, cfg, entry.PhenologyEnergy);
+            float enter = Math.Max(0.2f, cfg.FlowerPhenologyStressEnterDieback);
+            float stress = entry.PhenologyStress;
+
+            if (gain > 0f)
+            {
+                stress += gain * (float)deltaDays;
+            }
+            else
+            {
+                float decay = Math.Max(0f, cfg.FlowerPhenologyStressDecayPerDay);
+                stress -= decay * (float)deltaDays;
+            }
+
+            if (stress < 0f) stress = 0f;
+            if (stress > enter * 1.5f) stress = enter * 1.5f;
+            entry.PhenologyStress = stress;
+        }
+
+        internal static float SampleStressGainPerDay(
+            FlowerPhenologyPhase phase,
+            float season,
+            float temp,
+            EcosystemConfig cfg,
+            float energy)
+        {
+            float gain = 0f;
+            float coldGain = Math.Max(0f, cfg.FlowerPhenologyColdStressGainPerDay);
+            float heatGain = Math.Max(0f, cfg.FlowerPhenologyHeatStressGainPerDay);
+            float exitGain = Math.Max(0f, cfg.FlowerPhenologySeasonExitStressGainPerDay);
+
+            bool winterSeason = season < DormantSeasonThreshold;
+            bool frost = temp < cfg.FlowerBloomMinTemperature;
+            bool heat = temp > cfg.FlowerBloomMaxTemperature;
+
+            // Frost and winter: same damage class (one hard freeze ≈ early winter debt).
+            if (winterSeason || frost)
+            {
+                gain = Math.Max(gain, coldGain);
+            }
+
+            if (heat)
+            {
+                gain = Math.Max(gain, heatGain);
+            }
+
+            if (phase == FlowerPhenologyPhase.Bloom
+                && (season < BloomExitSeasonThreshold
+                    || energy <= cfg.FlowerBloomEnergyThreshold * 0.2f))
+            {
+                gain = Math.Max(gain, exitGain);
+            }
+
+            // Soft recovery when neither pressing stress nor deep dormancy.
+            if (gain <= 0f
+                && phase != FlowerPhenologyPhase.Dieback
+                && season >= VegetativeSeasonThreshold
+                && TemperatureSupportsGrowth(temp, cfg))
+            {
+                return 0f;
+            }
+
+            return gain;
+        }
+
+        /// <returns>True when the entry entered dieback or was removed (senescence death).</returns>
+        internal static bool TryApplyDiebackFromStress(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            if (entry == null || cfg == null) return false;
+            if (entry.PhenologyPhase == FlowerPhenologyPhase.Dieback
+                || entry.PhenologyPhase == FlowerPhenologyPhase.Dormant)
+            {
+                return false;
+            }
+
+            float enter = Math.Max(0.2f, cfg.FlowerPhenologyStressEnterDieback);
+            if (entry.PhenologyStress < enter) return false;
+
+            return TryEnterDieback(api, entry, cfg);
+        }
+
+        /// <returns>True when dieback entered or plant removed.</returns>
+        internal static bool TryEnterDieback(ICoreAPI api, ReproducerEntry entry, EcosystemConfig cfg)
+        {
+            if (entry == null || cfg == null) return false;
+
+            int maxCycles = ResolveMaxLifeCycles(entry.Requirements?.Species, cfg);
+            if (maxCycles > 0 && entry.PhenologyLifeCycles >= maxCycles)
+            {
+                KillFromSenescence(api, entry);
+                return true;
+            }
+
+            entry.PhenologyLifeCycles++;
+            entry.PhenologyPhase = FlowerPhenologyPhase.Dieback;
+            entry.PhenologyEnergy = 0f;
+            // Leave stress near enter so recovery needs real decay (hysteresis).
+            float enter = Math.Max(0.2f, cfg.FlowerPhenologyStressEnterDieback);
+            if (entry.PhenologyStress < enter) entry.PhenologyStress = enter;
+            return true;
+        }
+
+        /// <summary>
+        /// Per-species CSV <c>flower_phenology_life_cycles</c> when &gt; 0; else global config.
+        /// </summary>
+        public static int ResolveMaxLifeCycles(string species, EcosystemConfig cfg)
+        {
+            if (SpeciesEcology.SpeciesEcologyRegistry.TryGetFlowerPhenologyLifeCycles(species, out int cycles)
+                && cycles > 0)
+            {
+                return cycles;
+            }
+
+            return cfg?.MaxFlowerPhenologyLifeCycles ?? 0;
+        }
+
+        static void KillFromSenescence(ICoreAPI api, ReproducerEntry entry)
+        {
+            if (api == null || entry?.Origin == null) return;
+            string species = entry.Requirements?.Species ?? string.Empty;
+            EcologyHistoryRecorder.RecordPhenologySenescence(api, entry.Origin, species);
+            EcosystemSystem.Instance?.FlowerPhenologyLife?.Remove(entry.Origin);
+            EcosystemSystem.Instance?.RemoveEcologyPlant(
+                entry.Origin,
+                cascadeSymbiosis: true,
+                reason: "phenology-senescence",
+                soilEvent: SoilSuccessionEvent.Death);
         }
 
         static void AdvanceDormant(
@@ -211,7 +385,10 @@ namespace WildFarming.Ecosystem
             double deltaDays)
         {
             entry.PhenologyEnergy = Math.Max(0f, entry.PhenologyEnergy - (float)deltaDays * 0.05f);
-            if (season >= VegetativeSeasonThreshold && TemperatureSupportsGrowth(temp, cfg))
+            float exit = Math.Max(0f, cfg.FlowerPhenologyStressExitDieback);
+            if (season >= VegetativeSeasonThreshold
+                && TemperatureSupportsGrowth(temp, cfg)
+                && entry.PhenologyStress <= exit)
             {
                 entry.PhenologyPhase = FlowerPhenologyPhase.Vegetative;
             }
@@ -224,20 +401,7 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg,
             double deltaDays)
         {
-            if (season < DormantSeasonThreshold)
-            {
-                entry.PhenologyPhase = FlowerPhenologyPhase.Dormant;
-                entry.PhenologyEnergy = 0f;
-                return;
-            }
-
-            if (temp > cfg.FlowerBloomMaxTemperature)
-            {
-                entry.PhenologyPhase = FlowerPhenologyPhase.Dieback;
-                entry.PhenologyEnergy = 0f;
-                return;
-            }
-
+            // Winter / frost must go through deferred dieback (counts a life-cycle), then dieback→dormant.
             if (season < BloomSeasonThreshold || !TemperatureSupportsGrowth(temp, cfg))
             {
                 return;
@@ -257,7 +421,8 @@ namespace WildFarming.Ecosystem
 
             if (entry.PhenologyEnergy >= cfg.FlowerBloomEnergyThreshold
                 && season >= BloomSeasonThreshold
-                && TemperatureSupportsBloom(temp, cfg))
+                && TemperatureSupportsBloom(temp, cfg)
+                && entry.PhenologyStress <= cfg.FlowerPhenologyStressExitDieback)
             {
                 entry.PhenologyPhase = FlowerPhenologyPhase.Bloom;
                 entry.PhenologyEnergy = cfg.FlowerBloomEnergyThreshold;
@@ -272,14 +437,7 @@ namespace WildFarming.Ecosystem
             double deltaDays)
         {
             entry.PhenologyEnergy -= (float)deltaDays * BloomDepletionPerDay;
-
-            if (temp > cfg.FlowerBloomMaxTemperature
-                || season < BloomExitSeasonThreshold
-                || entry.PhenologyEnergy <= cfg.FlowerBloomEnergyThreshold * 0.2f)
-            {
-                entry.PhenologyPhase = FlowerPhenologyPhase.Dieback;
-                entry.PhenologyEnergy = 0f;
-            }
+            // Exit to dieback is deferred via UpdateStress + TryApplyDiebackFromStress.
         }
 
         static void AdvanceDieback(
@@ -289,6 +447,8 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg,
             double deltaDays)
         {
+            float exit = Math.Max(0f, cfg.FlowerPhenologyStressExitDieback);
+
             if (season < DormantSeasonThreshold)
             {
                 entry.PhenologyPhase = FlowerPhenologyPhase.Dormant;
@@ -296,7 +456,9 @@ namespace WildFarming.Ecosystem
                 return;
             }
 
-            if (season >= VegetativeSeasonThreshold && TemperatureSupportsGrowth(temp, cfg))
+            if (season >= VegetativeSeasonThreshold
+                && TemperatureSupportsGrowth(temp, cfg)
+                && entry.PhenologyStress <= exit)
             {
                 entry.PhenologyPhase = FlowerPhenologyPhase.Vegetative;
                 entry.PhenologyEnergy = 0.08f;
@@ -339,7 +501,6 @@ namespace WildFarming.Ecosystem
                 if (phaseBlock != null && phaseBlock.Id != 0) return phaseBlock;
             }
 
-            // Fallback when phase assets are missing (dev / third-party species).
             AssetLocation juvenileCode = FlowerJuvenileBlocks.CodeForSpecies(entry.Requirements.Species, snow);
             if (juvenileCode == null) return null;
             return api.World.GetBlock(juvenileCode);
@@ -385,5 +546,13 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg,
             double deltaDays) =>
             AdvanceBloom(entry, season, temp, cfg, deltaDays);
+
+        internal static void UpdateStressForTests(
+            ReproducerEntry entry,
+            float season,
+            float temp,
+            EcosystemConfig cfg,
+            double deltaDays) =>
+            UpdateStress(entry, season, temp, cfg, deltaDays);
     }
 }

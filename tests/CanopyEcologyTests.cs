@@ -78,12 +78,15 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void DeciduousProfiles_AllowDenseLocalLeafFill()
+        public void DeciduousProfiles_AllowModerateLocalLeafFill()
         {
             var oak = WildCanopySeason.Resolve("oak");
-            Assert.True(oak.MaxRegularNearBranchy >= 10);
-            Assert.True(oak.LeafCatchUpScale >= 0.9f);
-            Assert.True(oak.BranchyCatchUpScale >= 0.8f);
+            Assert.True(oak.MaxRegularNearBranchy >= 5);
+            Assert.True(oak.LeafCatchUpScale >= 0.7f);
+            Assert.True(oak.BranchyCatchUpScale >= 0.6f);
+            // Keep below the 4.9.12 hitch band (0.95/16) that stormed chunk-load SetBlocks.
+            Assert.True(oak.LeafCatchUpScale < 0.9f);
+            Assert.True(oak.MaxBranchyNearLog <= 12);
         }
     }
 

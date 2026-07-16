@@ -123,6 +123,34 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: faster vegetative energy buildup. Lower: slower path to bloom.",
                 "Больше: быстрее накопление энергии. Меньше: медленнее путь к цветению.");
 
+            D(nameof(EcosystemConfig.FlowerPhenologyStressEnterDieback),
+                "Higher: need more accumulated stress before dieback (smoother, less flicker). Lower: dieback sooner.",
+                "Больше: нужно больше накопленного стресса до dieback (меньше мигания). Меньше: dieback раньше.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologyStressExitDieback),
+                "Higher: must recover further from stress before leaving dieback/dormant. Lower: quicker green-up.",
+                "Больше: дольше сбрасывать стресс перед выходом из dieback. Меньше: быстрее зеленеют.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologyColdStressGainPerDay),
+                "Frost (below bloom min °C) and winter season share this rate — hard freezes pack winter-class debt.",
+                "Заморозки (ниже мин. °C цветения) и зима копят стресс с одной скоростью — жёсткий мороз ≈ зимний долг.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologyHeatStressGainPerDay),
+                "Higher: heat waves push dieback faster. Lower: more heat-tolerant stands.",
+                "Больше: жара быстрее толкает в dieback. Меньше: терпимее к жаре.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologySeasonExitStressGainPerDay),
+                "Higher: post-bloom / energy collapse enters dieback sooner. Lower: softer seasonal fade.",
+                "Больше: после цветения быстрее уходят в dieback. Меньше: мягче сезонный спад.");
+
+            D(nameof(EcosystemConfig.FlowerPhenologyStressDecayPerDay),
+                "Higher: good weather clears stress faster (easier recovery). Lower: longer dieback hangover.",
+                "Больше: хорошая погода быстрее снимает стресс. Меньше: дольше «после dieback».");
+
+            D(nameof(EcosystemConfig.MaxFlowerPhenologyLifeCycles),
+                "Fallback dieback entries before senescence when ecology.csv omits flower_phenology_life_cycles. 0 = unlimited.",
+                "Запасной лимит входов в dieback, если в ecology.csv нет flower_phenology_life_cycles. 0 = без лимита.");
+
             D(nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick),
                 "Higher: more flower phase updates per tick. Lower: slower phenology pacing.",
                 "Больше: больше обновлений фаз за тик. Меньше: медленнее фенология.");
@@ -544,8 +572,8 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: листва догоняет сезон при загрузке участка. Выкл.: может отставать до случайного тика.");
 
             D(nameof(EcosystemConfig.MaxFoliageCatchUpPerChunk),
-                "Higher: more strip+bud ops per chunk per pass (0 = unlimited). Lower: slower seasonal catch-up.",
-                "Больше: больше операций догонки на участок (0 = без лимита). Меньше: медленнее догонка.");
+                "Higher: more strip+bud ops per chunk load (0 = unlimited). Lower: less hitch when walking forests.",
+                "Больше: больше догонки листвы при загрузке участка (0 = без лимита). Меньше: меньше просадок в лесу.");
 
             D(nameof(EcosystemConfig.FoliageColumnScanHeightAboveSurface),
                 "Higher: scan fewer blocks above surface (less work). 0 = full column height.",
@@ -812,8 +840,8 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: логировать попытки распространения (вместе с «Подробные логи»). Выкл.: без лога распространения.");
 
             D(nameof(EcosystemConfig.EnableTrampling),
-                "On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology.",
-                "Вкл.: шаги уплотняют колонки, изнашивают растения и замедляют зарастание. Выкл.: троп нет.");
+                "On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off (default): no trail ecology.",
+                "Вкл.: шаги уплотняют колонки, изнашивают растения и замедляют зарастание. Выкл. (по умолчанию): троп нет.");
 
             D(nameof(EcosystemConfig.TramplingRadius),
                 "Higher: plants next to the foot cell also wear. 0 = only the cell you stand in.",
@@ -860,8 +888,8 @@ namespace WildFarming.Ecosystem.Config
                 "Не используется (legacy). Больше/меньше не влияют: животные — physics stride, игроки — OnFootStep.");
 
             D(nameof(EcosystemConfig.EnableAnimalFootTraffic),
-                "On: large creatures near players get physics stride trail hooks. Off: players only via OnFootStep.",
-                "Вкл.: крупные существа у игроков — physics stride. Выкл.: только игроки (OnFootStep).");
+                "On: large creatures near players get physics stride trail hooks (can hitch SSP with herds). Off (default): players only via OnFootStep.",
+                "Вкл.: крупные существа у игроков — physics stride (стада могут лагать SSP). Выкл. (по умолчанию): только игроки (OnFootStep).");
 
             D(nameof(EcosystemConfig.EnableFlowerDrygrass),
                 "On: empty hand harvests flower block; knife/scythe yields drygrass. Off: vanilla harvest only.",

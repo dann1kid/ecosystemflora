@@ -20,6 +20,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             "moisture", "light", "niche_bonus",
             "season_explicit",
             "flower_maturation_h", "flower_cooldown_h",
+            "flower_phenology_life_cycles",
             "fern_maturation_h", "fern_cooldown_h",
             "berry_maturation_h",
             "tree_seral_role", "soil_succession_role",

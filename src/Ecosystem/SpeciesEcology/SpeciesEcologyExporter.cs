@@ -37,10 +37,17 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             ApplyNiche(row, species);
             ApplySeason(row, species);
             ApplyMaturation(row, species, taxon);
+            ApplyFlowerPhenologyLife(row, species, taxon);
             ApplyTreeRole(row, species, taxon);
             ApplySoilSuccession(row, species);
 
             return row;
+        }
+
+        static void ApplyFlowerPhenologyLife(SpeciesEcologyCsvRow row, string species, string taxon)
+        {
+            int cycles = WildFlowerPhenologyLife.ResolveForExport(species, taxon);
+            if (cycles > 0) row.FlowerPhenologyLifeCycles = cycles;
         }
 
         static void ApplyClimate(SpeciesEcologyCsvRow row, string species, string taxon)

@@ -13,6 +13,12 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void Default_DisablesAnimalFootTraffic()
+        {
+            Assert.False(new EcosystemConfig().EnableAnimalFootTraffic);
+        }
+
+        [Fact]
         public void Natural_EnablesCoreEcologyFeatures()
         {
             var cfg = new EcosystemConfig
@@ -38,9 +44,13 @@ namespace WildFarming.Tests
             Assert.True(cfg.EnableTallgrassPhenology);
             Assert.True(cfg.UseSeasonalEcology);
             Assert.True(cfg.EnableSeasonalFoliage);
-            Assert.True(cfg.EnableTrampling);
-            Assert.True(cfg.TramplingSoilDegradation);
-            Assert.True(cfg.EnableAnimalFootTraffic);
+            Assert.False(cfg.EnableTrampling);
+            Assert.False(cfg.TramplingSoilDegradation);
+            Assert.False(cfg.EnableAnimalFootTraffic);
+            Assert.Equal(2000, cfg.ReproduceTickIntervalMs);
+            Assert.Equal(1000, cfg.ChunkScanTickIntervalMs);
+            Assert.Equal(48, cfg.FoliageColumnScanHeightAboveSurface);
+            Assert.Equal(48, cfg.MaxFoliageCellsTickedPerTick);
             Assert.True(cfg.EnableTreeAging);
             Assert.True(cfg.EnableTreeSenescence);
             Assert.True(cfg.EnableWildVineEcology);

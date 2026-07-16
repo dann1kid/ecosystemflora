@@ -58,6 +58,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 row.Moisture, row.Light, F(row.NicheBonus),
                 row.SeasonExplicit ? "true" : "false",
                 D(row.FlowerMaturationHours), D(row.FlowerCooldownHours),
+                PositiveI(row.FlowerPhenologyLifeCycles),
                 D(row.FernMaturationHours), D(row.FernCooldownHours),
                 D(row.BerryMaturationHours),
                 row.TreeSeralRole,
@@ -82,6 +83,9 @@ namespace WildFarming.Ecosystem.SpeciesEcology
 
         static string D(double value) =>
             value <= 0 ? string.Empty : value.ToString("0.###", CultureInfo.InvariantCulture);
+
+        static string PositiveI(int value) =>
+            value <= 0 ? string.Empty : value.ToString(CultureInfo.InvariantCulture);
 
         static string Escape(string value)
         {

@@ -209,6 +209,15 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             return true;
         }
 
+        public static bool TryGetFlowerPhenologyLifeCycles(string species, out int lifeCycles)
+        {
+            lifeCycles = 0;
+            if (!IsLoaded || !TryGet(species, out SpeciesEcologyCsvRow row)) return false;
+            if (row.FlowerPhenologyLifeCycles <= 0) return false;
+            lifeCycles = row.FlowerPhenologyLifeCycles;
+            return true;
+        }
+
         public static bool TryGetFernMaturation(string species, out double maturationHours, out double cooldownHours)
         {
             maturationHours = 0;

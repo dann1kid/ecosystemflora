@@ -47,6 +47,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
             SetBool(row, fields, "season_explicit", v => row.SeasonExplicit = v);
             SetDouble(row, fields, "flower_maturation_h", v => row.FlowerMaturationHours = v);
             SetDouble(row, fields, "flower_cooldown_h", v => row.FlowerCooldownHours = v);
+            SetInt(row, fields, "flower_phenology_life_cycles", v => row.FlowerPhenologyLifeCycles = v);
             SetDouble(row, fields, "fern_maturation_h", v => row.FernMaturationHours = v);
             SetDouble(row, fields, "fern_cooldown_h", v => row.FernCooldownHours = v);
             SetDouble(row, fields, "berry_maturation_h", v => row.BerryMaturationHours = v);
@@ -98,6 +99,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 SeasonExplicit = source.SeasonExplicit,
                 FlowerMaturationHours = source.FlowerMaturationHours,
                 FlowerCooldownHours = source.FlowerCooldownHours,
+                FlowerPhenologyLifeCycles = source.FlowerPhenologyLifeCycles,
                 FernMaturationHours = source.FernMaturationHours,
                 FernCooldownHours = source.FernCooldownHours,
                 BerryMaturationHours = source.BerryMaturationHours,
@@ -198,6 +200,7 @@ namespace WildFarming.Ecosystem.SpeciesEcology
                 && a.SeasonExplicit == b.SeasonExplicit
                 && Nearly((float)a.FlowerMaturationHours, (float)b.FlowerMaturationHours, tolerance)
                 && Nearly((float)a.FlowerCooldownHours, (float)b.FlowerCooldownHours, tolerance)
+                && a.FlowerPhenologyLifeCycles == b.FlowerPhenologyLifeCycles
                 && Nearly((float)a.FernMaturationHours, (float)b.FernMaturationHours, tolerance)
                 && Nearly((float)a.FernCooldownHours, (float)b.FernCooldownHours, tolerance)
                 && Nearly((float)a.BerryMaturationHours, (float)b.BerryMaturationHours, tolerance)

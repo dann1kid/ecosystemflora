@@ -166,9 +166,10 @@ namespace WildFarming.Ecosystem
             cfg.EnableSeasonalFoliage = true;
             cfg.EnableSeasonCoarseWake = true;
 
-            cfg.EnableTrampling = true;
-            cfg.TramplingSoilDegradation = true;
-            cfg.EnableAnimalFootTraffic = true;
+            cfg.EnableTrampling = false;
+            cfg.TramplingSoilDegradation = false;
+            // Players-only trails are opt-in; animal hooks + soil SetBlock were SSP hitch sources.
+            cfg.EnableAnimalFootTraffic = false;
 
             cfg.EnableTreeAging = true;
             cfg.EnableTreeSenescence = true;
@@ -207,6 +208,20 @@ namespace WildFarming.Ecosystem
             cfg.EnableOrphanFoliagePrune = true;
             cfg.EnableCanopyFallenSticks = true;
             cfg.EnableSpringBranchyAgeBoost = true;
+
+            // Playable tick cadence — never inherit timelapse leftovers into natural/custom merges.
+            cfg.ReproduceTickIntervalMs = 2000;
+            cfg.ChunkScanTickIntervalMs = 1000;
+            cfg.StressTickIntervalMs = 5500;
+            cfg.TickBudgetMs = 8;
+            cfg.SpreadBudgetMs = 6;
+            cfg.RegistrationBudgetMs = 80;
+            cfg.MaxReproduceAttemptsPerTick = 64;
+            cfg.MaxFoliageCellsTickedPerTick = 48;
+            cfg.FoliageColumnScanHeightAboveSurface = 48;
+            cfg.FoliageCatchUpOnChunkLoad = true;
+            cfg.MaxFoliageCatchUpPerChunk = 256;
+            cfg.MaxFloraRescanColumnsPerTick = 64;
         }
 
         static void ApplyLush(EcosystemConfig cfg)
@@ -272,6 +287,7 @@ namespace WildFarming.Ecosystem
             cfg.EnableFernPhenology = false;
             cfg.EnableTallgrassPhenology = false;
             cfg.EnableFernSporulationGate = false;
+            cfg.MaxFlowerPhenologyLifeCycles = 0;
             cfg.EnableFlowerSpreadAttemptCooldown = false;
             cfg.EnableFernSpreadAttemptCooldown = false;
 

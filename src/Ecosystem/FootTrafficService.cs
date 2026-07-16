@@ -15,9 +15,15 @@ namespace WildFarming.Ecosystem
     {
         static FootTrafficService active;
 
+        /// <summary>Cap animal soil/plant applies sharing the same server-ms bucket (herds otherwise spike).</summary>
+        const int MaxAnimalAppliesPerServerMs = 8;
+        static long animalApplyBudgetMs = -1;
+        static int animalAppliesThisMs;
+
         readonly ColumnTrafficStore store;
         readonly Dictionary<long, Action> hookedFootSteps = new Dictionary<long, Action>();
         readonly BlockPos scratch = new BlockPos(0);
+        readonly BlockPos plantScratch = new BlockPos(0);
 
         ICoreAPI api;
         ICoreServerAPI sapi;
@@ -41,7 +47,20 @@ namespace WildFarming.Ecosystem
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EnableTrampling || !cfg.EnableAnimalFootTraffic) return;
-            svc.ApplyEntityFoot(entity, cfg);
+
+            // Physics ticks are far denser than game ticks; unbounded herd applies hitch the server.
+            long nowMs = entity.World?.ElapsedMilliseconds ?? 0;
+            if (nowMs != animalApplyBudgetMs)
+            {
+                animalApplyBudgetMs = nowMs;
+                animalAppliesThisMs = 0;
+            }
+
+            if (animalAppliesThisMs >= MaxAnimalAppliesPerServerMs) return;
+            animalAppliesThisMs++;
+
+            // Soil coverage is catch-up via ProcessDeferredCoverageSync — avoid SetBlock storms on every stride.
+            svc.ApplyEntityFoot(entity, cfg, syncSoil: false);
         }
 
         public void Bind(ICoreServerAPI serverApi, EcosystemSystem eco)
@@ -172,11 +191,14 @@ namespace WildFarming.Ecosystem
         void OnPlayerFootStep(EntityPlayer player)
         {
             if (player?.Pos == null || api == null || ecosystem == null || store == null) return;
+            // Creative flight / mid-air: OnFootStep can still fire; skip — not a trail.
+            if (!player.OnGround || player.Swimming) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EcosystemEnabled || !cfg.EnableTrampling) return;
 
-            ApplyEntityFoot(player, cfg);
+            // Soil sync only on the foot that walked — never from calendar ticks.
+            ApplyEntityFoot(player, cfg, syncSoil: true);
         }
 
         void OnEntityAppear(Entity entity)
@@ -184,6 +206,8 @@ namespace WildFarming.Ecosystem
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             if (!cfg.EcosystemEnabled || !cfg.EnableTrampling || !cfg.EnableAnimalFootTraffic) return;
             if (CalendarSpeedHelper.GetSpeedMultiplier(entity.World?.Calendar) > 8f) return;
+            // Skip far spawns/loads — PhysicsUpdateWatcher on every loaded creature is the hitch source.
+            if (!IsEntityNearAnyPlayer(entity, cfg)) return;
             TryAttachAnimalBehavior(entity);
         }
 
@@ -191,10 +215,23 @@ namespace WildFarming.Ecosystem
         {
             if (sapi?.World == null) return;
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
             foreach (Entity entity in sapi.World.LoadedEntities.Values)
             {
+                if (!IsEntityNearAnyPlayer(entity, cfg)) continue;
                 TryAttachAnimalBehavior(entity);
             }
+        }
+
+        bool IsEntityNearAnyPlayer(Entity entity, EcosystemConfig cfg)
+        {
+            if (entity?.Pos == null || api == null) return false;
+            int radius = cfg.FootTrafficAnimalPlayerRadiusBlocks;
+            if (radius <= 0) return true;
+
+            scratch.Set((int)entity.Pos.X, (int)entity.Pos.Y, (int)entity.Pos.Z);
+            scratch.dimension = entity.Pos.Dimension;
+            return PlayerProximity.IsNearAnyPlayer(api, scratch, radius);
         }
 
         void DetachAllAnimalBehaviors()
@@ -229,7 +266,7 @@ namespace WildFarming.Ecosystem
             entity.RemoveBehavior(foot);
         }
 
-        void ApplyEntityFoot(Entity entity, EcosystemConfig cfg)
+        void ApplyEntityFoot(Entity entity, EcosystemConfig cfg, bool syncSoil)
         {
             if (entity?.Pos == null || api == null || ecosystem == null || store == null) return;
 
@@ -272,6 +309,8 @@ namespace WildFarming.Ecosystem
                 }
             }
 
+            if (!syncSoil) return;
+
             scratch.Set(fx, fy, fz);
             scratch.dimension = dim;
             MaybeSyncSoil(scratch, pressure, cfg);
@@ -311,37 +350,36 @@ namespace WildFarming.Ecosystem
             bool claimPrechecked)
         {
             IBlockAccessor acc = api.World.BlockAccessor;
-            if (!TryResolveTramplePlant(acc, feetPos, out BlockPos plantPos, out Block block)) return;
+            if (!TryResolveTramplePlant(acc, feetPos, out Block block)) return;
 
-            // Trample wear must hit immature tallgrass / juveniles — not only spread parents.
-            PlantRequirements req = PlantRequirements.FromBlock(block);
-            if (req.Habitat != EcologyHabitat.Terrestrial) return;
-            if (!claimPrechecked && !LandClaimGuard.AllowsEcologyChange(api, plantPos)) return;
+            // Lightweight — FromBlock rebuilds full ecology tables and was on the footstep hot path.
+            if (PlantCodeHelper.GetEcologyHabitat(block) != EcologyHabitat.Terrestrial) return;
+            if (!claimPrechecked && !LandClaimGuard.AllowsEcologyChange(api, plantScratch)) return;
 
-            string species = req.Species ?? PlantCodeHelper.ResolveEcologySpecies(block);
+            string species = PlantCodeHelper.ResolveEcologySpecies(block);
             if (string.IsNullOrEmpty(species)) return;
 
             if (species == "tallgrass")
             {
-                if (TallgrassSpreadHeight.TryRetreatOneStage(api, acc, plantPos))
+                if (TallgrassSpreadHeight.TryRetreatOneStage(api, acc, plantScratch))
                 {
-                    store.ClearPlantHits(plantPos);
-                    ecosystem.InvalidateEnvironmentAround(plantPos);
+                    store.ClearPlantHits(plantScratch);
+                    ecosystem.InvalidateEnvironmentAround(plantScratch);
                     // Height dropped below target — resume establishment growth.
-                    ecosystem.TryQueueTallgrassPromotionAtInspect(plantPos, acc.GetBlock(plantPos));
+                    ecosystem.TryQueueTallgrassPromotionAtInspect(plantScratch, acc.GetBlock(plantScratch));
                     return;
                 }
             }
 
-            byte hits = store.IncrementPlantHits(plantPos, nowHours, hoursPerDay, decayPerDay);
+            byte hits = store.IncrementPlantHits(plantScratch, nowHours, hoursPerDay, decayPerDay);
             int threshold = cfg.TramplingStressThreshold;
             if (threshold < 1) threshold = 1;
 
             if (hits < threshold) return;
 
-            store.ClearPlantHits(plantPos);
+            store.ClearPlantHits(plantScratch);
             ecosystem.RemoveEcologyPlant(
-                plantPos,
+                plantScratch.Copy(),
                 cascadeSymbiosis: true,
                 reason: "trampled",
                 soilEvent: SoilSuccessionEvent.Death);
@@ -349,34 +387,23 @@ namespace WildFarming.Ecosystem
 
         /// <summary>
         /// Feet often sit in the plant cell; sometimes Pos.Y lands on soil or air adjacent to the plant.
+        /// Result stays in <see cref="plantScratch"/> (no UpCopy/DownCopy allocs).
         /// </summary>
-        static bool TryResolveTramplePlant(
-            IBlockAccessor acc,
-            BlockPos feetPos,
-            out BlockPos plantPos,
-            out Block block)
+        bool TryResolveTramplePlant(IBlockAccessor acc, BlockPos feetPos, out Block block)
         {
-            plantPos = feetPos;
-            block = acc.GetBlock(feetPos);
+            plantScratch.Set(feetPos.X, feetPos.Y, feetPos.Z);
+            plantScratch.dimension = feetPos.dimension;
+            block = acc.GetBlock(plantScratch);
             if (IsTrampleableSurfacePlant(block)) return true;
 
-            BlockPos up = feetPos.UpCopy();
-            block = acc.GetBlock(up);
-            if (IsTrampleableSurfacePlant(block))
-            {
-                plantPos = up;
-                return true;
-            }
+            plantScratch.Y = feetPos.Y + 1;
+            block = acc.GetBlock(plantScratch);
+            if (IsTrampleableSurfacePlant(block)) return true;
 
-            BlockPos down = feetPos.DownCopy();
-            block = acc.GetBlock(down);
-            if (IsTrampleableSurfacePlant(block))
-            {
-                plantPos = down;
-                return true;
-            }
+            plantScratch.Y = feetPos.Y - 1;
+            block = acc.GetBlock(plantScratch);
+            if (IsTrampleableSurfacePlant(block)) return true;
 
-            plantPos = feetPos;
             block = null;
             return false;
         }

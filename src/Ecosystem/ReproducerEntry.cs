@@ -44,6 +44,15 @@ namespace WildFarming.Ecosystem
         /// <summary>Energy toward bloom (0..threshold+); depletes during bloom.</summary>
         public float PhenologyEnergy { get; set; }
 
+        /// <summary>
+        /// Accumulated dieback pressure (0..enter×1.5). Heat, frost, and winter push it up;
+        /// good growing weather decays it. Crossing enter applies dieback (hysteresis exit).
+        /// </summary>
+        public float PhenologyStress { get; set; }
+
+        /// <summary>Completed dieback life-cycles (each winter/frost/heat dieback entry). Capped by config.</summary>
+        public int PhenologyLifeCycles { get; set; }
+
         /// <summary>Last game-hour when phenology was advanced for this entry.</summary>
         public double LastPhenologyUpdateHours { get; set; }
 

@@ -93,12 +93,19 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `FlowerBloomEnergyThreshold` | float | `1` | server | Higher: longer vegetative wait before bloom. Lower: faster bloom after season opens. |
 | `FlowerBloomMaxTemperature` | float | `32` | server | Higher: tolerate hotter summers before dieback. Lower: earlier heat dieback. |
 | `FlowerBloomMinTemperature` | float | `5` | server | Higher: flowers need warmer weather to bloom (shorter bloom window). Lower: bloom in cooler cells. |
+| `FlowerPhenologyColdStressGainPerDay` | float | `0.25` | server | Frost below bloom min °C and winter season share this gain (freeze ≈ winter debt). |
 | `FlowerPhenologyEnergyGainPerDay` | float | `0.15` | server | Higher: faster vegetative energy buildup. Lower: slower path to bloom. |
+| `FlowerPhenologyHeatStressGainPerDay` | float | `0.35` | server | Per-day stress while above bloom max °C. |
+| `FlowerPhenologySeasonExitStressGainPerDay` | float | `0.15` | server | Per-day stress during post-bloom / energy collapse. |
+| `FlowerPhenologyStressDecayPerDay` | float | `0.12` | server | Per-day stress decay in good growing weather. |
+| `FlowerPhenologyStressEnterDieback` | float | `1` | server | Accumulated stress needed before dieback (deferred; reduces flicker). |
+| `FlowerPhenologyStressExitDieback` | float | `0.3` | server | Stress must fall here before leaving dieback/dormant (hysteresis). |
 | `FlowerSpreadCooldownHoursMultiplier` | float | `1` | server | Higher: shorter post-spread pause on parent flowers. Lower: longer cooldown between offspring. |
 | `GrowthHoursMultiplier` | float | `1` | server | Higher: spread flower seedlings and tallgrass stages mature faster. Lower: longer establishing phase. |
 | `MaxFernPhenologyChecksPerTick` | int | `32` | server | Higher: more fern phenology updates per tick. Lower: slower phase sync. |
 | `MaxFloraRescanColumnsPerTick` | int | `32` | server | Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU. |
 | `MaxFlowerPhenologyChecksPerTick` | int | `48` | server | Higher: more flower phase updates per tick. Lower: slower phenology pacing. |
+| `MaxFlowerPhenologyLifeCycles` | int | `4` | server | Fallback dieback entries before senescence when species CSV omits `flower_phenology_life_cycles`; `0` = unlimited. |
 | `MaxPendingBerryMaturationChecksPerTick` | int | `24` | server | Higher: more berry maturation checks per tick. Lower: slower spread bush queue. |
 | `MaxPendingFernMaturationChecksPerTick` | int | `24` | server | Higher: more fern maturation checks per tick. Lower: slower juvenile queue. |
 | `MaxPendingFlowerMaturationChecksPerTick` | int | `32` | server | Higher: more maturation checks per game tick. Lower: slower maturation queue. |
@@ -158,14 +165,14 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 |-----|------|---------|-------|-------------|
 | `EnableStressDeath` | bool | **true** | server | On: remove plants after repeated failed survival checks. Off: plants never removed by stress. |
 | `EnableSymbiosis` | bool | **true** | server | On: forest symbionts need tree hosts; orphans fade via stress death after host loss. Off: symbiosis rules off. |
-| `EnableTrampling` | bool | **true** | server | On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off: no trail ecology. |
-| `EnableAnimalFootTraffic` | bool | **true** | server | On: large animals near players also compact columns. Off: players only. |
+| `EnableTrampling` | bool | **false** | server | On: footsteps leave column pressure, wear plants, and slow meadow recolonization. Off (default): no trail ecology. |
+| `EnableAnimalFootTraffic` | bool | **false** | server | On: large animals near players also leave trails (physics hooks — can hitch SSP with herds). Off (default): players only. |
 | `FootTrafficStepsToFullCoverageWear` | int | `20` | server | Footsteps on one column to reach `verysparse`. Primary tempo. Set `0` to use advanced `FootTrafficSoilWearPressureStep`. |
 | `FootTrafficDecayPerDay` | float | `6` | server | Higher: abandoned trails heal faster. Lower: packed paths linger longer. Aged for all columns on world save. |
 | `FootTrafficMinSpreadMultiplier` | float | `0.2` | server | At full pressure, spread/hold fitness × this floor. Lower: harder reclaim. |
 | `FootTrafficPressurePerStep` | int | `8` | server | Higher: trails pack faster (0–255 pressure). Lower: need more traffic. |
-| `FootTrafficAnimalStrideBlocks` | float | `1.15` | server | Higher: animals leave traffic less often per distance. Lower: denser animal trails. |
-| `FootTrafficAnimalPlayerRadiusBlocks` | int | `128` | server | Higher: animals farther from players still leave trails. Lower: only nearby fauna. `0` = all loaded. |
+| `FootTrafficAnimalStrideBlocks` | float | `1.5` | server | Higher: animals leave traffic less often per distance. Lower: denser animal trails. |
+| `FootTrafficAnimalPlayerRadiusBlocks` | int | `64` | server | Higher: animals farther from players still leave trails. Lower: only nearby fauna. `0` = all loaded. |
 | `FootTrafficSampleIntervalMs` | int | `1000` | server | Unused legacy — animals use physics stride hooks; players use `OnFootStep`. |
 | `FootTrafficSoilWearPressureStep` | byte | `0` | server | Advanced: pressure per coverage stage when Steps=0. When Steps>0, derived as `PressurePerStep × Steps / 2` (≤127). |
 | `MaxFailedSurvivalChecks` | int | `5` | server | Higher: more failed checks tolerated before stress removal. Lower: plants die sooner from stress. |
@@ -271,7 +278,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `FoliagePeakAutumnBranchyStripActivity` | float | `0.35` | server | Higher: strip more branchy foliage in peak autumn (0 = keep all branchy). Lower: gentler strip. |
 | `FoliageRestoreBareSkeleton` | bool | **true** | server | On: winter repair adds branchy leaves on bare log-grown pillars. Off: bare crowns stay bare. |
 | `FoliageSyncMode` | string | `chunk` | server | chunk = sync on chunk load (default). hybrid = chunk plus random tick. random = legacy random only. |
-| `MaxFoliageCatchUpPerChunk` | int | `2048` | server | Higher: more strip+bud ops per chunk per pass (0 = unlimited). Lower: slower seasonal catch-up. |
+| `MaxFoliageCatchUpPerChunk` | int | `256` | server | Higher: more strip+bud ops per chunk per pass (0 = unlimited). Lower: slower seasonal catch-up / less hitch on load. |
 | `MaxFoliageCellsTickedPerTick` | int | `0` | server | Higher: more random foliage cells per reproduce tick (hybrid/random). 0 = off. |
 | `OrphanFoliageFireChunkHours` | double | `48` | server | Hours after fire to prioritize orphan-prune chunk passes. 0 = no fire priority window. |
 | `OrphanFoliageMaxBfsDepth` | int | `14` | server | Higher: longer support search before pruning (safer, more CPU). Lower: faster, may miss edge cases. |
@@ -345,7 +352,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 
 ### Trampling / foot traffic
 
-Ecological trails (not path blocks): players use `EntityPlayer.OnFootStep`; animals (optional) use `EntityBehaviorFootTraffic` + physics stride. Footsteps raise per-column pressure (savegame-persisted), wear tallgrass height / remove other terrestrial plants after enough steps, sync wild soil grass coverage to pressure (`normal`↔`verysparse`, not bare `none`; same fertility — restores as pressure fades), and multiply spread/hold fitness down to `FootTrafficMinSpreadMultiplier` at full pressure. Abandoned columns decay via `FootTrafficDecayPerDay` (lazy on access + age/prune on world save; coverage sync only when soil mark is stale, budget-capped).
+Ecological trails (not path blocks): players use `EntityPlayer.OnFootStep`; animals are **opt-in** (`EnableAnimalFootTraffic`, default off) via `EntityBehaviorFootTraffic` + physics stride. Footsteps raise per-column pressure (savegame-persisted), wear tallgrass height / remove other terrestrial plants after enough steps, sync wild soil grass coverage to pressure (`normal`↔`verysparse`, not bare `none`; same fertility — restores as pressure fades), and multiply spread/hold fitness down to `FootTrafficMinSpreadMultiplier` at full pressure. Abandoned columns decay via `FootTrafficDecayPerDay` (lazy on access + age/prune on world save). Coverage `SetBlock` is deferred on the reproduce tick (round-robin, small budget) — not on every footstep.
 
 See **Stress** section keys (`EnableTrampling`, `FootTraffic*`, …).
 
