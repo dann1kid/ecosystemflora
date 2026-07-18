@@ -9,6 +9,28 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
+## Unreleased — 4.10.8
+
+- **Redwood lifespan** — senescence horizon raised to **1000** years.
+- **Sapling age catch-up death** — new trunks no longer inherit a size-estimated calendar age; impossible `LastGrowthYear` lags (e.g. 0 from old saves) are snapped instead of burning lifespan from world year 0; stale age saves on seedling trunks are ignored.
+
+## Unreleased — 4.10.7
+
+- **Per-species crown forms** — yearly aging grows foliage inside a species silhouette (`Spreading` oak/maple/walnut, `Oval` birch, `Umbrella` acacia/kapok, `Column` pine/cypress, `Tiered` redwood) instead of a generic broom ball.
+
+## Unreleased — 4.10.6
+
+- **Bare oak tip fix** — spring density and winter skeleton repair no longer treat foliage *below* a protruding trunk tip as “already dressed”, so stick-tops above a leafy mid canopy get branchy again; yearly aging also repairs undressed tips even when height growth has stopped.
+- **Upper canopy bias** — yearly tree growth anchors from the upper half of the trunk and tries top anchors first (plus tip dress on trunk extend), so broadleaf crowns widen the top shelf instead of only fluffing the mid canopy.
+- **Broadleaf crown targets** — oak soft crown 5→7; maple / crimson king maple / walnut 5→6.
+
+## Unreleased — 4.10.5
+
+- **Redwood trunk inspect** — living `logsection-grown-redwood-*` 2×2 trunk quarters are recognized as ecology trunks (vanilla treegen), so the lower trunk inspects and registers like branch `log-grown` wood.
+- **Oak crown fill** — yearly tree aging prefers branchy/leaf spread when the crown lags the trunk (typical after sapling treegen); older lagging trees get extra crown ops.
+- **Wild vines with seasonal leaves** — canopy leaf/branchy strip and tree senescence now revalidate attached vine columns so vines no longer float after the host foliage disappears.
+- **Wild vines on chunk load** — pending vine registration checks column support (once per column per drain) and prunes already-floating vines before they enter the ecology registry.
+
 ## Unreleased — 4.9.13
 
 - **Main-thread chunk-load hitch** — legacy fern remaps scan only a rain-surface band (±2 / +8), not full `MapSizeY`; empty worker flora no longer triggers a second live column rescan on flat/empty chunks.

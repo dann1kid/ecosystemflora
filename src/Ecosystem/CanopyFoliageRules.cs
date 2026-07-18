@@ -22,7 +22,8 @@ namespace WildFarming.Ecosystem
         public static FoliageCellKind Classify(Block block)
         {
             if (block?.Code == null) return FoliageCellKind.None;
-            if (PlantCodeHelper.IsTreeLogGrownBlock(block))
+            if (PlantCodeHelper.IsTreeLogGrownBlock(block)
+                && !PlantCodeHelper.IsLogSectionGrownBlock(block))
             {
                 string wood = PlantCodeHelper.GetTreeWood(block);
                 return CanopyBlockHelper.IsDeciduousTreeWood(wood)
@@ -148,7 +149,11 @@ namespace WildFarming.Ecosystem
             WildCanopySeason.Profile profile = WildCanopySeason.Resolve(wood);
             if (kind == FoliageCellKind.LogGrown)
             {
-                return CountFoliageInRadius(acc, pos, wood, FoliageCellKind.BranchyLeaf, 2, profile.MaxBranchyNearLog)
+                // Only same-level / above branchy counts — foliage below a protruding tip must not
+                // mark the tip "full" (oak stick-top over a dense mid canopy).
+                return CountFoliageInRadius(
+                        acc, pos, wood, FoliageCellKind.BranchyLeaf, 2, profile.MaxBranchyNearLog,
+                        minDy: 0)
                     < profile.MaxBranchyNearLog;
             }
             if (kind == FoliageCellKind.BranchyLeaf)
@@ -168,13 +173,15 @@ namespace WildFarming.Ecosystem
             string wood,
             FoliageCellKind kind,
             int radius,
-            int stopAt)
+            int stopAt,
+            int minDy = int.MinValue)
         {
             int count = 0;
             if (stopAt < 1) stopAt = 1;
+            int dyStart = minDy == int.MinValue ? -radius : System.Math.Max(-radius, minDy);
             for (int dx = -radius; dx <= radius; dx++)
             {
-                for (int dy = -radius; dy <= radius; dy++)
+                for (int dy = dyStart; dy <= radius; dy++)
                 {
                     for (int dz = -radius; dz <= radius; dz++)
                     {
@@ -371,11 +378,20 @@ namespace WildFarming.Ecosystem
         {
             return HasAdjacentBranchyLeaf(acc, center, wood);
         }
-        internal static bool HasAdjacentBranchyLeaf(IBlockAccessor acc, BlockPos center, string wood)
+        /// <param name="ignoreBelow">
+        /// When true, branchy directly under the log does not count (tip protruding from a mid canopy
+        /// is still bare and needs winter/spring scaffold).
+        /// </param>
+        internal static bool HasAdjacentBranchyLeaf(
+            IBlockAccessor acc,
+            BlockPos center,
+            string wood,
+            bool ignoreBelow = true)
         {
             var scratch = new BlockPos(0);
             for (int i = 0; i < 6; i++)
             {
+                if (ignoreBelow && NeighborDy[i] < 0) continue;
                 scratch.Set(
                     center.X + NeighborDx[i],
                     center.Y + NeighborDy[i],
@@ -414,6 +430,7 @@ namespace WildFarming.Ecosystem
             acc.MarkBlockDirty(pos);
             index?.Remove(pos);
             CanopyFallenSticks.TryDropFromStrip(api, acc, pos, wood, activity, gameYear, kind);
+            NotifyWildVinesAfterHostCleared(api, pos);
             return true;
         }
         static bool TryBudFromSource(
@@ -489,7 +506,27 @@ namespace WildFarming.Ecosystem
             {
                 CanopyFallenSticks.TryDropFromStrip(api, acc, pos, wood, autumnActivity, gameYear, strippedKind);
             }
+            NotifyWildVinesAfterHostCleared(api, pos);
             return true;
+        }
+
+        /// <summary>
+        /// Seasonal / orphan leaf removal bypasses DidBreakBlock — re-check attached vine columns
+        /// so they do not float after the host foliage disappears.
+        /// </summary>
+        static void NotifyWildVinesAfterHostCleared(ICoreAPI api, BlockPos pos)
+        {
+            if (api == null || pos == null) return;
+            if (!EcosystemConfig.Loaded.EnableWildVineEcology) return;
+
+            EcosystemSystem eco = EcosystemSystem.Instance;
+            if (eco != null)
+            {
+                eco.NotifyWildVineHostChanged(pos);
+                return;
+            }
+
+            WildVineColumnSupport.OnStructuralChange(api, pos);
         }
         internal static bool TryPlaceSeasonBudDeterministic(
             ICoreAPI api,

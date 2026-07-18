@@ -736,6 +736,63 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void PendingVineRegistration_PrunesUnsupportedColumnOnChunkLoad()
+        {
+            using var host = EcosystemSimHost.Create(new EcosystemConfig
+            {
+                EcosystemEnabled = true,
+                EnableWildVineEcology = true,
+                OnlyActivateNearPlayers = false,
+            });
+
+            var tip = new BlockPos(12, 63, 12);
+            var section = new BlockPos(12, 64, 12);
+            host.Accessor.SetBlockCode("game:wildvine-section-north", section);
+            host.Accessor.SetBlockCode("game:wildvine-end-north", tip);
+
+            host.Eco.Test_ClearVineLoadSupportChecked();
+            var item = new PendingRegistration(
+                new Vec2i(0, 0),
+                tip,
+                new AssetLocation("game", "wildvine-end-north"),
+                PendingRegistrationKind.Vine);
+
+            Assert.False(host.Eco.Test_TryApplyPendingRegistration(item, out bool stale));
+            Assert.True(stale);
+            Assert.Equal(0, host.Accessor.GetBlock(tip).Id);
+            Assert.Equal(0, host.Accessor.GetBlock(section).Id);
+            Assert.False(host.Eco.Test_TryGetRegistryEntry(tip, out _));
+        }
+
+        [Fact]
+        public void PendingVineRegistration_RegistersWhenHostAnchored()
+        {
+            using var host = EcosystemSimHost.Create(new EcosystemConfig
+            {
+                EcosystemEnabled = true,
+                EnableWildVineEcology = true,
+                OnlyActivateNearPlayers = false,
+            });
+
+            var tip = new BlockPos(12, 64, 12);
+            var hostPos = WildVineHelper.HostPos(tip, BlockFacing.NORTH);
+            host.Accessor.SetBlockCode("game:rock-granite", hostPos);
+            host.Accessor.SetBlockCode("game:wildvine-end-north", tip);
+
+            host.Eco.Test_ClearVineLoadSupportChecked();
+            var item = new PendingRegistration(
+                new Vec2i(0, 0),
+                tip,
+                new AssetLocation("game", "wildvine-end-north"),
+                PendingRegistrationKind.Vine);
+
+            Assert.True(host.Eco.Test_TryApplyPendingRegistration(item, out bool stale));
+            Assert.False(stale);
+            Assert.True(host.Eco.Test_TryGetRegistryEntry(tip, out ReproducerEntry entry));
+            Assert.Equal(EcologyHabitat.WildVine, entry.Requirements.Habitat);
+        }
+
+        [Fact]
         public void SectionBlock_IsEcologySpreadParentAndParticipant()
         {
             var block = new Block { Code = new AssetLocation("game", "wildvine-section-north") };
@@ -852,6 +909,70 @@ namespace WildFarming.Tests
 
             Assert.Equal(0, removed);
             Assert.True(WildVineHelper.IsVineBlock(acc.GetBlock(new BlockPos(0, 54, 0))));
+        }
+
+        [Fact]
+        public void OnStructuralChange_PrunesColumnWhenFoliageHostStripped()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig { EnableWildVineEcology = true };
+
+                Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+                Block leaf = new Block
+                {
+                    BlockId = 3,
+                    Code = new AssetLocation("game", "leaves-grown-oak"),
+                    BlockMaterial = EnumBlockMaterial.Wood,
+                    Replaceable = 0,
+                };
+                Block[] blocks =
+                {
+                    air,
+                    new Block { BlockId = 1, Code = new AssetLocation("game", "wildvine-section-north") },
+                    new Block { BlockId = 2, Code = new AssetLocation("game", "wildvine-end-north") },
+                    leaf,
+                };
+                var acc = new EcologyTestBlockAccessor(blocks);
+                var hostPos = new BlockPos(0, 64, 1);
+                var topVine = new BlockPos(0, 64, 0);
+                acc.SetBlock(3, hostPos);
+                acc.SetBlock(1, topVine);
+                acc.SetBlock(1, new BlockPos(0, 63, 0));
+                acc.SetBlock(2, new BlockPos(0, 62, 0));
+
+                var worldMock = new Mock<IWorldAccessor>();
+                worldMock.Setup(w => w.BlockAccessor).Returns(acc);
+                worldMock.Setup(w => w.GetBlock(It.IsAny<AssetLocation>()))
+                    .Returns((AssetLocation loc) =>
+                    {
+                        if (loc == null) return blocks[0];
+                        for (int i = 0; i < blocks.Length; i++)
+                        {
+                            if (blocks[i]?.Code != null && blocks[i].Code.Equals(loc)) return blocks[i];
+                        }
+
+                        return blocks[0];
+                    });
+                var apiMock = new Mock<ICoreAPI>();
+                apiMock.Setup(a => a.World).Returns(worldMock.Object);
+
+                Assert.True(WildVineColumnSupport.IsColumnTopAnchored(
+                    acc, worldMock.Object, topVine, new WildVineInfo(false, false, BlockFacing.NORTH)));
+
+                // Seasonal canopy strip clears the leaf without DidBreakBlock.
+                acc.SetBlock(0, hostPos);
+                WildVineColumnSupport.OnStructuralChange(apiMock.Object, hostPos);
+
+                Assert.Equal(0, acc.GetBlock(topVine).Id);
+                Assert.Equal(0, acc.GetBlock(new BlockPos(0, 63, 0)).Id);
+                Assert.Equal(0, acc.GetBlock(new BlockPos(0, 62, 0)).Id);
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
         }
 
         static IWorldAccessor CreateVineResolveWorld(Block[] blocks)

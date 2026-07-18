@@ -70,6 +70,13 @@ namespace WildFarming.Ecosystem
 
                 WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
                 int catchUpLimit = cfg.MaxTreeGrowthCatchUpYearsPerTick <= 0 ? 1 : cfg.MaxTreeGrowthCatchUpYearsPerTick;
+                entry.LastTreeGrowthYear = TreeCalendarCatchUp.NormalizeLastGrowthYear(
+                    entry.LastTreeGrowthYear,
+                    gameYear,
+                    entry.TreeAgeYears,
+                    catchUpLimit);
+                if (entry.LastTreeGrowthYear >= gameYear) continue;
+
                 int advancedYears = 0;
                 int placedTotal = 0;
 
@@ -125,7 +132,8 @@ namespace WildFarming.Ecosystem
                         entry.Origin,
                         wood,
                         year,
-                        scale);
+                        scale,
+                        entry.TreeAgeYears);
 
                     placedTotal += placed;
                     entry.LastTreeGrowthYear = year;

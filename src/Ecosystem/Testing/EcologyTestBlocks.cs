@@ -61,6 +61,17 @@ namespace WildFarming.Ecosystem.Testing
                 b.BlockMaterial = EnumBlockMaterial.Plant;
                 b.Replaceable = 3000;
             }));
+            blocks = Expand(blocks, Make("game:rock-granite", b =>
+            {
+                b.BlockMaterial = EnumBlockMaterial.Stone;
+                b.Replaceable = 0;
+                b.SideSolid[BlockFacing.NORTH.Index] = true;
+                b.SideSolid[BlockFacing.SOUTH.Index] = true;
+                b.SideSolid[BlockFacing.EAST.Index] = true;
+                b.SideSolid[BlockFacing.WEST.Index] = true;
+                b.SideSolid[BlockFacing.UP.Index] = true;
+                b.SideSolid[BlockFacing.DOWN.Index] = true;
+            }));
             blocks = Expand(blocks, Make("game:fern-eaglefern-normal-free", b =>
             {
                 b.BlockMaterial = EnumBlockMaterial.Plant;

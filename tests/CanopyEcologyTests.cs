@@ -465,6 +465,63 @@ namespace WildFarming.Tests
         }
     }
 
+    public class BareTrunkTipScaffoldTests
+    {
+        static Block Block(string code, int id) =>
+            new Block { BlockId = id, Code = new AssetLocation(code) };
+
+        [Fact]
+        public void NeedsSpringCatchUp_TipAboveDenseMidCanopy_StillNeedsScaffold()
+        {
+            Block air = Block("game:air", 0);
+            Block log = Block("game:log-grown-oak-ud", 1);
+            Block branchy = Block("game:leavesbranchy-oak-grown", 2);
+            var acc = new EcologyTestBlockAccessor(new[] { air, log, branchy });
+
+            var tip = new BlockPos(0, 70, 0);
+            acc.SetBlock(1, tip);
+            // Mid canopy directly under / around tip — old density cube would treat tip as full.
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                for (int dz = -2; dz <= 2; dz++)
+                {
+                    if (dx == 0 && dz == 0) continue;
+                    acc.SetBlock(2, new BlockPos(dx, 68, dz));
+                    acc.SetBlock(2, new BlockPos(dx, 69, dz));
+                }
+            }
+
+            Assert.True(CanopyFoliageRules.NeedsSpringCatchUp(acc, tip, "oak", FoliageCellKind.LogGrown));
+            Assert.True(TreeGrowthApplier.IsTrunkTipUndressed(acc, tip, "oak"));
+            Assert.False(CanopyFoliageRules.HasAdjacentBranchyLeaf(acc, tip, "oak", ignoreBelow: true));
+        }
+
+        [Fact]
+        public void NeedsSpringCatchUp_TipWithSideBranchy_IsSatisfied()
+        {
+            Block air = Block("game:air", 0);
+            Block log = Block("game:log-grown-oak-ud", 1);
+            Block branchy = Block("game:leavesbranchy-oak-grown", 2);
+            var acc = new EcologyTestBlockAccessor(new[] { air, log, branchy });
+
+            var tip = new BlockPos(0, 70, 0);
+            acc.SetBlock(1, tip);
+            int n = 0;
+            for (int dx = -2; dx <= 2 && n < 10; dx++)
+            {
+                for (int dz = -2; dz <= 2 && n < 10; dz++)
+                {
+                    if (dx == 0 && dz == 0) continue;
+                    acc.SetBlock(2, new BlockPos(dx, 70, dz));
+                    n++;
+                }
+            }
+
+            Assert.False(CanopyFoliageRules.NeedsSpringCatchUp(acc, tip, "oak", FoliageCellKind.LogGrown));
+            Assert.False(TreeGrowthApplier.IsTrunkTipUndressed(acc, tip, "oak"));
+        }
+    }
+
     public class FoliageCellIndexTests
     {
         [Fact]

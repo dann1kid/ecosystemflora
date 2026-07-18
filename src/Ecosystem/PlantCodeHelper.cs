@@ -249,13 +249,28 @@ namespace WildFarming.Ecosystem
             return GetTreeWood(block) != null;
         }
 
-        /// <summary>Living log-grown trunk segment (any wood/orientation; excludes aged snags).</summary>
+        /// <summary>
+        /// Living trunk wood in the world: normal <c>log-grown-*</c> and redwood 2×2
+        /// <c>logsection-grown-*</c> quarters (vanilla treegen trunkSegmentBase).
+        /// </summary>
         public static bool IsAnyLogGrownTrunkBlock(Block block)
         {
             if (block?.Code == null || block.Code.Domain != "game") return false;
             string path = block.Code.Path;
-            if (string.IsNullOrEmpty(path) || !path.StartsWith("log-grown-")) return false;
+            if (string.IsNullOrEmpty(path)) return false;
+
+            if (path.StartsWith("logsection-grown-")) return true;
+
+            if (!path.StartsWith("log-grown-")) return false;
             return !path.StartsWith("log-grown-aged");
+        }
+
+        /// <summary>Vanilla 2×2 trunk quarter (<c>logsection-grown-{wood}-{ne|se|sw|nw}-*</c>), e.g. redwood.</summary>
+        public static bool IsLogSectionGrownBlock(Block block)
+        {
+            if (block?.Code == null || block.Code.Domain != "game") return false;
+            string path = block.Code.Path;
+            return path != null && path.StartsWith("logsection-grown-");
         }
 
         public static bool IsFerntreeTrunkBlock(Block block) =>
@@ -362,6 +377,15 @@ namespace WildFarming.Ecosystem
                 // Floral Zones and other content mods extend game:log-grown-* woods without updating our
                 // vanilla wood allowlist. Treat any non-aged wood id as a valid tree species id.
                 return rest;
+            }
+
+            // Redwood 2×2 trunk: logsection-grown-redwood-ne-ud
+            if (path.StartsWith("logsection-grown-"))
+            {
+                string rest = path.Substring("logsection-grown-".Length);
+                int dash = rest.IndexOf('-');
+                if (dash > 0) rest = rest.Substring(0, dash);
+                return string.IsNullOrEmpty(rest) ? null : rest;
             }
 
             if (path.StartsWith("sapling-"))

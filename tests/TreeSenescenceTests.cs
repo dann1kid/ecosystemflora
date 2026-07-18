@@ -65,7 +65,7 @@ namespace WildFarming.Tests
         [Theory]
         [InlineData("pine", 110)]
         [InlineData("birch", 75)]
-        [InlineData("redwood", 140)]
+        [InlineData("redwood", 1000)]
         public void Species_Horizon_MatchesProfile(string wood, int horizon)
         {
             var profile = WildTreeGrowthProfiles.Resolve(wood);

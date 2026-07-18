@@ -33,4 +33,6 @@ Temperate and tropical vines keep their variant; spread uses vanilla block codes
 
 - Watch vine columns on cliff faces and log trunks over several in-game days.
 - Break the host block — vanilla removes the vine; registry entry expires on the next tick.
+- Seasonal leaf strip / orphan foliage prune / tree senescence also prune unsupported vine columns (no floating vines on bare crowns).
+- Chunk-load registration re-checks each vine column once and drops unsupported columns before registry entry.
 - Tropical vines need warm, wet climate per `WildVineEcology` profile.

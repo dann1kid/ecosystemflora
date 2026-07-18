@@ -57,6 +57,9 @@ namespace WildFarming.Ecosystem
 
         internal FlowerPhenologyLifeStore FlowerPhenologyLife => flowerPhenologyLifeStore;
         readonly ColumnTrafficStore columnTrafficStore = new ColumnTrafficStore();
+        /// <summary>Dedup vine support checks while draining pending chunk-load registrations.</summary>
+        readonly HashSet<(int x, int z, string facing, bool tropical)> vineLoadSupportChecked =
+            new HashSet<(int x, int z, string facing, bool tropical)>();
         FootTrafficService footTraffic;
         readonly FoliageCellScheduler foliageCells = new FoliageCellScheduler();
         readonly FoliagePlayerVacancySuppressor foliagePlayerVacancies = new FoliagePlayerVacancySuppressor();
@@ -856,11 +859,23 @@ namespace WildFarming.Ecosystem
                     && PlantCodeHelper.IsTreeLogGrownBlock(matureBlock))
                 {
                     string wood = PlantCodeHelper.GetTreeWood(matureBlock);
-                    if (!treeCalendarAgeStore.TryRestore(entry, origin, wood))
+                    int gameYear = CanopyEcology.GameYear(api.World.Calendar);
+                    if (treeCalendarAgeStore.TryRestore(entry, origin, wood)
+                        && !TreeRegistrationAge.ShouldRejectRestoredAge(
+                            api.World.BlockAccessor, origin, wood, entry))
                     {
-                        int gameYear = CanopyEcology.GameYear(api.World.Calendar);
-                        entry.TreeAgeYears = TreeSpreadMaturity.EffectiveAgeYears(
-                            api.World.BlockAccessor, entry, wood);
+                        // Clamp impossible "years since world start" lags from defaulted saves.
+                        entry.LastTreeGrowthYear = TreeCalendarCatchUp.NormalizeLastGrowthYear(
+                            entry.LastTreeGrowthYear,
+                            gameYear,
+                            entry.TreeAgeYears,
+                            cfg.MaxTreeGrowthCatchUpYearsPerTick);
+                    }
+                    else
+                    {
+                        // Calendar age starts at registration — never invent lifespan from crown size.
+                        entry.TreeAgeYears = 0;
+                        entry.TreeSenescencePhase = TreeSenescencePhase.None;
                         // One year behind so the next growth tick can run (including catch-up after time skip).
                         entry.LastTreeGrowthYear = gameYear - 1;
                     }
@@ -1291,6 +1306,42 @@ namespace WildFarming.Ecosystem
             WildVineColumnSupport.OnStructuralChange(api, changedPos, OnWildVineCellRemoved);
         }
 
+        /// <summary>
+        /// Revalidate vine columns after a host cell is cleared (player break, ecology remove,
+        /// seasonal leaf strip, tree senescence).
+        /// </summary>
+        internal void NotifyWildVineHostChanged(BlockPos changedPos)
+        {
+            if (changedPos == null || !EcosystemConfig.Loaded.EnableWildVineEcology) return;
+            OnWildVineHostChanged(changedPos);
+        }
+
+        /// <summary>
+        /// On chunk registration, prune vine columns whose top is no longer anchored (cheap check;
+        /// at most one walk per column per drain via <see cref="vineLoadSupportChecked"/>).
+        /// </summary>
+        /// <returns>False when the column was unsupported and removed (or the cell is gone).</returns>
+        bool TryEnsureVineColumnSupportedOnLoad(IBlockAccessor acc, BlockPos pos, in WildVineInfo info)
+        {
+            if (api?.World == null || acc == null || pos == null) return false;
+            if (!EcosystemConfig.Loaded.EnableWildVineEcology) return true;
+
+            BlockPos top = WildVineHelper.FindHighestColumnCell(acc, pos, info);
+            var key = (top.X, top.Z, info.Facing.Code, info.Tropical);
+            if (!vineLoadSupportChecked.Add(key))
+            {
+                return WildVineHelper.IsVineBlock(acc.GetBlock(pos));
+            }
+
+            if (WildVineColumnSupport.IsColumnTopAnchored(acc, api.World, top, info))
+            {
+                return true;
+            }
+
+            WildVineColumnSupport.PruneUnsupportedColumn(acc, api.World, top, OnWildVineCellRemoved);
+            return false;
+        }
+
         void OnWildVineCellRemoved(BlockPos pos)
         {
             if (pos == null) return;
@@ -1466,6 +1517,9 @@ namespace WildFarming.Ecosystem
         {
             if (pendingRegistrations.TotalPending == 0) return;
 
+            // One support check per vine column per drain wave (section+end hits share a column).
+            vineLoadSupportChecked.Clear();
+
             HashSet<long> priorityChunks = null;
             if (cfg.EnablePlayerPriorityRegistration && api != null)
             {
@@ -1547,7 +1601,27 @@ namespace WildFarming.Ecosystem
 
                 case PendingRegistrationKind.Vine:
                     if (registry.Contains(item.Pos)) return true;
-                    if (!WildVineHelper.IsVineBlock(block)) { stale = true; return false; }
+                    if (!WildVineHelper.TryParse(block, out WildVineInfo vineInfo))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
+                    // Chunk-load / scan registration: drop floating columns (e.g. leaf host already gone)
+                    // before they enter the reproduce registry. Deduped per column in this drain wave.
+                    if (!TryEnsureVineColumnSupportedOnLoad(acc, item.Pos, vineInfo))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
+                    block = acc.GetBlock(item.Pos);
+                    if (!WildVineHelper.IsVineBlock(block))
+                    {
+                        stale = true;
+                        return false;
+                    }
+
                     if (!EcosystemParticipant.TryFromBlock(block, out IEcosystemParticipant vineParticipant))
                     {
                         stale = true;

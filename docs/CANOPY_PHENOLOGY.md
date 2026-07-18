@@ -112,6 +112,7 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 - Only **orthogonal** neighbors; same `wood`, vacant air, land claims respected.
 - Activity + deterministic noise (patchy crown).
 - **Density caps** (`MaxBranchyNearLog` / `MaxRegularNearBranchy` per wood profile) stop catch-up when the local crown is already bushy enough.
+- **Log tip density** counts only same-level / above branchy — foliage under a protruding tip does not silence spring scaffold (fixes bare oak stick-tops).
 
 **Conifers** — no behaviour. **Not** `log-placed` / `leaves-placed`.
 
@@ -127,7 +128,7 @@ WildCanopySeason + CanopyEcology (phase, activity, gates)
 
 Ensures bare skeleton by winter even when chunk sync marks the month complete after a partial autumn pass.
 
-**Anti-wave rules (v4.9+):** temperate bud curves have **no February** and **no July residual bud** (those used to leave→strip→leave). Autumn wins phase ties (`defol >= bud`). Yearly tree aging (`TreeGrowthApplier`) does not place deciduous foliage during autumn or the bare winter window — only trunk height may advance then.
+**Anti-wave rules (v4.9+):** temperate bud curves have **no February** and **no July residual bud** (those used to leave→strip→leave). Autumn wins phase ties (`defol >= bud`). Yearly tree aging (`TreeGrowthApplier`) does not place deciduous foliage during autumn or the bare winter window — only trunk height may advance then. Yearly growth also respects per-wood **crown forms** (`TreeCrownForm` — see [`TREE_AGING.md`](TREE_AGING.md)); seasonal spring dress is still density/interior-biased and may fill mid canopy faster than the silhouette.
 
 **Fuller spring crowns (v4.8.2+):** chunk sync again grows **`log → leavesbranchy`** in the crown zone during Spring (was missing in Option B “branchy-only dress”, which left thin skeletons). Leaf/branchy catch-up scales and near-crown density caps were raised so trees fill more before summer idle.
 

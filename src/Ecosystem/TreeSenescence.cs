@@ -294,6 +294,7 @@ namespace WildFarming.Ecosystem
 
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
+            EcosystemSystem.Instance?.NotifyWildVineHostChanged(pos);
             return true;
         }
 

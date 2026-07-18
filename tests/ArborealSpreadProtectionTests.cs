@@ -31,6 +31,47 @@ namespace WildFarming.Tests
             Assert.True(PlantCodeHelper.IsTreeLogGrownBlock(Block("game:log-grown-moddedwood-ud")));
         }
 
+        [Theory]
+        [InlineData("game:logsection-grown-redwood-ne-ud")]
+        [InlineData("game:logsection-grown-redwood-sw-ns")]
+        public void RedwoodLogSection_IsLivingTrunkAndSpecies(string code)
+        {
+            Block section = Block(code);
+            Assert.True(PlantCodeHelper.IsLogSectionGrownBlock(section));
+            Assert.True(PlantCodeHelper.IsAnyLogGrownTrunkBlock(section));
+            Assert.True(PlantCodeHelper.IsTreeLogGrownBlock(section));
+            Assert.True(PlantCodeHelper.IsArborealHostBlock(section));
+            Assert.Equal("redwood", PlantCodeHelper.GetTreeWood(section));
+            Assert.Equal("redwood", PlantCodeHelper.ResolveEcologySpecies(section));
+            Assert.False(PlantCodeHelper.IsAnyLogGrownTrunkBlock(Block("game:logsection-placed-redwood-ne-ud")));
+        }
+
+        [Fact]
+        public void GetTreeTrunkBase_WalksFromBranchLogThroughRedwoodSections()
+        {
+            Block air = new Block { BlockId = 0, Code = new AssetLocation("game", "air") };
+            Block section = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game", "logsection-grown-redwood-ne-ud"),
+            };
+            Block branch = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game", "log-grown-redwood-ud"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, section, branch });
+            acc.SetBlock(1, new BlockPos(0, 60, 0));
+            acc.SetBlock(1, new BlockPos(0, 61, 0));
+            acc.SetBlock(1, new BlockPos(0, 62, 0));
+            acc.SetBlock(2, new BlockPos(0, 63, 0));
+            acc.SetBlock(2, new BlockPos(0, 64, 0));
+
+            BlockPos basePos = PlantCodeHelper.GetTreeTrunkBase(acc, new BlockPos(0, 64, 0));
+            Assert.Equal(60, basePos.Y);
+            Assert.True(PlantCodeHelper.IsLogSectionGrownBlock(acc.GetBlock(basePos)));
+        }
+
         [Fact]
         public void CanDisplaceFromSolveCell_rejects_log_grown_trunk()
         {

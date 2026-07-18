@@ -28,7 +28,7 @@ When **`EnableTreeAging`** is off, spread still places vanilla **`sapling-{wood}
 | **3. Register** | Lowest `log-grown` in the column enters the ecology registry at **`TreeAgeYears = 0`** (spread seedlings register immediately; worldgen giants register on chunk scan). |
 | **4. Active life** | Each **game year** in loaded chunks: age +1; may add trunk/crown blocks; continues **sapling spread** from trunk base. Trees do **not** die from niche stress. |
 | **5. Seasonal dress** | *(Parallel, optional)* Deciduous crowns follow autumn/winter/spring (`EnableSeasonalFoliage`) — separate from aging/senescence. |
-| **6. Senescence** | When age ≥ species lifespan (oak ~120 y, birch ~90, redwood ~140 — see `WildTreeGrowthProfiles.cs`), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
+| **6. Senescence** | When age ≥ species lifespan (oak ~120 y, birch ~75, redwood ~1000 — see `WildTreeGrowthProfiles.cs`), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
 | **7. Remains** | Final year: snag removed; **stump** `log-{wood}-ud` at base + up to **`TreeSenescenceFallenLogCount`** horizontal `debarkedlog-*` nearby. Vanilla choppable blocks — **not** re-registered; ecology record cleared. Mycelium/soil cascade as on player tree cut. |
 | **8. Succession** | No sapling burst on death — **neighbouring mature trees** fill the gap through normal spread. |
 
@@ -62,9 +62,24 @@ Worldgen trees register at **age 0** even when already tall. They will **not** s
 
 | When | What |
 |------|------|
-| **Registration** | `TreeAgeYears = 0`; structure measured live |
+| **Registration** | `TreeAgeYears = 0` (size never invents lifespan); restore from save only when the trunk is not a fresh seedling overwriting a stale record |
+| **Catch-up** | Missed years after time skip are limited; a `LastGrowthYear` stuck near 0 in a long-lived world is snapped forward so saplings do not burn their whole lifespan catching up from year 0 |
 | **Each game year** | `TreeAgeYears++`, then growth **or** next senescence stage if age ≥ horizon |
-| **Young / below reference** | Faster growth, mostly upward |
+| **Young / below reference** | Faster growth; height first until trunk ~85% of reference, unless crown already lags |
+| **Crown lags trunk** | Prefer branchy/leaf spread (typical after sapling treegen); extra ops as calendar age rises; horizontal-first placement |
+| **Crown form** | Per-wood silhouette (`TreeCrownForm`): Spreading / Oval / Umbrella / Column / Tiered — yearly foliage only inside that envelope |
+| **Upper canopy bias** | Spreading/Umbrella/Tiered prefer top anchors; Oval prefers mid-crown; tip dress respects the form |
+| **Bare tip repair** | Spring log density / winter restore ignore foliage *below* the tip; yearly aging dresses undressed tips even when height ops are done |
+
+### Crown forms (first pass)
+
+| Form | Woods | Shape |
+|------|-------|--------|
+| **Spreading** | oak, maple, crimsonkingmaple, walnut | Clearer bole; widest near tip |
+| **Oval** | birch, ebony, purpleheart | Mid-height oval; taper at tip and base |
+| **Umbrella** | acacia, kapok | High crown break; flat wide shelf |
+| **Column** | pine, larch, greenspirecypress | Narrow vertical fill |
+| **Tiered** | redwood, baldcypress | Heavy upper tiers |
 | **Above typical mature** | Growth slows but continues (rare ops above ~125% size index) |
 | **Physical limits** | Map height, crown scan radius 14, vacancy / claims |
 
@@ -80,12 +95,12 @@ Compared to **typical worldgen mature** per species (reference, not a cap):
 size index = 55% × (trunk / ref trunk) + 45% × (crown / ref crown)
 ```
 
-Example oak reference ~14 trunk / 5 crown — a worldgen oak near that reads **~100%**; an ancient taller tree can read **150%+**.
+Example oak reference ~14 trunk / 7 crown — a worldgen oak near that reads **~100%**; an ancient taller tree can read **150%+**.
 
 Inspect:
 
 - `Tree age: 3 / 120 years (since ecology registration)`
-- `Structure: trunk 14 blocks, crown radius 5 (100% of typical mature ~14/5)`
+- `Structure: trunk 14 blocks, crown radius 7 (100% of typical mature ~14/7)`
 
 ### Senescence (phased death)
 

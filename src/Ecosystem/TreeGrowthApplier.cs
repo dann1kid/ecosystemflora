@@ -17,7 +17,8 @@ namespace WildFarming.Ecosystem
             BlockPos trunkBase,
             string wood,
             int gameYear,
-            float activityScale)
+            float activityScale,
+            int treeAgeYears = 0)
         {
             if (api == null || acc == null || trunkBase == null || string.IsNullOrEmpty(wood)) return 0;
             if (!LandClaimGuard.AllowsEcologyChange(api, trunkBase)) return 0;
@@ -34,46 +35,71 @@ namespace WildFarming.Ecosystem
                 metrics.TrunkHeight,
                 metrics.CrownRadius,
                 profile) / pace;
-            int ops = OpsForSizeIndex(sizeIndex, trunkBase, wood, gameYear);
-            if (ops <= 0) return 0;
+            float trunkVsRef = TreeGrowthTargets.TrunkVsReference(metrics.TrunkHeight, profile);
+            float crownVsRef = TreeGrowthTargets.CrownVsReference(metrics.CrownRadius, profile);
+            bool crownLags = TreeGrowthTargets.CrownLagsTrunk(trunkVsRef, crownVsRef);
 
             // Seasonal canopy: do not push leaves/branchy during autumn strip or winter bare
             // window — otherwise yearly aging fights Dec–Feb force-strip and looks like waves.
             bool allowFoliageGrowth = AllowsSeasonalFoliageGrowth(api, trunkBase, wood);
 
             int placed = 0;
+            // Worldgen / mature oaks often stop extending while the tip stays a bare stick above
+            // a leafy mid canopy — repair that shelf even when yearly ops are zero.
+            if (allowFoliageGrowth
+                && metrics.TrunkTop != null
+                && IsTrunkTipUndressed(acc, metrics.TrunkTop, wood))
+            {
+                TryDressNewTrunkTip(api, acc, metrics.TrunkTop, wood, profile, metrics, trunkBase);
+                if (!IsTrunkTipUndressed(acc, metrics.TrunkTop, wood)) placed++;
+            }
+
+            int ops = OpsForSizeIndex(sizeIndex, trunkBase, wood, gameYear, crownLags, treeAgeYears);
+            if (ops <= 0) return placed;
+
             bool canExtendTrunk = metrics.TrunkTop.Y + 1 < acc.MapSizeY - 1;
+            bool belowCrownSoftTarget = metrics.CrownRadius < profile.ReferenceCrownRadius;
             bool needSpread = allowFoliageGrowth
-                && metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius;
-            float trunkVsRef = TreeGrowthTargets.TrunkVsReference(metrics.TrunkHeight, profile);
+                && (belowCrownSoftTarget || metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius);
 
             for (int i = 0; i < ops; i++)
             {
                 bool preferHeight = canExtendTrunk
-                    && (!needSpread || PreferHeightPass(i, trunkVsRef, trunkBase, wood, gameYear));
+                    && !crownLags
+                    && (!needSpread || PreferHeightPass(i, trunkVsRef, trunkBase, wood, gameYear, profile.CrownForm));
                 if (preferHeight)
                 {
-                    if (TryExtendTrunk(api, acc, metrics.TrunkTop, wood))
+                    if (TryExtendTrunk(api, acc, metrics.TrunkTop, wood, profile, metrics, trunkBase))
                     {
                         placed++;
                         metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
                         canExtendTrunk = metrics.TrunkTop.Y + 1 < acc.MapSizeY - 1;
                         trunkVsRef = TreeGrowthTargets.TrunkVsReference(metrics.TrunkHeight, profile);
+                        crownVsRef = TreeGrowthTargets.CrownVsReference(metrics.CrownRadius, profile);
+                        crownLags = TreeGrowthTargets.CrownLagsTrunk(trunkVsRef, crownVsRef);
+                        belowCrownSoftTarget = metrics.CrownRadius < profile.ReferenceCrownRadius;
+                        needSpread = allowFoliageGrowth
+                            && (belowCrownSoftTarget || metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius);
                         continue;
                     }
                 }
 
                 if (!allowFoliageGrowth) continue;
 
-                if (needSpread && TrySpreadBranchy(api, acc, trunkBase, wood, metrics, gameYear))
+                if (needSpread && TrySpreadBranchy(api, acc, trunkBase, wood, metrics, profile, gameYear, crownLags))
                 {
                     placed++;
                     metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
-                    needSpread = metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius;
+                    trunkVsRef = TreeGrowthTargets.TrunkVsReference(metrics.TrunkHeight, profile);
+                    crownVsRef = TreeGrowthTargets.CrownVsReference(metrics.CrownRadius, profile);
+                    crownLags = TreeGrowthTargets.CrownLagsTrunk(trunkVsRef, crownVsRef);
+                    belowCrownSoftTarget = metrics.CrownRadius < profile.ReferenceCrownRadius;
+                    needSpread = allowFoliageGrowth
+                        && (belowCrownSoftTarget || metrics.CrownRadius < TreeStructureProbe.MaxCrownScanRadius);
                     continue;
                 }
 
-                if (TrySpreadRegularLeaf(api, acc, trunkBase, wood, metrics, gameYear))
+                if (TrySpreadRegularLeaf(api, acc, trunkBase, wood, metrics, profile, gameYear, crownLags))
                 {
                     placed++;
                 }
@@ -97,23 +123,34 @@ namespace WildFarming.Ecosystem
             float sizeIndex,
             BlockPos trunkBase,
             string wood,
-            int gameYear)
+            int gameYear,
+            bool crownLags,
+            int treeAgeYears)
         {
+            int ops;
             if (sizeIndex >= 2.5f)
             {
                 float gate = CanopyBlockHelper.DeterministicNoise(trunkBase, wood, gameYear + 900);
-                return gate < 0.12f ? 1 : 0;
+                ops = gate < 0.12f ? 1 : 0;
             }
-
-            if (sizeIndex >= 1.25f)
+            else if (sizeIndex >= 1.25f)
             {
                 float gate = CanopyBlockHelper.DeterministicNoise(trunkBase, wood, gameYear + 900);
-                return gate < 0.3f ? 1 : 0;
+                ops = gate < 0.3f ? 1 : 0;
+            }
+            else if (sizeIndex < 0.35f) ops = 2;
+            else if (sizeIndex < 0.85f) ops = 2;
+            else ops = 1;
+
+            // Tall-but-skinny trees (typical after vanilla sapling treegen): spend the year on crown.
+            if (crownLags)
+            {
+                if (ops < 2) ops = 2;
+                if (treeAgeYears >= 15) ops++;
+                if (treeAgeYears >= 40) ops++;
             }
 
-            if (sizeIndex < 0.35f) return 2;
-            if (sizeIndex < 0.85f) return 2;
-            return 1;
+            return ops;
         }
 
         static bool PreferHeightPass(
@@ -121,14 +158,23 @@ namespace WildFarming.Ecosystem
             float trunkVsReference,
             BlockPos trunkBase,
             string wood,
-            int gameYear)
+            int gameYear,
+            TreeCrownForm form)
         {
             if (trunkVsReference > 0.85f) return false;
             float gate = CanopyBlockHelper.DeterministicNoise(trunkBase, wood, gameYear + 700 + opIndex);
-            return gate < 0.62f;
+            float threshold = form == TreeCrownForm.Column ? 0.72f : 0.62f;
+            return gate < threshold;
         }
 
-        static bool TryExtendTrunk(ICoreAPI api, IBlockAccessor acc, BlockPos trunkTop, string wood)
+        static bool TryExtendTrunk(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos trunkTop,
+            string wood,
+            WildTreeGrowthProfiles.Profile profile,
+            TreeStructureMetrics metrics,
+            BlockPos trunkBase)
         {
             if (trunkTop == null) return false;
 
@@ -153,12 +199,26 @@ namespace WildFarming.Ecosystem
             acc.MarkBlockDirty(above);
             EcosystemSystem.Instance?.FoliageCells?.OnBlockAdded(above);
 
-            // Add a small amount of foliage with upward growth, but never overwrite blocks.
-            TryPlaceOneLeafNearNewTrunk(api, acc, above, wood);
+            TreeStructureMetrics after = TreeStructureProbe.Measure(acc, trunkBase, wood);
+            TryDressNewTrunkTip(api, acc, above, wood, profile, after, trunkBase);
             return true;
         }
 
-        static void TryPlaceOneLeafNearNewTrunk(ICoreAPI api, IBlockAccessor acc, BlockPos newTrunkPos, string wood)
+        /// <summary>True when the tip has no branchy at the same level or above (foliage below does not count).</summary>
+        internal static bool IsTrunkTipUndressed(IBlockAccessor acc, BlockPos trunkTop, string wood)
+        {
+            if (acc == null || trunkTop == null || string.IsNullOrEmpty(wood)) return false;
+            return !CanopyFoliageRules.HasAdjacentBranchyLeaf(acc, trunkTop, wood, ignoreBelow: true);
+        }
+
+        static void TryDressNewTrunkTip(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos newTrunkPos,
+            string wood,
+            WildTreeGrowthProfiles.Profile profile,
+            TreeStructureMetrics metrics,
+            BlockPos trunkBase)
         {
             if (api == null || acc == null || newTrunkPos == null || string.IsNullOrEmpty(wood)) return;
             if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, newTrunkPos)) return;
@@ -169,8 +229,10 @@ namespace WildFarming.Ecosystem
             var scratch = new BlockPos(0);
             int start = (int)(CanopyBlockHelper.DeterministicNoise(newTrunkPos, wood, 31337) * 4f) % 4;
             if (start < 0) start += 4;
+            int placed = 0;
+            int maxDress = profile.CrownForm == TreeCrownForm.Column ? 2 : 3;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4 && placed < maxDress; i++)
             {
                 int dir = (start + i) % 4;
                 scratch.Set(
@@ -179,18 +241,53 @@ namespace WildFarming.Ecosystem
                     newTrunkPos.Z + (dir == 2 ? 1 : dir == 3 ? -1 : 0));
                 scratch.dimension = newTrunkPos.dimension;
 
-                if (!acc.IsValidPos(scratch)) continue;
-                if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
-                if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(scratch))) continue;
+                if (!TreeCrownEnvelope.AllowsCell(profile, metrics, trunkBase, scratch)) continue;
+                if (!TryPlaceTipFoliage(api, acc, scratch, newTrunkPos, anchor, wood, preferBranchy: true))
+                {
+                    continue;
+                }
 
-                Block leaf = CanopyBlockHelper.ResolveGrownLeafBlock(api.World, wood, scratch, newTrunkPos, anchor);
-                if (leaf == null || leaf.Id == 0) continue;
-
-                acc.SetBlock(leaf.BlockId, scratch);
-                acc.MarkBlockDirty(scratch);
-                EcosystemSystem.Instance?.FoliageCells?.OnBlockAdded(scratch);
-                return;
+                placed++;
             }
+
+            if (placed < maxDress && TreeCrownEnvelope.DressAboveTip(profile.CrownForm))
+            {
+                scratch.Set(newTrunkPos.X, newTrunkPos.Y + 1, newTrunkPos.Z);
+                scratch.dimension = newTrunkPos.dimension;
+                if (TreeCrownEnvelope.AllowsCell(profile, metrics, trunkBase, scratch))
+                {
+                    TryPlaceTipFoliage(api, acc, scratch, newTrunkPos, anchor, wood, preferBranchy: true);
+                }
+            }
+        }
+
+        static bool TryPlaceTipFoliage(
+            ICoreAPI api,
+            IBlockAccessor acc,
+            BlockPos target,
+            BlockPos anchorPos,
+            Block anchor,
+            string wood,
+            bool preferBranchy)
+        {
+            if (!acc.IsValidPos(target)) return false;
+            if (!LandClaimGuard.AllowsEcologyChange(api, target)) return false;
+            if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(target))) return false;
+
+            Block leaf = preferBranchy
+                ? CanopyBlockHelper.ResolveBranchyLeafBlock(api.World, wood, target, anchorPos, anchor)
+                : CanopyBlockHelper.ResolveGrownLeafBlock(api.World, wood, target, anchorPos, anchor);
+            if (leaf == null || leaf.Id == 0)
+            {
+                leaf = CanopyBlockHelper.ResolveGrownLeafBlock(api.World, wood, target, anchorPos, anchor);
+            }
+
+            if (leaf == null || leaf.Id == 0) return false;
+
+            acc.SetBlock(leaf.BlockId, target);
+            acc.MarkBlockDirty(target);
+            EcosystemSystem.Instance?.FoliageCells?.OnBlockAdded(target);
+            return true;
         }
 
         static bool TrySpreadBranchy(
@@ -199,13 +296,16 @@ namespace WildFarming.Ecosystem
             BlockPos trunkBase,
             string wood,
             TreeStructureMetrics metrics,
-            int gameYear)
+            WildTreeGrowthProfiles.Profile profile,
+            int gameYear,
+            bool crownLags)
         {
             var candidates = new List<BlockPos>(32);
-            CollectCrownAnchors(acc, trunkBase, wood, metrics, candidates, branchyOnly: false);
+            CollectCrownAnchors(acc, trunkBase, wood, metrics, profile, candidates, branchyOnly: false);
             if (candidates.Count == 0) return false;
 
-            ShuffleCandidates(candidates, trunkBase, wood, gameYear + 11);
+            OrderCandidatesByForm(candidates, metrics, profile, trunkBase);
+            ShuffleWithinPriorityBands(candidates, wood, gameYear + 11, metrics, profile, trunkBase);
 
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -214,8 +314,8 @@ namespace WildFarming.Ecosystem
                 if (!CanopyBlockHelper.IsBudAnchorBlock(sourceBlock, wood)) continue;
 
                 if (TryPlaceAdjacent(
-                        api, acc, source, sourceBlock, wood,
-                        budBranchy: true, gameYear, salt: 31))
+                        api, acc, source, sourceBlock, wood, profile, metrics, trunkBase,
+                        budBranchy: true, gameYear, salt: 31, crownLags: crownLags))
                 {
                     return true;
                 }
@@ -230,13 +330,16 @@ namespace WildFarming.Ecosystem
             BlockPos trunkBase,
             string wood,
             TreeStructureMetrics metrics,
-            int gameYear)
+            WildTreeGrowthProfiles.Profile profile,
+            int gameYear,
+            bool crownLags)
         {
             var candidates = new List<BlockPos>(32);
-            CollectCrownAnchors(acc, trunkBase, wood, metrics, candidates, branchyOnly: true);
+            CollectCrownAnchors(acc, trunkBase, wood, metrics, profile, candidates, branchyOnly: true);
             if (candidates.Count == 0) return false;
 
-            ShuffleCandidates(candidates, trunkBase, wood, gameYear + 23);
+            OrderCandidatesByForm(candidates, metrics, profile, trunkBase);
+            ShuffleWithinPriorityBands(candidates, wood, gameYear + 23, metrics, profile, trunkBase);
 
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -245,8 +348,8 @@ namespace WildFarming.Ecosystem
                 if (CanopyFoliageRules.Classify(sourceBlock) != FoliageCellKind.BranchyLeaf) continue;
 
                 if (TryPlaceAdjacent(
-                        api, acc, source, sourceBlock, wood,
-                        budBranchy: false, gameYear, salt: 47))
+                        api, acc, source, sourceBlock, wood, profile, metrics, trunkBase,
+                        budBranchy: false, gameYear, salt: 47, crownLags: crownLags))
                 {
                     return true;
                 }
@@ -260,21 +363,26 @@ namespace WildFarming.Ecosystem
             BlockPos trunkBase,
             string wood,
             TreeStructureMetrics metrics,
+            WildTreeGrowthProfiles.Profile profile,
             List<BlockPos> output,
             bool branchyOnly)
         {
-            int crownStartY = trunkBase.Y + System.Math.Max(2, metrics.TrunkHeight / 3);
-            int radius = System.Math.Min(14, metrics.CrownRadius + 3);
+            int crownStartY = TreeCrownEnvelope.CrownStartY(trunkBase, metrics, profile.CrownForm);
+            int crownTopY = TreeCrownEnvelope.CrownTopY(metrics, profile.CrownForm);
+            int radius = System.Math.Min(
+                TreeStructureProbe.MaxCrownScanRadius,
+                System.Math.Max(profile.ReferenceCrownRadius + 1, metrics.CrownRadius + 3));
             var scratch = new BlockPos(0);
 
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
-                    for (int y = crownStartY; y <= metrics.TrunkTop.Y + 5 && y < acc.MapSizeY; y++)
+                    for (int y = crownStartY; y <= crownTopY && y < acc.MapSizeY; y++)
                     {
                         scratch.Set(trunkBase.X + dx, y, trunkBase.Z + dz);
                         if (!acc.IsValidPos(scratch)) continue;
+                        if (!TreeCrownEnvelope.AllowsCell(profile, metrics, trunkBase, scratch)) continue;
 
                         Block block = acc.GetBlock(scratch);
                         if (branchyOnly)
@@ -293,13 +401,68 @@ namespace WildFarming.Ecosystem
             }
         }
 
-        static void ShuffleCandidates(List<BlockPos> candidates, BlockPos trunkBase, string wood, int salt)
+        /// <summary>Form-aware anchor order (spreading/umbrella: top first; oval: mid-band first).</summary>
+        internal static void OrderCandidatesByForm(
+            List<BlockPos> candidates,
+            TreeStructureMetrics metrics,
+            WildTreeGrowthProfiles.Profile profile,
+            BlockPos trunkBase)
         {
-            for (int i = candidates.Count - 1; i > 0; i--)
+            if (candidates == null || candidates.Count < 2) return;
+
+            candidates.Sort((a, b) =>
+            {
+                int pa = TreeCrownEnvelope.AnchorPriority(profile.CrownForm, metrics, trunkBase, a);
+                int pb = TreeCrownEnvelope.AnchorPriority(profile.CrownForm, metrics, trunkBase, b);
+                int cmp = pb.CompareTo(pa);
+                if (cmp != 0) return cmp;
+                return b.Y.CompareTo(a.Y);
+            });
+        }
+
+        /// <summary>Legacy helper used by tests — spreading-style top-first order.</summary>
+        internal static void OrderCandidatesUpperCrownFirst(List<BlockPos> candidates, TreeStructureMetrics metrics)
+        {
+            var profile = new WildTreeGrowthProfiles.Profile(14, 7, 120, crownForm: TreeCrownForm.Spreading);
+            var trunkBase = new BlockPos(metrics.TrunkTop.X, metrics.TrunkTop.Y - metrics.TrunkHeight + 1, metrics.TrunkTop.Z);
+            OrderCandidatesByForm(candidates, metrics, profile, trunkBase);
+        }
+
+        static void ShuffleWithinPriorityBands(
+            List<BlockPos> candidates,
+            string wood,
+            int salt,
+            TreeStructureMetrics metrics,
+            WildTreeGrowthProfiles.Profile profile,
+            BlockPos trunkBase)
+        {
+            if (candidates == null || candidates.Count < 2) return;
+
+            int i = 0;
+            while (i < candidates.Count)
+            {
+                int band = TreeCrownEnvelope.AnchorPriority(profile.CrownForm, metrics, trunkBase, candidates[i]) / 20;
+                int j = i + 1;
+                while (j < candidates.Count)
+                {
+                    int other = TreeCrownEnvelope.AnchorPriority(profile.CrownForm, metrics, trunkBase, candidates[j]) / 20;
+                    if (other != band) break;
+                    j++;
+                }
+
+                ShuffleRange(candidates, i, j - 1, wood, salt + band * 17);
+                i = j;
+            }
+        }
+
+        static void ShuffleRange(List<BlockPos> candidates, int from, int to, string wood, int salt)
+        {
+            for (int i = to; i > from; i--)
             {
                 float gate = CanopyBlockHelper.DeterministicNoise(candidates[i], wood, salt + i);
-                int j = (int)(gate * (i + 1));
-                if (j < 0) j = 0;
+                int span = i - from + 1;
+                int j = from + (int)(gate * span);
+                if (j < from) j = from;
                 if (j > i) j = i;
 
                 BlockPos tmp = candidates[i];
@@ -314,24 +477,32 @@ namespace WildFarming.Ecosystem
             BlockPos sourcePos,
             Block sourceBlock,
             string wood,
+            WildTreeGrowthProfiles.Profile profile,
+            TreeStructureMetrics metrics,
+            BlockPos trunkBase,
             bool budBranchy,
             int gameYear,
-            int salt)
+            int salt,
+            bool crownLags)
         {
             if (CanopyBurnGuard.SuppressesFoliagePlacement(acc, sourcePos)) return false;
 
             var scratch = new BlockPos(0);
-            int start = (int)(CanopyBlockHelper.DeterministicNoise(sourcePos, wood, gameYear + salt) * 6f) % 6;
-            if (start < 0) start += 6;
+            bool horizontalFirst = TreeCrownEnvelope.PreferHorizontalFill(profile.CrownForm, crownLags);
+            int[] dirOrder = horizontalFirst ? HorizontalFirstDirs : SequentialDirs;
+            int start = (int)(CanopyBlockHelper.DeterministicNoise(sourcePos, wood, gameYear + salt) * dirOrder.Length) % dirOrder.Length;
+            if (start < 0) start += dirOrder.Length;
+            float placeGate = crownLags || horizontalFirst ? 0.9f : 0.72f;
 
-            for (int n = 0; n < 6; n++)
+            for (int n = 0; n < dirOrder.Length; n++)
             {
-                int i = (start + n) % 6;
+                int i = dirOrder[(start + n) % dirOrder.Length];
                 scratch.Set(
                     sourcePos.X + NeighborDx[i],
                     sourcePos.Y + NeighborDy[i],
                     sourcePos.Z + NeighborDz[i]);
                 if (!acc.IsValidPos(scratch)) continue;
+                if (!TreeCrownEnvelope.AllowsCell(profile, metrics, trunkBase, scratch)) continue;
                 if (!LandClaimGuard.AllowsEcologyChange(api, scratch)) continue;
                 if (CanopyBurnGuard.SuppressesBudTarget(acc, scratch)) continue;
                 if (!PlantVacancyRules.IsVacantPlantSpace(acc.GetBlock(scratch))) continue;
@@ -339,7 +510,7 @@ namespace WildFarming.Ecosystem
                 if (CanopyFoliageRules.BlocksPlayerClearedVacancy(api, scratch)) continue;
 
                 float gate = CanopyBlockHelper.DeterministicNoise(scratch, wood, gameYear + salt + i);
-                if (gate > 0.72f) continue;
+                if (gate > placeGate) continue;
 
                 Block placed = budBranchy
                     ? CanopyBlockHelper.ResolveBranchyLeafBlock(api.World, wood, scratch, sourcePos, sourceBlock)
@@ -355,6 +526,10 @@ namespace WildFarming.Ecosystem
 
             return false;
         }
+
+        // Neighbor indices: 0=+X 1=-X 2=+Y 3=-Y 4=+Z 5=-Z
+        static readonly int[] SequentialDirs = { 0, 1, 2, 3, 4, 5 };
+        static readonly int[] HorizontalFirstDirs = { 0, 1, 4, 5, 2, 3 };
 
         static Block ResolveLogBlock(IWorldAccessor world, string wood)
         {
