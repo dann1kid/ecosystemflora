@@ -63,6 +63,7 @@ namespace WildFarming.Ecosystem
         bool deferredTreeBootstrapDone;
         int foliageBootstrapPasses;
         bool foliageStartupLogged;
+        bool ecologyRuntimeStarted;
         internal FoliageCellScheduler FoliageCells => foliageCells;
         internal StumpDecayScheduler StumpDecay => stumpDecayScheduler;
         internal FoliagePlayerVacancySuppressor FoliagePlayerVacancies => foliagePlayerVacancies;
@@ -108,6 +109,25 @@ namespace WildFarming.Ecosystem
 
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
 
+            StartEcologyRuntime();
+        }
+
+        /// <summary>
+        /// First-time ecology wiring (samplers, ticks, chunk hooks, workers).
+        /// Safe to call from <see cref="TryRefreshTickIntervals"/> when the ecosystem was disabled at Init.
+        /// </summary>
+        void StartEcologyRuntime()
+        {
+            if (api == null || api.Side != EnumAppSide.Server) return;
+            if (ecologyRuntimeStarted)
+            {
+                SyncBackgroundWorkers(EcosystemConfig.Loaded);
+                RegisterTickListeners(EcosystemConfig.Loaded);
+                return;
+            }
+
+            ecologyRuntimeStarted = true;
+
             FloraContext = new FloraContextSampler();
             Niche = new NicheSampler();
             SpacingIndex = new EcologySpacingIndex();
@@ -115,18 +135,8 @@ namespace WildFarming.Ecosystem
             EcologyColumns = new EcologyColumnState();
             spreadCooldown = new SpreadCooldownService(api, registry);
 
-            EcosystemConfig tickCfg = EcosystemConfig.Loaded;
-            if (tickCfg.EnableBackgroundRegistrationScan)
-            {
-                backgroundRegistration.Start(api.World.Blocks, tickCfg.RegistrationWorkerCount);
-            }
-
-            if (tickCfg.EnableBackgroundSpreadSolve)
-            {
-                backgroundSpread.Start(api.World.Blocks, tickCfg.SpreadWorkerCount);
-            }
-
-            RegisterTickListeners(tickCfg);
+            SyncBackgroundWorkers(EcosystemConfig.Loaded);
+            RegisterTickListeners(EcosystemConfig.Loaded);
 
             footTraffic = new FootTrafficService(columnTrafficStore);
 
@@ -159,6 +169,21 @@ namespace WildFarming.Ecosystem
             }
 
             SpeciesEcologyLegacyAccess.LogMissingContractSpecies(api);
+        }
+
+        void SyncBackgroundWorkers(EcosystemConfig tickCfg)
+        {
+            if (api?.World?.Blocks == null || tickCfg == null) return;
+
+            if (tickCfg.EnableBackgroundRegistrationScan)
+            {
+                backgroundRegistration.Start(api.World.Blocks, tickCfg.RegistrationWorkerCount);
+            }
+
+            if (tickCfg.EnableBackgroundSpreadSolve)
+            {
+                backgroundSpread.Start(api.World.Blocks, tickCfg.SpreadWorkerCount);
+            }
         }
 
         void OnPlayerJoin(IPlayer player)
@@ -359,12 +384,15 @@ namespace WildFarming.Ecosystem
         {
             if (api == null || api.Side != EnumAppSide.Server) return;
             if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
-            if (reproduceListenerId == 0 && stressListenerId == 0 && chunkScanListenerId == 0)
+
+            if (!ecologyRuntimeStarted)
             {
-                // Init has not registered listeners yet (or ecosystem was disabled at Init).
+                // Ecosystem was disabled during Init — start full runtime now.
+                StartEcologyRuntime();
                 return;
             }
 
+            SyncBackgroundWorkers(EcosystemConfig.Loaded);
             RegisterTickListeners(EcosystemConfig.Loaded);
         }
 
@@ -454,6 +482,7 @@ namespace WildFarming.Ecosystem
             didUseBlockHandler = null;
             calendarDebugLogged = false;
             deferredTreeBootstrapDone = false;
+            ecologyRuntimeStarted = false;
             playerJoinHandler = null;
             FloraContext?.Clear();
             FloraContext = null;

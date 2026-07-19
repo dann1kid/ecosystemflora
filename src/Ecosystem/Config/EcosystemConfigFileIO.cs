@@ -68,25 +68,38 @@ namespace WildFarming.Ecosystem.Config
         {
             if (cfg == null || string.IsNullOrEmpty(key) || value == null) return;
 
-            switch (key)
+            if (KeysEqual(key, nameof(EcosystemConfig.SetupWizardCompleted)))
             {
-                case nameof(EcosystemConfig.SetupWizardCompleted):
-                    cfg.SetupWizardCompleted = ToBool(value);
-                    break;
-                case nameof(EcosystemConfig.LastAutoTuneTier):
-                    cfg.LastAutoTuneTier = value.ToString() ?? "";
-                    break;
-                case nameof(EcosystemConfig.LastAutoTuneOpsPerMs):
-                    cfg.LastAutoTuneOpsPerMs = ToDouble(value);
-                    break;
-                case nameof(EcosystemConfig.LastAutoTuneElapsedMs):
-                    cfg.LastAutoTuneElapsedMs = ToInt(value);
-                    break;
-                case nameof(EcosystemConfig.LastAutoTuneUtc):
-                    cfg.LastAutoTuneUtc = value.ToString() ?? "";
-                    break;
+                cfg.SetupWizardCompleted = ToBool(value);
+                return;
+            }
+
+            if (KeysEqual(key, nameof(EcosystemConfig.LastAutoTuneTier)))
+            {
+                cfg.LastAutoTuneTier = value.ToString() ?? "";
+                return;
+            }
+
+            if (KeysEqual(key, nameof(EcosystemConfig.LastAutoTuneOpsPerMs)))
+            {
+                cfg.LastAutoTuneOpsPerMs = ToDouble(value);
+                return;
+            }
+
+            if (KeysEqual(key, nameof(EcosystemConfig.LastAutoTuneElapsedMs)))
+            {
+                cfg.LastAutoTuneElapsedMs = ToInt(value);
+                return;
+            }
+
+            if (KeysEqual(key, nameof(EcosystemConfig.LastAutoTuneUtc)))
+            {
+                cfg.LastAutoTuneUtc = value.ToString() ?? "";
             }
         }
+
+        static bool KeysEqual(string a, string b) =>
+            string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
         public static void WriteJsonDict(string path, Dictionary<string, object> values)
         {
@@ -179,7 +192,35 @@ namespace WildFarming.Ecosystem.Config
             if (value is bool b) return b;
             if (value is long l) return l != 0;
             if (value is int i) return i != 0;
-            return bool.TryParse(value.ToString(), out bool parsed) && parsed;
+            if (value is double d) return Math.Abs(d) > 0.0001;
+            if (value is float f) return Math.Abs(f) > 0.0001f;
+            if (value == null) return false;
+
+            string s = value.ToString();
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            if (bool.TryParse(s, out bool parsed)) return parsed;
+            if (s == "1") return true;
+            if (s == "0") return false;
+
+            // Newtonsoft JValue / similar
+            try
+            {
+                var prop = value.GetType().GetProperty("Value");
+                if (prop != null)
+                {
+                    object inner = prop.GetValue(value);
+                    if (inner != null && !ReferenceEquals(inner, value))
+                    {
+                        return ToBool(inner);
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return false;
         }
 
         static int ToInt(object value)

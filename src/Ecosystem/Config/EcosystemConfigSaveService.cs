@@ -24,7 +24,7 @@ namespace WildFarming.Ecosystem.Config
 
             if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
             {
-                EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+                EcosystemConfigSchema.ReapplyKnownPresetPreservingOverrides(cfg);
             }
 
             EcosystemConfig.Loaded = EcosystemConfigCopier.Clone(cfg);
@@ -33,6 +33,11 @@ namespace WildFarming.Ecosystem.Config
             if (api is ICoreServerAPI sapi)
             {
                 EcosystemWorldConfigStore.Persist(sapi);
+                // Ensure the in-memory flag cannot be lost before the next autosave.
+                if (cfg.SetupWizardCompleted)
+                {
+                    EcosystemConfig.Loaded.SetupWizardCompleted = true;
+                }
             }
 
             EcosystemSystem.Instance?.RefreshFootTrafficAnimals();

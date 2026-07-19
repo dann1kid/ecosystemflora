@@ -19,8 +19,15 @@ namespace WildFarming.Ecosystem.Config
         static ICoreServerAPI boundApi;
         static bool eventsBound;
         static string activeWorldKey;
+        static bool worldConfigReady;
 
         public static string ActiveWorldKey => activeWorldKey;
+
+        /// <summary>True after <see cref="LoadOrMigrate"/> has applied this world's files (not just the global template).</summary>
+        public static bool IsWorldConfigReady => worldConfigReady;
+
+        /// <summary>Fired on the server after per-world settings are loaded into <see cref="EcosystemConfig.Loaded"/>.</summary>
+        public static event Action OnWorldConfigReady;
 
         public static void Bind(ICoreServerAPI sapi)
         {
@@ -45,6 +52,7 @@ namespace WildFarming.Ecosystem.Config
             eventsBound = false;
             boundApi = null;
             activeWorldKey = null;
+            worldConfigReady = false;
         }
 
         static void OnSaveGameLoaded()
@@ -75,30 +83,51 @@ namespace WildFarming.Ecosystem.Config
             string worldDir = EcosystemConfigPaths.GetWorldFolder(sapi, activeWorldKey);
             EcosystemConfigPaths.EnsureDirectory(worldDir);
 
-            if (TryLoadFromWorldFolder(sapi, activeWorldKey, out EcosystemConfig fromFiles))
+            if (TryLoadFromWorldFolder(sapi, activeWorldKey, out EcosystemConfig fromFiles, out bool wizardFlagPresent))
             {
                 EcosystemConfigValidator.NormalizeInPlace(fromFiles);
                 EcosystemBalancePresets.TryLoadFilePresets(sapi);
                 ApplyKnownPreset(fromFiles);
+                bool upgraded = EnsureWizardPendingUnlessRecorded(fromFiles, wizardFlagPresent);
+                if (fromFiles.SetupWizardCompleted)
+                {
+                    WriteWizardDoneMarker(sapi, activeWorldKey, completed: true);
+                }
+
                 EcosystemConfig.Loaded = fromFiles;
-                sapi.Logger.Notification(
-                    "[ecosystemflora] Loaded world settings from {0}",
-                    RelativeWorldPath(activeWorldKey));
+                if (upgraded)
+                {
+                    Persist(sapi);
+                    sapi.Logger.Notification(
+                        "[ecosystemflora] Loaded world settings from {0}; setup wizard pending (upgrade).",
+                        RelativeWorldPath(activeWorldKey));
+                }
+                else
+                {
+                    sapi.Logger.Notification(
+                        "[ecosystemflora] Loaded world settings from {0} (wizardCompleted={1})",
+                        RelativeWorldPath(activeWorldKey),
+                        fromFiles.SetupWizardCompleted);
+                }
+
+                MarkWorldConfigReady();
                 return;
             }
 
             // Legacy SaveGame blob → export to files once.
-            if (TryLoadLegacySaveBlob(sapi, out EcosystemConfig fromBlob))
+            if (TryLoadLegacySaveBlob(sapi, out EcosystemConfig fromBlob, out bool blobWizardFlagPresent))
             {
                 EcosystemConfigValidator.NormalizeInPlace(fromBlob);
                 EcosystemBalancePresets.TryLoadFilePresets(sapi);
                 ApplyKnownPreset(fromBlob);
+                EnsureWizardPendingUnlessRecorded(fromBlob, blobWizardFlagPresent);
                 EcosystemConfig.Loaded = fromBlob;
                 Persist(sapi);
                 ClearLegacySaveBlob(sapi);
                 sapi.Logger.Notification(
                     "[ecosystemflora] Migrated SaveGame config blob → {0}",
                     RelativeWorldPath(activeWorldKey));
+                MarkWorldConfigReady();
                 return;
             }
 
@@ -110,6 +139,23 @@ namespace WildFarming.Ecosystem.Config
             sapi.Logger.Notification(
                 "[ecosystemflora] Seeded world settings at {0}; setup wizard pending.",
                 RelativeWorldPath(activeWorldKey));
+            MarkWorldConfigReady();
+        }
+
+        static void MarkWorldConfigReady()
+        {
+            bool firstReady = !worldConfigReady;
+            worldConfigReady = true;
+            if (!firstReady) return;
+
+            try
+            {
+                OnWorldConfigReady?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                boundApi?.Logger.Warning("[ecosystemflora] OnWorldConfigReady handler failed: {0}", ex.Message);
+            }
         }
 
         public static void Persist(ICoreServerAPI sapi)
@@ -163,6 +209,116 @@ namespace WildFarming.Ecosystem.Config
             }
         }
 
+        /// <summary>
+        /// Worlds that never recorded <see cref="EcosystemConfig.SetupWizardCompleted"/>
+        /// (pre-wizard saves / missing meta key) stay pending so the client can prompt.
+        /// Never downgrades an already-completed flag.
+        /// </summary>
+        public static bool EnsureWizardPendingUnlessRecorded(EcosystemConfig cfg, bool completionFlagPresent)
+        {
+            if (cfg == null) return false;
+            // Already completed (meta or in-memory) — do not re-prompt.
+            if (cfg.SetupWizardCompleted) return false;
+            // Explicit false already stored in meta.
+            if (completionFlagPresent) return false;
+            // Missing key: keep pending and persist an explicit false once.
+            return true;
+        }
+
+        public static bool MetaContainsWizardCompletionFlag(Dictionary<string, object> meta)
+        {
+            if (meta == null) return false;
+            foreach (string key in meta.Keys)
+            {
+                if (string.Equals(key, nameof(EcosystemConfig.SetupWizardCompleted), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool JsonMentionsWizardCompletionFlag(string json) =>
+            !string.IsNullOrEmpty(json)
+            && json.IndexOf(nameof(EcosystemConfig.SetupWizardCompleted), StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>
+        /// Disk is the source of truth for wizard completion (marker file and/or meta.json text).
+        /// Used to defeat SSP sync races that briefly expose template defaults.
+        /// </summary>
+        public static bool IsWizardCompletedOnDisk(ICoreAPI api, string worldKey = null)
+        {
+            if (api == null) return false;
+            string key = worldKey;
+            if (string.IsNullOrEmpty(key))
+            {
+                key = activeWorldKey;
+            }
+
+            if (string.IsNullOrEmpty(key) && api is ICoreServerAPI sapi)
+            {
+                try { key = EcosystemConfigPaths.ResolveWorldKey(sapi); }
+                catch { /* ignore */ }
+            }
+
+            if (string.IsNullOrEmpty(key)) return false;
+
+            string donePath = EcosystemConfigPaths.GetWizardDonePath(api, key);
+            if (File.Exists(donePath)) return true;
+
+            return TryReadWizardCompletedFromMetaText(
+                EcosystemConfigPaths.GetWorldMetaPath(api, key));
+        }
+
+        public static void WriteWizardDoneMarker(ICoreAPI api, string worldKey, bool completed)
+        {
+            if (api == null || string.IsNullOrEmpty(worldKey)) return;
+            string path = EcosystemConfigPaths.GetWizardDonePath(api, worldKey);
+            try
+            {
+                if (completed)
+                {
+                    EcosystemConfigPaths.EnsureDirectory(Path.GetDirectoryName(path));
+                    File.WriteAllText(path, DateTime.UtcNow.ToString("o"), Encoding.UTF8);
+                }
+                else if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // best-effort
+            }
+        }
+
+        /// <summary>Parse meta.json without JsonUtil Dictionary boxing quirks.</summary>
+        public static bool TryReadWizardCompletedFromMetaText(string metaPath)
+        {
+            if (string.IsNullOrEmpty(metaPath) || !File.Exists(metaPath)) return false;
+            try
+            {
+                string text = File.ReadAllText(metaPath, Encoding.UTF8);
+                if (string.IsNullOrEmpty(text)) return false;
+
+                // "SetupWizardCompleted": true / True / 1
+                int idx = text.IndexOf("SetupWizardCompleted", StringComparison.OrdinalIgnoreCase);
+                if (idx < 0) return false;
+                int colon = text.IndexOf(':', idx);
+                if (colon < 0 || colon + 1 >= text.Length) return false;
+
+                string tail = text.Substring(colon + 1).TrimStart();
+                if (tail.StartsWith("true", StringComparison.OrdinalIgnoreCase)) return true;
+                if (tail.StartsWith("1") && (tail.Length == 1 || !char.IsDigit(tail[1]))) return true;
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static void PrepareFreshWorldConfig(EcosystemConfig cfg)
         {
             if (cfg == null) return;
@@ -195,9 +351,14 @@ namespace WildFarming.Ecosystem.Config
             return EcosystemConfigFileIO.ReadFullConfig(EcosystemConfigPaths.GetTemplateDefaultsPath(api));
         }
 
-        static bool TryLoadFromWorldFolder(ICoreAPI api, string worldKey, out EcosystemConfig cfg)
+        static bool TryLoadFromWorldFolder(
+            ICoreAPI api,
+            string worldKey,
+            out EcosystemConfig cfg,
+            out bool wizardFlagPresent)
         {
             cfg = null;
+            wizardFlagPresent = false;
             if (!HasWorldFiles(api, worldKey)) return false;
 
             cfg = new EcosystemConfig();
@@ -211,7 +372,18 @@ namespace WildFarming.Ecosystem.Config
 
             Dictionary<string, object> meta = EcosystemConfigFileIO.ReadJsonDict(
                 EcosystemConfigPaths.GetWorldMetaPath(api, worldKey));
-            if (meta != null) EcosystemConfigFileIO.ApplyMeta(cfg, meta);
+            if (meta != null)
+            {
+                wizardFlagPresent = MetaContainsWizardCompletionFlag(meta);
+                EcosystemConfigFileIO.ApplyMeta(cfg, meta);
+            }
+
+            // Disk marker / raw meta text beat flaky Dictionary bool boxing.
+            if (IsWizardCompletedOnDisk(api, worldKey))
+            {
+                cfg.SetupWizardCompleted = true;
+                wizardFlagPresent = true;
+            }
 
             return true;
         }
@@ -231,6 +403,8 @@ namespace WildFarming.Ecosystem.Config
             EcosystemConfigFileIO.WriteJsonDict(
                 EcosystemConfigPaths.GetWorldMetaPath(api, worldKey),
                 EcosystemConfigFileIO.ExtractMeta(cfg));
+
+            WriteWizardDoneMarker(api, worldKey, cfg != null && cfg.SetupWizardCompleted);
 
             var info = new Dictionary<string, object>(StringComparer.Ordinal)
             {
@@ -256,14 +430,19 @@ namespace WildFarming.Ecosystem.Config
                 info);
         }
 
-        static bool TryLoadLegacySaveBlob(ICoreServerAPI sapi, out EcosystemConfig cfg)
+        static bool TryLoadLegacySaveBlob(
+            ICoreServerAPI sapi,
+            out EcosystemConfig cfg,
+            out bool wizardFlagPresent)
         {
             cfg = null;
+            wizardFlagPresent = false;
             try
             {
                 byte[] data = sapi.WorldManager.SaveGame.GetData(SaveKey);
                 if (data == null || data.Length == 0) return false;
                 string json = Encoding.UTF8.GetString(data);
+                wizardFlagPresent = JsonMentionsWizardCompletionFlag(json);
                 cfg = EcosystemConfigCopier.FromJson(json);
                 return cfg != null;
             }
@@ -288,11 +467,7 @@ namespace WildFarming.Ecosystem.Config
 
         static void ApplyKnownPreset(EcosystemConfig cfg)
         {
-            if (cfg == null) return;
-            if (EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset))
-            {
-                EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
-            }
+            EcosystemConfigSchema.ReapplyKnownPresetPreservingOverrides(cfg);
         }
 
         static string RelativeWorldPath(string worldKey) =>

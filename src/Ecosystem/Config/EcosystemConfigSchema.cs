@@ -12,7 +12,6 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.MaxCanopyUpdateOpsPerTick),
             nameof(EcosystemConfig.CanopyBudgetMs),
             nameof(EcosystemConfig.RegistrationBudgetPerWorkerMigrated),
-            nameof(EcosystemConfig.WildVineMaxHangDepth),
             nameof(EcosystemConfig.SetupWizardCompleted),
             nameof(EcosystemConfig.LastAutoTuneTier),
             nameof(EcosystemConfig.LastAutoTuneOpsPerMs),
@@ -455,6 +454,45 @@ namespace WildFarming.Ecosystem.Config
 
         public static bool IsPresetControlledField(string propertyName) =>
             PresetFields.Contains(propertyName);
+
+        /// <summary>
+        /// Re-apply a known <see cref="EcosystemConfig.BalancePreset"/> on load/save while keeping
+        /// non-preset overrides from disk/UI (perf budgets, intervals, extra toggles).
+        /// Selecting a preset in the U dialog still uses <see cref="ApplyPresetSelection"/> (full apply).
+        /// </summary>
+        public static void ReapplyKnownPresetPreservingOverrides(EcosystemConfig cfg)
+        {
+            if (cfg == null) return;
+            if (!EcosystemBalancePresets.IsKnownPreset(cfg.BalancePreset)) return;
+
+            bool wizardCompleted = cfg.SetupWizardCompleted;
+            string autoTier = cfg.LastAutoTuneTier;
+            double autoOps = cfg.LastAutoTuneOpsPerMs;
+            int autoMs = cfg.LastAutoTuneElapsedMs;
+            string autoUtc = cfg.LastAutoTuneUtc;
+
+            EcosystemConfig snapshot = EcosystemConfigCopier.Clone(cfg);
+            EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
+            RestoreNonPresetFields(snapshot, cfg);
+
+            cfg.SetupWizardCompleted = wizardCompleted;
+            cfg.LastAutoTuneTier = autoTier ?? "";
+            cfg.LastAutoTuneOpsPerMs = autoOps;
+            cfg.LastAutoTuneElapsedMs = autoMs;
+            cfg.LastAutoTuneUtc = autoUtc ?? "";
+        }
+
+        /// <summary>Copy every schema field that is not part of the balance-preset bundle.</summary>
+        public static void RestoreNonPresetFields(EcosystemConfig from, EcosystemConfig to)
+        {
+            if (from == null || to == null) return;
+
+            foreach (EcosystemConfigFieldDescriptor field in Fields)
+            {
+                if (field.IsPresetField) continue;
+                field.SetValue(to, field.GetValue(from));
+            }
+        }
 
         public static void ApplyPresetSelection(EcosystemConfig cfg, string presetCode)
         {

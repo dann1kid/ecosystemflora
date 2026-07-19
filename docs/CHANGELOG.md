@@ -3,11 +3,17 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.10.32** (unreleased) — per-world config files under ModConfig/ecosystemflora/worlds/
+**Next release:** **4.10.33** (unreleased) — expanded setup-wizard bench table (full Performance knobs)
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.10.33
+
+- **Setup wizard bench** — editable table covers the full Performance knob set (intervals, budgets, spread/registration pipelines, bool toggles, foliage budgets, near-players), paginated; Weak/Balanced/Strong and Super-minimal stress all of them. No CPU topology detection (P/E, X3D).
+- **Setup wizard welcome** — first page states this is Ecosystem Flora's per-world setup; then profile → bench. Old worlds without a recorded `SetupWizardCompleted` stay pending and get the prompt. Reopen via `/ecosetup`.
+- **Setup wizard re-prompt fix** — disk marker `setup-wizard.done` + raw meta parse; client checks disk before auto-open; at most one auto-open per session; SSP stale sync cannot clear completion.
 
 ## Unreleased — 4.10.32
 

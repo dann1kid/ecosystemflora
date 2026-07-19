@@ -173,6 +173,7 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.EnableWildVineEcology),
             nameof(EcosystemConfig.WildVineWallCaptureRadius),
             nameof(EcosystemConfig.WildVineWallCaptureHeight),
+            nameof(EcosystemConfig.WildVineMaxHangDepth),
         };
 
         static readonly string[] CanopyFields =

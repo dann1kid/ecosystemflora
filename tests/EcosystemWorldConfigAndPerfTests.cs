@@ -35,6 +35,26 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void CopyFields_PreservesSetupWizardCompletedTrue()
+        {
+            var src = new EcosystemConfig { SetupWizardCompleted = true };
+            var dst = new EcosystemConfig { SetupWizardCompleted = false };
+            EcosystemConfigCopier.CopyFields(src, dst);
+            Assert.True(dst.SetupWizardCompleted);
+        }
+
+        [Fact]
+        public void CopyFields_DoesNotImplicitlyClearWizardFlagWhenSourceFalse_IsExplicit()
+        {
+            // Documents current CopyFields behavior: source wins. Callers must guard against
+            // stale sync snapshots regressing a completed wizard on SSP shared Loaded.
+            var src = new EcosystemConfig { SetupWizardCompleted = false };
+            var dst = new EcosystemConfig { SetupWizardCompleted = true };
+            EcosystemConfigCopier.CopyFields(src, dst);
+            Assert.False(dst.SetupWizardCompleted);
+        }
+
+        [Fact]
         public void ConfigCopier_CopiesLastAutoTuneMetadata()
         {
             var src = new EcosystemConfig
@@ -49,6 +69,106 @@ namespace WildFarming.Tests
             Assert.Equal(300.5, dst.LastAutoTuneOpsPerMs);
             Assert.Equal(42, dst.LastAutoTuneElapsedMs);
             Assert.Equal("2026-07-19T00:00:00Z", dst.LastAutoTuneUtc);
+        }
+
+        [Fact]
+        public void EnsureWizardPendingUnlessRecorded_MissingFlag_AlreadyPending_StillNeedsPersist()
+        {
+            var cfg = new EcosystemConfig { SetupWizardCompleted = false };
+            Assert.True(EcosystemWorldConfigStore.EnsureWizardPendingUnlessRecorded(cfg, completionFlagPresent: false));
+            Assert.False(cfg.SetupWizardCompleted);
+        }
+
+        [Fact]
+        public void EnsureWizardPendingUnlessRecorded_CompletedWithoutMetaKey_NotDowngraded()
+        {
+            var cfg = new EcosystemConfig { SetupWizardCompleted = true };
+            Assert.False(EcosystemWorldConfigStore.EnsureWizardPendingUnlessRecorded(cfg, completionFlagPresent: false));
+            Assert.True(cfg.SetupWizardCompleted);
+        }
+
+        [Fact]
+        public void EnsureWizardPendingUnlessRecorded_RecordedTrue_LeftAlone()
+        {
+            var cfg = new EcosystemConfig { SetupWizardCompleted = true };
+            Assert.False(EcosystemWorldConfigStore.EnsureWizardPendingUnlessRecorded(cfg, completionFlagPresent: true));
+            Assert.True(cfg.SetupWizardCompleted);
+        }
+
+        [Fact]
+        public void EnsureWizardPendingUnlessRecorded_RecordedFalse_NoPersistNeeded()
+        {
+            var cfg = new EcosystemConfig { SetupWizardCompleted = false };
+            Assert.False(EcosystemWorldConfigStore.EnsureWizardPendingUnlessRecorded(cfg, completionFlagPresent: true));
+            Assert.False(cfg.SetupWizardCompleted);
+        }
+
+        [Fact]
+        public void JsonMentionsWizardCompletionFlag_DetectsPropertyName()
+        {
+            Assert.True(EcosystemWorldConfigStore.JsonMentionsWizardCompletionFlag(
+                "{\"SetupWizardCompleted\":false}"));
+            Assert.False(EcosystemWorldConfigStore.JsonMentionsWizardCompletionFlag("{\"TickBudgetMs\":2}"));
+        }
+
+        [Fact]
+        public void MetaContainsWizardCompletionFlag_RequiresKey()
+        {
+            var with = new System.Collections.Generic.Dictionary<string, object>
+            {
+                [nameof(EcosystemConfig.SetupWizardCompleted)] = false,
+            };
+            var without = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["LastAutoTuneTier"] = "Weak",
+            };
+            Assert.True(EcosystemWorldConfigStore.MetaContainsWizardCompletionFlag(with));
+            Assert.False(EcosystemWorldConfigStore.MetaContainsWizardCompletionFlag(without));
+            Assert.False(EcosystemWorldConfigStore.MetaContainsWizardCompletionFlag(null));
+        }
+
+        [Fact]
+        public void ApplyMeta_ReadsWizardFlagCaseInsensitive()
+        {
+            var cfg = new EcosystemConfig { SetupWizardCompleted = false };
+            var meta = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["setupWizardCompleted"] = true,
+            };
+
+            EcosystemConfigFileIO.ApplyMeta(cfg, meta);
+            Assert.True(cfg.SetupWizardCompleted);
+            Assert.True(EcosystemWorldConfigStore.MetaContainsWizardCompletionFlag(meta));
+        }
+
+        [Fact]
+        public void TryReadWizardCompletedFromMetaText_DetectsTrue()
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "eco-meta-test.json");
+            System.IO.File.WriteAllText(path, "{\"SetupWizardCompleted\":true,\"LastAutoTuneTier\":\"\"}");
+            try
+            {
+                Assert.True(EcosystemWorldConfigStore.TryReadWizardCompletedFromMetaText(path));
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+            }
+        }
+
+        [Fact]
+        public void TryReadWizardCompletedFromMetaText_DetectsFalse()
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "eco-meta-test-false.json");
+            System.IO.File.WriteAllText(path, "{\"SetupWizardCompleted\":false}");
+            try
+            {
+                Assert.False(EcosystemWorldConfigStore.TryReadWizardCompletedFromMetaText(path));
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+            }
         }
 
         [Fact]
@@ -155,7 +275,7 @@ namespace WildFarming.Tests
         public void ApplyTier_Weak_SetsConservativeScanCadence()
         {
             var cfg = new EcosystemConfig();
-            EcosystemPerfCalibrator.ApplyTier(cfg, EcosystemPerfCalibrator.PerfTier.Weak);
+            EcosystemPerfCalibrator.ApplyTiers(cfg, EcosystemPerfCalibrator.PerfTier.Weak);
 
             Assert.True(cfg.ReproduceTickIntervalMs >= 5000);
             Assert.True(cfg.PlayerVicinityRescanIntervalMs >= 8000);
@@ -215,7 +335,7 @@ namespace WildFarming.Tests
         {
             var weak = new EcosystemConfig();
             var min = new EcosystemConfig();
-            EcosystemPerfCalibrator.ApplyTier(weak, EcosystemPerfCalibrator.PerfTier.Weak);
+            EcosystemPerfCalibrator.ApplyTiers(weak, EcosystemPerfCalibrator.PerfTier.Weak);
             EcosystemPerfCalibrator.ApplySuperMinimal(min);
 
             Assert.True(min.ReproduceTickIntervalMs > weak.ReproduceTickIntervalMs);
@@ -225,13 +345,59 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void WizardEditableFields_AreAllKnownSchemaIntegers()
+        public void WizardEditableFields_CoverHotPerfKnobs()
+        {
+            Assert.Contains(nameof(EcosystemConfig.PriorityRegistrationBudgetMs), EcosystemPerfCalibrator.WizardEditableFields);
+            Assert.Contains(nameof(EcosystemConfig.MaxRegistrationsPerTick), EcosystemPerfCalibrator.WizardEditableFields);
+            Assert.Contains(nameof(EcosystemConfig.EnableBackgroundRegistrationScan), EcosystemPerfCalibrator.WizardEditableFields);
+            Assert.Contains(nameof(EcosystemConfig.OnlyActivateNearPlayers), EcosystemPerfCalibrator.WizardEditableFields);
+            Assert.True(EcosystemPerfCalibrator.WizardEditableFields.Length >= 40);
+        }
+
+        [Fact]
+        public void WizardEditableFields_HavePerfHints()
+        {
+            foreach (string name in EcosystemPerfCalibrator.WizardEditableFields)
+            {
+                // Every wizard field should resolve (Neutral is allowed for mixed toggles).
+                PerfKnobHint hint = EcosystemPerfKnobHints.Get(name);
+                Assert.True(
+                    hint == PerfKnobHint.HigherHeavier
+                    || hint == PerfKnobHint.HigherLighter
+                    || hint == PerfKnobHint.OnHeavier
+                    || hint == PerfKnobHint.OnLighter
+                    || hint == PerfKnobHint.Neutral,
+                    name);
+            }
+
+            Assert.Equal(PerfKnobHint.HigherLighter, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.ReproduceTickIntervalMs)));
+            Assert.Equal(PerfKnobHint.HigherHeavier, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.TickBudgetMs)));
+            Assert.Equal(PerfKnobHint.OnLighter, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.OnlyActivateNearPlayers)));
+            Assert.Equal("Tick budget ↑", EcosystemPerfKnobHints.FormatTitleWithHint("Tick budget", nameof(EcosystemConfig.TickBudgetMs)));
+            Assert.Equal("Interval ↓", EcosystemPerfKnobHints.FormatTitleWithHint("Interval", nameof(EcosystemConfig.ReproduceTickIntervalMs)));
+        }
+
+        [Fact]
+        public void ApplyTiers_Weak_SetsRegistrationAndPriorityCaps()
+        {
+            var cfg = new EcosystemConfig();
+            EcosystemPerfCalibrator.ApplyTiers(cfg, EcosystemPerfCalibrator.PerfTier.Weak);
+            Assert.True(cfg.MaxRegistrationsPerTick > 0);
+            Assert.True(cfg.PriorityRegistrationBudgetMs > 0);
+            Assert.True(cfg.MaxPriorityChunkScansPerTick > 0);
+            Assert.False(cfg.OnlyActivateNearPlayers);
+        }
+
+        [Fact]
+        public void WizardEditableFields_AreAllKnownSchemaFields()
         {
             foreach (string name in EcosystemPerfCalibrator.WizardEditableFields)
             {
                 EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(name);
                 Assert.NotNull(field);
-                Assert.Equal(ConfigFieldKind.Integer, field.Kind);
+                Assert.True(
+                    field.Kind == ConfigFieldKind.Integer || field.Kind == ConfigFieldKind.Boolean,
+                    name);
             }
         }
     }

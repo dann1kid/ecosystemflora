@@ -14,6 +14,7 @@ namespace WildFarming.Client
         public const string HotkeyCode = "ecosystemflora-config";
         public const string CommandCode = "ecoconfig";
         public const string AutoTuneCommandCode = "ecoautotune";
+        public const string SetupWizardCommandCode = "ecosetup";
 
         ICoreClientAPI capi;
         IClientNetworkChannel channel;
@@ -21,6 +22,10 @@ namespace WildFarming.Client
         EcosystemSetupWizardDialog wizard;
         bool awaitingServerSave;
         bool wizardPromptPending = true;
+        /// <summary>After Apply/Skip this session, never auto-open again (guards SSP stale sync).</summary>
+        bool wizardAutoPromptSuppressed;
+        /// <summary>Hard cap: at most one automatic wizard open per client process/session.</summary>
+        bool wizardAutoOpenedOnce;
         bool lastSyncCanEdit;
         bool reloadAwaitingSync;
 
@@ -33,7 +38,9 @@ namespace WildFarming.Client
                 .RegisterMessageType<EcosystemConfigSyncRequestPacket>()
                 .RegisterMessageType<EcosystemConfigSyncResponsePacket>()
                 .RegisterMessageType<EcosystemConfigSaveRequestPacket>()
-                .RegisterMessageType<EcosystemConfigSaveResponsePacket>();
+                .RegisterMessageType<EcosystemConfigSaveResponsePacket>()
+                .RegisterMessageType<EcosystemOpenSetupWizardPacket>()
+                .RegisterMessageType<EcosystemOpenConfigDialogPacket>();
         }
 
         public override void StartClientSide(ICoreClientAPI api)
@@ -42,7 +49,9 @@ namespace WildFarming.Client
 
             channel = api.Network.GetChannel(EcosystemConfigChannel.Name)
                 .SetMessageHandler<EcosystemConfigSyncResponsePacket>(OnSyncResponse)
-                .SetMessageHandler<EcosystemConfigSaveResponsePacket>(OnSaveResponse);
+                .SetMessageHandler<EcosystemConfigSaveResponsePacket>(OnSaveResponse)
+                .SetMessageHandler<EcosystemOpenSetupWizardPacket>(_ => OpenSetupWizard(force: true))
+                .SetMessageHandler<EcosystemOpenConfigDialogPacket>(_ => OpenConfigDialog());
 
             api.Input.RegisterHotKey(
                 HotkeyCode,
@@ -73,9 +82,31 @@ namespace WildFarming.Client
                     return TextCommandResult.Success();
                 });
 
+            api.ChatCommands
+                .GetOrCreate(SetupWizardCommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:setup-wizard-command-desc"))
+                .HandleWith(_ =>
+                {
+                    OpenSetupWizard(force: true);
+                    return TextCommandResult.Success();
+                });
+
             api.Event.LevelFinalize += () =>
             {
-                wizardPromptPending = true;
+                if (IsWizardDoneOnDiskOrMemory())
+                {
+                    wizardAutoPromptSuppressed = true;
+                    wizardPromptPending = false;
+                    if (EcosystemConfig.Loaded != null)
+                    {
+                        EcosystemConfig.Loaded.SetupWizardCompleted = true;
+                    }
+                }
+                else if (!wizardAutoPromptSuppressed)
+                {
+                    wizardPromptPending = true;
+                }
+
                 channel.SendPacket(new EcosystemConfigSyncRequestPacket());
             };
         }
@@ -111,7 +142,8 @@ namespace WildFarming.Client
             wizard.OnFinished += ApplyWorkingCopyQuiet;
             capi.Gui.RegisterDialog(wizard);
             wizard.TryOpen();
-            channel.SendPacket(new EcosystemConfigSyncRequestPacket());
+            // Do not sync here: a response snapshotted before Apply would overwrite
+            // SetupWizardCompleted on the shared SSP Loaded instance and re-prompt forever.
             _ = force;
         }
 
@@ -167,7 +199,12 @@ namespace WildFarming.Client
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(packet.ConfigJson)) return;
+            // Server has not finished loading this world's folder yet — keep waiting
+            // (do not treat global template defaults as the world config).
+            if (!packet.WorldConfigReady || string.IsNullOrWhiteSpace(packet.ConfigJson))
+            {
+                return;
+            }
 
             EcosystemConfig serverCfg;
             try
@@ -182,8 +219,22 @@ namespace WildFarming.Client
             }
 
             lastSyncCanEdit = packet.CanEditConfig || CanSaveOnLocalServer();
-            // Authoritative per-world settings (full blob, not ModConfig template).
+
+            bool diskDone = IsWizardDoneOnDiskOrMemory();
+            // SSP shares Loaded with the server. A stale sync (snapshotted before wizard Apply)
+            // must not clear SetupWizardCompleted back to false.
+            bool wizardDone = diskDone
+                || EcosystemConfig.Loaded.SetupWizardCompleted
+                || serverCfg.SetupWizardCompleted;
             EcosystemConfigCopier.CopyFields(serverCfg, EcosystemConfig.Loaded);
+            EcosystemConfig.Loaded.SetupWizardCompleted = wizardDone;
+            serverCfg.SetupWizardCompleted = wizardDone;
+
+            if (wizardDone)
+            {
+                wizardAutoPromptSuppressed = true;
+                wizardPromptPending = false;
+            }
 
             if (dialog != null && dialog.IsOpened())
             {
@@ -204,16 +255,38 @@ namespace WildFarming.Client
 
             if (wizard != null && wizard.IsOpened())
             {
-                EcosystemConfigCopier.CopyFields(serverCfg, wizard.WorkingCopy);
+                // Keep in-progress wizard edits.
             }
-            else if (wizardPromptPending && !serverCfg.SetupWizardCompleted && lastSyncCanEdit)
+            else if (wizardPromptPending
+                && !wizardAutoPromptSuppressed
+                && !wizardAutoOpenedOnce
+                && !wizardDone
+                && lastSyncCanEdit)
             {
                 wizardPromptPending = false;
+                wizardAutoOpenedOnce = true;
                 OpenSetupWizard();
             }
             else
             {
                 wizardPromptPending = false;
+            }
+        }
+
+        bool IsWizardDoneOnDiskOrMemory()
+        {
+            if (EcosystemConfig.Loaded != null && EcosystemConfig.Loaded.SetupWizardCompleted)
+            {
+                return true;
+            }
+
+            try
+            {
+                return EcosystemWorldConfigStore.IsWizardCompletedOnDisk(capi);
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -243,6 +316,7 @@ namespace WildFarming.Client
                     return;
                 }
 
+                NoteWizardCompletedIfSet(working);
                 // Keep ModConfig as a clean new-world template only (no wizard completion).
                 TryRefreshGlobalTemplate();
                 FinishApplySuccess(closeConfigDialog);
@@ -254,6 +328,36 @@ namespace WildFarming.Client
             {
                 ConfigJson = EcosystemConfigCopier.ToJson(working),
             });
+        }
+
+        void NoteWizardCompletedIfSet(EcosystemConfig cfg)
+        {
+            if (cfg == null || !cfg.SetupWizardCompleted) return;
+            wizardAutoPromptSuppressed = true;
+            wizardPromptPending = false;
+            wizardAutoOpenedOnce = true;
+            if (EcosystemConfig.Loaded != null)
+            {
+                EcosystemConfig.Loaded.SetupWizardCompleted = true;
+            }
+
+            try
+            {
+                string key = EcosystemWorldConfigStore.ActiveWorldKey;
+                if (string.IsNullOrEmpty(key) && CanSaveOnLocalServer() && capi.World.Api is ICoreServerAPI sapi)
+                {
+                    key = EcosystemConfigPaths.ResolveWorldKey(sapi);
+                }
+
+                if (!string.IsNullOrEmpty(key))
+                {
+                    EcosystemWorldConfigStore.WriteWizardDoneMarker(capi, key, completed: true);
+                }
+            }
+            catch
+            {
+                // best-effort
+            }
         }
 
         void OnSaveResponse(EcosystemConfigSaveResponsePacket packet)
@@ -273,7 +377,10 @@ namespace WildFarming.Client
                 try
                 {
                     EcosystemConfig serverCfg = EcosystemConfigCopier.FromJson(packet.ConfigJson);
+                    bool wizardDone = EcosystemConfig.Loaded.SetupWizardCompleted || serverCfg.SetupWizardCompleted;
                     EcosystemConfigCopier.CopyFields(serverCfg, EcosystemConfig.Loaded);
+                    EcosystemConfig.Loaded.SetupWizardCompleted = wizardDone;
+                    NoteWizardCompletedIfSet(EcosystemConfig.Loaded);
                     TryRefreshGlobalTemplate();
                 }
                 catch

@@ -1,6 +1,6 @@
 # Configuration reference
 
-**Active settings (U / wizard / `/ecoautotune`):** per-world files under
+**Active settings (U / `/ecoconfig` / `/ecosetup` / `/ecoautotune`):** per-world files under
 
 `ModConfig/ecosystemflora/worlds/<WorldName_Seed>/`
 
@@ -20,9 +20,9 @@
 
 **Source of truth (defaults):** `src/Ecosystem/EcosystemConfig.cs`.
 
-**In-game UI (U / `/ecoconfig`):** reads/writes the **current world's** folder above. Reload never pulls the global template while you are in a save.
+**In-game UI (U / `/ecoconfig`):** reads/writes the **current world's** folder above. Reload never pulls the global template while you are in a save. First-setup wizard: `/ecosetup` (also from U). Performance auto-tune only: `/ecoautotune`.
 
-**First-run setup:** when `SetupWizardCompleted` is false in that world's `meta.json`, players with `controlserver` see the wizard.
+**First-run setup:** when `SetupWizardCompleted` is false in that world's `meta.json`, players with `controlserver` (or singleplayer) see the wizard — including **old worlds** that never recorded the flag (missing meta key is treated as pending). Closing the window without Apply/Skip does not mark it complete; it will prompt again on the next join.
 
 Legacy: an old SaveGame blob `ecosystemflora:config` is migrated into the world folder once, then cleared.
 
@@ -32,7 +32,7 @@ Legacy: an old SaveGame blob `ecosystemflora:config` is migrated into the world 
 
 `BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite the spread bundle and feature toggles listed for that preset. Default preset is **`natural`**.
 
-Use `"custom"` to keep your own values across restarts (auto-tune and Weak PC profile set `custom`).
+Use `"custom"` to keep your own values across restarts (auto-tune and Weak PC profile set `custom`). Known presets still re-apply their **balance/feature bundle** on load/save, but **non-preset fields** (tick intervals, budgets, most Performance knobs) keep the values from the world JSON files.
 
 | Preset | Attempts/year | Chance | MinFitness | Same/other spacing | `SpeciesSpreadRateScale` |
 |--------|---------------|--------|------------|--------------------|---------------------------|

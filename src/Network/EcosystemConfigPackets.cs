@@ -23,6 +23,13 @@ namespace WildFarming.Network
 
         [ProtoMember(3)]
         public bool CanEditConfig;
+
+        /// <summary>
+        /// False when the server has not finished loading per-world config yet
+        /// (client must not treat template defaults as authoritative, especially SetupWizardCompleted).
+        /// </summary>
+        [ProtoMember(4)]
+        public bool WorldConfigReady;
     }
 
     [ProtoContract]
@@ -43,5 +50,17 @@ namespace WildFarming.Network
 
         [ProtoMember(3)]
         public string ConfigJson;
+    }
+
+    /// <summary>Server → client: open the setup wizard GUI.</summary>
+    [ProtoContract]
+    public class EcosystemOpenSetupWizardPacket
+    {
+    }
+
+    /// <summary>Server → client: open the U config dialog.</summary>
+    [ProtoContract]
+    public class EcosystemOpenConfigDialogPacket
+    {
     }
 }

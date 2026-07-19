@@ -46,6 +46,50 @@ namespace WildFarming.Tests
         }
 
         [Fact]
+        public void ReapplyKnownPresetPreservingOverrides_KeepsHandEditedPerf()
+        {
+            var cfg = new EcosystemConfig
+            {
+                BalancePreset = EcosystemBalancePresets.Natural,
+                ReproduceAttemptsPerYear = 10,
+                TickBudgetMs = 99,
+                ReproduceTickIntervalMs = 7777,
+                MaxFloraRescanColumnsPerTick = 3,
+            };
+
+            EcosystemConfigSchema.ReapplyKnownPresetPreservingOverrides(cfg);
+
+            Assert.Equal(72, cfg.ReproduceAttemptsPerYear); // preset field
+            Assert.Equal(99, cfg.TickBudgetMs); // non-preset override
+            Assert.Equal(7777, cfg.ReproduceTickIntervalMs);
+            Assert.Equal(3, cfg.MaxFloraRescanColumnsPerTick);
+        }
+
+        [Fact]
+        public void ApplyPresetSelection_StillResetsPerfCadence()
+        {
+            var cfg = new EcosystemConfig
+            {
+                TickBudgetMs = 99,
+                ReproduceTickIntervalMs = 7777,
+            };
+
+            EcosystemConfigSchema.ApplyPresetSelection(cfg, EcosystemBalancePresets.Natural);
+
+            Assert.Equal(2, cfg.TickBudgetMs);
+            Assert.Equal(3500, cfg.ReproduceTickIntervalMs);
+        }
+
+        [Fact]
+        public void Schema_ExposesWildVineMaxHangDepthInTrees()
+        {
+            EcosystemConfigFieldDescriptor field =
+                EcosystemConfigSchema.GetField(nameof(EcosystemConfig.WildVineMaxHangDepth));
+            Assert.NotNull(field);
+            Assert.Equal("trees", field.Category);
+        }
+
+        [Fact]
         public void MarkCustomIfPresetFieldEdited_SwitchesPreset()
         {
             var cfg = new EcosystemConfig { BalancePreset = EcosystemBalancePresets.Natural };

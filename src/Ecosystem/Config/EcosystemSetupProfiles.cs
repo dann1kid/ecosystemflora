@@ -41,7 +41,7 @@ namespace WildFarming.Ecosystem.Config
                 case Weak:
                     EcosystemBalancePresets.Apply(cfg, EcosystemBalancePresets.Natural);
                     cfg.BalancePreset = EcosystemBalancePresets.Custom;
-                    EcosystemPerfCalibrator.ApplyTier(cfg, EcosystemPerfCalibrator.PerfTier.Weak);
+                    EcosystemPerfCalibrator.ApplyTiers(cfg, EcosystemPerfCalibrator.PerfTier.Weak);
                     break;
 
                 case Lush:

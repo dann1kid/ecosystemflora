@@ -31,17 +31,71 @@ namespace WildFarming.Ecosystem.Config
             public int Operations { get; }
         }
 
-        /// <summary>Synthetic plant pool size (memory + scoring work).</summary>
         public const int DefaultPoolSize = 80000;
-
-        /// <summary>Fixed operation count for timing (deterministic workload).</summary>
         public const int DefaultOperationCount = 400000;
-
-        /// <summary>ops/ms below this → Weak.</summary>
         public const double WeakOpsPerMsCeiling = 80.0;
-
-        /// <summary>ops/ms below this (and ≥ Weak ceiling) → Balanced; else Strong.</summary>
         public const double BalancedOpsPerMsCeiling = 220.0;
+
+        /// <summary>
+        /// Performance (and foliage budget) knobs exposed in the setup-wizard bench table.
+        /// Profiling fields are omitted.
+        /// </summary>
+        public static readonly string[] WizardEditableFields =
+        {
+            nameof(EcosystemConfig.ReproduceTickIntervalMs),
+            nameof(EcosystemConfig.ChunkScanTickIntervalMs),
+            nameof(EcosystemConfig.StressTickIntervalMs),
+            nameof(EcosystemConfig.EnablePlayerVicinityRescan),
+            nameof(EcosystemConfig.PlayerVicinityRescanIntervalMs),
+            nameof(EcosystemConfig.EnableCyclicFloraDiscovery),
+            nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick),
+            nameof(EcosystemConfig.TickBudgetMs),
+            nameof(EcosystemConfig.SpreadBudgetMs),
+            nameof(EcosystemConfig.RegistrationBudgetMs),
+            nameof(EcosystemConfig.StressBudgetMs),
+            nameof(EcosystemConfig.PriorityRegistrationBudgetMs),
+            nameof(EcosystemConfig.BurstRegistrationBudgetMs),
+            nameof(EcosystemConfig.FoliageBudgetMs),
+            nameof(EcosystemConfig.FoliageChunkSyncBudgetMs),
+            nameof(EcosystemConfig.MaxReproduceAttemptsPerTick),
+            nameof(EcosystemConfig.EnableChunkFairSpread),
+            nameof(EcosystemConfig.MaxSpreadAttemptsPerChunkPerTick),
+            nameof(EcosystemConfig.MaxSpreadChunksVisitedPerTick),
+            nameof(EcosystemConfig.EnableTwoPhaseSpreadPlacement),
+            nameof(EcosystemConfig.MaxSpreadCommitsPerTick),
+            nameof(EcosystemConfig.MaxSpreadCommitChunksVisitedPerTick),
+            nameof(EcosystemConfig.MaxSpreadCommitsPerChunkPerTick),
+            nameof(EcosystemConfig.EnableEventDrivenSpread),
+            nameof(EcosystemConfig.EnableSeasonCoarseWake),
+            nameof(EcosystemConfig.EcologyWakeRadiusBlocks),
+            nameof(EcosystemConfig.EnableEcologyColumnCache),
+            nameof(EcosystemConfig.EnableBackgroundSpreadSolve),
+            nameof(EcosystemConfig.SpreadWorkerCount),
+            nameof(EcosystemConfig.MaxSpreadSolvePending),
+            nameof(EcosystemConfig.MaxSpreadSolveCompleted),
+            nameof(EcosystemConfig.MaxSpreadSolveDrainPerTick),
+            nameof(EcosystemConfig.MaxPendingSpreadIntents),
+            nameof(EcosystemConfig.EnableBackgroundRegistrationScan),
+            nameof(EcosystemConfig.RegistrationWorkerCount),
+            nameof(EcosystemConfig.MaxRegistrationSnapshotCellsPerTick),
+            nameof(EcosystemConfig.RegistrationSnapshotBandBelowSurface),
+            nameof(EcosystemConfig.MaxRegistrationSolvePending),
+            nameof(EcosystemConfig.MaxRegistrationSolveCompleted),
+            nameof(EcosystemConfig.MaxRegistrationSolveDrainPerTick),
+            nameof(EcosystemConfig.MaxActiveRegistrationSnapshots),
+            nameof(EcosystemConfig.MaxChunkColumnsScannedPerTick),
+            nameof(EcosystemConfig.MaxRegistrationsPerTick),
+            nameof(EcosystemConfig.MaxRegistryAppliesPerTick),
+            nameof(EcosystemConfig.MaxRegistryAppliesPerChunkPerTick),
+            nameof(EcosystemConfig.EnablePlayerPriorityRegistration),
+            nameof(EcosystemConfig.EnableBurstRegistrationNearPlayers),
+            nameof(EcosystemConfig.PlayerRegistrationPriorityRadiusBlocks),
+            nameof(EcosystemConfig.MaxPriorityChunkScansPerTick),
+            nameof(EcosystemConfig.MaxPriorityRegistrationsPerTick),
+            nameof(EcosystemConfig.MaxBurstRegistrationsPerChunk),
+            nameof(EcosystemConfig.MaxPriorityRegistryAppliesPerTick),
+            nameof(EcosystemConfig.OnlyActivateNearPlayers),
+        };
 
         public static CalibrationResult Run(
             int poolSize = DefaultPoolSize,
@@ -52,6 +106,7 @@ namespace WildFarming.Ecosystem.Config
 
             var fitness = new float[poolSize];
             var keys = new int[poolSize];
+            var queue = new int[Math.Min(4096, poolSize)];
             var rng = new Random(0xE50);
             for (int i = 0; i < poolSize; i++)
             {
@@ -61,6 +116,8 @@ namespace WildFarming.Ecosystem.Config
 
             var sw = Stopwatch.StartNew();
             double acc = 0;
+            int qHead = 0;
+            int qTail = 0;
             for (int op = 0; op < operationCount; op++)
             {
                 int i = op % poolSize;
@@ -69,7 +126,21 @@ namespace WildFarming.Ecosystem.Config
                 float b = fitness[j];
                 float score = a * 0.65f + b * 0.35f;
                 if (score < 0.45f) score *= 0.5f;
-                // Cheap heap-like swap / key mix (registration / spread queue spirit).
+
+                // Registration / priority-queue spirit: push + occasional drain.
+                if ((op & 7) == 0)
+                {
+                    queue[qTail % queue.Length] = i;
+                    qTail++;
+                }
+
+                if ((op & 31) == 0 && qHead < qTail)
+                {
+                    int idx = queue[qHead % queue.Length];
+                    qHead++;
+                    score += fitness[idx] * 0.05f;
+                }
+
                 if ((keys[i] ^ keys[j]) > keys[i])
                 {
                     int tmp = keys[i];
@@ -86,16 +157,11 @@ namespace WildFarming.Ecosystem.Config
             }
 
             sw.Stop();
-            // Prevent dead-code elimination of acc.
-            if (acc < -1)
-            {
-                throw new InvalidOperationException("unreachable");
-            }
+            if (acc < -1) throw new InvalidOperationException("unreachable");
 
             long elapsedMs = Math.Max(1, sw.ElapsedMilliseconds);
             double opsPerMs = operationCount / (double)elapsedMs;
-            PerfTier tier = Classify(opsPerMs);
-            return new CalibrationResult(tier, opsPerMs, elapsedMs, operationCount);
+            return new CalibrationResult(Classify(opsPerMs), opsPerMs, elapsedMs, operationCount);
         }
 
         public static PerfTier Classify(double opsPerMs)
@@ -105,129 +171,175 @@ namespace WildFarming.Ecosystem.Config
             return PerfTier.Strong;
         }
 
-        /// <summary>Apply Performance-only knobs for a tier. Does not change ecology balance fields.</summary>
-        public static void ApplyTier(EcosystemConfig cfg, PerfTier tier)
+        public static void ApplyTiers(EcosystemConfig cfg, PerfTier tier)
         {
             if (cfg == null) return;
 
             switch (tier)
             {
                 case PerfTier.Weak:
-                    cfg.ReproduceTickIntervalMs = 5500;
-                    cfg.ChunkScanTickIntervalMs = 3800;
-                    cfg.StressTickIntervalMs = 12000;
-                    cfg.TickBudgetMs = 2;
-                    cfg.SpreadBudgetMs = 1;
-                    cfg.RegistrationBudgetMs = 6;
-                    cfg.PriorityRegistrationBudgetMs = 5;
-                    cfg.BurstRegistrationBudgetMs = 5;
-                    cfg.FoliageBudgetMs = 1;
-                    cfg.FoliageChunkSyncBudgetMs = 1;
-                    cfg.MaxReproduceAttemptsPerTick = 8;
-                    cfg.MaxSpreadAttemptsPerChunkPerTick = 1;
-                    cfg.MaxSpreadChunksVisitedPerTick = 6;
-                    cfg.MaxFloraRescanColumnsPerTick = 3;
-                    cfg.MaxChunkColumnsScannedPerTick = 8;
-                    cfg.MaxRegistrationsPerTick = 32;
-                    cfg.MaxRegistryAppliesPerTick = 48;
-                    cfg.EnablePlayerVicinityRescan = true;
-                    cfg.PlayerVicinityRescanIntervalMs = 9000;
-                    cfg.MaxPriorityChunkScansPerTick = 3;
-                    cfg.MaxPriorityRegistrationsPerTick = 160;
+                    ApplyTierCore(
+                        cfg,
+                        reproduceMs: 5500, chunkScanMs: 3800, stressMs: 12000, vicinityMs: 9000,
+                        tickBudget: 2, spreadBudget: 1, regBudget: 6, stressBudget: 2,
+                        priorityBudget: 5, burstBudget: 5, foliageBudget: 1, foliageSyncBudget: 1,
+                        attempts: 8, spreadPerChunk: 1, spreadChunks: 6, commits: 8, commitChunks: 6, commitsPerChunk: 1,
+                        floraRescan: 3, chunkCols: 8, registrations: 32, applies: 48, appliesPerChunk: 12,
+                        snapCells: 220, snapBand: 20, regPending: 4, regDone: 4, regDrain: 2, activeSnaps: 2,
+                        spreadPending: 4, spreadDone: 4, spreadDrain: 2, spreadIntents: 8,
+                        workers: 1, wakeRadius: 64, priorityRadius: 48,
+                        priorityScans: 3, priorityRegs: 160, burstPerChunk: 512, priorityApplies: 48,
+                        vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
+                        eventWake: true, seasonWake: true, columnCache: true,
+                        bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
+                        onlyNearPlayers: false);
                     break;
 
                 case PerfTier.Strong:
-                    cfg.ReproduceTickIntervalMs = 2800;
-                    cfg.ChunkScanTickIntervalMs = 1800;
-                    cfg.StressTickIntervalMs = 7000;
-                    cfg.TickBudgetMs = 5;
-                    cfg.SpreadBudgetMs = 4;
-                    cfg.RegistrationBudgetMs = 12;
-                    cfg.PriorityRegistrationBudgetMs = 10;
-                    cfg.BurstRegistrationBudgetMs = 10;
-                    cfg.FoliageBudgetMs = 3;
-                    cfg.FoliageChunkSyncBudgetMs = 2;
-                    cfg.MaxReproduceAttemptsPerTick = 20;
-                    cfg.MaxSpreadAttemptsPerChunkPerTick = 1;
-                    cfg.MaxSpreadChunksVisitedPerTick = 16;
-                    cfg.MaxFloraRescanColumnsPerTick = 10;
-                    cfg.MaxChunkColumnsScannedPerTick = 18;
-                    cfg.MaxRegistrationsPerTick = 72;
-                    cfg.MaxRegistryAppliesPerTick = 110;
-                    cfg.EnablePlayerVicinityRescan = true;
-                    cfg.PlayerVicinityRescanIntervalMs = 4000;
-                    cfg.MaxPriorityChunkScansPerTick = 8;
-                    cfg.MaxPriorityRegistrationsPerTick = 420;
+                    ApplyTierCore(
+                        cfg,
+                        reproduceMs: 2800, chunkScanMs: 1800, stressMs: 7000, vicinityMs: 4000,
+                        tickBudget: 5, spreadBudget: 4, regBudget: 12, stressBudget: 4,
+                        priorityBudget: 10, burstBudget: 10, foliageBudget: 3, foliageSyncBudget: 2,
+                        attempts: 20, spreadPerChunk: 1, spreadChunks: 16, commits: 20, commitChunks: 16, commitsPerChunk: 1,
+                        floraRescan: 10, chunkCols: 18, registrations: 72, applies: 110, appliesPerChunk: 28,
+                        snapCells: 420, snapBand: 28, regPending: 8, regDone: 8, regDrain: 4, activeSnaps: 4,
+                        spreadPending: 8, spreadDone: 8, spreadDrain: 4, spreadIntents: 24,
+                        workers: 0, wakeRadius: 0, priorityRadius: 80,
+                        priorityScans: 8, priorityRegs: 420, burstPerChunk: 2048, priorityApplies: 110,
+                        vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
+                        eventWake: true, seasonWake: true, columnCache: true,
+                        bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
+                        onlyNearPlayers: false);
                     break;
 
                 default:
-                    cfg.ReproduceTickIntervalMs = 3500;
-                    cfg.ChunkScanTickIntervalMs = 2300;
-                    cfg.StressTickIntervalMs = 8500;
-                    cfg.TickBudgetMs = 2;
-                    cfg.SpreadBudgetMs = 1;
-                    cfg.RegistrationBudgetMs = 9;
-                    cfg.PriorityRegistrationBudgetMs = 8;
-                    cfg.BurstRegistrationBudgetMs = 8;
-                    cfg.FoliageBudgetMs = 2;
-                    cfg.FoliageChunkSyncBudgetMs = 2;
-                    cfg.MaxReproduceAttemptsPerTick = 14;
-                    cfg.MaxSpreadAttemptsPerChunkPerTick = 1;
-                    cfg.MaxSpreadChunksVisitedPerTick = 12;
-                    cfg.MaxFloraRescanColumnsPerTick = 7;
-                    cfg.MaxChunkColumnsScannedPerTick = 14;
-                    cfg.MaxRegistrationsPerTick = 54;
-                    cfg.MaxRegistryAppliesPerTick = 85;
-                    cfg.EnablePlayerVicinityRescan = true;
-                    cfg.PlayerVicinityRescanIntervalMs = 5000;
-                    cfg.MaxPriorityChunkScansPerTick = 6;
-                    cfg.MaxPriorityRegistrationsPerTick = 340;
+                    ApplyTierCore(
+                        cfg,
+                        reproduceMs: 3500, chunkScanMs: 2300, stressMs: 8500, vicinityMs: 5000,
+                        tickBudget: 2, spreadBudget: 1, regBudget: 9, stressBudget: 0,
+                        priorityBudget: 8, burstBudget: 8, foliageBudget: 2, foliageSyncBudget: 2,
+                        attempts: 14, spreadPerChunk: 1, spreadChunks: 12, commits: 0, commitChunks: 0, commitsPerChunk: 0,
+                        floraRescan: 7, chunkCols: 14, registrations: 54, applies: 85, appliesPerChunk: 21,
+                        snapCells: 340, snapBand: 24, regPending: 6, regDone: 6, regDrain: 3, activeSnaps: 3,
+                        spreadPending: 6, spreadDone: 6, spreadDrain: 3, spreadIntents: 16,
+                        workers: 0, wakeRadius: 0, priorityRadius: 64,
+                        priorityScans: 6, priorityRegs: 340, burstPerChunk: 2048, priorityApplies: 85,
+                        vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
+                        eventWake: true, seasonWake: true, columnCache: true,
+                        bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
+                        onlyNearPlayers: false);
                     break;
             }
         }
 
-        /// <summary>
-        /// Ultra-low CPU profile for very weak machines — slower/rarer than <see cref="PerfTier.Weak"/>.
-        /// Also enables near-player-only activation.
-        /// </summary>
         public static void ApplySuperMinimal(EcosystemConfig cfg)
         {
             if (cfg == null) return;
+            ApplyTierCore(
+                cfg,
+                reproduceMs: 10000, chunkScanMs: 7500, stressMs: 20000, vicinityMs: 15000,
+                tickBudget: 1, spreadBudget: 1, regBudget: 3, stressBudget: 1,
+                priorityBudget: 2, burstBudget: 2, foliageBudget: 1, foliageSyncBudget: 1,
+                attempts: 3, spreadPerChunk: 1, spreadChunks: 3, commits: 3, commitChunks: 3, commitsPerChunk: 1,
+                floraRescan: 1, chunkCols: 3, registrations: 12, applies: 20, appliesPerChunk: 6,
+                snapCells: 120, snapBand: 16, regPending: 2, regDone: 2, regDrain: 1, activeSnaps: 1,
+                spreadPending: 2, spreadDone: 2, spreadDrain: 1, spreadIntents: 4,
+                workers: 1, wakeRadius: 48, priorityRadius: 32,
+                priorityScans: 1, priorityRegs: 48, burstPerChunk: 256, priorityApplies: 24,
+                vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
+                eventWake: true, seasonWake: false, columnCache: true,
+                bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
+                onlyNearPlayers: true);
+        }
 
-            cfg.ReproduceTickIntervalMs = 10000;
-            cfg.ChunkScanTickIntervalMs = 7500;
-            cfg.StressTickIntervalMs = 20000;
-            cfg.TickBudgetMs = 1;
-            cfg.SpreadBudgetMs = 1;
-            cfg.RegistrationBudgetMs = 3;
-            cfg.PriorityRegistrationBudgetMs = 2;
-            cfg.BurstRegistrationBudgetMs = 2;
-            cfg.FoliageBudgetMs = 1;
-            cfg.FoliageChunkSyncBudgetMs = 1;
-            cfg.MaxReproduceAttemptsPerTick = 3;
-            cfg.MaxSpreadAttemptsPerChunkPerTick = 1;
-            cfg.MaxSpreadChunksVisitedPerTick = 3;
-            cfg.MaxFloraRescanColumnsPerTick = 1;
-            cfg.MaxChunkColumnsScannedPerTick = 3;
-            cfg.MaxRegistrationsPerTick = 12;
-            cfg.MaxRegistryAppliesPerTick = 20;
-            cfg.EnablePlayerVicinityRescan = true;
-            cfg.PlayerVicinityRescanIntervalMs = 15000;
-            cfg.MaxPriorityChunkScansPerTick = 1;
-            cfg.MaxPriorityRegistrationsPerTick = 48;
-            cfg.MaxPriorityRegistryAppliesPerTick = 24;
-            cfg.OnlyActivateNearPlayers = true;
+        static void ApplyTierCore(
+            EcosystemConfig cfg,
+            int reproduceMs, int chunkScanMs, int stressMs, int vicinityMs,
+            int tickBudget, int spreadBudget, int regBudget, int stressBudget,
+            int priorityBudget, int burstBudget, int foliageBudget, int foliageSyncBudget,
+            int attempts, int spreadPerChunk, int spreadChunks, int commits, int commitChunks, int commitsPerChunk,
+            int floraRescan, int chunkCols, int registrations, int applies, int appliesPerChunk,
+            int snapCells, int snapBand, int regPending, int regDone, int regDrain, int activeSnaps,
+            int spreadPending, int spreadDone, int spreadDrain, int spreadIntents,
+            int workers, int wakeRadius, int priorityRadius,
+            int priorityScans, int priorityRegs, int burstPerChunk, int priorityApplies,
+            bool vicinity, bool cyclicFlora, bool fairSpread, bool twoPhase,
+            bool eventWake, bool seasonWake, bool columnCache,
+            bool bgSpread, bool bgReg, bool priorityReg, bool burstReg,
+            bool onlyNearPlayers)
+        {
+            cfg.ReproduceTickIntervalMs = reproduceMs;
+            cfg.ChunkScanTickIntervalMs = chunkScanMs;
+            cfg.StressTickIntervalMs = stressMs;
+            cfg.EnablePlayerVicinityRescan = vicinity;
+            cfg.PlayerVicinityRescanIntervalMs = vicinityMs;
+            cfg.EnableCyclicFloraDiscovery = cyclicFlora;
+            cfg.MaxFloraRescanColumnsPerTick = floraRescan;
+
+            cfg.TickBudgetMs = tickBudget;
+            cfg.SpreadBudgetMs = spreadBudget;
+            cfg.RegistrationBudgetMs = regBudget;
+            cfg.StressBudgetMs = stressBudget;
+            cfg.PriorityRegistrationBudgetMs = priorityBudget;
+            cfg.BurstRegistrationBudgetMs = burstBudget;
+            cfg.FoliageBudgetMs = foliageBudget;
+            cfg.FoliageChunkSyncBudgetMs = foliageSyncBudget;
+
+            cfg.MaxReproduceAttemptsPerTick = attempts;
+            cfg.EnableChunkFairSpread = fairSpread;
+            cfg.MaxSpreadAttemptsPerChunkPerTick = spreadPerChunk;
+            cfg.MaxSpreadChunksVisitedPerTick = spreadChunks;
+            cfg.EnableTwoPhaseSpreadPlacement = twoPhase;
+            cfg.MaxSpreadCommitsPerTick = commits;
+            cfg.MaxSpreadCommitChunksVisitedPerTick = commitChunks;
+            cfg.MaxSpreadCommitsPerChunkPerTick = commitsPerChunk;
+
+            cfg.EnableEventDrivenSpread = eventWake;
+            cfg.EnableSeasonCoarseWake = seasonWake;
+            cfg.EcologyWakeRadiusBlocks = wakeRadius;
+            cfg.EnableEcologyColumnCache = columnCache;
+
+            cfg.EnableBackgroundSpreadSolve = bgSpread;
+            cfg.SpreadWorkerCount = workers;
+            cfg.MaxSpreadSolvePending = spreadPending;
+            cfg.MaxSpreadSolveCompleted = spreadDone;
+            cfg.MaxSpreadSolveDrainPerTick = spreadDrain;
+            cfg.MaxPendingSpreadIntents = spreadIntents;
+
+            cfg.EnableBackgroundRegistrationScan = bgReg;
+            cfg.RegistrationWorkerCount = workers;
+            cfg.MaxRegistrationSnapshotCellsPerTick = snapCells;
+            cfg.RegistrationSnapshotBandBelowSurface = snapBand;
+            cfg.MaxRegistrationSolvePending = regPending;
+            cfg.MaxRegistrationSolveCompleted = regDone;
+            cfg.MaxRegistrationSolveDrainPerTick = regDrain;
+            cfg.MaxActiveRegistrationSnapshots = activeSnaps;
+
+            cfg.MaxChunkColumnsScannedPerTick = chunkCols;
+            cfg.MaxRegistrationsPerTick = registrations;
+            cfg.MaxRegistryAppliesPerTick = applies;
+            cfg.MaxRegistryAppliesPerChunkPerTick = appliesPerChunk;
+
+            cfg.EnablePlayerPriorityRegistration = priorityReg;
+            cfg.EnableBurstRegistrationNearPlayers = burstReg;
+            cfg.PlayerRegistrationPriorityRadiusBlocks = priorityRadius;
+            cfg.MaxPriorityChunkScansPerTick = priorityScans;
+            cfg.MaxPriorityRegistrationsPerTick = priorityRegs;
+            cfg.MaxBurstRegistrationsPerChunk = burstPerChunk;
+            cfg.MaxPriorityRegistryAppliesPerTick = priorityApplies;
+
+            cfg.OnlyActivateNearPlayers = onlyNearPlayers;
         }
 
         public static CalibrationResult RunAndApply(EcosystemConfig cfg)
         {
             CalibrationResult result = Run();
-            ApplyTier(cfg, result.Tier);
+            ApplyTiers(cfg, result.Tier);
             RecordResult(cfg, result);
             return result;
         }
 
-        /// <summary>Persist bench metadata on the world config (does not change Performance knobs).</summary>
         public static void RecordResult(EcosystemConfig cfg, CalibrationResult result)
         {
             if (cfg == null) return;
@@ -237,20 +349,15 @@ namespace WildFarming.Ecosystem.Config
             cfg.LastAutoTuneUtc = DateTime.UtcNow.ToString("o");
         }
 
-        /// <summary>Key Performance fields the setup wizard exposes for post-bench editing.</summary>
-        public static readonly string[] WizardEditableFields =
+        public static void CopyWizardFields(EcosystemConfig source, EcosystemConfig target)
         {
-            nameof(EcosystemConfig.ReproduceTickIntervalMs),
-            nameof(EcosystemConfig.ChunkScanTickIntervalMs),
-            nameof(EcosystemConfig.StressTickIntervalMs),
-            nameof(EcosystemConfig.PlayerVicinityRescanIntervalMs),
-            nameof(EcosystemConfig.TickBudgetMs),
-            nameof(EcosystemConfig.SpreadBudgetMs),
-            nameof(EcosystemConfig.RegistrationBudgetMs),
-            nameof(EcosystemConfig.MaxReproduceAttemptsPerTick),
-            nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick),
-            nameof(EcosystemConfig.MaxSpreadChunksVisitedPerTick),
-            nameof(EcosystemConfig.MaxChunkColumnsScannedPerTick),
-        };
+            if (source == null || target == null) return;
+            foreach (string name in WizardEditableFields)
+            {
+                EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(name);
+                if (field == null) continue;
+                field.SetValue(target, field.GetValue(source));
+            }
+        }
     }
 }

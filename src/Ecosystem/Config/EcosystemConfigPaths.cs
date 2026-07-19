@@ -25,6 +25,8 @@ namespace WildFarming.Ecosystem.Config
         public const string SpeciesFolderName = "species";
         public const string MetaFileName = "meta.json";
         public const string WorldInfoFileName = "world.json";
+        /// <summary>Presence = setup wizard finished for this world (authoritative; survives sync races).</summary>
+        public const string WizardDoneFileName = "setup-wizard.done";
 
         public const string LegacyFlatConfigFileName = "ecosystemflora.json";
         public const string LegacyPresetsFolderName = "ecosystemflora.presets";
@@ -73,6 +75,9 @@ namespace WildFarming.Ecosystem.Config
 
         public static string GetWorldMetaPath(ICoreAPI api, string worldKey) =>
             Path.Combine(GetWorldFolder(api, worldKey), MetaFileName);
+
+        public static string GetWizardDonePath(ICoreAPI api, string worldKey) =>
+            Path.Combine(GetWorldFolder(api, worldKey), WizardDoneFileName);
 
         public static string GetWorldInfoPath(ICoreAPI api, string worldKey) =>
             Path.Combine(GetWorldFolder(api, worldKey), WorldInfoFileName);

@@ -9,30 +9,36 @@ using WildFarming.Ecosystem.Config;
 namespace WildFarming.Client
 {
     /// <summary>
-    /// First-run / re-run setup: page 1 = profile + scope; page 2 = benchmark + editable perf knobs
-    /// with a read-only bench-suggestion column for comparison.
+    /// First-run / re-run setup: welcome → profile + scope → performance bench table.
     /// </summary>
     public class EcosystemSetupWizardDialog : GuiDialog
     {
         public override string ToggleKeyCombinationCode => null;
 
-        const double DialogWidth = 700;
-        const double DialogHeightPage1 = 300;
-        const double DialogHeightPage2 = 560;
-        const double EditColWidth = 80;
-        const double BenchColWidth = 64;
-        const double MinimalColWidth = 64;
+        const int PageWelcome = 0;
+        const int PageProfile = 1;
+        const int PageBench = 2;
+
+        const double DialogWidth = 720;
+        const double DialogHeightWelcome = 320;
+        const double DialogHeightProfile = 300;
+        const double DialogHeightBench = 610;
+        const double EditColWidth = 78;
+        const double BenchColWidth = 62;
+        const double MinimalColWidth = 62;
         const double ColGap = 6;
-        const double RowH = 26;
+        const double RowH = 24;
+        const int FieldsPerPage = 12;
 
         readonly EcosystemConfig working;
-        readonly Dictionary<string, int> benchSnapshot = new Dictionary<string, int>(StringComparer.Ordinal);
-        readonly Dictionary<string, int> baselineSnapshot = new Dictionary<string, int>(StringComparer.Ordinal);
-        readonly Dictionary<string, int> minimalSnapshot = new Dictionary<string, int>(StringComparer.Ordinal);
+        EcosystemConfig baselineCfg;
+        EcosystemConfig benchCfg;
+        EcosystemConfig minimalCfg;
 
         string profileCode = EcosystemSetupProfiles.Balanced;
         bool nearPlayers;
         int page;
+        int fieldPage;
         string lastResultText = "";
         bool benchRan;
 
@@ -45,7 +51,8 @@ namespace WildFarming.Client
             working = EcosystemConfigCopier.Clone(source ?? EcosystemConfig.Loaded);
             profileCode = EcosystemSetupProfiles.Balanced;
             nearPlayers = EcosystemSetupProfiles.DefaultNearPlayers(profileCode);
-            page = 0;
+            page = PageWelcome;
+            fieldPage = 0;
             RefreshResultTextFromConfig();
         }
 
@@ -61,14 +68,83 @@ namespace WildFarming.Client
         bool TryCompose()
         {
             SingleComposer?.Dispose();
-            return page == 0 ? ComposePage1() : ComposePage2();
+            switch (page)
+            {
+                case PageWelcome:
+                    return ComposeWelcomePage();
+                case PageProfile:
+                    return ComposeProfilePage();
+                default:
+                    return ComposeBenchPage();
+            }
         }
 
-        bool ComposePage1()
+        bool ComposeWelcomePage()
         {
             double pad = GuiStyle.ElementToDialogPadding;
             double titleH = GuiStyle.TitleBarHeight;
-            double height = DialogHeightPage1;
+            double height = DialogHeightWelcome;
+
+            ElementBounds dialogBounds = ElementBounds
+                .FixedSize(DialogWidth, height)
+                .WithAlignment(EnumDialogArea.CenterMiddle);
+            ElementBounds bgBounds = ElementBounds.Fixed(0, 0, DialogWidth, height);
+
+            var composer = capi.Gui
+                .CreateCompo("ecosystemflora-setup", dialogBounds)
+                .AddShadedDialogBG(bgBounds, true)
+                .AddDialogTitleBar(L("setup-wizard-welcome-title"), () => TryClose());
+
+            double y = titleH + pad;
+            double contentW = DialogWidth - pad * 2;
+
+            composer.AddStaticText(
+                L("setup-wizard-welcome-heading"),
+                CairoFont.WhiteDetailText(),
+                ElementBounds.Fixed(pad, y, contentW, 28));
+            y += 32;
+
+            composer.AddStaticText(
+                L("setup-wizard-welcome-body"),
+                CairoFont.WhiteSmallText(),
+                ElementBounds.Fixed(pad, y, contentW, 120));
+            y += 128;
+
+            composer.AddStaticText(
+                L("setup-wizard-welcome-steps"),
+                CairoFont.WhiteSmallText(),
+                ElementBounds.Fixed(pad, y, contentW, 48));
+
+            double btnY = height - pad - 30;
+            double btnW = 110;
+            composer.AddButton(
+                L("setup-wizard-skip"),
+                OnSkip,
+                ElementBounds.Fixed(pad, btnY, btnW, 28),
+                CairoFont.WhiteSmallText());
+            composer.AddButton(
+                L("setup-wizard-next"),
+                OnNextFromWelcome,
+                ElementBounds.Fixed(DialogWidth - pad - btnW, btnY, btnW, 28),
+                CairoFont.WhiteDetailText());
+
+            try
+            {
+                SingleComposer = composer.Compose();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                capi.Logger.Error("[ecosystemflora] Setup wizard welcome failed: {0}", ex);
+                return false;
+            }
+        }
+
+        bool ComposeProfilePage()
+        {
+            double pad = GuiStyle.ElementToDialogPadding;
+            double titleH = GuiStyle.TitleBarHeight;
+            double height = DialogHeightProfile;
 
             ElementBounds dialogBounds = ElementBounds
                 .FixedSize(DialogWidth, height)
@@ -134,9 +210,14 @@ namespace WildFarming.Client
             double btnY = height - pad - 30;
             double btnW = 110;
             composer.AddButton(
+                L("setup-wizard-back"),
+                OnBackToWelcome,
+                ElementBounds.Fixed(pad, btnY, btnW, 28),
+                CairoFont.WhiteSmallText());
+            composer.AddButton(
                 L("setup-wizard-skip"),
                 OnSkip,
-                ElementBounds.Fixed(pad, btnY, btnW, 28),
+                ElementBounds.Fixed(pad + btnW + 8, btnY, btnW, 28),
                 CairoFont.WhiteSmallText());
             composer.AddButton(
                 L("setup-wizard-next"),
@@ -152,16 +233,22 @@ namespace WildFarming.Client
             }
             catch (Exception ex)
             {
-                capi.Logger.Error("[ecosystemflora] Setup wizard page1 failed: {0}", ex);
+                capi.Logger.Error("[ecosystemflora] Setup wizard profile failed: {0}", ex);
                 return false;
             }
         }
 
-        bool ComposePage2()
+        bool ComposeBenchPage()
         {
+            EnsureMinimalCfg();
+            string[] fields = EcosystemPerfCalibrator.WizardEditableFields;
+            int fieldPageCount = Math.Max(1, (fields.Length + FieldsPerPage - 1) / FieldsPerPage);
+            if (fieldPage >= fieldPageCount) fieldPage = fieldPageCount - 1;
+            if (fieldPage < 0) fieldPage = 0;
+
             double pad = GuiStyle.ElementToDialogPadding;
             double titleH = GuiStyle.TitleBarHeight;
-            double height = DialogHeightPage2;
+            double height = DialogHeightBench;
 
             ElementBounds dialogBounds = ElementBounds
                 .FixedSize(DialogWidth, height)
@@ -183,99 +270,142 @@ namespace WildFarming.Client
             composer.AddStaticText(
                 L("setup-wizard-bench-intro"),
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(pad, y, contentW, 36));
-            y += 40;
+                ElementBounds.Fixed(pad, y, contentW, 32));
+            y += 34;
 
             composer.AddButton(
                 L("setup-wizard-bench-run"),
                 OnRunBench,
-                ElementBounds.Fixed(pad, y, 140, 28),
+                ElementBounds.Fixed(pad, y, 130, 26),
                 CairoFont.WhiteDetailText());
 
-            double btnX = pad + 148;
+            double btnX = pad + 138;
             if (benchRan)
             {
                 composer.AddButton(
                     L("setup-wizard-bench-use"),
                     OnUseBenchValues,
-                    ElementBounds.Fixed(btnX, y, 150, 28),
+                    ElementBounds.Fixed(btnX, y, 140, 26),
                     CairoFont.WhiteSmallText());
-                btnX += 158;
+                btnX += 148;
             }
 
             composer.AddButton(
                 L("setup-wizard-minimal-use"),
                 OnUseMinimalValues,
-                ElementBounds.Fixed(btnX, y, 200, 28),
+                ElementBounds.Fixed(btnX, y, 190, 26),
                 CairoFont.WhiteSmallText());
-
-            y += 34;
+            y += 30;
 
             composer.AddStaticText(
                 string.IsNullOrWhiteSpace(lastResultText) ? L("setup-wizard-bench-idle") : lastResultText,
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(pad, y, contentW, 28));
-            y += 32;
+                ElementBounds.Fixed(pad, y, contentW, 22));
+            y += 24;
+
+            composer.AddStaticText(
+                L("setup-wizard-bench-legend"),
+                CairoFont.WhiteSmallText(),
+                ElementBounds.Fixed(pad, y, contentW, 32));
+            y += 34;
+
+            composer.AddStaticText(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    L("setup-wizard-bench-page"),
+                    fieldPage + 1,
+                    fieldPageCount,
+                    fields.Length),
+                CairoFont.WhiteSmallText(),
+                ElementBounds.Fixed(pad, y, contentW, 18));
+            y += 20;
 
             composer.AddStaticText(
                 L("setup-wizard-bench-edit"),
                 CairoFont.WhiteDetailText(),
-                ElementBounds.Fixed(pad, y, labelW, 22));
+                ElementBounds.Fixed(pad, y, labelW, 18));
             composer.AddStaticText(
                 L("setup-wizard-bench-col-yours"),
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(editX, y, EditColWidth, 22));
+                ElementBounds.Fixed(editX, y, EditColWidth, 18));
             composer.AddStaticText(
                 L("setup-wizard-bench-col-bench"),
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(benchX, y, BenchColWidth, 22));
+                ElementBounds.Fixed(benchX, y, BenchColWidth, 18));
             composer.AddStaticText(
                 L("setup-wizard-bench-col-minimal"),
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(minimalX, y, MinimalColWidth, 22));
-            y += 24;
+                ElementBounds.Fixed(minimalX, y, MinimalColWidth, 18));
+            y += 20;
 
-            foreach (string fieldName in EcosystemPerfCalibrator.WizardEditableFields)
+            int start = fieldPage * FieldsPerPage;
+            int end = Math.Min(fields.Length, start + FieldsPerPage);
+            for (int i = start; i < end; i++)
             {
+                string fieldName = fields[i];
                 EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(fieldName);
-                if (field == null || field.Kind != ConfigFieldKind.Integer) continue;
+                if (field == null) continue;
+                if (field.Kind != ConfigFieldKind.Integer && field.Kind != ConfigFieldKind.Boolean) continue;
 
-                string title = ConfigFieldLangResolver.GetTitle(field);
+                string title = EcosystemPerfKnobHints.FormatTitleWithHint(
+                    ConfigFieldLangResolver.GetTitle(field),
+                    fieldName);
                 composer.AddStaticText(
                     title,
                     CairoFont.WhiteSmallText(),
                     ElementBounds.Fixed(pad, y, labelW, RowH));
 
                 string code = "bench-" + fieldName;
-                composer.AddNumberInput(
-                    ElementBounds.Fixed(editX, y, EditColWidth, 22),
-                    val => OnBenchFieldChanged(field, val),
-                    CairoFont.WhiteSmallText(),
-                    code);
+                if (field.Kind == ConfigFieldKind.Boolean)
+                {
+                    composer.AddSwitch(
+                        on => OnBenchBoolChanged(field, on),
+                        ElementBounds.Fixed(editX, y, 40, 22),
+                        code,
+                        18,
+                        3);
+                }
+                else
+                {
+                    composer.AddNumberInput(
+                        ElementBounds.Fixed(editX, y, EditColWidth, 20),
+                        val => OnBenchFieldChanged(field, val),
+                        CairoFont.WhiteSmallText(),
+                        code);
+                }
 
                 composer.AddStaticText(
-                    FormatSnapshotColumn(benchSnapshot, fieldName, requireBench: true),
+                    FormatCfgColumn(benchCfg, field, requireBench: true),
                     CairoFont.WhiteSmallText(),
                     ElementBounds.Fixed(benchX, y, BenchColWidth, RowH));
-
                 composer.AddStaticText(
-                    FormatSnapshotColumn(minimalSnapshot, fieldName, requireBench: false),
+                    FormatCfgColumn(minimalCfg, field, requireBench: false),
                     CairoFont.WhiteSmallText(),
                     ElementBounds.Fixed(minimalX, y, MinimalColWidth, RowH));
                 y += RowH;
             }
 
             double btnY = height - pad - 30;
-            double btnW = 110;
+            double btnW = 90;
             composer.AddButton(
                 L("setup-wizard-back"),
-                OnBack,
+                OnBackToProfile,
                 ElementBounds.Fixed(pad, btnY, btnW, 28),
+                CairoFont.WhiteSmallText());
+            composer.AddButton(
+                L("setup-wizard-fields-prev"),
+                OnFieldsPrev,
+                ElementBounds.Fixed(pad + btnW + 6, btnY, 70, 28),
+                CairoFont.WhiteSmallText());
+            composer.AddButton(
+                L("setup-wizard-fields-next"),
+                OnFieldsNext,
+                ElementBounds.Fixed(pad + btnW + 82, btnY, 70, 28),
                 CairoFont.WhiteSmallText());
             composer.AddButton(
                 L("setup-wizard-skip"),
                 OnSkip,
-                ElementBounds.Fixed(pad + btnW + 8, btnY, btnW, 28),
+                ElementBounds.Fixed(pad + btnW + 158, btnY, btnW, 28),
                 CairoFont.WhiteSmallText());
             composer.AddButton(
                 L("setup-wizard-apply"),
@@ -286,60 +416,56 @@ namespace WildFarming.Client
             try
             {
                 SingleComposer = composer.Compose();
-                ApplyBenchFieldValues();
+                ApplyBenchFieldValues(start, end);
                 return true;
             }
             catch (Exception ex)
             {
-                capi.Logger.Error("[ecosystemflora] Setup wizard page2 failed: {0}", ex);
+                capi.Logger.Error("[ecosystemflora] Setup wizard bench failed: {0}", ex);
                 return false;
             }
         }
 
-        string FormatSnapshotColumn(Dictionary<string, int> snapshot, string fieldName, bool requireBench)
-        {
-            if (requireBench && !benchRan) return "—";
-            if (snapshot == null || !snapshot.TryGetValue(fieldName, out int value)) return "—";
-            return value.ToString(CultureInfo.InvariantCulture);
-        }
-
-        void EnsureMinimalSnapshot()
-        {
-            if (minimalSnapshot.Count > 0) return;
-            var tmp = new EcosystemConfig();
-            EcosystemPerfCalibrator.ApplySuperMinimal(tmp);
-            CaptureSnapshotFrom(tmp, minimalSnapshot);
-        }
-
-        void CaptureSnapshot(Dictionary<string, int> target)
-        {
-            target.Clear();
-            foreach (string fieldName in EcosystemPerfCalibrator.WizardEditableFields)
-            {
-                EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(fieldName);
-                if (field == null) continue;
-                object raw = field.GetValue(working);
-                if (raw is int n)
-                {
-                    target[fieldName] = n;
-                }
-                else if (raw != null && int.TryParse(raw.ToString(), out int parsed))
-                {
-                    target[fieldName] = parsed;
-                }
-            }
-        }
-
-        void ApplyBenchFieldValues()
+        void ApplyBenchFieldValues(int start, int end)
         {
             if (SingleComposer == null) return;
-            foreach (string fieldName in EcosystemPerfCalibrator.WizardEditableFields)
+            string[] fields = EcosystemPerfCalibrator.WizardEditableFields;
+            for (int i = start; i < end && i < fields.Length; i++)
             {
+                string fieldName = fields[i];
                 EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(fieldName);
                 if (field == null) continue;
                 object value = field.GetValue(working);
-                SingleComposer.GetNumberInput("bench-" + fieldName)?.SetValue(value?.ToString() ?? "0");
+                string code = "bench-" + fieldName;
+                if (field.Kind == ConfigFieldKind.Boolean)
+                {
+                    SingleComposer.GetSwitch(code)?.SetValue(value is bool b && b);
+                }
+                else
+                {
+                    SingleComposer.GetNumberInput(code)?.SetValue(value?.ToString() ?? "0");
+                }
             }
+        }
+
+        string FormatCfgColumn(EcosystemConfig cfg, EcosystemConfigFieldDescriptor field, bool requireBench)
+        {
+            if (requireBench && (!benchRan || cfg == null)) return "—";
+            if (cfg == null || field == null) return "—";
+            object value = field.GetValue(cfg);
+            if (field.Kind == ConfigFieldKind.Boolean)
+            {
+                return value is bool b && b ? "on" : "off";
+            }
+
+            return value?.ToString() ?? "—";
+        }
+
+        void EnsureMinimalCfg()
+        {
+            if (minimalCfg != null) return;
+            minimalCfg = new EcosystemConfig();
+            EcosystemPerfCalibrator.ApplySuperMinimal(minimalCfg);
         }
 
         void OnBenchFieldChanged(EcosystemConfigFieldDescriptor field, string text)
@@ -355,6 +481,17 @@ namespace WildFarming.Client
             working.BalancePreset = EcosystemBalancePresets.Custom;
         }
 
+        void OnBenchBoolChanged(EcosystemConfigFieldDescriptor field, bool value)
+        {
+            if (field == null) return;
+            field.SetValue(working, value);
+            working.BalancePreset = EcosystemBalancePresets.Custom;
+            if (field.Name == nameof(EcosystemConfig.OnlyActivateNearPlayers))
+            {
+                nearPlayers = value;
+            }
+        }
+
         void OnProfileSelected(string code, bool selected)
         {
             if (!selected || string.IsNullOrWhiteSpace(code)) return;
@@ -365,39 +502,72 @@ namespace WildFarming.Client
 
         void OnNearPlayersChanged(bool value) => nearPlayers = value;
 
+        bool OnNextFromWelcome()
+        {
+            page = PageProfile;
+            return TryCompose();
+        }
+
+        bool OnBackToWelcome()
+        {
+            page = PageWelcome;
+            return TryCompose();
+        }
+
         bool OnNextFromProfile()
         {
             EcosystemSetupProfiles.ApplyProfile(working, profileCode, nearPlayers);
-            page = 1;
+            page = PageBench;
+            fieldPage = 0;
             benchRan = false;
-            benchSnapshot.Clear();
-            CaptureSnapshot(baselineSnapshot);
-            EnsureMinimalSnapshot();
+            benchCfg = null;
+            baselineCfg = EcosystemConfigCopier.Clone(working);
+            EnsureMinimalCfg();
             RefreshResultTextFromConfig();
             return TryCompose();
         }
 
-        bool OnBack()
+        bool OnBackToProfile()
         {
-            page = 0;
+            page = PageProfile;
             return TryCompose();
+        }
+
+        bool OnFieldsPrev()
+        {
+            if (fieldPage > 0)
+            {
+                fieldPage--;
+                return TryCompose();
+            }
+
+            return true;
+        }
+
+        bool OnFieldsNext()
+        {
+            int count = EcosystemPerfCalibrator.WizardEditableFields.Length;
+            int pages = Math.Max(1, (count + FieldsPerPage - 1) / FieldsPerPage);
+            if (fieldPage + 1 < pages)
+            {
+                fieldPage++;
+                return TryCompose();
+            }
+
+            return true;
         }
 
         bool OnRunBench()
         {
-            if (baselineSnapshot.Count == 0)
+            if (baselineCfg == null)
             {
-                CaptureSnapshot(baselineSnapshot);
+                baselineCfg = EcosystemConfigCopier.Clone(working);
             }
 
-            // Apply tiers on a clone so we can keep profile defaults in the editable column.
-            EcosystemConfig benchCfg = EcosystemConfigCopier.Clone(working);
-            EcosystemPerfCalibrator.CalibrationResult result = EcosystemPerfCalibrator.RunAndApply(benchCfg);
-
-            CaptureSnapshotFrom(benchCfg, benchSnapshot);
-            // Restore editable column to profile defaults for side-by-side comparison.
-            ApplySnapshot(baselineSnapshot, working);
-            // Keep auto-tune metadata from the bench run on the working config.
+            EcosystemConfig measured = EcosystemConfigCopier.Clone(working);
+            EcosystemPerfCalibrator.CalibrationResult result = EcosystemPerfCalibrator.RunAndApply(measured);
+            benchCfg = EcosystemConfigCopier.Clone(measured);
+            EcosystemPerfCalibrator.CopyWizardFields(baselineCfg, working);
             EcosystemPerfCalibrator.RecordResult(working, result);
 
             benchRan = true;
@@ -411,63 +581,24 @@ namespace WildFarming.Client
 
         bool OnUseBenchValues()
         {
-            if (!benchRan || benchSnapshot.Count == 0) return true;
-            ApplySnapshot(benchSnapshot, working);
+            if (!benchRan || benchCfg == null) return true;
+            EcosystemPerfCalibrator.CopyWizardFields(benchCfg, working);
             working.BalancePreset = EcosystemBalancePresets.Custom;
-            ApplyBenchFieldValues();
-            return true;
+            nearPlayers = working.OnlyActivateNearPlayers;
+            return TryCompose();
         }
 
         bool OnUseMinimalValues()
         {
-            EnsureMinimalSnapshot();
-            EcosystemPerfCalibrator.ApplySuperMinimal(working);
+            EnsureMinimalCfg();
+            EcosystemPerfCalibrator.CopyWizardFields(minimalCfg, working);
             working.BalancePreset = EcosystemBalancePresets.Custom;
-            nearPlayers = true;
-            ApplyBenchFieldValues();
-            return true;
-        }
-
-        void CaptureSnapshotFrom(EcosystemConfig source, Dictionary<string, int> target)
-        {
-            target.Clear();
-            if (source == null) return;
-            foreach (string fieldName in EcosystemPerfCalibrator.WizardEditableFields)
-            {
-                EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(fieldName);
-                if (field == null) continue;
-                object raw = field.GetValue(source);
-                if (raw is int n)
-                {
-                    target[fieldName] = n;
-                }
-                else if (raw != null && int.TryParse(raw.ToString(), out int parsed))
-                {
-                    target[fieldName] = parsed;
-                }
-            }
-        }
-
-        void ApplySnapshot(Dictionary<string, int> source, EcosystemConfig target)
-        {
-            if (source == null || target == null) return;
-            foreach (KeyValuePair<string, int> pair in source)
-            {
-                EcosystemConfigFieldDescriptor field = EcosystemConfigSchema.GetField(pair.Key);
-                field?.SetValue(target, pair.Value);
-            }
+            nearPlayers = working.OnlyActivateNearPlayers;
+            return TryCompose();
         }
 
         bool OnSkip()
         {
-            if (page == 0)
-            {
-                working.SetupWizardCompleted = true;
-                OnFinished?.Invoke(working);
-                TryClose();
-                return true;
-            }
-
             working.SetupWizardCompleted = true;
             OnFinished?.Invoke(working);
             TryClose();

@@ -10,7 +10,10 @@ namespace WildFarming.Ecosystem
     public class EcosystemConfigServerSystem : ModSystem
     {
         public const string AutoTuneCommandCode = "ecoautotune";
+        public const string SetupWizardCommandCode = "ecosetup";
+        public const string ConfigCommandCode = "ecoconfig";
 
+        ICoreServerAPI sapi;
         IServerNetworkChannel channel;
 
         public override bool ShouldLoad(EnumAppSide side) => side == EnumAppSide.Server;
@@ -22,14 +25,23 @@ namespace WildFarming.Ecosystem
                 .RegisterMessageType<EcosystemConfigSyncRequestPacket>()
                 .RegisterMessageType<EcosystemConfigSyncResponsePacket>()
                 .RegisterMessageType<EcosystemConfigSaveRequestPacket>()
-                .RegisterMessageType<EcosystemConfigSaveResponsePacket>();
+                .RegisterMessageType<EcosystemConfigSaveResponsePacket>()
+                .RegisterMessageType<EcosystemOpenSetupWizardPacket>()
+                .RegisterMessageType<EcosystemOpenConfigDialogPacket>();
         }
 
         public override void StartServerSide(ICoreServerAPI api)
         {
+            sapi = api;
             channel = api.Network.GetChannel(EcosystemConfigChannel.Name)
                 .SetMessageHandler<EcosystemConfigSyncRequestPacket>(OnSyncRequest)
                 .SetMessageHandler<EcosystemConfigSaveRequestPacket>(OnSaveRequest);
+
+            EcosystemWorldConfigStore.OnWorldConfigReady += PushConfigToOnlinePlayers;
+            if (EcosystemWorldConfigStore.IsWorldConfigReady)
+            {
+                PushConfigToOnlinePlayers();
+            }
 
             api.ChatCommands
                 .GetOrCreate(AutoTuneCommandCode)
@@ -57,14 +69,84 @@ namespace WildFarming.Ecosystem
                     api.Logger.Notification("[ecosystemflora] {0}", msg);
                     return TextCommandResult.Success(msg);
                 });
+
+            // Chat commands are resolved on the server — client-only registration is invisible in /.
+            api.ChatCommands
+                .GetOrCreate(SetupWizardCommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:setup-wizard-command-desc"))
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(args =>
+                {
+                    if (args.Caller?.Player is not IServerPlayer player)
+                    {
+                        return TextCommandResult.Error(Lang.Get("ecosystemflora:config-error-noprivilege"));
+                    }
+
+                    channel.SendPacket(new EcosystemOpenSetupWizardPacket(), player);
+                    return TextCommandResult.Success(Lang.Get("ecosystemflora:setup-wizard-command-opened"));
+                });
+
+            api.ChatCommands
+                .GetOrCreate(ConfigCommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:config-command-desc"))
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(args =>
+                {
+                    if (args.Caller?.Player is not IServerPlayer player)
+                    {
+                        return TextCommandResult.Error(Lang.Get("ecosystemflora:config-error-noprivilege"));
+                    }
+
+                    channel.SendPacket(new EcosystemOpenConfigDialogPacket(), player);
+                    return TextCommandResult.Success(Lang.Get("ecosystemflora:config-command-opened"));
+                });
+        }
+
+        public override void Dispose()
+        {
+            EcosystemWorldConfigStore.OnWorldConfigReady -= PushConfigToOnlinePlayers;
+            sapi = null;
+            base.Dispose();
+        }
+
+        void PushConfigToOnlinePlayers()
+        {
+            if (sapi?.World?.AllOnlinePlayers == null || channel == null) return;
+            if (!EcosystemWorldConfigStore.IsWorldConfigReady) return;
+
+            foreach (IPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                if (player is IServerPlayer sp)
+                {
+                    SendSyncResponse(sp);
+                }
+            }
         }
 
         void OnSyncRequest(IServerPlayer player, EcosystemConfigSyncRequestPacket packet)
         {
             if (player == null) return;
+            SendSyncResponse(player);
+        }
+
+        void SendSyncResponse(IServerPlayer player)
+        {
+            if (player == null || channel == null) return;
+
+            if (!EcosystemWorldConfigStore.IsWorldConfigReady)
+            {
+                channel.SendPacket(new EcosystemConfigSyncResponsePacket
+                {
+                    WorldConfigReady = false,
+                    ConfigJson = null,
+                    CanEditConfig = player.HasPrivilege(Privilege.controlserver),
+                }, player);
+                return;
+            }
 
             channel.SendPacket(new EcosystemConfigSyncResponsePacket
             {
+                WorldConfigReady = true,
                 ConfigJson = EcosystemConfigCopier.ToJson(EcosystemConfig.Loaded),
                 CanEditConfig = player.HasPrivilege(Privilege.controlserver),
             }, player);
