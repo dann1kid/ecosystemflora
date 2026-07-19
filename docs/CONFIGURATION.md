@@ -1,12 +1,17 @@
-# Configuration reference (`ecosystemflora.json`)
+# Configuration reference
 
-**File:** `ModConfig/ecosystemflora.json` (server; client when the file exists).  
-**Template:** `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.  
+**Per-world (server):** ecology settings for each save live in the world SaveGame blob `ecosystemflora:config` (in-game UI / setup wizard). World A settings do not affect world B.
+
+**Global template:** `ModConfig/ecosystemflora.json` — seeds new worlds on first load / migration, and stores **client-only** fields (inspect UI, canopy ambience). Server apply does **not** overwrite this file with world settings.
+
+**Template example:** `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.  
 **Source of truth:** `src/Ecosystem/EcosystemConfig.cs` (defaults below match C# unless noted).
 
-**Per-species balance** (climate, spread rate, spacing, maturation hours, season curves): [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md) — `ecology.csv` + `season.csv`, not this JSON file.
+**First-run setup:** when `SetupWizardCompleted` is false, players with `controlserver` see a two-page wizard (profile → performance bench with editable fields). Re-open from Settings → **Setup wizard…**. Re-run bench anytime: **`/ecoautotune`** (or Performance → Auto-tune now). Last result is stored on the world config (`LastAutoTuneTier`, `LastAutoTuneOpsPerMs`, `LastAutoTuneElapsedMs`, `LastAutoTuneUtc`).
 
-On load, **missing keys are added** with defaults and the file is rewritten (server always; client when the file already exists).
+**Per-species balance** (climate, spread rate, spacing, maturation hours, season curves): [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md) — `ecology.csv` + `season.csv`, not this JSON file (still global ModConfig for now).
+
+On template load, **missing keys are added** with defaults and the ModConfig file is rewritten (server always; client when the file already exists). World blobs flush on apply / world save.
 
 ---
 
@@ -14,7 +19,7 @@ On load, **missing keys are added** with defaults and the file is rewritten (ser
 
 `BalancePreset` is applied **on every server start** when set to a known preset (not `custom`). Presets overwrite the spread bundle and feature toggles listed for that preset. Default preset is **`natural`**.
 
-Use `"custom"` to keep your own values across restarts.
+Use `"custom"` to keep your own values across restarts (auto-tune and Weak PC profile set `custom`).
 
 | Preset | Attempts/year | Chance | MinFitness | Same/other spacing | `SpeciesSpreadRateScale` |
 |--------|---------------|--------|------------|--------------------|---------------------------|
@@ -28,7 +33,7 @@ Use `"custom"` to keep your own values across restarts.
 
 `vanilla-minimal` starts from `natural` then sets `EnableFlowerSpreadMaturation`, `EnableFernSpreadMaturation`, `EnableTallgrassSpreadMaturation`, `EnableBerrySpreadMaturation`, and all three phenology flags to **false**.
 
-Optional custom JSON presets: `ModConfig/ecosystemflora.presets/*.json` (filename = preset code). File presets copy the same spread bundle fields as above.
+Optional custom JSON presets: `ModConfig/ecosystemflora.presets/*.json` (filename = preset code). File presets are a **shared library**; applying one copies values into the **current world’s** config only.
 
 **Global spread multiplier** (`SpeciesSpreadRateScale`) applies to every species `spread_rate` from CSV. Per-species exceptions: `ModConfig/ecosystemflora/species/ecology.csv` and `season.csv`. Reload without restart: **`/ecospeciesreload`** (server admin) — see [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md).
 
@@ -103,7 +108,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `FlowerSpreadCooldownHoursMultiplier` | float | `1` | server | Higher: shorter post-spread pause on parent flowers. Lower: longer cooldown between offspring. |
 | `GrowthHoursMultiplier` | float | `1` | server | Higher: spread flower seedlings and tallgrass stages mature faster. Lower: longer establishing phase. |
 | `MaxFernPhenologyChecksPerTick` | int | `32` | server | Higher: more fern phenology updates per tick. Lower: slower phase sync. |
-| `MaxFloraRescanColumnsPerTick` | int | `32` | server | Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU. |
+| `MaxFloraRescanColumnsPerTick` | int | `7` | server | Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU. |
 | `MaxFlowerPhenologyChecksPerTick` | int | `48` | server | Higher: more flower phase updates per tick. Lower: slower phenology pacing. |
 | `MaxFlowerPhenologyLifeCycles` | int | `4` | server | Fallback dieback entries before senescence when species CSV omits `flower_phenology_life_cycles`; `0` = unlimited. |
 | `MaxPendingBerryMaturationChecksPerTick` | int | `24` | server | Higher: more berry maturation checks per tick. Lower: slower spread bush queue. |
@@ -118,7 +123,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `ReproduceChance` | float | `0.5` | server | Higher (toward 1): more spread attempts succeed. Lower (toward 0): rarer successful placement. |
 | `ReproduceIntervalHours` | double | `24` | server | Higher: longer wait between spread attempts (legacy mode). Lower: more frequent attempts. |
 | `ReproduceRadius` | int | `4` | server | Higher: wider horizontal search for spread targets. Lower: tighter, more local colonization. |
-| `ReproduceTickIntervalMs` | int | `2000` | server | Higher: less frequent spread/foliage/tree ticks. Lower: more frequent spread updates. |
+| `ReproduceTickIntervalMs` | int | `3500` | server | Higher: less frequent spread/foliage/tree ticks. Lower: more frequent spread updates. |
 | `ReproduceVerticalSearch` | int | `5` | server | Higher: search farther above/below for valid surface. Lower: narrower vertical placement window. |
 | `SpeciesSpreadRateScale` | float | `0.333` (~⅓) | server | Higher: faster wild spread vs ecology tables (1 = table rates). Lower: slower reproduction for all species. |
 | `StaggerReproduceAttempts` | bool | **true** | server | On: random initial delay on registration spreads tick load. Off: all plants tick together. |
@@ -179,7 +184,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `SeasonalStressEnabled` | bool | **true** | server | On: seasonal stress die-off rolls for terrestrial plants. Off: no extra seasonal die-off. |
 | `StressBudgetMs` | int | `0` | server | Higher: more ms for stress phase (0 = TickBudgetMs). Lower: tighter stress cap. |
 | `StressRecheckHours` | double | `18` | server | Higher: slower stress evaluations per plant (less CPU). Lower: faster stress reactions. |
-| `StressTickIntervalMs` | int | `5500` | server | Higher: less frequent stress ticks (less CPU). Lower: more frequent stress updates. |
+| `StressTickIntervalMs` | int | `8500` | server | Higher: less frequent stress ticks (less CPU). Lower: more frequent stress updates. |
 | `SymbiosisCascadeRadius` | int | `4` | server | Higher: wider host-cache invalidation and ecology wake when a symbiosis host is removed. Lower: tighter radius. |
 | `TramplingRadius` | int | `0` | server | Higher: plants beside the foot cell also wear. `0` = only the cell underfoot. |
 | `TramplingSoilDegradation` | bool | **true** | server | On: paced grass-coverage compaction on wild `soil-*` (same fertility tier). Off: plants only. Never changes farmland. |
@@ -270,10 +275,10 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `EnableOrphanFoliagePrune` | bool | **true** | server | On: remove wild leaves with no path to log-grown (e.g. after wildfire). Off: leave floating foliage. |
 | `EnableSeasonalFoliage` | bool | **true** | server | On: deciduous autumn strip and spring bud on log-grown skeleton. Off: static vanilla crowns. |
 | `EnableSpringBranchyAgeBoost` | bool | **true** | server | On: spring branchy buds scale with tree calendar age. Off: uniform spring bud strength. |
-| `FoliageBudgetMs` | int | `10` | server | Higher: more ms for foliage random tick (smoother, more CPU). 0 = linked/unlimited alias. |
+| `FoliageBudgetMs` | int | `6` | server | Higher: more ms for foliage random tick (smoother, more CPU). 0 = linked/unlimited alias. |
 | `FoliageCatchUpOnChunkLoad` | bool | **true** | server | On: sync foliage to current season when chunk loads. Off: foliage may lag until random tick. |
-| `FoliageChunkSyncBudgetMs` | int | `12` | server | Higher: more ms per chunk foliage sync pass. Lower: faster passes, less work per chunk. |
-| `FoliageChunkWorkPerTick` | int | `4` | server | Higher: more chunks resumed per chunk-scan tick. Lower: slower foliage catch-up. |
+| `FoliageChunkSyncBudgetMs` | int | `2` | server | Higher: more ms per chunk foliage sync pass. Lower: faster passes, less work per chunk. |
+| `FoliageChunkWorkPerTick` | int | `2` | server | Higher: more chunks resumed per chunk-scan tick. Lower: slower foliage catch-up. |
 | `FoliageColumnScanHeightAboveSurface` | int | `0` | server | Higher: scan fewer blocks above surface (less work). 0 = full column height. |
 | `FoliagePeakAutumnBranchyStripActivity` | float | `0.35` | server | Higher: strip more branchy foliage in peak autumn (0 = keep all branchy). Lower: gentler strip. |
 | `FoliageRestoreBareSkeleton` | bool | **true** | server | On: winter repair adds branchy leaves on bare log-grown pillars. Off: bare crowns stay bare. |
@@ -282,7 +287,9 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `MaxFoliageCellsTickedPerTick` | int | `0` | server | Higher: more random foliage cells per reproduce tick (hybrid/random). 0 = off. |
 | `OrphanFoliageFireChunkHours` | double | `48` | server | Hours after fire to prioritize orphan-prune chunk passes. 0 = no fire priority window. |
 | `OrphanFoliageMaxBfsDepth` | int | `14` | server | Higher: longer support search before pruning (safer, more CPU). Lower: faster, may miss edge cases. |
-| `OrphanFoliageMaxChecksPerChunkPass` | int | `64` | server | Higher: more orphan BFS checks per chunk pass (0 = unlimited). Lower: slower cleanup. |
+| `OrphanFoliageMaxChecksPerChunkPass` | int | `16` | server | Higher: more orphan BFS checks per chunk pass (0 = unlimited). Lower: slower cleanup / less main-thread cost. |
+| `MaxRegistrationSnapshotCellsPerTick` | int | `340` | server | Main-thread only (not × workers). Higher: copy more block ids to snapshot per main tick. Lower: less main-thread GetBlock load. |
+| `RegistrationSnapshotBandBelowSurface` | int | `24` | server | Higher: copy more blocks below rain surface into snapshots. 0 = full column to y=0. Lower: skip deep underground GetBlock. |
 | `SpringBranchyAgeBoostMax` | float | `1.5` | server | Higher: stronger max spring branchy multiplier from age. Lower: subtler age effect. |
 | `SpringBranchyAgeBoostYearsToMax` | float | `60` | server | Higher: older trees needed for max spring branchy boost. Lower: young trees reach max sooner. |
 
@@ -296,11 +303,21 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 
 | Key | Type | Default | Scope | Description |
 |-----|------|---------|-------|-------------|
-| `BurstRegistrationBudgetMs` | int | `80` | server | Higher: more ms to finish one burst chunk on load. Lower: smaller burst completion slice. |
+| `BurstRegistrationBudgetMs` | int | `24` | server | Higher: longer single paced slice on near-player chunk load before priority-queue fallback. Lower: smoother loads. |
+| `MaxRegistrationSolvePending` | int | `0` | server | Higher: larger background registration classify queue before reject/requeue. 0 = 16. |
+| `MaxRegistrationSolveCompleted` | int | `0` | server | Higher: more finished registration scans held for main drain. 0 = same as pending. |
+| `MaxRegistrationSolveDrainPerTick` | int | `0` | server | Higher: apply more worker registration results per chunk-scan tick. 0 = 8. |
+| `MaxActiveRegistrationSnapshots` | int | `0` | server | Higher: more in-progress main-thread snapshot builders. 0 = 8. Caps transient memory on mass chunk load. |
 | `ChunkScanTickIntervalMs` | int | `2300` | server | Higher: less frequent registration and foliage chunk sync. Lower: faster registry/foliage sync. |
+| `EnablePlayerVicinityRescan` | bool | **true** | server | On: periodically re-queue chunks around players for fast registration. Off: load-time and place events only. |
+| `PlayerVicinityRescanIntervalMs` | int | `5000` | server | Higher: rarer vicinity rescans (less CPU near players). Lower: faster late-flora discovery near players. |
 | `EcologyWakeRadiusBlocks` | int | `0` | server | 0 = auto from spread radius and spacing. Higher: wake more neighbors on block changes. |
 | `EnableBackgroundRegistrationScan` | bool | **true** | server | On: classify columns on worker from main-thread snapshot. Off: sync scan on main thread only. |
 | `EnableBackgroundSpreadSolve` | bool | **true** | server | On: score spread candidates on worker from compact env snapshots; SetBlock stays on main thread. Requires two-phase spread. Terrestrial, mat, and water crowfoot. |
+| `MaxSpreadSolvePending` | int | `0` | server | Higher: larger background solve queue before reject (sync fallback). 0 = 2× MaxReproduceAttemptsPerTick. Per-origin coalesce: one pending solve per plant. |
+| `MaxSpreadSolveCompleted` | int | `0` | server | Higher: more finished solves held for main drain. 0 = same as pending cap. Excess results are dropped. |
+| `MaxSpreadSolveDrainPerTick` | int | `0` | server | Higher: apply more worker results into the commit queue per reproduce tick. 0 = MaxReproduceAttemptsPerTick. |
+| `MaxPendingSpreadIntents` | int | `0` | server | Higher: more two-phase commit intents buffered. 0 = 4× MaxReproduceAttemptsPerTick. |
 | `EnableBurstRegistrationNearPlayers` | bool | **true** | server | On: finish nearby chunk registration on load within ms budget. Off: no burst completion. |
 | `EnableChunkFairSpread` | bool | **true** | server | On: round-robin spread attempts across registry chunks (fair pacing). Off: less fair chunk order. |
 | `EnableEcologyColumnCache` | bool | **true** | server | On: cache spread column snapshots (faster repeat attempts). Off: rescan columns each time. |
@@ -314,12 +331,12 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `MaxPriorityChunkScansPerTick` | int | `48` | server | Higher: more priority queue passes per chunk-scan tick. Lower: slower player-vicinity registration. |
 | `MaxPriorityRegistrationsPerTick` | int | `8192` | server | Higher: more registrations from priority queue per tick. Lower: slower near-player fill. |
 | `MaxPriorityRegistryAppliesPerTick` | int | `2048` | server | Higher: more extra applies for player-vicinity chunks. Lower: slower near-player registry. |
-| `MaxRegistrationSnapshotCellsPerTick` | int | `8192` | server | Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed. |
+| `MaxRegistrationSnapshotCellsPerTick` | int | `1024` | server | Main-thread only (not × workers). Higher: more snapshot GetBlock/tick. Lower: less main-core load. |
 | `MaxRegistrationsPerTick` | int | `2048` | server | Higher: more sync registrations when background scan off. Lower: slower registry fill. |
 | `MaxRegistryAppliesPerChunkPerTick` | int | `256` | server | Higher: more registry inserts from one chunk per drain pass. Lower: fairer but slower single-chunk meadows. |
-| `MaxRegistryAppliesPerTick` | int | `512` | server | Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing. |
-| `MaxReproduceAttemptsPerTick` | int | `64` | server | Higher: more spread evaluations per reproduce tick (faster sim, more CPU). Lower: gentler spread pacing. |
-| `MaxSpreadAttemptsPerChunkPerTick` | int | `2` | server | Higher: more spread attempts per chunk per reproduce tick. Lower: slower per-chunk spread. |
+| `MaxRegistryAppliesPerTick` | int | `256` | server | Higher: more paced RegisterReproducer applies per chunk-scan tick. Lower: slower registry pacing. |
+| `MaxReproduceAttemptsPerTick` | int | `14` | server | Higher: more spread evaluations per reproduce tick (faster sim, more CPU). Lower: gentler spread pacing. |
+| `MaxSpreadAttemptsPerChunkPerTick` | int | `1` | server | Higher: more spread attempts per chunk per reproduce tick. Lower: slower per-chunk spread. |
 | `MaxSpreadChunksVisitedPerTick` | int | `32` | server | Higher: visit more registry chunks per reproduce tick. Lower: slower global spread sweep. |
 | `MaxSpreadCommitChunksVisitedPerTick` | int | `0` | server | Higher: more chunks in commit pass (0 = MaxSpreadChunksVisitedPerTick). Lower: narrower commit sweep. |
 | `MaxSpreadCommitsPerChunkPerTick` | int | `0` | server | Higher: more commits per chunk per tick (0 = MaxSpreadAttemptsPerChunkPerTick). Lower: slower local commits. |
@@ -327,14 +344,14 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `MaxStressChecksPerTick` | int | `16` | server | Higher: more stress evaluations per stress tick (faster catch-up, more CPU). Lower: gentler pacing. |
 | `MaxTreeGrowthAttemptsPerTick` | int | `6` | server | Higher: more trees advanced per reproduce tick. Lower: slower aging, less CPU. |
 | `PlayerRegistrationPriorityRadiusBlocks` | int | `16` | server | Higher: wider player-vicinity priority and burst registration. Lower: tighter priority zone. |
-| `PriorityRegistrationBudgetMs` | int | `80` | server | Higher: more ms per priority registration pass (smoother, more CPU). Lower: stricter time cap. |
-| `RegistrationBudgetMs` | int | `25` | server | Higher: more ms for chunk-scan phase (0 = TickBudgetMs). Lower: tighter registration cap. |
+| `PriorityRegistrationBudgetMs` | int | `24` | server | Higher: more ms per priority registration pass (smoother, more CPU). Lower: stricter time cap. |
+| `RegistrationBudgetMs` | int | `9` | server | Higher: more ms for chunk-scan phase (0 = TickBudgetMs). Lower: tighter registration cap. |
 | `RegistrationWorkerCount` | int | `0` | server | Higher: more background column-classification threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread. |
 | `ReproduceTickProfilingIntervalMs` | int | `30000` | server | Higher: less frequent profiling log lines. Lower: more frequent timing logs. |
 | `ReproduceTickProfilingMinRegistry` | int | `2000` | server | Higher: profiling logs only when registry is larger. Lower: logs on smaller registries. |
-| `SpreadBudgetMs` | int | `30` | server | Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap. |
+| `SpreadBudgetMs` | int | `4` | server | Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap. |
 | `SpreadWorkerCount` | int | `0` | server | Higher: more background spread-scoring threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread. |
-| `TickBudgetMs` | int | `30` | server | Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited. |
+| `TickBudgetMs` | int | `5` | server | Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited. |
 
 ### Diagnostics, logging & ecology inspect (client)
 

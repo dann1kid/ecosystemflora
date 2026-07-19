@@ -112,8 +112,7 @@ namespace WildFarming.Ecosystem
                         chunkCoord.X * cs + 8,
                         64,
                         chunkCoord.Y * cs + 8);
-                    FloraContext?.InvalidateAround(invalidateAt, 3);
-                    InvalidateEnvironmentAround(invalidateAt);
+                    InvalidateEnvironmentAround(invalidateAt, floraRadius: 2);
                 }
             }
 

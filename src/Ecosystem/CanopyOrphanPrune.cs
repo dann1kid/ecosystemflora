@@ -15,6 +15,12 @@ namespace WildFarming.Ecosystem
         static readonly int[] NeighborDy = { 0, 0, 1, -1, 0, 0 };
         static readonly int[] NeighborDz = { 0, 0, 0, 0, 1, -1 };
 
+        [System.ThreadStatic]
+        static Queue<(int x, int y, int z, int depth)> bfsQueue;
+
+        [System.ThreadStatic]
+        static HashSet<long> bfsSeen;
+
         public static bool IsWildPrunableLeaf(Block block)
         {
             if (block?.Code?.Path == null) return false;
@@ -82,8 +88,28 @@ namespace WildFarming.Ecosystem
                 if (IsMatchingLogGrown(acc.GetBlock(scratch), wood)) return true;
             }
 
-            var queue = new Queue<(int x, int y, int z, int depth)>(32);
-            var seen = new HashSet<long>(64);
+            Queue<(int x, int y, int z, int depth)> queue = bfsQueue;
+            HashSet<long> seen = bfsSeen;
+            if (queue == null)
+            {
+                queue = new Queue<(int, int, int, int)>(32);
+                bfsQueue = queue;
+            }
+            else
+            {
+                queue.Clear();
+            }
+
+            if (seen == null)
+            {
+                seen = new HashSet<long>(64);
+                bfsSeen = seen;
+            }
+            else
+            {
+                seen.Clear();
+            }
+
             queue.Enqueue((start.X, start.Y, start.Z, 0));
             seen.Add(PackCell(start.X, start.Y, start.Z));
 

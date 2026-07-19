@@ -31,7 +31,8 @@ namespace WildFarming.Ecosystem
 
                 Loaded = new EcosystemConfig();
                 ApplyBalancePreset(Loaded);
-                api.StoreModConfig(Loaded, ConfigFileName);
+                EcosystemWorldConfigStore.PrepareFreshWorldConfig(Loaded);
+                api.StoreModConfig(EcosystemWorldConfigStore.CloneAsGlobalTemplate(Loaded), ConfigFileName);
                 return;
             }
 
@@ -52,7 +53,8 @@ namespace WildFarming.Ecosystem
 
             if (ShouldPersistConfig(createDefaultIfMissing, fromDisk != null))
             {
-                api.StoreModConfig(Loaded, ConfigFileName);
+                // Never bake per-world wizard completion into the global template file.
+                api.StoreModConfig(EcosystemWorldConfigStore.CloneAsGlobalTemplate(Loaded), ConfigFileName);
             }
         }
 
@@ -141,7 +143,7 @@ namespace WildFarming.Ecosystem
         public float FlowerSpreadCooldownHoursMultiplier { get; set; } = 1f;
 
         /// <summary>Juvenile → mature checks per reproduce tick.</summary>
-        public int MaxPendingFlowerMaturationChecksPerTick { get; set; } = 32;
+        public int MaxPendingFlowerMaturationChecksPerTick { get; set; } = 11;
 
         /// <summary>Meadow flower phenology: energy, phases, bloom-gated spread, block sync.</summary>
         public bool EnableFlowerPhenology { get; set; } = true;
@@ -188,13 +190,13 @@ namespace WildFarming.Ecosystem
         public int MaxFlowerPhenologyLifeCycles { get; set; } = 4;
 
         /// <summary>Phenology state advances per reproduce tick (round-robin).</summary>
-        public int MaxFlowerPhenologyChecksPerTick { get; set; } = 48;
+        public int MaxFlowerPhenologyChecksPerTick { get; set; } = 16;
 
         /// <summary>Spread tallgrass as veryshort; register for spread only after vanilla growth reaches short+.</summary>
         public bool EnableTallgrassSpreadMaturation { get; set; } = true;
 
         /// <summary>Establishing tallgrass promotion checks per reproduce tick.</summary>
-        public int MaxPendingTallgrassPromotionChecksPerTick { get; set; } = 96;
+        public int MaxPendingTallgrassPromotionChecksPerTick { get; set; } = 32;
 
         /// <summary>Ground ferns spread one orthogonal step from patch edge (rhizome mat).</summary>
         public bool EnableFernRhizomeSpread { get; set; } = true;
@@ -212,19 +214,19 @@ namespace WildFarming.Ecosystem
         public bool EnableFernSporulationGate { get; set; } = true;
 
         /// <summary>Juvenile fern → mature checks per reproduce tick.</summary>
-        public int MaxPendingFernMaturationChecksPerTick { get; set; } = 24;
+        public int MaxPendingFernMaturationChecksPerTick { get; set; } = 8;
 
         /// <summary>Ground fern phenology: dormant/sporulating/dieback blocks and spread gates.</summary>
         public bool EnableFernPhenology { get; set; } = true;
 
         /// <summary>Fern phenology state advances per reproduce tick (round-robin).</summary>
-        public int MaxFernPhenologyChecksPerTick { get; set; } = 32;
+        public int MaxFernPhenologyChecksPerTick { get; set; } = 11;
 
         /// <summary>Tallgrass phenology: winter dormant and stress dieback visuals.</summary>
         public bool EnableTallgrassPhenology { get; set; } = true;
 
         /// <summary>Tallgrass phenology checks per reproduce tick.</summary>
-        public int MaxTallgrassPhenologyChecksPerTick { get; set; } = 32;
+        public int MaxTallgrassPhenologyChecksPerTick { get; set; } = 11;
 
         /// <summary>Wild berry colony mat (rhizome/runner edge + optional seed jumps).</summary>
         public bool EnableBerryColonySpread { get; set; } = true;
@@ -236,7 +238,7 @@ namespace WildFarming.Ecosystem
         public bool EnableBerrySpreadMaturation { get; set; } = true;
 
         /// <summary>Pending berry maturation checks per reproduce tick.</summary>
-        public int MaxPendingBerryMaturationChecksPerTick { get; set; } = 24;
+        public int MaxPendingBerryMaturationChecksPerTick { get; set; } = 8;
 
         /// <summary>Vanilla stumps from senescent snag collapse decay after calendar years.</summary>
         public bool EnableStumpDecay { get; set; } = true;
@@ -245,7 +247,7 @@ namespace WildFarming.Ecosystem
         public double StumpDecayYears { get; set; } = 10;
 
         /// <summary>Stump decay checks per reproduce tick.</summary>
-        public int MaxStumpDecayChecksPerTick { get; set; } = 16;
+        public int MaxStumpDecayChecksPerTick { get; set; } = 6;
 
         /// <summary>Lightweight history hint (H key / throttled look-at).</summary>
         public bool EnableEcologyHistoryHint { get; set; } = true;
@@ -263,13 +265,13 @@ namespace WildFarming.Ecosystem
         public bool VerboseLogging { get; set; } = false;
 
         /// <summary>Max reproduction attempts per server tick (spreads CPU load).</summary>
-        public int MaxReproduceAttemptsPerTick { get; set; } = 64;
+        public int MaxReproduceAttemptsPerTick { get; set; } = 14;
 
         /// <summary>Chunk columns to scan per tick after load (deferred registration). Per worker; scaled at runtime.</summary>
-        public int MaxChunkColumnsScannedPerTick { get; set; } = 64;
+        public int MaxChunkColumnsScannedPerTick { get; set; } = 14;
 
         /// <summary>Cap flower registrations per tick while draining the chunk queue. Per worker; scaled at runtime.</summary>
-        public int MaxRegistrationsPerTick { get; set; } = 256;
+        public int MaxRegistrationsPerTick { get; set; } = 54;
 
         /// <summary>Drain player-vicinity chunk scans before the background registration queue.</summary>
         public bool EnablePlayerPriorityRegistration { get; set; } = true;
@@ -281,31 +283,34 @@ namespace WildFarming.Ecosystem
         public int PlayerRegistrationPriorityRadiusBlocks { get; set; } = 64;
 
         /// <summary>Extra chunk scan passes per tick for the priority registration queue. Per worker; scaled at runtime.</summary>
-        public int MaxPriorityChunkScansPerTick { get; set; } = 24;
+        public int MaxPriorityChunkScansPerTick { get; set; } = 6;
 
         /// <summary>Registration cap per tick for the priority queue (separate from background). Per worker; scaled at runtime.</summary>
-        public int MaxPriorityRegistrationsPerTick { get; set; } = 2048;
+        public int MaxPriorityRegistrationsPerTick { get; set; } = 340;
 
         /// <summary>Per-pass ms budget for priority registration scans.</summary>
-        public int PriorityRegistrationBudgetMs { get; set; } = 120;
+        public int PriorityRegistrationBudgetMs { get; set; } = 8;
 
-        /// <summary>Total ms budget to finish one chunk on load near a player.</summary>
-        public int BurstRegistrationBudgetMs { get; set; } = 120;
+        /// <summary>
+        /// Ms budget for one paced registration slice on near-player chunk load.
+        /// Remainder is enqueued as high-priority (no multi-pass 120 ms spin).
+        /// </summary>
+        public int BurstRegistrationBudgetMs { get; set; } = 8;
 
         /// <summary>Max registrations while completing one burst chunk near a player. Per worker; scaled at runtime.</summary>
         public int MaxBurstRegistrationsPerChunk { get; set; } = 2048;
 
         /// <summary>Registry applies per chunk-scan tick from the pending registration queue. Per worker; scaled at runtime.</summary>
-        public int MaxRegistryAppliesPerTick { get; set; } = 512;
+        public int MaxRegistryAppliesPerTick { get; set; } = 85;
 
         /// <summary>Max registry inserts per chunk per drain pass (fairness cap within one tick). Per worker; scaled at runtime.</summary>
-        public int MaxRegistryAppliesPerChunkPerTick { get; set; } = 96;
+        public int MaxRegistryAppliesPerChunkPerTick { get; set; } = 21;
 
         /// <summary>Background column-classification workers (snapshot + SetBlock stay on main thread).</summary>
         public int RegistrationWorkerCount { get; set; } = 0;
 
         /// <summary>Extra pending applies per tick for player-priority chunks before background drain. Per worker; scaled at runtime.</summary>
-        public int MaxPriorityRegistryAppliesPerTick { get; set; } = 512;
+        public int MaxPriorityRegistryAppliesPerTick { get; set; } = 85;
 
         /// <summary>Capture block ids on main; column classification runs on a background thread.</summary>
         public bool EnableBackgroundRegistrationScan { get; set; } = true;
@@ -316,11 +321,87 @@ namespace WildFarming.Ecosystem
         /// <summary>Background spread scoring workers (snapshot + SetBlock stay on main thread).</summary>
         public int SpreadWorkerCount { get; set; } = 0;
 
+        /// <summary>
+        /// Max pending background spread solve requests. 0 = 2 × <see cref="MaxReproduceAttemptsPerTick"/>.
+        /// Rejected submits fall back to sync two-phase enqueue.
+        /// </summary>
+        public int MaxSpreadSolvePending { get; set; } = 0;
+
+        /// <summary>Max completed solve results waiting for main-thread drain. 0 = same as pending cap.</summary>
+        public int MaxSpreadSolveCompleted { get; set; } = 0;
+
+        /// <summary>Max completed solves applied to the pending commit queue per reproduce tick. 0 = MaxReproduceAttemptsPerTick.</summary>
+        public int MaxSpreadSolveDrainPerTick { get; set; } = 0;
+
+        /// <summary>Max intents in the two-phase commit queue. 0 = 4 × MaxReproduceAttemptsPerTick.</summary>
+        public int MaxPendingSpreadIntents { get; set; } = 0;
+
+        public int ResolveMaxSpreadSolvePending()
+        {
+            if (MaxSpreadSolvePending > 0) return MaxSpreadSolvePending;
+            int attempts = MaxReproduceAttemptsPerTick > 0 ? MaxReproduceAttemptsPerTick : 14;
+            return attempts * 2;
+        }
+
+        public int ResolveMaxSpreadSolveCompleted()
+        {
+            if (MaxSpreadSolveCompleted > 0) return MaxSpreadSolveCompleted;
+            return ResolveMaxSpreadSolvePending();
+        }
+
+        public int ResolveMaxSpreadSolveDrainPerTick()
+        {
+            if (MaxSpreadSolveDrainPerTick > 0) return MaxSpreadSolveDrainPerTick;
+            return MaxReproduceAttemptsPerTick > 0 ? MaxReproduceAttemptsPerTick : 14;
+        }
+
+        public int ResolveMaxPendingSpreadIntents()
+        {
+            if (MaxPendingSpreadIntents > 0) return MaxPendingSpreadIntents;
+            int attempts = MaxReproduceAttemptsPerTick > 0 ? MaxReproduceAttemptsPerTick : 14;
+            return attempts * 4;
+        }
+
         /// <summary>Internal: legacy absolute registration budgets were converted to per-worker values.</summary>
         public bool RegistrationBudgetPerWorkerMigrated { get; set; } = true;
 
-        /// <summary>Block cells copied into a chunk snapshot per main-thread tick (background scan). Per worker; scaled at runtime.</summary>
-        public int MaxRegistrationSnapshotCellsPerTick { get; set; } = 4096;
+        /// <summary>
+        /// Block cells copied into a chunk snapshot per main-thread tick (background scan).
+        /// Main-thread budget — not multiplied by worker count (workers only classify).
+        /// </summary>
+        public int MaxRegistrationSnapshotCellsPerTick { get; set; } = 340;
+
+        /// <summary>
+        /// Only copy this many blocks below rain-surface into registration snapshots (0 = full column to y=0).
+        /// Underground stone/air is unused by flora classify; vines/mycelium need a modest band.
+        /// </summary>
+        public int RegistrationSnapshotBandBelowSurface { get; set; } = 24;
+
+        /// <summary>Max pending background registration classify jobs. 0 = 6.</summary>
+        public int MaxRegistrationSolvePending { get; set; } = 0;
+
+        /// <summary>Max completed registration results waiting for main drain. 0 = same as pending.</summary>
+        public int MaxRegistrationSolveCompleted { get; set; } = 0;
+
+        /// <summary>Max completed registration scans applied per chunk-scan tick. 0 = 3.</summary>
+        public int MaxRegistrationSolveDrainPerTick { get; set; } = 0;
+
+        /// <summary>Max in-progress snapshot builders on the main thread. 0 = 3.</summary>
+        public int MaxActiveRegistrationSnapshots { get; set; } = 0;
+
+        public int ResolveMaxRegistrationSolvePending() =>
+            MaxRegistrationSolvePending > 0 ? MaxRegistrationSolvePending : 6;
+
+        public int ResolveMaxRegistrationSolveCompleted() =>
+            MaxRegistrationSolveCompleted > 0
+                ? MaxRegistrationSolveCompleted
+                : ResolveMaxRegistrationSolvePending();
+
+        public int ResolveMaxRegistrationSolveDrainPerTick() =>
+            MaxRegistrationSolveDrainPerTick > 0 ? MaxRegistrationSolveDrainPerTick : 3;
+
+        public int ResolveMaxActiveRegistrationSnapshots() =>
+            MaxActiveRegistrationSnapshots > 0 ? MaxActiveRegistrationSnapshots : 3;
 
         public int EffectiveRegistrationWorkerCount() =>
             RegistrationWorkerScale.Resolve(RegistrationWorkerCount);
@@ -349,20 +430,21 @@ namespace WildFarming.Ecosystem
         public int EffectiveMaxPriorityRegistryAppliesPerTick() =>
             RegistrationWorkerScale.Scale(MaxPriorityRegistryAppliesPerTick, RegistrationWorkerCount);
 
+        /// <summary>Main-thread snapshot copy budget — intentionally not scaled by worker count.</summary>
         public int EffectiveMaxRegistrationSnapshotCellsPerTick() =>
-            RegistrationWorkerScale.Scale(MaxRegistrationSnapshotCellsPerTick, RegistrationWorkerCount);
+            MaxRegistrationSnapshotCellsPerTick > 0 ? MaxRegistrationSnapshotCellsPerTick : 340;
 
         public int ResolvePriorityRegistrationBudgetMs() =>
             PriorityRegistrationBudgetMs > 0 ? PriorityRegistrationBudgetMs : ResolveRegistrationBudgetMs();
 
         /// <summary>Max milliseconds per game tick for spread processing. 0 = no limit.</summary>
-        public int TickBudgetMs { get; set; } = 30;
+        public int TickBudgetMs { get; set; } = 5;
 
         /// <summary>Spread attempt budget ms/tick. 0 = use <see cref="TickBudgetMs"/>.</summary>
-        public int SpreadBudgetMs { get; set; } = 30;
+        public int SpreadBudgetMs { get; set; } = 4;
 
         /// <summary>Chunk registration scan budget ms/tick. 0 = use <see cref="TickBudgetMs"/>.</summary>
-        public int RegistrationBudgetMs { get; set; } = 80;
+        public int RegistrationBudgetMs { get; set; } = 9;
 
         /// <summary>Max milliseconds per stress tick. Defaults to <see cref="TickBudgetMs"/> when 0.</summary>
         public int StressBudgetMs { get; set; } = 0;
@@ -381,16 +463,40 @@ namespace WildFarming.Ecosystem
         public int ReproduceTickProfilingIntervalMs { get; set; } = 30000;
 
         /// <summary>Interval (ms) between stress-check ticks. Higher = less CPU for stress, slower die-off.</summary>
-        public int StressTickIntervalMs { get; set; } = 5500;
+        public int StressTickIntervalMs { get; set; } = 8500;
 
         /// <summary>Real-time ms between spread / foliage / tree-growth ticks.</summary>
-        public int ReproduceTickIntervalMs { get; set; } = 2000;
+        public int ReproduceTickIntervalMs { get; set; } = 3500;
 
-        /// <summary>
-        /// Real-time ms between deferred chunk-registration ticks.
+        /// <summary>Real-time ms between deferred chunk-registration ticks.
         /// Use a value not divisible by <see cref="ReproduceTickIntervalMs"/> to avoid aligned CPU spikes.
         /// </summary>
-        public int ChunkScanTickIntervalMs { get; set; } = 1000;
+        public int ChunkScanTickIntervalMs { get; set; } = 2300;
+
+        /// <summary>
+        /// Re-enqueue chunks near online players into the fast registration scan (catches flora without DidPlaceBlock).
+        /// </summary>
+        public bool EnablePlayerVicinityRescan { get; set; } = true;
+
+        /// <summary>Real-time ms between player-vicinity registration rescans. Higher = less CPU near players.</summary>
+        public int PlayerVicinityRescanIntervalMs { get; set; } = 5000;
+
+        /// <summary>
+        /// When false, the first-join setup wizard is shown (per world). Set true after wizard Apply / Skip.
+        /// </summary>
+        public bool SetupWizardCompleted { get; set; } = false;
+
+        /// <summary>Last auto-tune tier name (Weak / Balanced / Strong), empty if never run.</summary>
+        public string LastAutoTuneTier { get; set; } = "";
+
+        /// <summary>Last synthetic bench throughput (ops/ms).</summary>
+        public double LastAutoTuneOpsPerMs { get; set; } = 0;
+
+        /// <summary>Last synthetic bench wall time (ms).</summary>
+        public int LastAutoTuneElapsedMs { get; set; } = 0;
+
+        /// <summary>UTC timestamp of last auto-tune (ISO-8601), empty if never run.</summary>
+        public string LastAutoTuneUtc { get; set; } = "";
 
         /// <summary>Random delay spread when registering (hours) to avoid tick spikes.</summary>
         public bool StaggerReproduceAttempts { get; set; } = true;
@@ -412,10 +518,10 @@ namespace WildFarming.Ecosystem
         public bool EnableChunkFairSpread { get; set; } = true;
 
         /// <summary>Max spread attempts per registry chunk per reproduce tick when chunk-fair spread is on.</summary>
-        public int MaxSpreadAttemptsPerChunkPerTick { get; set; } = 2;
+        public int MaxSpreadAttemptsPerChunkPerTick { get; set; } = 1;
 
         /// <summary>How many registry chunks to visit per reproduce tick when chunk-fair spread is on.</summary>
-        public int MaxSpreadChunksVisitedPerTick { get; set; } = 32;
+        public int MaxSpreadChunksVisitedPerTick { get; set; } = 12;
 
         /// <summary>Wake nearby reproducers on ecology-relevant block changes (Phase 6.3).</summary>
         public bool EnableEventDrivenSpread { get; set; } = true;
@@ -466,19 +572,19 @@ namespace WildFarming.Ecosystem
         public int SpacingVerticalSearch { get; set; } = 2;
 
         /// <summary>Checks per tick for mod-placed saplings that matured into log-grown.</summary>
-        public int MaxPendingTreeChecksPerTick { get; set; } = 12;
+        public int MaxPendingTreeChecksPerTick { get; set; } = 4;
 
         /// <summary>Round-robin column scan for log-grown trunks that appeared after chunk load.</summary>
         public bool EnableCyclicTreeDiscovery { get; set; } = true;
 
         /// <summary>Chunk columns scanned per tick for cyclic tree discovery (TreeTrunkDiscovery only).</summary>
-        public int MaxTreeRescanColumnsPerTick { get; set; } = 16;
+        public int MaxTreeRescanColumnsPerTick { get; set; } = 6;
 
         /// <summary>Round-robin live scan for wild flora parents that appeared after chunk load.</summary>
         public bool EnableCyclicFloraDiscovery { get; set; } = true;
 
         /// <summary>Chunk columns scanned per tick for cyclic flora discovery.</summary>
-        public int MaxFloraRescanColumnsPerTick { get; set; } = 256;
+        public int MaxFloraRescanColumnsPerTick { get; set; } = 7;
 
         // --- Wild tree aging (v3.6) — see docs/TREE_AGING.md ---
 
@@ -498,7 +604,7 @@ namespace WildFarming.Ecosystem
         public int TreeYoungSpreadBypassTrunkHeight { get; set; } = 14;
 
         /// <summary>Wild trees processed per reproduce tick (global round-robin; filtered to player radius when <see cref="OnlyActivateNearPlayers"/> or <see cref="LimitSpreadNearPlayers"/>).</summary>
-        public int MaxTreeGrowthAttemptsPerTick { get; set; } = 6;
+        public int MaxTreeGrowthAttemptsPerTick { get; set; } = 2;
 
         /// <summary>
         /// When time skips forward (or ticks were throttled), a tree may be behind the current game year.
@@ -578,7 +684,7 @@ namespace WildFarming.Ecosystem
 
         public double StressRecheckHours { get; set; } = 18;
 
-        public int MaxStressChecksPerTick { get; set; } = 16;
+        public int MaxStressChecksPerTick { get; set; } = 4;
 
         public bool EnableSymbiosis { get; set; } = true;
 
@@ -683,25 +789,25 @@ namespace WildFarming.Ecosystem
         public bool EnableSeasonalFoliage { get; set; } = true;
 
         /// <summary>Random foliage cells ticked per reproduce pass (hybrid/random modes; 0 = off).</summary>
-        public int MaxFoliageCellsTickedPerTick { get; set; } = 48;
+        public int MaxFoliageCellsTickedPerTick { get; set; } = 11;
 
         /// <summary>Wall-time cap for foliage random-tick per reproduce pass (0 = no extra cap).</summary>
-        public int FoliageBudgetMs { get; set; } = 10;
+        public int FoliageBudgetMs { get; set; } = 2;
 
         /// <summary>chunk = column sync on load (v3.4); hybrid = chunk + random tick; random = legacy v3.3.</summary>
         public string FoliageSyncMode { get; set; } = "chunk";
 
         /// <summary>Wall-time budget per chunk-sync drain pass (ms).</summary>
-        public int FoliageChunkSyncBudgetMs { get; set; } = 12;
+        public int FoliageChunkSyncBudgetMs { get; set; } = 2;
 
         /// <summary>Max chunks resumed per chunk-scan tick.</summary>
-        public int FoliageChunkWorkPerTick { get; set; } = 4;
+        public int FoliageChunkWorkPerTick { get; set; } = 1;
 
         /// <summary>On chunk scan, catch up foliage to current season (autumn strip + spring bud).</summary>
         public bool FoliageCatchUpOnChunkLoad { get; set; } = true;
 
         /// <summary>Max catch-up ops (strip + bud) per chunk per scan pass (0 = unlimited).</summary>
-        public int MaxFoliageCatchUpPerChunk { get; set; } = 256;
+        public int MaxFoliageCatchUpPerChunk { get; set; } = 54;
 
         /// <summary>Column scan depth above rain heightmap (0 = full world height).</summary>
         /// <summary>
@@ -735,7 +841,7 @@ namespace WildFarming.Ecosystem
         public int OrphanFoliageMaxBfsDepth { get; set; } = 14;
 
         /// <summary>Orphan foliage BFS checks per chunk column pass (0 = unlimited).</summary>
-        public int OrphanFoliageMaxChecksPerChunkPass { get; set; } = 64;
+        public int OrphanFoliageMaxChecksPerChunkPass { get; set; } = 6;
 
         /// <summary>Re-prioritize fire-touched chunks for orphan prune for this many game hours.</summary>
         public double OrphanFoliageFireChunkHours { get; set; } = 48;
@@ -832,7 +938,7 @@ namespace WildFarming.Ecosystem
         public int FootTrafficAnimalPlayerRadiusBlocks { get; set; } = 64;
 
         /// <summary>Legacy unused — animal trails use physics stride hooks, not polling.</summary>
-        public int FootTrafficSampleIntervalMs { get; set; } = 1000;
+        public int FootTrafficSampleIntervalMs { get; set; } = 2500;
 
         /// <summary>
         /// On: attach physics stride hooks to large creatures near players.

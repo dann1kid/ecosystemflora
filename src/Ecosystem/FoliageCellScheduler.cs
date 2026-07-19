@@ -12,6 +12,9 @@ namespace WildFarming.Ecosystem
         internal readonly FoliageCellIndex Index = new FoliageCellIndex();
         readonly Dictionary<long, FoliageChunkState> chunkStates = new Dictionary<long, FoliageChunkState>();
         readonly HashSet<long> activeChunkKeysScratch = new HashSet<long>();
+        /// <summary>Chunks that still need season sync or deferred orphan prune (incremental; no full map scan).</summary>
+        readonly HashSet<long> pendingSyncKeys = new HashSet<long>();
+        readonly List<long> pendingSyncStaleScratch = new List<long>();
 
         int lastSeasonKey = int.MinValue;
         int autumnStripTotal;
@@ -20,19 +23,7 @@ namespace WildFarming.Ecosystem
 
         internal Action<Vec2i> RequestEcologyScan;
 
-        public int PendingSyncChunks
-        {
-            get
-            {
-                int n = 0;
-                foreach (KeyValuePair<long, FoliageChunkState> kv in chunkStates)
-                {
-                    if (!kv.Value.Completed) n++;
-                }
-
-                return n;
-            }
-        }
+        public int PendingSyncChunks => pendingSyncKeys.Count;
 
         public int TrackedChunkCount => chunkStates.Count;
 
@@ -40,6 +31,7 @@ namespace WildFarming.Ecosystem
         {
             Index.Clear();
             chunkStates.Clear();
+            pendingSyncKeys.Clear();
             autumnStripTotal = 0;
             totalSyncedCells = 0;
             lastSeasonKey = int.MinValue;
@@ -50,6 +42,7 @@ namespace WildFarming.Ecosystem
             long key = FoliageCellIndex.ChunkKey(chunkCoord.X, chunkCoord.Y);
             Index.RemoveChunk(chunkCoord);
             chunkStates.Remove(key);
+            pendingSyncKeys.Remove(key);
         }
 
         public void OnBlockAdded(BlockPos pos)
@@ -148,6 +141,7 @@ namespace WildFarming.Ecosystem
             state.FireTouchedAtHours = totalHours;
             state.PendingOrphanPrune = true;
             chunkStates[key] = state;
+            pendingSyncKeys.Add(key);
             RequestEcologyScan?.Invoke(chunkCoord);
         }
 
@@ -184,6 +178,15 @@ namespace WildFarming.Ecosystem
                     FireTouchedAtHours = prior.FireTouchedAtHours,
                     PendingOrphanPrune = prior.PendingOrphanPrune,
                 };
+
+                if (!prior.PendingOrphanPrune)
+                {
+                    pendingSyncKeys.Remove(key);
+                }
+                else
+                {
+                    pendingSyncKeys.Add(key);
+                }
             }
             else
             {
@@ -199,6 +202,7 @@ namespace WildFarming.Ecosystem
                     FireTouchedAtHours = prior.FireTouchedAtHours,
                     PendingOrphanPrune = prior.PendingOrphanPrune,
                 };
+                pendingSyncKeys.Add(key);
             }
         }
 
@@ -220,10 +224,15 @@ namespace WildFarming.Ecosystem
             {
                 state.FireTouchedAtHours = calendarTotalHours;
                 state.PendingOrphanPrune = true;
+                pendingSyncKeys.Add(key);
             }
             else if (passCompleted && passState.OrphanPruneOnly)
             {
                 state.PendingOrphanPrune = false;
+                if (state.Completed)
+                {
+                    pendingSyncKeys.Remove(key);
+                }
             }
 
             chunkStates[key] = state;
@@ -287,8 +296,7 @@ namespace WildFarming.Ecosystem
                     && CanopyOrphanPrune.IsWildPrunableLeaf(block)
                     && CanopyOrphanPrune.TryPruneIfOrphan(api, acc, pos, block, Index))
                 {
-                    EcosystemSystem.Instance?.FloraContext?.InvalidateAround(pos, 3);
-                    EcosystemSystem.Instance?.InvalidateEnvironmentAround(pos);
+                    EcosystemSystem.Instance?.InvalidateEnvironmentAround(pos, floraRadius: 2);
                     changed++;
                     autumnStripTotal++;
                     continue;
@@ -296,8 +304,7 @@ namespace WildFarming.Ecosystem
 
                 if (CanopyFoliageRules.TickCell(api, acc, pos, block, Index))
                 {
-                    EcosystemSystem.Instance?.FloraContext?.InvalidateAround(pos, 3);
-                    EcosystemSystem.Instance?.InvalidateEnvironmentAround(pos);
+                    EcosystemSystem.Instance?.InvalidateEnvironmentAround(pos, floraRadius: 2);
                     changed++;
                     FoliageCellKind strippedKind = CanopyFoliageRules.Classify(block);
                     if (strippedKind == FoliageCellKind.RegularLeaf || strippedKind == FoliageCellKind.BranchyLeaf)
@@ -328,6 +335,7 @@ namespace WildFarming.Ecosystem
             }
 
             chunkStates[key] = state;
+            pendingSyncKeys.Add(key);
             RequestEcologyScan?.Invoke(chunkCoord);
         }
 
@@ -350,6 +358,7 @@ namespace WildFarming.Ecosystem
                 state.ResumeLx = 0;
                 state.ResumeLz = 0;
                 chunkStates[key] = state;
+                pendingSyncKeys.Add(key);
 
                 int cx = (int)(key >> 32);
                 int cz = (int)(key & 0xFFFFFFFF);
@@ -472,11 +481,12 @@ namespace WildFarming.Ecosystem
                     && state.Completed
                     && state.SyncedSeasonKey == seasonKey;
 
+                // F7: defer orphan BFS until after season catch-up completes (orphanPruneOnly pass).
                 var passState = cfg.EnableOrphanFoliagePrune
                     ? new FoliageChunkPassState
                     {
                         OrphanPruneOnly = orphanPruneOnly,
-                        OrphanChecksRemaining = maxOrphanChecks,
+                        OrphanChecksRemaining = orphanPruneOnly ? maxOrphanChecks : 0,
                     }
                     : null;
 
@@ -504,6 +514,19 @@ namespace WildFarming.Ecosystem
                     pass.Completed);
 
                 ApplyEcologyPassResult(chunkCoord, ecologyResult, seasonKey);
+
+                // After season sync finishes, schedule a dedicated orphan pass (no BFS during catch-up).
+                if (pass.Completed
+                    && !orphanPruneOnly
+                    && cfg.EnableOrphanFoliagePrune
+                    && pass.Indexed > 0
+                    && chunkStates.TryGetValue(key, out FoliageChunkState afterSync))
+                {
+                    afterSync.PendingOrphanPrune = true;
+                    chunkStates[key] = afterSync;
+                    pendingSyncKeys.Add(key);
+                }
+
                 ApplyFoliagePassState(chunkCoord, passState, pass.Completed, nowHours);
                 chunksProcessed++;
 
@@ -525,22 +548,38 @@ namespace WildFarming.Ecosystem
         void CollectPendingSyncChunks(int seasonKey, double nowHours, List<Vec2i> output)
         {
             output.Clear();
-            foreach (KeyValuePair<long, FoliageChunkState> kv in chunkStates)
+            pendingSyncStaleScratch.Clear();
+
+            foreach (long key in pendingSyncKeys)
             {
-                FoliageChunkState state = kv.Value;
+                if (!chunkStates.TryGetValue(key, out FoliageChunkState state))
+                {
+                    pendingSyncStaleScratch.Add(key);
+                    continue;
+                }
+
                 if (state.Completed
                     && state.SyncedSeasonKey == seasonKey
                     && !state.PendingOrphanPrune)
                 {
+                    pendingSyncStaleScratch.Add(key);
                     continue;
                 }
 
-                int cx = (int)(kv.Key >> 32);
-                int cz = (int)(kv.Key & 0xFFFFFFFF);
+                int cx = (int)(key >> 32);
+                int cz = (int)(key & 0xFFFFFFFF);
                 output.Add(new Vec2i(cx, cz));
             }
 
-            output.Sort((a, b) => CompareChunkSyncPriority(a, b, seasonKey, nowHours));
+            for (int i = 0; i < pendingSyncStaleScratch.Count; i++)
+            {
+                pendingSyncKeys.Remove(pendingSyncStaleScratch[i]);
+            }
+
+            if (output.Count > 1)
+            {
+                output.Sort((a, b) => CompareChunkSyncPriority(a, b, seasonKey, nowHours));
+            }
         }
 
         int CompareChunkSyncPriority(Vec2i a, Vec2i b, int seasonKey, double nowHours)

@@ -9,6 +9,7 @@ namespace WildFarming.Ecosystem
         readonly BackgroundSpreadScanner scanner = new BackgroundSpreadScanner();
         int tickSolveQueued;
         int tickSolveCompleted;
+        int tickSolveRejected;
 
         public int WorkerPendingCount => scanner.PendingCount;
 
@@ -16,14 +17,23 @@ namespace WildFarming.Ecosystem
 
         public int LastTickSolveCompleted => tickSolveCompleted;
 
+        public int LastTickSolveRejected => tickSolveRejected;
+
         public void BeginReproduceTick()
         {
             tickSolveQueued = 0;
             tickSolveCompleted = 0;
+            tickSolveRejected = 0;
         }
 
-        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount) =>
+        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded ?? new EcosystemConfig();
+            scanner.ConfigureLimits(
+                cfg.ResolveMaxSpreadSolvePending(),
+                cfg.ResolveMaxSpreadSolveCompleted());
             scanner.Start(blockRegistry, workerCount);
+        }
 
         public bool TryQueueSolve(
             ICoreAPI api,
@@ -58,6 +68,7 @@ namespace WildFarming.Ecosystem
 
             if (!scanner.TrySubmit(request, out _))
             {
+                tickSolveRejected++;
                 return false;
             }
 
@@ -65,11 +76,15 @@ namespace WildFarming.Ecosystem
             return true;
         }
 
-        public void PollCompleted(EcosystemSystem eco, bool logFailures)
+        public void PollCompleted(EcosystemSystem eco, bool logFailures, int maxDrain = 0)
         {
-            while (scanner.TryTakeCompleted(out BackgroundSpreadScanner.CompletedWork done))
+            if (maxDrain <= 0) maxDrain = int.MaxValue;
+
+            int drained = 0;
+            while (drained < maxDrain && scanner.TryTakeCompleted(out BackgroundSpreadScanner.CompletedWork done))
             {
                 tickSolveCompleted++;
+                drained++;
                 ApplyResult(eco, in done.Result, logFailures);
             }
         }
@@ -86,10 +101,18 @@ namespace WildFarming.Ecosystem
             PendingSpreadQueue queue = eco.PendingSpreads;
             if (queue == null) return;
 
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            int intentCap = cfg != null ? cfg.ResolveMaxPendingSpreadIntents() : 256;
+
             for (int i = 0; i < result.Winners.Count; i++)
             {
                 SpreadSolveWinner winner = result.Winners[i];
                 if (winner.TargetPos == null) continue;
+
+                if (intentCap > 0 && queue.Count >= intentCap)
+                {
+                    break;
+                }
 
                 queue.Enqueue(new PendingSpreadIntent
                 {

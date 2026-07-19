@@ -47,10 +47,10 @@ namespace WildFarming.Tests
             Assert.False(cfg.EnableTrampling);
             Assert.False(cfg.TramplingSoilDegradation);
             Assert.False(cfg.EnableAnimalFootTraffic);
-            Assert.Equal(2000, cfg.ReproduceTickIntervalMs);
-            Assert.Equal(1000, cfg.ChunkScanTickIntervalMs);
+            Assert.Equal(3500, cfg.ReproduceTickIntervalMs);
+            Assert.Equal(2300, cfg.ChunkScanTickIntervalMs);
             Assert.Equal(48, cfg.FoliageColumnScanHeightAboveSurface);
-            Assert.Equal(48, cfg.MaxFoliageCellsTickedPerTick);
+            Assert.Equal(11, cfg.MaxFoliageCellsTickedPerTick);
             Assert.True(cfg.EnableTreeAging);
             Assert.True(cfg.EnableTreeSenescence);
             Assert.True(cfg.EnableWildVineEcology);
@@ -62,6 +62,14 @@ namespace WildFarming.Tests
             Assert.True(cfg.EnableEventDrivenSpread);
             Assert.Equal(72, cfg.ReproduceAttemptsPerYear);
             Assert.Equal(1f / 3f, cfg.SpeciesSpreadRateScale, 3);
+            Assert.Equal(14, cfg.MaxReproduceAttemptsPerTick);
+            Assert.Equal(1, cfg.MaxSpreadAttemptsPerChunkPerTick);
+            Assert.Equal(12, cfg.MaxSpreadChunksVisitedPerTick);
+            Assert.Equal(7, cfg.MaxFloraRescanColumnsPerTick);
+            Assert.Equal(9, cfg.RegistrationBudgetMs);
+            Assert.Equal(2, cfg.TickBudgetMs);
+            Assert.Equal(1, cfg.SpreadBudgetMs);
+            Assert.Equal(8500, cfg.StressTickIntervalMs);
         }
 
         [Fact]

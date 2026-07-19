@@ -419,6 +419,14 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more columns scanned per tick for flora discovery. Lower: slower meadow fill-in, less CPU.",
                 "Больше: больше колонок обхода флоры за тик. Меньше: медленнее заполнение луга, меньше нагрузка на процессор.");
 
+            D(nameof(EcosystemConfig.EnablePlayerVicinityRescan),
+                "On: periodically re-queue chunks around players for fast registration (worldedit / late flora). Off: only load-time and place events.",
+                "Вкл.: периодически ставит в очередь чанки вокруг игроков для быстрой регистрации. Выкл.: только при загрузке и размещении.");
+
+            D(nameof(EcosystemConfig.PlayerVicinityRescanIntervalMs),
+                "Higher: rarer vicinity rescans (less CPU near players). Lower: faster discovery of late flora near players.",
+                "Больше: реже повторный обход у игроков (меньше CPU). Меньше: быстрее находит позднюю флору рядом.");
+
             D(nameof(EcosystemConfig.EnableTreeAging),
                 "On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this).",
                 "Вкл.: календарный возраст и рост структуры диких деревьев. Выкл.: без роста (старение требует вкл.).");
@@ -740,8 +748,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше мс на приоритетный проход. Меньше: жёстче лимит времени.");
 
             D(nameof(EcosystemConfig.BurstRegistrationBudgetMs),
-                "Higher: more ms to finish one burst chunk on load. Lower: smaller burst completion slice.",
-                "Больше: больше мс на завершение пакетного участка. Меньше: меньшая доля.");
+                "Higher: longer single paced slice on near-player chunk load before priority-queue fallback. Lower: smoother loads.",
+                "Больше: длиннее один paced-срез при загрузке у игрока до очереди. Меньше: плавнее загрузка.");
 
             D(nameof(EcosystemConfig.MaxBurstRegistrationsPerChunk),
                 "Per worker (× worker count). Higher: allow more registrations when finishing one burst chunk. Lower: cap burst chunk size.",
@@ -775,9 +783,45 @@ namespace WildFarming.Ecosystem.Config
                 "Higher: more background spread-scoring threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread.",
                 "Больше: больше потоков оценки распространения (макс. 8). 0 = половина ядер. Снимок и установка блока — в основном потоке.");
 
+            D(nameof(EcosystemConfig.MaxSpreadSolvePending),
+                "Higher: larger background spread solve queue before reject (falls back to sync). 0 = 2× MaxReproduceAttemptsPerTick.",
+                "Больше: больше очередь фоновых solve до отказа (тогда sync). 0 = 2× MaxReproduceAttemptsPerTick.");
+
+            D(nameof(EcosystemConfig.MaxSpreadSolveCompleted),
+                "Higher: more finished solves held for main-thread drain. 0 = same as MaxSpreadSolvePending.",
+                "Больше: больше готовых solve до drain в основном потоке. 0 = как MaxSpreadSolvePending.");
+
+            D(nameof(EcosystemConfig.MaxSpreadSolveDrainPerTick),
+                "Higher: apply more worker results into the commit queue per reproduce tick. 0 = MaxReproduceAttemptsPerTick.",
+                "Больше: больше результатов воркеров в очередь commit за тик. 0 = MaxReproduceAttemptsPerTick.");
+
+            D(nameof(EcosystemConfig.MaxPendingSpreadIntents),
+                "Higher: more two-phase commit intents buffered. 0 = 4× MaxReproduceAttemptsPerTick.",
+                "Больше: больше intent в двухфазной очереди commit. 0 = 4× MaxReproduceAttemptsPerTick.");
+
             D(nameof(EcosystemConfig.MaxRegistrationSnapshotCellsPerTick),
-                "Per worker (× worker count). Higher: copy more block ids to snapshot per main tick. Lower: slower background scan feed.",
-                "На поток (× число потоков). Больше: больше идентификаторов блоков в снимок за тик. Меньше: медленнее подача данных фоновому обходу.");
+                "Main-thread only (not × workers). Higher: copy more block ids to snapshot per main tick. Lower: less main-thread GetBlock load.",
+                "Только main-поток (не × воркеры). Больше: больше id блоков в снимок за тик. Меньше: меньше GetBlock на main.");
+
+            D(nameof(EcosystemConfig.RegistrationSnapshotBandBelowSurface),
+                "Higher: copy more blocks below rain surface into registration snapshots. 0 = full column. Lower: less underground GetBlock (default 24 covers vines/mycelium).",
+                "Больше: больше блоков ниже поверхности дождя в снимок. 0 = вся колонка. Меньше: меньше подземных GetBlock (24 хватает для лиан/грибницы).");
+
+            D(nameof(EcosystemConfig.MaxRegistrationSolvePending),
+                "Higher: larger background registration classify queue before reject/requeue. 0 = 16.",
+                "Больше: больше очередь фоновой классификации до отказа. 0 = 16.");
+
+            D(nameof(EcosystemConfig.MaxRegistrationSolveCompleted),
+                "Higher: more finished registration scans held for main drain. 0 = same as pending.",
+                "Больше: больше готовых сканов регистрации до drain. 0 = как pending.");
+
+            D(nameof(EcosystemConfig.MaxRegistrationSolveDrainPerTick),
+                "Higher: apply more worker registration results per chunk-scan tick. 0 = 8.",
+                "Больше: больше результатов регистрации за тик обхода. 0 = 8.");
+
+            D(nameof(EcosystemConfig.MaxActiveRegistrationSnapshots),
+                "Higher: more in-progress main-thread snapshot builders. 0 = 8. Caps transient memory on mass chunk load.",
+                "Больше: больше незавершённых снимков на main. 0 = 8. Лимит памяти при массовой загрузке.");
 
             D(nameof(EcosystemConfig.TickBudgetMs),
                 "Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited.",

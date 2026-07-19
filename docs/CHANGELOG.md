@@ -3,11 +3,27 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.8.2** (unreleased) — ecological trails + Floral Zones Cape/Cosmopolitan
+**Next release:** **4.10.31** (unreleased) — per-world config, setup wizard, light auto-tune
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.10.31
+
+- **Per-world config** — server settings persist in the world SaveGame (`ecosystemflora:config`); `ModConfig/ecosystemflora.json` is a template for new worlds + client-only fields. Worlds no longer overwrite each other’s tuning. **Every new world** seeds with `SetupWizardCompleted=false` (wizard for SP owner / server `controlserver`); global template never stores wizard completion.
+- **First-run setup wizard** — page 1: profile (Weak PC / Balanced / Lush / Vanilla-safe) + near-players; page 2: **Start test** bench + editable Performance knobs. Privilege: `controlserver`. Re-open from Settings.
+- **Light performance auto-tune** — synthetic CPU bench; results stored (`LastAutoTuneTier` / `OpsPerMs` / `ElapsedMs` / `Utc`). Re-run: **`/ecoautotune`** or Performance → Auto-tune now.
+- **Performance scans** — `EnablePlayerVicinityRescan` + `PlayerVicinityRescanIntervalMs` (was hard-coded 5 s); cyclic flora discovery knobs listed under Performance.
+
+## Unreleased — 4.10.9
+
+- **Smoother cadence** — rarer, desynced ticks (reproduce **3.5 s**, chunk-scan **2.3 s**, stress **8.5 s**, vicinity **5 s**); spread fairer (**1** attempt × **12** chunks); smaller registration pipeline defaults (pending **6**, drain/active snapshots **3**).
+- **~3× lighter main defaults** — another cut for mod-pack headroom: snapshot **340**, registration **9 ms**, burst/priority **8 ms**, tick/spread **5/4 ms** (natural **2/1**), reproduce attempts **14**, registry applies **85**, foliage sync **2 ms** / **1** chunk, capture ≤**12** cells, flora rescan **7** columns/tick.
+- **Smarter main paths** — registration snapshots copy only a surface band (`RegistrationSnapshotBandBelowSurface` **24**, not full underground); spread runs PreSpawn + near-zero season skip and chance roll before capture; maturation queues no longer burn GetBlock/check budget on not-yet-due juveniles.
+- **Perpetual near-player re-scan** — player-vicinity no longer re-queues **finished** chunks into the full registration snapshot pipeline every 2.5 s (that kept one CPU core pegged). Late flora still comes from the light cyclic column scanner. Default `MaxFloraRescanColumnsPerTick` is **20** (property + **natural** balance preset).
+- **Perf F1–F12** — spread/registration/foliage queue fixes (F1–F8); tighter environment-cache invalidation without wiping worldgen climate columns (F9); cyclic flora skips unfinished registration chunks so discovery paths do not overlap (F10); vine network BFS reuses thread-local pools (F11); third-party ecology bootstraps share one block-table pass (F12).
+- **Perf F6–F8** — foliage pending sync uses an incremental dirty set (no full-map enumerate+sort each tick); orphan BFS reuses thread-local pools and runs in a deferred pass after season catch-up; pending registration drain uses per-chunk queues (no `RemoveAt(0)` shifts).
 
 ## Unreleased — 4.10.8
 

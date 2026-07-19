@@ -20,7 +20,7 @@ namespace WildFarming.Client
         const double TextPadPx = 2;
         const double ControlHeight = 25;
         const double ControlWidth = 118;
-        const double HeaderBlockHeight = 88;
+        const double HeaderBlockHeight = 112;
         const double FooterBlockHeight = 44;
         const double FooterGap = 12;
 
@@ -167,7 +167,7 @@ namespace WildFarming.Client
                 "cfg-preset");
 
             composer.AddAutoSizeHoverText(
-                string.Format(CultureInfo.InvariantCulture, L("config-ui-preset-desc"), nameof(EcosystemConfig.BalancePreset)),
+                L("config-ui-preset-desc", nameof(EcosystemConfig.BalancePreset)),
                 CairoFont.WhiteSmallText(),
                 380,
                 ElementBounds.Fixed(pad, y, labelW + controlW, 25).FlatCopy(),
@@ -199,6 +199,25 @@ namespace WildFarming.Client
                 380,
                 ElementBounds.Fixed(pad, y, labelW + controlW, 25).FlatCopy(),
                 "cfg-category-tip");
+
+            y += 28;
+
+            double setupBtnW = 130;
+            double autoBtnW = 120;
+            composer.AddButton(
+                L("config-ui-setup-again"),
+                OnSetupAgainClicked,
+                ElementBounds.Fixed(pad, y, setupBtnW, 24),
+                CairoFont.WhiteSmallText());
+
+            if (string.Equals(selectedCategory, "perf", StringComparison.Ordinal))
+            {
+                composer.AddButton(
+                    L("config-ui-autotune"),
+                    OnAutoTuneClicked,
+                    ElementBounds.Fixed(pad + setupBtnW + 8, y, autoBtnW, 24),
+                    CairoFont.WhiteSmallText());
+            }
 
             y += 26;
 
@@ -562,6 +581,19 @@ namespace WildFarming.Client
             return true;
         }
 
+        bool OnSetupAgainClicked()
+        {
+            OnSetupWizardRequested?.Invoke();
+            TryClose();
+            return true;
+        }
+
+        bool OnAutoTuneClicked()
+        {
+            OnAutoTuneRequested?.Invoke();
+            return true;
+        }
+
         bool OnPrevPage()
         {
             if (fieldPage > 0)
@@ -602,6 +634,8 @@ namespace WildFarming.Client
         }
 
         public event Action<EcosystemConfig> OnApplyRequested;
+        public event Action OnSetupWizardRequested;
+        public event Action OnAutoTuneRequested;
 
         static string BuildFieldHelpText(string title, string scopeHint, string jsonKey, string desc)
         {
@@ -623,7 +657,7 @@ namespace WildFarming.Client
         }
 
         static string FormatJsonKey(string propertyName) =>
-            string.Format(CultureInfo.InvariantCulture, L("config-ui-json-key"), propertyName);
+            L("config-ui-json-key", propertyName);
 
         static string EscapeRichText(string text)
         {
@@ -634,7 +668,10 @@ namespace WildFarming.Client
                 .Replace(">", "&gt;", StringComparison.Ordinal);
         }
 
-        static string L(string key) => Lang.Get("ecosystemflora:" + key);
+        static string L(string key, params object[] args) =>
+            args is { Length: > 0 }
+                ? Lang.Get("ecosystemflora:" + key, args)
+                : Lang.Get("ecosystemflora:" + key);
 
         static string PresetLabel(string code)
         {

@@ -1,3 +1,4 @@
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -12,11 +13,15 @@ namespace WildFarming.Client
     {
         public const string HotkeyCode = "ecosystemflora-config";
         public const string CommandCode = "ecoconfig";
+        public const string AutoTuneCommandCode = "ecoautotune";
 
         ICoreClientAPI capi;
         IClientNetworkChannel channel;
         EcosystemConfigDialog dialog;
+        EcosystemSetupWizardDialog wizard;
         bool awaitingServerSave;
+        bool wizardPromptPending = true;
+        bool lastSyncCanEdit;
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Client;
 
@@ -57,6 +62,61 @@ namespace WildFarming.Client
                     OpenConfigDialog();
                     return TextCommandResult.Success();
                 });
+
+            api.ChatCommands
+                .GetOrCreate(AutoTuneCommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:autotune-command-desc"))
+                .HandleWith(_ =>
+                {
+                    RunAutoTuneAndSave();
+                    return TextCommandResult.Success();
+                });
+
+            api.Event.LevelFinalize += () =>
+            {
+                wizardPromptPending = true;
+                channel.SendPacket(new EcosystemConfigSyncRequestPacket());
+            };
+        }
+
+        void RunAutoTuneAndSave()
+        {
+            if (!lastSyncCanEdit && !CanSaveOnLocalServer())
+            {
+                // Still try — server will reject without privilege.
+            }
+
+            EcosystemConfig working = EcosystemConfigCopier.Clone(EcosystemConfig.Loaded);
+            EcosystemPerfCalibrator.CalibrationResult result =
+                EcosystemPerfCalibrator.RunAndApply(working);
+            working.BalancePreset = EcosystemBalancePresets.Custom;
+
+            capi.ShowChatMessage(Lang.Get(
+                "ecosystemflora:setup-wizard-autotune-result",
+                result.Tier.ToString(),
+                result.OpsPerMs.ToString("0.0"),
+                result.ElapsedMs));
+
+            ApplyWorkingCopy(working, closeConfigDialog: false);
+
+            if (dialog != null && dialog.IsOpened())
+            {
+                EcosystemConfigCopier.CopyScope(working, dialog.WorkingCopy, ConfigFieldScope.Server);
+                dialog.RequestRecompose();
+            }
+        }
+
+        public void OpenSetupWizard(bool force = false)
+        {
+            if (wizard != null && wizard.IsOpened()) return;
+
+            wizard?.TryClose();
+            wizard = new EcosystemSetupWizardDialog(capi, EcosystemConfig.Loaded);
+            wizard.OnFinished += ApplyWorkingCopyQuiet;
+            capi.Gui.RegisterDialog(wizard);
+            wizard.TryOpen();
+            channel.SendPacket(new EcosystemConfigSyncRequestPacket());
+            _ = force;
         }
 
         void OpenConfigDialog()
@@ -64,14 +124,30 @@ namespace WildFarming.Client
             dialog?.TryClose();
             dialog = new EcosystemConfigDialog(capi, EcosystemConfig.Loaded);
             dialog.OnApplyRequested += ApplyWorkingCopy;
+            dialog.OnSetupWizardRequested += () => OpenSetupWizard(force: true);
+            dialog.OnAutoTuneRequested += OnAutoTuneFromConfig;
             capi.Gui.RegisterDialog(dialog);
             dialog.TryOpen();
             channel.SendPacket(new EcosystemConfigSyncRequestPacket());
         }
 
+        void OnAutoTuneFromConfig()
+        {
+            if (dialog == null) return;
+            EcosystemPerfCalibrator.CalibrationResult result =
+                EcosystemPerfCalibrator.RunAndApply(dialog.WorkingCopy);
+            dialog.WorkingCopy.BalancePreset = EcosystemBalancePresets.Custom;
+            dialog.RequestRecompose();
+            capi.ShowChatMessage(Lang.Get(
+                "ecosystemflora:setup-wizard-autotune-result",
+                result.Tier.ToString(),
+                result.OpsPerMs.ToString("0.0"),
+                result.ElapsedMs));
+        }
+
         void OnSyncResponse(EcosystemConfigSyncResponsePacket packet)
         {
-            if (dialog == null || packet == null) return;
+            if (packet == null) return;
 
             if (!string.IsNullOrEmpty(packet.ErrorLangKey))
             {
@@ -81,18 +157,51 @@ namespace WildFarming.Client
 
             if (string.IsNullOrWhiteSpace(packet.ConfigJson)) return;
 
+            EcosystemConfig serverCfg;
             try
             {
-                EcosystemConfig serverCfg = EcosystemConfigCopier.FromJson(packet.ConfigJson);
-                dialog.MergeServerConfig(serverCfg);
+                serverCfg = EcosystemConfigCopier.FromJson(packet.ConfigJson);
             }
             catch
             {
                 capi.ShowChatMessage(Lang.Get("ecosystemflora:config-error-parse"));
+                return;
+            }
+
+            lastSyncCanEdit = packet.CanEditConfig || CanSaveOnLocalServer();
+            EcosystemConfigCopier.CopyScope(serverCfg, EcosystemConfig.Loaded, ConfigFieldScope.Server);
+
+            if (dialog != null && dialog.IsOpened())
+            {
+                dialog.MergeServerConfig(serverCfg);
+            }
+
+            if (wizard != null && wizard.IsOpened())
+            {
+                EcosystemConfigCopier.CopyScope(serverCfg, wizard.WorkingCopy, ConfigFieldScope.Server);
+            }
+            else if (wizardPromptPending && !serverCfg.SetupWizardCompleted && lastSyncCanEdit)
+            {
+                wizardPromptPending = false;
+                OpenSetupWizard();
+            }
+            else
+            {
+                wizardPromptPending = false;
             }
         }
 
+        void ApplyWorkingCopyQuiet(EcosystemConfig working)
+        {
+            ApplyWorkingCopy(working, closeConfigDialog: false);
+        }
+
         void ApplyWorkingCopy(EcosystemConfig working)
+        {
+            ApplyWorkingCopy(working, closeConfigDialog: true);
+        }
+
+        void ApplyWorkingCopy(EcosystemConfig working, bool closeConfigDialog)
         {
             if (working == null) return;
 
@@ -108,8 +217,9 @@ namespace WildFarming.Client
                     return;
                 }
 
-                capi.StoreModConfig(EcosystemConfig.Loaded, EcosystemConfig.ConfigFileName);
-                FinishApplySuccess();
+                // Client-scope mirror only — server/world settings live in SaveGame.
+                SaveClientScope(EcosystemConfig.Loaded);
+                FinishApplySuccess(closeConfigDialog);
                 return;
             }
 
@@ -139,8 +249,8 @@ namespace WildFarming.Client
                 try
                 {
                     EcosystemConfig serverCfg = EcosystemConfigCopier.FromJson(packet.ConfigJson);
-                    EcosystemConfigCopier.CopyFields(serverCfg, EcosystemConfig.Loaded);
-                    capi.StoreModConfig(EcosystemConfig.Loaded, EcosystemConfig.ConfigFileName);
+                    EcosystemConfigCopier.CopyScope(serverCfg, EcosystemConfig.Loaded, ConfigFieldScope.Server);
+                    SaveClientScope(EcosystemConfig.Loaded);
                 }
                 catch
                 {
@@ -148,13 +258,16 @@ namespace WildFarming.Client
                 }
             }
 
-            FinishApplySuccess();
+            FinishApplySuccess(closeConfigDialog: true);
         }
 
         void SaveClientScope(EcosystemConfig working)
         {
             EcosystemConfigCopier.CopyScope(working, EcosystemConfig.Loaded, ConfigFieldScope.Client);
-            capi.StoreModConfig(EcosystemConfig.Loaded, EcosystemConfig.ConfigFileName);
+            // Global ModConfig is a template only — never carry this world's wizard completion into it.
+            capi.StoreModConfig(
+                EcosystemWorldConfigStore.CloneAsGlobalTemplate(EcosystemConfig.Loaded),
+                EcosystemConfig.ConfigFileName);
         }
 
         bool CanSaveOnLocalServer()
@@ -162,10 +275,13 @@ namespace WildFarming.Client
             return capi.World.Api is ICoreServerAPI;
         }
 
-        void FinishApplySuccess()
+        void FinishApplySuccess(bool closeConfigDialog)
         {
             capi.ShowChatMessage(Lang.Get("ecosystemflora:config-ui-saved"));
-            dialog?.TryClose();
+            if (closeConfigDialog)
+            {
+                dialog?.TryClose();
+            }
         }
     }
 }

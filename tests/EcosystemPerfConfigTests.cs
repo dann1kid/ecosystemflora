@@ -29,8 +29,8 @@ namespace WildFarming.Tests
             Assert.True(cfg.EnableEventDrivenSpread);
             Assert.True(cfg.EnableBackgroundSpreadSolve);
             Assert.True(cfg.EnableSeasonCoarseWake);
-            Assert.Equal(2, cfg.MaxSpreadAttemptsPerChunkPerTick);
-            Assert.Equal(32, cfg.MaxSpreadChunksVisitedPerTick);
+            Assert.Equal(1, cfg.MaxSpreadAttemptsPerChunkPerTick);
+            Assert.Equal(12, cfg.MaxSpreadChunksVisitedPerTick);
         }
     }
 }

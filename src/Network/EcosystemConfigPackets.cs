@@ -20,6 +20,9 @@ namespace WildFarming.Network
 
         [ProtoMember(2)]
         public string ErrorLangKey;
+
+        [ProtoMember(3)]
+        public bool CanEditConfig;
     }
 
     [ProtoContract]

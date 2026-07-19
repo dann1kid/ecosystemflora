@@ -33,7 +33,8 @@ namespace WildFarming.Ecosystem
             FloraColumnDiscovery.FloraFoundHandler onFound,
             ref int registrationsLeft,
             long budgetTicks,
-            Stopwatch budgetWatch)
+            Stopwatch budgetWatch,
+            System.Func<Vec2i, bool> shouldScanChunk = null)
         {
             if (!cfg.EnableCyclicFloraDiscovery || api == null || acc == null || onFound == null) return;
             if (registrationsLeft <= 0 || cfg.MaxFloraRescanColumnsPerTick <= 0) return;
@@ -58,6 +59,12 @@ namespace WildFarming.Ecosystem
                 if (!activeChunkKeys.Contains(chunkKey))
                 {
                     columnResume.Remove(chunkKey);
+                    roundRobinIndex++;
+                    continue;
+                }
+
+                if (shouldScanChunk != null && !shouldScanChunk(chunk))
+                {
                     roundRobinIndex++;
                     continue;
                 }

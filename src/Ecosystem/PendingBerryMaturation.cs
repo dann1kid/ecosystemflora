@@ -62,9 +62,9 @@ namespace WildFarming.Ecosystem
             for (int i = entries.Count - 1; i >= 0 && checkedCount < maxChecks; i--)
             {
                 Entry entry = entries[i];
-                checkedCount++;
-
                 if (nowHours < entry.MatureAtHours) continue;
+
+                checkedCount++;
 
                 Block block = acc.GetBlock(entry.Pos);
                 if (block == null || block.Id == 0

@@ -1,4 +1,6 @@
+using System.Globalization;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using WildFarming.Ecosystem.Config;
 using WildFarming.Network;
@@ -7,6 +9,8 @@ namespace WildFarming.Ecosystem
 {
     public class EcosystemConfigServerSystem : ModSystem
     {
+        public const string AutoTuneCommandCode = "ecoautotune";
+
         IServerNetworkChannel channel;
 
         public override bool ShouldLoad(EnumAppSide side) => side == EnumAppSide.Server;
@@ -26,6 +30,33 @@ namespace WildFarming.Ecosystem
             channel = api.Network.GetChannel(EcosystemConfigChannel.Name)
                 .SetMessageHandler<EcosystemConfigSyncRequestPacket>(OnSyncRequest)
                 .SetMessageHandler<EcosystemConfigSaveRequestPacket>(OnSaveRequest);
+
+            api.ChatCommands
+                .GetOrCreate(AutoTuneCommandCode)
+                .WithDescription(Lang.Get("ecosystemflora:autotune-command-desc"))
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(args =>
+                {
+                    EcosystemConfig cfg = EcosystemConfigCopier.Clone(EcosystemConfig.Loaded);
+                    EcosystemPerfCalibrator.CalibrationResult result =
+                        EcosystemPerfCalibrator.RunAndApply(cfg);
+                    cfg.BalancePreset = EcosystemBalancePresets.Custom;
+
+                    if (!EcosystemConfigSaveService.TryApplyAndPersist(api, cfg, out string errorCode))
+                    {
+                        return TextCommandResult.Error(
+                            Lang.Get("ecosystemflora:config-error-save")
+                            + (string.IsNullOrEmpty(errorCode) ? "" : " (" + errorCode + ")"));
+                    }
+
+                    string msg = Lang.Get(
+                        "ecosystemflora:setup-wizard-autotune-result",
+                        result.Tier.ToString(),
+                        result.OpsPerMs.ToString("0.0", CultureInfo.InvariantCulture),
+                        result.ElapsedMs);
+                    api.Logger.Notification("[ecosystemflora] {0}", msg);
+                    return TextCommandResult.Success(msg);
+                });
         }
 
         void OnSyncRequest(IServerPlayer player, EcosystemConfigSyncRequestPacket packet)
@@ -35,6 +66,7 @@ namespace WildFarming.Ecosystem
             channel.SendPacket(new EcosystemConfigSyncResponsePacket
             {
                 ConfigJson = EcosystemConfigCopier.ToJson(EcosystemConfig.Loaded),
+                CanEditConfig = player.HasPrivilege(Privilege.controlserver),
             }, player);
         }
 

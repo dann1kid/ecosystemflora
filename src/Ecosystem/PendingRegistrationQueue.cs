@@ -36,20 +36,10 @@ namespace WildFarming.Ecosystem
         readonly Dictionary<long, ChunkState> byChunk = new Dictionary<long, ChunkState>();
         readonly List<Vec2i> roundRobin = new List<Vec2i>();
         int roundRobinIndex;
+        int totalPending;
+        int lastChunkCount = -1;
 
-        public int TotalPending
-        {
-            get
-            {
-                int n = 0;
-                foreach (KeyValuePair<long, ChunkState> kv in byChunk)
-                {
-                    n += kv.Value.Items.Count;
-                }
-
-                return n;
-            }
-        }
+        public int TotalPending => totalPending;
 
         public int LastDrainApplied { get; private set; }
 
@@ -68,9 +58,8 @@ namespace WildFarming.Ecosystem
             Vec2i chunk = ReproducerRegistry.ToChunkCoord(pos);
             if (!byChunk.TryGetValue(ChunkKey(chunk), out ChunkState state)) return false;
 
-            for (int i = 0; i < state.Items.Count; i++)
+            foreach (PendingRegistration item in state.Items)
             {
-                PendingRegistration item = state.Items[i];
                 if (item.Pos != null && item.Pos.Equals(pos)) return true;
             }
 
@@ -95,6 +84,7 @@ namespace WildFarming.Ecosystem
             if (completed && state.Items.Count == 0)
             {
                 byChunk.Remove(ChunkKey(chunk));
+                lastChunkCount = -1;
             }
         }
 
@@ -107,7 +97,8 @@ namespace WildFarming.Ecosystem
             {
                 ChunkFlowerHit hit = hits[i];
                 if (hit.Pos == null || hit.BlockCode == null) continue;
-                state.Items.Add(new PendingRegistration(chunk, hit.Pos.Copy(), hit.BlockCode.Clone(), kind));
+                state.Items.Enqueue(new PendingRegistration(chunk, hit.Pos.Copy(), hit.BlockCode.Clone(), kind));
+                totalPending++;
             }
         }
 
@@ -121,22 +112,31 @@ namespace WildFarming.Ecosystem
             if (registry != null && registry.Contains(basePos)) return false;
 
             ChunkState state = GetOrCreate(chunk);
-            for (int i = 0; i < state.Items.Count; i++)
+            foreach (PendingRegistration existing in state.Items)
             {
-                if (state.Items[i].Kind == PendingRegistrationKind.Tree
-                    && state.Items[i].Pos.Equals(basePos))
+                if (existing.Kind == PendingRegistrationKind.Tree
+                    && existing.Pos != null
+                    && existing.Pos.Equals(basePos))
                 {
                     return false;
                 }
             }
 
-            state.Items.Add(new PendingRegistration(chunk, basePos.Copy(), blockCode.Clone(), PendingRegistrationKind.Tree));
+            state.Items.Enqueue(new PendingRegistration(chunk, basePos.Copy(), blockCode.Clone(), PendingRegistrationKind.Tree));
+            totalPending++;
             return true;
         }
 
         public void RemoveChunk(Vec2i chunk)
         {
-            byChunk.Remove(ChunkKey(chunk));
+            long key = ChunkKey(chunk);
+            if (byChunk.TryGetValue(key, out ChunkState state))
+            {
+                totalPending -= state.Items.Count;
+                if (totalPending < 0) totalPending = 0;
+                byChunk.Remove(key);
+                lastChunkCount = -1;
+            }
         }
 
         public int Drain(
@@ -210,22 +210,23 @@ namespace WildFarming.Ecosystem
                    && chunkApplied < maxAppliesPerChunk
                    && state.Items.Count > 0)
             {
-                PendingRegistration item = state.Items[0];
+                PendingRegistration item = state.Items.Dequeue();
+                totalPending--;
+                if (totalPending < 0) totalPending = 0;
+
                 if (eco.TryApplyPendingRegistration(acc, item, out bool stale))
                 {
                     applied++;
                     LastDrainApplied++;
-                    state.Items.RemoveAt(0);
                 }
                 else if (stale)
                 {
                     LastDrainStale++;
-                    state.Items.RemoveAt(0);
                 }
                 else
                 {
-                    state.Items.RemoveAt(0);
-                    state.Items.Add(item);
+                    state.Items.Enqueue(item);
+                    totalPending++;
                     break;
                 }
 
@@ -235,6 +236,7 @@ namespace WildFarming.Ecosystem
             if (state.Items.Count == 0 && state.ScanCompleted)
             {
                 byChunk.Remove(ChunkKey(chunk));
+                lastChunkCount = -1;
                 eco.OnPendingChunkDrained(chunk);
             }
 
@@ -256,6 +258,9 @@ namespace WildFarming.Ecosystem
 
         void RefreshRoundRobin()
         {
+            if (lastChunkCount == byChunk.Count && roundRobin.Count > 0) return;
+
+            lastChunkCount = byChunk.Count;
             roundRobin.Clear();
             foreach (long key in byChunk.Keys)
             {
@@ -274,6 +279,7 @@ namespace WildFarming.Ecosystem
             {
                 state = new ChunkState();
                 byChunk[key] = state;
+                lastChunkCount = -1;
             }
 
             return state;
@@ -284,7 +290,7 @@ namespace WildFarming.Ecosystem
         sealed class ChunkState
         {
             public bool ScanCompleted;
-            public readonly List<PendingRegistration> Items = new List<PendingRegistration>();
+            public readonly Queue<PendingRegistration> Items = new Queue<PendingRegistration>();
         }
     }
 }

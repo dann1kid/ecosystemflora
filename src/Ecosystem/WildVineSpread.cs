@@ -12,6 +12,23 @@ namespace WildFarming.Ecosystem
 
         const int NetworkSectionScanLimit = 48;
 
+        [System.ThreadStatic]
+        static HashSet<BlockPos> networkVisitedPool;
+
+        [System.ThreadStatic]
+        static Queue<BlockPos> networkQueuePool;
+
+        static void BeginNetworkScan(BlockPos origin, out HashSet<BlockPos> visited, out Queue<BlockPos> queue)
+        {
+            visited = networkVisitedPool ??= new HashSet<BlockPos>();
+            queue = networkQueuePool ??= new Queue<BlockPos>();
+            visited.Clear();
+            queue.Clear();
+            BlockPos start = origin.Copy();
+            queue.Enqueue(start);
+            visited.Add(start);
+        }
+
         public static bool TrySpread(EcosystemSystem eco, ReproducerEntry entry, ICoreAPI api, EcosystemConfig cfg)
         {
             if (eco == null || entry == null || api == null || cfg == null) return false;
@@ -81,10 +98,7 @@ namespace WildFarming.Ecosystem
             BlockPos origin,
             in WildVineInfo startInfo)
         {
-            var visited = new HashSet<BlockPos>();
-            var queue = new Queue<BlockPos>();
-            queue.Enqueue(origin.Copy());
-            visited.Add(origin);
+            BeginNetworkScan(origin, out HashSet<BlockPos> visited, out Queue<BlockPos> queue);
 
             int scanned = 0;
             while (queue.Count > 0 && scanned < NetworkSectionScanLimit)
@@ -349,10 +363,7 @@ namespace WildFarming.Ecosystem
             BlockPos origin,
             in WildVineInfo startInfo)
         {
-            var visited = new HashSet<BlockPos>();
-            var queue = new Queue<BlockPos>();
-            queue.Enqueue(origin.Copy());
-            visited.Add(origin);
+            BeginNetworkScan(origin, out HashSet<BlockPos> visited, out Queue<BlockPos> queue);
 
             int scanned = 0;
             while (queue.Count > 0 && scanned < NetworkSectionScanLimit)

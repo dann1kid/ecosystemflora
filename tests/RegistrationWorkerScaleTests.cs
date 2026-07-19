@@ -1,3 +1,4 @@
+using System;
 using WildFarming.Ecosystem;
 using Xunit;
 
@@ -15,16 +16,15 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void Resolve_AutoUsesLogicalProcessors()
+        public void Resolve_AutoUsesHalfLogicalProcessors()
         {
-            int cores = System.Environment.ProcessorCount;
-            if (cores < 1) cores = 1;
+            int cores = Math.Max(1, Environment.ProcessorCount / 2);
             if (cores > RegistrationWorkerScale.MaxWorkers) cores = RegistrationWorkerScale.MaxWorkers;
             Assert.Equal(cores, RegistrationWorkerScale.Resolve(0));
         }
 
         [Fact]
-        public void EffectiveBudgets_MultiplyByWorkerCount()
+        public void EffectiveBudgets_ApplyScale_ButSnapshotDoesNot()
         {
             var cfg = new EcosystemConfig
             {
@@ -37,7 +37,8 @@ namespace WildFarming.Tests
             Assert.Equal(4, cfg.EffectiveRegistrationWorkerCount());
             Assert.Equal(512, cfg.EffectiveMaxRegistryAppliesPerTick());
             Assert.Equal(256, cfg.EffectiveMaxRegistryAppliesPerChunkPerTick());
-            Assert.Equal(8192, cfg.EffectiveMaxRegistrationSnapshotCellsPerTick());
+            // Snapshot capture is main-thread GetBlock — must not multiply by worker count.
+            Assert.Equal(2048, cfg.EffectiveMaxRegistrationSnapshotCellsPerTick());
         }
     }
 }

@@ -13,22 +13,64 @@ namespace WildFarming.Tests
         [Fact]
         public void ResolveFlowerScanTopY_NeverBelowColumnScanTop()
         {
-            var heightmap = new ushort[ChunkSize * ChunkSize];
-            heightmap[5 * ChunkSize + 7] = 64;
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                // extra <= 0 → column scan uses full map height; flora top must match.
+                EcosystemConfig.Loaded = new EcosystemConfig { FoliageColumnScanHeightAboveSurface = 0 };
 
-            int topY = ChunkEcologyColumnPass.ResolveFlowerScanTopY(heightmap, 7, 5, ChunkSize, columnTop: 255);
+                var heightmap = new ushort[ChunkSize * ChunkSize];
+                heightmap[5 * ChunkSize + 7] = 64;
 
-            Assert.Equal(255, topY);
+                int topY = ChunkEcologyColumnPass.ResolveFlowerScanTopY(heightmap, 7, 5, ChunkSize, columnTop: 255);
+
+                Assert.Equal(255, topY);
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
         }
 
         [Fact]
         public void ResolveFlowerScanTopY_FallsBackToColumnTopWhenHeightmapZero()
         {
-            var heightmap = new ushort[ChunkSize * ChunkSize];
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig { FoliageColumnScanHeightAboveSurface = 0 };
 
-            int topY = ChunkEcologyColumnPass.ResolveFlowerScanTopY(heightmap, 3, 3, ChunkSize, columnTop: 255);
+                var heightmap = new ushort[ChunkSize * ChunkSize];
 
-            Assert.Equal(255, topY);
+                int topY = ChunkEcologyColumnPass.ResolveFlowerScanTopY(heightmap, 3, 3, ChunkSize, columnTop: 255);
+
+                Assert.Equal(255, topY);
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
+        }
+
+        [Fact]
+        public void ResolveFlowerScanTopY_UsesSurfacePlusHeadroom_ByDefault()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = new EcosystemConfig { FoliageColumnScanHeightAboveSurface = 48 };
+
+                var heightmap = new ushort[ChunkSize * ChunkSize];
+                heightmap[5 * ChunkSize + 7] = 64;
+
+                int topY = ChunkEcologyColumnPass.ResolveFlowerScanTopY(heightmap, 7, 5, ChunkSize, columnTop: 255);
+
+                Assert.Equal(112, topY); // 64 + 48
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
         }
 
         [Fact]

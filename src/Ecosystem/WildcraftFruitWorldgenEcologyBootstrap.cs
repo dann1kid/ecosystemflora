@@ -21,18 +21,9 @@ namespace WildFarming.Ecosystem
             int mergeFailed = 0;
             foreach (Block block in api.World.Blocks)
             {
-                if (block?.Code == null || block.Id == 0) continue;
-                if (PlantCodeHelper.HasDeclaredEcologyParticipant(block)) continue;
-                if (block.Code.Domain != "wildcraftfruit") continue;
-                if (WildcraftFruitFruitingVineEcology.IsFruitingVineBlock(block)) continue;
-
-                if (!TryBuildInjection(block, out JsonObject ecology)) continue;
-                if (!MergeEcology(block, ecology))
-                {
-                    mergeFailed++;
-                }
-
+                if (!TryInject(block, out bool fail)) continue;
                 injected++;
+                if (fail) mergeFailed++;
             }
 
             if (injected > 0)
@@ -42,6 +33,18 @@ namespace WildFarming.Ecosystem
                     injected,
                     mergeFailed);
             }
+        }
+
+        internal static bool TryInject(Block block, out bool mergeFailed)
+        {
+            mergeFailed = false;
+            if (block?.Code == null || block.Id == 0) return false;
+            if (PlantCodeHelper.HasDeclaredEcologyParticipant(block)) return false;
+            if (block.Code.Domain != "wildcraftfruit") return false;
+            if (WildcraftFruitFruitingVineEcology.IsFruitingVineBlock(block)) return false;
+            if (!TryBuildInjection(block, out JsonObject ecology)) return false;
+            if (!MergeEcology(block, ecology)) mergeFailed = true;
+            return true;
         }
 
         static bool TryBuildInjection(Block block, out JsonObject ecology)

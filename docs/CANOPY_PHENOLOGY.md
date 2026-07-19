@@ -153,7 +153,7 @@ Random/hybrid modes also maintain `FoliageCellIndex` for per-tick picks.
 |-----|---------|-------------|
 | `EnableSeasonalFoliage` | `true` | master toggle |
 | `FoliageSyncMode` | `chunk` | `chunk` / `hybrid` / `random` |
-| `FoliageChunkSyncBudgetMs` | `12` | wall-time per column pass slice |
+| `FoliageChunkSyncBudgetMs` | `5` | wall-time per column pass slice |
 | `FoliageChunkWorkPerTick` | `4` | chunk columns resumed per tick |
 | `MaxFoliageCellsTickedPerTick` | `0` | random cells/tick (hybrid/random; 0 = off) |
 | `FoliageBudgetMs` | `10` | random-tick wall cap |

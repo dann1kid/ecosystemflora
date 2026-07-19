@@ -13,6 +13,11 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.CanopyBudgetMs),
             nameof(EcosystemConfig.RegistrationBudgetPerWorkerMigrated),
             nameof(EcosystemConfig.WildVineMaxHangDepth),
+            nameof(EcosystemConfig.SetupWizardCompleted),
+            nameof(EcosystemConfig.LastAutoTuneTier),
+            nameof(EcosystemConfig.LastAutoTuneOpsPerMs),
+            nameof(EcosystemConfig.LastAutoTuneElapsedMs),
+            nameof(EcosystemConfig.LastAutoTuneUtc),
         };
 
         static readonly HashSet<string> PresetFields = new HashSet<string>(StringComparer.Ordinal)
@@ -222,7 +227,16 @@ namespace WildFarming.Ecosystem.Config
             ("EnableBackgroundRegistrationScan", "perf"),
             ("EnableBackgroundSpreadSolve", "perf"),
             ("SpreadWorkerCount", "perf"),
+            ("MaxSpreadSolvePending", "perf"),
+            ("MaxSpreadSolveCompleted", "perf"),
+            ("MaxSpreadSolveDrainPerTick", "perf"),
+            ("MaxPendingSpreadIntents", "perf"),
             ("MaxRegistrationSnapshotCellsPerTick", "perf"),
+            ("RegistrationSnapshotBandBelowSurface", "perf"),
+            ("MaxRegistrationSolvePending", "perf"),
+            ("MaxRegistrationSolveCompleted", "perf"),
+            ("MaxRegistrationSolveDrainPerTick", "perf"),
+            ("MaxActiveRegistrationSnapshots", "perf"),
             ("TickBudgetMs", "perf"),
             ("SpreadBudgetMs", "perf"),
             ("RegistrationBudgetMs", "perf"),

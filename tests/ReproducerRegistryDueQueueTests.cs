@@ -61,7 +61,7 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void ProcessDue_ReportsDueQueueSizeBeforeBudgetCap()
+        public void ProcessDue_ReportsDueSeenDuringCursorScan()
         {
             var registry = new ReproducerRegistry();
             registry.Add(MakeEntry(1, 0));
@@ -75,7 +75,8 @@ namespace WildFarming.Tests
                 _ => true);
 
             Assert.Equal(1, processed);
-            Assert.Equal(3, registry.LastDueQueueSize);
+            // Cursor RR stops after filling attempts — does not pre-count the full due set.
+            Assert.Equal(1, registry.LastDueQueueSize);
         }
 
         [Fact]

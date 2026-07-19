@@ -210,18 +210,22 @@ namespace WildFarming.Ecosystem
             cfg.EnableSpringBranchyAgeBoost = true;
 
             // Playable tick cadence — never inherit timelapse leftovers into natural/custom merges.
-            cfg.ReproduceTickIntervalMs = 2000;
-            cfg.ChunkScanTickIntervalMs = 1000;
-            cfg.StressTickIntervalMs = 5500;
-            cfg.TickBudgetMs = 8;
-            cfg.SpreadBudgetMs = 6;
-            cfg.RegistrationBudgetMs = 80;
-            cfg.MaxReproduceAttemptsPerTick = 64;
-            cfg.MaxFoliageCellsTickedPerTick = 48;
+            cfg.ReproduceTickIntervalMs = 3500;
+            cfg.ChunkScanTickIntervalMs = 2300;
+            cfg.StressTickIntervalMs = 8500;
+            cfg.TickBudgetMs = 2;
+            cfg.SpreadBudgetMs = 1;
+            cfg.RegistrationBudgetMs = 9;
+            cfg.MaxReproduceAttemptsPerTick = 14;
+            cfg.MaxSpreadAttemptsPerChunkPerTick = 1;
+            cfg.MaxSpreadChunksVisitedPerTick = 12;
+            cfg.MaxFoliageCellsTickedPerTick = 11;
             cfg.FoliageColumnScanHeightAboveSurface = 48;
             cfg.FoliageCatchUpOnChunkLoad = true;
-            cfg.MaxFoliageCatchUpPerChunk = 256;
-            cfg.MaxFloraRescanColumnsPerTick = 64;
+            cfg.MaxFoliageCatchUpPerChunk = 54;
+            cfg.MaxFloraRescanColumnsPerTick = 7;
+            cfg.EnablePlayerVicinityRescan = true;
+            cfg.PlayerVicinityRescanIntervalMs = 5000;
         }
 
         static void ApplyLush(EcosystemConfig cfg)

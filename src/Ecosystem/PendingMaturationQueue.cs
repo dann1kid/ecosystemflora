@@ -90,11 +90,13 @@ namespace WildFarming.Ecosystem
             for (int i = entries.Count - 1; i >= 0 && checkedCount < maxChecks; i--)
             {
                 Entry entry = entries[i];
+                // Due-first: immature entries must not burn GetBlock or the check budget.
+                if (nowHours < entry.MatureAtHours) continue;
+
                 checkedCount++;
 
                 Block current = acc.GetBlock(entry.Pos);
 
-                if (nowHours < entry.MatureAtHours) continue;
                 if (!IsJuvenileBlock(current))
                 {
                     remove.Add(entry.Pos);

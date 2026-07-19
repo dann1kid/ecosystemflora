@@ -36,6 +36,21 @@ namespace WildFarming.Ecosystem
     {
         static readonly HashSet<BlockPos> scratchSeen = new HashSet<BlockPos>();
 
+        /// <summary>
+        /// Soft cap on cells copied per solve request. Workers only need a small weighted pool;
+        /// scanning a full radius disk every attempt dominates main-thread capture cost.
+        /// </summary>
+        internal const int MaxCapturedCellsPerSolve = 12;
+
+        internal static int ResolveCaptureCellCap(SpreadSolveRequest request)
+        {
+            int maxSpawns = request != null && request.MaxSpawns > 0 ? request.MaxSpawns : 1;
+            int scaled = maxSpawns * 6;
+            if (scaled < 8) scaled = 8;
+            if (scaled > MaxCapturedCellsPerSolve) scaled = MaxCapturedCellsPerSolve;
+            return scaled;
+        }
+
         internal static bool UsesMatSpread(PlantRequirements requirements) =>
             requirements != null
                 && requirements.Habitat != EcologyHabitat.UnderwaterColumn
@@ -235,6 +250,7 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements = request.Requirements;
             int radius = request.Radius;
             int verticalSearch = request.VerticalSearch;
+            int cellCap = ResolveCaptureCellCap(request);
             EcosystemConfig cfg = EcosystemConfig.Loaded;
             EcologyColumnOccupancy occupancy = cfg.EnableSpreadColumnOccupancyHint
                 ? EcosystemSystem.Instance?.SpacingIndex?.ColumnOccupancy
@@ -243,11 +259,13 @@ namespace WildFarming.Ecosystem
             EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
             FloraContextSampler flora = EcosystemSystem.Instance?.FloraContext;
             NicheSampler niche = EcosystemSystem.Instance?.Niche;
+            EnvironmentalColumnCache columnCache = EcosystemSystem.Instance?.ColumnCache;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
+                    if (request.Cells.Count >= cellCap) return;
                     if (dx == 0 && dz == 0) continue;
 
                     int worldX = origin.X + dx;
@@ -310,16 +328,17 @@ namespace WildFarming.Ecosystem
 
                     if (!haveColumnSnap)
                     {
-                        EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
-                        if (cache == null || !cache.TryGetWorldgenRainfall(acc, plantPos, out worldgenRain, out hasClimate))
+                        if (columnCache == null
+                            || !columnCache.TryGetWorldgenRainfall(acc, plantPos, out worldgenRain, out hasClimate))
                         {
+                            // Prefer column cache; live climate sample is expensive — only when cache miss.
                             ClimateCondition worldgen = acc.GetClimateAt(plantPos, EnumGetClimateMode.WorldGenValues);
                             ClimateCondition now = acc.GetClimateAt(plantPos, EnumGetClimateMode.NowValues);
                             worldgenRain = worldgen?.WorldgenRainfall ?? now?.WorldgenRainfall ?? 0f;
                             hasClimate = (worldgen ?? now) != null;
                         }
 
-                        if (flora != null)
+                        if (flora != null && cfg.UseFloraContext)
                         {
                             localForest = flora.GetLocalForestCover(api, plantPos);
                         }
@@ -384,6 +403,9 @@ namespace WildFarming.Ecosystem
             int radius = request.Radius;
             int verticalSearch = request.VerticalSearch;
             MatSpreadCollectMode matMode = request.MatMode;
+            int cellCap = ResolveCaptureCellCap(request);
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
 
             if (matMode == MatSpreadCollectMode.MatEdge
                 && !MatSpreadDispatch.IsFrontier(acc, origin, requirements, verticalSearch))
@@ -395,6 +417,7 @@ namespace WildFarming.Ecosystem
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
+                    if (request.Cells.Count >= cellCap) return;
                     if (dx == 0 && dz == 0) continue;
 
                     if (matMode == MatSpreadCollectMode.MatEdge
@@ -409,8 +432,6 @@ namespace WildFarming.Ecosystem
                     if (!scratchSeen.Add(plantPos)) continue;
                     if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) continue;
 
-                    EcosystemConfig cfg = EcosystemConfig.Loaded;
-                    EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
                     SpreadColumnSnapshot columnSnap = default;
                     bool haveColumnSnap = ecologyColumns != null
                         && cfg.EnableEcologyColumnCache
@@ -443,11 +464,15 @@ namespace WildFarming.Ecosystem
             PlantRequirements requirements = request.Requirements;
             int radius = request.Radius;
             int verticalSearch = request.VerticalSearch;
+            int cellCap = ResolveCaptureCellCap(request);
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dz = -radius; dz <= radius; dz++)
                 {
+                    if (request.Cells.Count >= cellCap) return;
                     if (dx == 0 && dz == 0) continue;
 
                     if (!CrowfootPlacement.TryFindPlantPos(
@@ -459,8 +484,6 @@ namespace WildFarming.Ecosystem
                     if (!scratchSeen.Add(plantPos)) continue;
                     if (!LandClaimGuard.AllowsEcologyChange(api, plantPos)) continue;
 
-                    EcosystemConfig cfg = EcosystemConfig.Loaded;
-                    EcologyColumnState ecologyColumns = EcosystemSystem.Instance?.EcologyColumns;
                     SpreadColumnSnapshot columnSnap = default;
                     bool haveColumnSnap = ecologyColumns != null
                         && cfg.EnableEcologyColumnCache
@@ -530,7 +553,7 @@ namespace WildFarming.Ecosystem
                     hasClimate = (worldgen ?? now) != null;
                 }
 
-                if (flora != null)
+                if (flora != null && cfg.UseFloraContext)
                 {
                     localForest = flora.GetLocalForestCover(api, plantPos);
                 }

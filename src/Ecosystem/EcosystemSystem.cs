@@ -5,6 +5,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using WildFarming.Ecosystem.Config;
 using WildFarming.Ecosystem.SpeciesEcology;
 
 // Export-only C# tables: fallback when SpeciesEcologyRegistry is not loaded.
@@ -28,13 +29,8 @@ namespace WildFarming.Ecosystem
 
         /// <summary>
         /// Cadence for re-enqueuing each player's immediate chunks into the (fast) background
-        /// registration scan. The load-time scan marks a chunk complete and nothing re-runs the fast
-        /// pass afterwards, so flora added without a <c>DidPlaceBlock</c> event (worldedit / fill /
-        /// other mods) used to wait for the slow cyclic column crawler to round-robin back to it —
-        /// minutes at default activation radius. This bounded re-enqueue keeps near-player edits
-        /// registering within a couple seconds. Idempotent: already-registered flora is skipped on drain.
+        /// registration scan is <see cref="EcosystemConfig.PlayerVicinityRescanIntervalMs"/>.
         /// </summary>
-        const int PlayerVicinityRescanIntervalMs = 2500;
         long nextPlayerVicinityRescanMs;
 
         long reproduceListenerId;
@@ -97,6 +93,10 @@ namespace WildFarming.Ecosystem
             Instance = this;
 
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing: true);
+            if (api is ICoreServerAPI sapi)
+            {
+                EcosystemWorldConfigStore.Bind(sapi);
+            }
         }
 
         public void Init(ICoreAPI api)
@@ -126,41 +126,7 @@ namespace WildFarming.Ecosystem
                 backgroundSpread.Start(api.World.Blocks, tickCfg.SpreadWorkerCount);
             }
 
-            int reproduceInterval = tickCfg.ReproduceTickIntervalMs > 0
-                ? tickCfg.ReproduceTickIntervalMs : 2000;
-            int stressInterval = tickCfg.StressTickIntervalMs > 0
-                ? tickCfg.StressTickIntervalMs : 5500;
-            int chunkScanInterval = tickCfg.ChunkScanTickIntervalMs > 0
-                ? tickCfg.ChunkScanTickIntervalMs : 2300;
-
-            // Timelapse leftover in custom JSON (25ms) freezes the time slider when calendar jumps.
-            // Explicit BalancePreset=timelapse keeps the fast cadence.
-            bool timelapsePreset = !string.IsNullOrEmpty(tickCfg.BalancePreset)
-                && tickCfg.BalancePreset.Equals(
-                    EcosystemBalancePresets.Timelapse,
-                    System.StringComparison.OrdinalIgnoreCase);
-
-            if (!timelapsePreset && reproduceInterval < 100)
-            {
-                api.Logger.Warning(
-                    "[ecosystemflora] ReproduceTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 2000 for play.",
-                    reproduceInterval,
-                    tickCfg.BalancePreset);
-                reproduceInterval = 2000;
-            }
-
-            if (!timelapsePreset && chunkScanInterval < 100)
-            {
-                api.Logger.Warning(
-                    "[ecosystemflora] ChunkScanTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 1000 for play.",
-                    chunkScanInterval,
-                    tickCfg.BalancePreset);
-                chunkScanInterval = 1000;
-            }
-
-            reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, reproduceInterval);
-            stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
-            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, chunkScanInterval);
+            RegisterTickListeners(tickCfg);
 
             footTraffic = new FootTrafficService(columnTrafficStore);
 
@@ -273,21 +239,24 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
-        /// Throttled re-enqueue of the chunks immediately around each online player into the fast
-        /// background registration scan. Catches flora that appeared after a chunk's load-time scan
-        /// completed but bypassed <c>OnDidPlaceBlock</c> (bulk/worldedit placement). Scoped to the
-        /// player-priority radius (a 3×3-ish chunk window at defaults) and gated by
-        /// <see cref="PlayerVicinityRescanIntervalMs"/> so it cannot outrun scan completion. The fresh
-        /// re-enqueue is deduped by <see cref="RegistrationScanQueue"/> until the prior scan finishes.
+        /// Throttled enqueue of unloaded-scan chunks around each online player into the fast
+        /// background registration path. Catches chunks that finished loading after the initial
+        /// column-load callback (or were never scanned). Already-finished chunks are skipped —
+        /// re-scanning them every few seconds was pegging the main thread with perpetual
+        /// snapshot GetBlock. Late flora (worldedit / other mods) is discovered by
+        /// <see cref="CyclicFloraScanner"/> instead.
         /// </summary>
         void RescanPlayerVicinity(EcosystemConfig cfg, IBlockAccessor acc)
         {
-            if (acc == null || !cfg.EnableCyclicFloraDiscovery) return;
+            if (acc == null || !cfg.EnablePlayerVicinityRescan) return;
             if (!(api is ICoreServerAPI sapi)) return;
 
             long nowMs = api.World.ElapsedMilliseconds;
             if (nowMs < nextPlayerVicinityRescanMs) return;
-            nextPlayerVicinityRescanMs = nowMs + PlayerVicinityRescanIntervalMs;
+            int vicinityInterval = cfg.PlayerVicinityRescanIntervalMs > 0
+                ? cfg.PlayerVicinityRescanIntervalMs
+                : 5000;
+            nextPlayerVicinityRescanMs = nowMs + vicinityInterval;
 
             int cs = GlobalConstants.ChunkSize;
             int chunkRadius = cfg.PlayerRegistrationPriorityRadiusBlocks / cs + 1;
@@ -307,7 +276,13 @@ namespace WildFarming.Ecosystem
                         int cx = pcx + dx;
                         int cz = pcz + dz;
                         if (acc.GetMapChunk(cx, cz) == null) continue;
-                        EnqueueChunkScan(new Vec2i(cx, cz), highPriority: highPriority);
+
+                        var coord = new Vec2i(cx, cz);
+                        // Do not re-queue chunks that already completed registration — that looped
+                        // full snapshot capture forever near every player (~every 2.5 s).
+                        if (!ShouldVicinityRescanEnqueue(IsChunkRegistrationFinished(coord))) continue;
+
+                        EnqueueChunkScan(coord, highPriority: highPriority);
                     }
                 }
             }
@@ -379,10 +354,68 @@ namespace WildFarming.Ecosystem
                 cfg.UseCalendarScaledSpread);
         }
 
+        /// <summary>Re-register game tick listeners after config apply / world-config load.</summary>
+        public void TryRefreshTickIntervals()
+        {
+            if (api == null || api.Side != EnumAppSide.Server) return;
+            if (!EcosystemConfig.Loaded.EcosystemEnabled) return;
+            if (reproduceListenerId == 0 && stressListenerId == 0 && chunkScanListenerId == 0)
+            {
+                // Init has not registered listeners yet (or ecosystem was disabled at Init).
+                return;
+            }
+
+            RegisterTickListeners(EcosystemConfig.Loaded);
+        }
+
+        void RegisterTickListeners(EcosystemConfig tickCfg)
+        {
+            if (api == null || tickCfg == null) return;
+
+            int reproduceInterval = tickCfg.ReproduceTickIntervalMs > 0
+                ? tickCfg.ReproduceTickIntervalMs : 2000;
+            int stressInterval = tickCfg.StressTickIntervalMs > 0
+                ? tickCfg.StressTickIntervalMs : 5500;
+            int chunkScanInterval = tickCfg.ChunkScanTickIntervalMs > 0
+                ? tickCfg.ChunkScanTickIntervalMs : 2300;
+
+            bool timelapsePreset = !string.IsNullOrEmpty(tickCfg.BalancePreset)
+                && tickCfg.BalancePreset.Equals(
+                    EcosystemBalancePresets.Timelapse,
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (!timelapsePreset && reproduceInterval < 100)
+            {
+                api.Logger.Warning(
+                    "[ecosystemflora] ReproduceTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 2000 for play.",
+                    reproduceInterval,
+                    tickCfg.BalancePreset);
+                reproduceInterval = 2000;
+            }
+
+            if (!timelapsePreset && chunkScanInterval < 100)
+            {
+                api.Logger.Warning(
+                    "[ecosystemflora] ChunkScanTickIntervalMs={0} is timelapse-tier under preset '{1}'; clamping to 1000 for play.",
+                    chunkScanInterval,
+                    tickCfg.BalancePreset);
+                chunkScanInterval = 1000;
+            }
+
+            if (reproduceListenerId != 0) api.Event.UnregisterGameTickListener(reproduceListenerId);
+            if (stressListenerId != 0) api.Event.UnregisterGameTickListener(stressListenerId);
+            if (chunkScanListenerId != 0) api.Event.UnregisterGameTickListener(chunkScanListenerId);
+
+            reproduceListenerId = api.Event.RegisterGameTickListener(OnReproduceTick, reproduceInterval);
+            stressListenerId = api.Event.RegisterGameTickListener(OnStressTick, stressInterval);
+            chunkScanListenerId = api.Event.RegisterGameTickListener(OnChunkScanTick, chunkScanInterval);
+        }
+
         public void Dispose()
         {
             if (api is ICoreServerAPI sapi)
             {
+                EcosystemWorldConfigStore.Unbind(sapi);
                 treeCalendarAgeStore.Unbind(sapi);
                 treeCalendarAgeStore.Clear();
                 flowerPhenologyLifeStore.Unbind(sapi);
@@ -446,13 +479,18 @@ namespace WildFarming.Ecosystem
             return EnvironmentalContext.SampleForSurvival(api, plantPos, null, ColumnCache);
         }
 
-        internal void InvalidateEnvironmentAround(BlockPos pos)
+        /// <summary>
+        /// Drop local niche / flora-context / ecology-spread cache cells near a mutation.
+        /// Skips worldgen climate columns (stable across plant SetBlock) and uses tight radii —
+        /// <see cref="FloraContextSampler.InvalidateAround"/> already expands by
+        /// <c>FloraContextNeighborRadius</c>.
+        /// </summary>
+        internal void InvalidateEnvironmentAround(BlockPos pos, int floraRadius = 1)
         {
             if (pos == null) return;
-            ColumnCache?.InvalidateAround(pos, 1);
-            Niche?.InvalidateAround(pos, 2);
-            FloraContext?.InvalidateAround(pos, 2);
-            EcologyColumns?.InvalidateAround(pos, 2);
+            Niche?.InvalidateAround(pos, 1);
+            FloraContext?.InvalidateAround(pos, floraRadius);
+            EcologyColumns?.InvalidateAround(pos, 1);
         }
 
         public void WakeEcologyAround(BlockPos pos)
@@ -624,8 +662,7 @@ namespace WildFarming.Ecosystem
             registry.Remove(trunkBase);
             SpacingIndex?.Remove(trunkBase);
             treeCalendarAgeStore.Remove(trunkBase);
-            FloraContext?.InvalidateAround(trunkBase, 4);
-            InvalidateEnvironmentAround(trunkBase);
+            InvalidateEnvironmentAround(trunkBase, floraRadius: 4);
 
             if (EcosystemConfig.Loaded.UseSoilSuccession && !string.IsNullOrEmpty(removal.Wood))
             {
@@ -670,7 +707,6 @@ namespace WildFarming.Ecosystem
             flowerPhenologyLifeStore.Remove(pos);
             acc.SetBlock(0, pos);
             acc.MarkBlockDirty(pos);
-            FloraContext?.InvalidateAround(pos, 2);
             InvalidateEnvironmentAround(pos);
 
             if (EcosystemConfig.Loaded.EnableWildVineEcology)
@@ -1279,16 +1315,15 @@ namespace WildFarming.Ecosystem
 
             if (!inRegistry && !ecologyPlant && !forestNeighbor && !wakeNeighbors) return;
 
-            if (forestNeighbor || ecologyPlant)
-            {
-                FloraContext?.InvalidateAround(pos, 2);
-            }
-
             if (inRegistry)
             {
                 registry.Remove(pos);
                 SpacingIndex?.Remove(pos);
                 InvalidateEnvironmentAround(pos);
+            }
+            else if (forestNeighbor || ecologyPlant)
+            {
+                FloraContext?.InvalidateAround(pos, 1);
             }
 
             maturationQueues.Remove(pos);
@@ -1505,7 +1540,12 @@ namespace WildFarming.Ecosystem
                         TryRegisterDiscoveredFlora(acc, pos, block, needsEstablishment, ref registrationsLeft),
                     ref registrationsLeft,
                     budgetTicks,
-                    tickBudgetWatch);
+                    tickBudgetWatch,
+                    // Registration owns first-pass discovery; cyclic only catches late flora
+                    // after the chunk snapshot/apply pipeline has finished.
+                    shouldScanChunk: cfg.EnableBackgroundRegistrationScan
+                        ? IsChunkRegistrationFinished
+                        : null);
             }
 
             DrainPendingRegistrations(cfg, acc, activePlayerChunks);
@@ -1685,8 +1725,7 @@ namespace WildFarming.Ecosystem
                 chunkCoord.X * cs + 8,
                 64,
                 chunkCoord.Y * cs + 8);
-            FloraContext?.InvalidateAround(invalidateAt, 3);
-            InvalidateEnvironmentAround(invalidateAt);
+            InvalidateEnvironmentAround(invalidateAt, floraRadius: 2);
         }
 
         void ProcessRegistrationScanBatch(
@@ -1809,6 +1848,12 @@ namespace WildFarming.Ecosystem
                 }
             }
         }
+
+        /// <summary>
+        /// Vicinity soft-rescan should only enqueue chunks that have not finished registration yet.
+        /// Finished chunks are left to <see cref="CyclicFloraScanner"/> for cheap live discovery.
+        /// </summary>
+        internal static bool ShouldVicinityRescanEnqueue(bool scanFinished) => !scanFinished;
 
         internal bool IsChunkRegistrationFinished(Vec2i chunkCoord)
         {

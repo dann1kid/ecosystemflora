@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 namespace WildFarming.Ecosystem.Config
 {
@@ -27,8 +28,15 @@ namespace WildFarming.Ecosystem.Config
             }
 
             EcosystemConfig.Loaded = EcosystemConfigCopier.Clone(cfg);
-            api.StoreModConfig(EcosystemConfig.Loaded, EcosystemConfig.ConfigFileName);
+
+            // Server: persist to this world's SaveGame only — never rewrite global ModConfig template.
+            if (api is ICoreServerAPI sapi)
+            {
+                EcosystemWorldConfigStore.Persist(sapi);
+            }
+
             EcosystemSystem.Instance?.RefreshFootTrafficAnimals();
+            EcosystemSystem.Instance?.TryRefreshTickIntervals();
             if (!EcosystemConfig.Loaded.EnableTrampling)
             {
                 EcosystemSystem.Instance?.ColumnTraffic?.Clear();
@@ -39,6 +47,13 @@ namespace WildFarming.Ecosystem.Config
 
         public static void ReloadFromDisk(ICoreAPI api, bool createDefaultIfMissing)
         {
+            if (api is ICoreServerAPI sapi && sapi.WorldManager?.SaveGame != null)
+            {
+                EcosystemWorldConfigStore.LoadOrMigrate(sapi);
+                EcosystemSystem.Instance?.TryRefreshTickIntervals();
+                return;
+            }
+
             EcosystemConfig.TryLoadFromDisk(api, createDefaultIfMissing);
         }
     }

@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
@@ -59,10 +58,30 @@ namespace WildFarming.Ecosystem
         readonly ConcurrentDictionary<long, long> inFlightByChunk = new ConcurrentDictionary<long, long>();
         readonly AutoResetEvent signal = new AutoResetEvent(false);
         readonly object startLock = new object();
+        readonly object submitLock = new object();
 
         Thread[] workers;
         System.Collections.Generic.IList<Block> blocks;
         volatile bool disposed;
+        long nextToken;
+        int maxPending = 32;
+        int maxCompleted = 32;
+        int rejectedSubmitCount;
+        int droppedCompletedCount;
+
+        public int PendingCount => priorityQueue.Count + backgroundQueue.Count;
+
+        public int CompletedCount => completed.Count;
+
+        public int RejectedSubmitCount => Volatile.Read(ref rejectedSubmitCount);
+
+        public int DroppedCompletedCount => Volatile.Read(ref droppedCompletedCount);
+
+        public void ConfigureLimits(int pendingCap, int completedCap)
+        {
+            maxPending = pendingCap > 0 ? pendingCap : 32;
+            maxCompleted = completedCap > 0 ? completedCap : maxPending;
+        }
 
         public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount)
         {
@@ -101,19 +120,28 @@ namespace WildFarming.Ecosystem
             if (snapshot == null || disposed) return false;
 
             long chunkKey = ChunkKey(snapshot.ChunkCoord);
-            if (inFlightByChunk.ContainsKey(chunkKey)) return false;
 
-            token = Interlocked.Increment(ref nextToken);
-            var item = new WorkItem(token, chunkKey, snapshot, in request, highPriority);
-            if (!inFlightByChunk.TryAdd(chunkKey, token)) return false;
+            lock (submitLock)
+            {
+                if (inFlightByChunk.ContainsKey(chunkKey)) return false;
+                if (PendingCount >= maxPending)
+                {
+                    Interlocked.Increment(ref rejectedSubmitCount);
+                    return false;
+                }
 
-            if (highPriority)
-            {
-                priorityQueue.Enqueue(item);
-            }
-            else
-            {
-                backgroundQueue.Enqueue(item);
+                token = Interlocked.Increment(ref nextToken);
+                if (!inFlightByChunk.TryAdd(chunkKey, token)) return false;
+
+                var item = new WorkItem(token, chunkKey, snapshot, in request, highPriority);
+                if (highPriority)
+                {
+                    priorityQueue.Enqueue(item);
+                }
+                else
+                {
+                    backgroundQueue.Enqueue(item);
+                }
             }
 
             signal.Set();
@@ -145,8 +173,6 @@ namespace WildFarming.Ecosystem
 
             signal.Dispose();
         }
-
-        long nextToken;
 
         void WorkerLoop(int workerIndex)
         {
@@ -183,11 +209,18 @@ namespace WildFarming.Ecosystem
                         continue;
                     }
 
-                    completed.Enqueue(new CompletedWork(
-                        item.Token,
-                        item.ChunkKey,
-                        item.Snapshot.ChunkCoord,
-                        in result));
+                    if (completed.Count >= maxCompleted)
+                    {
+                        Interlocked.Increment(ref droppedCompletedCount);
+                    }
+                    else
+                    {
+                        completed.Enqueue(new CompletedWork(
+                            item.Token,
+                            item.ChunkKey,
+                            item.Snapshot.ChunkCoord,
+                            in result));
+                    }
                 }
                 catch (System.Exception)
                 {

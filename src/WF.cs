@@ -38,11 +38,7 @@ namespace WildFarming
         public override void AssetsFinalize(ICoreAPI api)
         {
             base.AssetsFinalize(api);
-            WildcraftFruitEcologyBootstrap.Apply(api);
-            WildcraftFruitFruitingVineEcologyBootstrap.Apply(api);
-            WildcraftFruitWorldgenEcologyBootstrap.Apply(api);
-            WildcraftTreeEcologyBootstrap.Apply(api);
-            FloralZonesEcologyBootstrap.Apply(api);
+            ThirdPartyEcologyBootstrapPass.ApplyAll(api);
             DynamicSpeciesAutoCurves.Apply(api);
             FlowerDrygrassDrops.Apply(api);
         }

@@ -50,8 +50,7 @@ namespace WildFarming.Ecosystem
                                 && CanopyFoliageRules.TryCatchUpStripOnScan(api, acc, scanScratch, block))
                             {
                                 catchUpOps++;
-                                EcosystemSystem.Instance?.FloraContext?.InvalidateAround(scanScratch, 3);
-                                EcosystemSystem.Instance?.InvalidateEnvironmentAround(scanScratch);
+                                EcosystemSystem.Instance?.InvalidateEnvironmentAround(scanScratch, floraRadius: 2);
                                 continue;
                             }
 
@@ -60,8 +59,7 @@ namespace WildFarming.Ecosystem
                                 && CanopyFoliageRules.TryCatchUpBudOnScan(api, acc, scanScratch, block, index))
                             {
                                 catchUpOps++;
-                                EcosystemSystem.Instance?.FloraContext?.InvalidateAround(scanScratch, 3);
-                                EcosystemSystem.Instance?.InvalidateEnvironmentAround(scanScratch);
+                                EcosystemSystem.Instance?.InvalidateEnvironmentAround(scanScratch, floraRadius: 2);
                             }
 
                             index.Add(scanScratch);

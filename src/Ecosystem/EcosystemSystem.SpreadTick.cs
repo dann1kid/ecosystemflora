@@ -28,8 +28,16 @@ namespace WildFarming.Ecosystem
             {
                 backgroundSpread.PollCompleted(
                     this,
-                    cfg.VerboseLogging && cfg.ReproduceDebug);
+                    cfg.VerboseLogging && cfg.ReproduceDebug,
+                    cfg.ResolveMaxSpreadSolveDrainPerTick());
             }
+
+            // Shared placement budget with two-phase commits: vine/mycelium SetBlock outside
+            // PendingSpreadQueue must not consume an uncapped share of the reproduce tick.
+            int placementBudget = cfg.MaxSpreadCommitsPerTick > 0
+                ? cfg.MaxSpreadCommitsPerTick
+                : cfg.MaxReproduceAttemptsPerTick;
+                if (placementBudget <= 0) placementBudget = 14;
 
             if (spreadActiveChunks == null || spreadActiveChunks.Count > 0)
             {
@@ -37,36 +45,61 @@ namespace WildFarming.Ecosystem
 
                 System.Func<ReproducerEntry, bool> trySpread = entry =>
                 {
+                    PlantRequirements req = entry.Requirements;
+
+                    // Entry-only gates before GetBlock / capture (senescence, phenology, zero rate).
+                    if (req?.Habitat != EcologyHabitat.MyceliumAnchor
+                        && SpreadGateChain.PreSpawn.BlocksSpread(api, entry, cfg))
+                    {
+                        return true;
+                    }
+
+                    // Near-zero seasonal activity: interval already stretches ×20; skip live work this due.
+                    if (cfg.UseSeasonalEcology
+                        && req != null
+                        && req.Habitat != EcologyHabitat.MyceliumAnchor
+                        && SeasonEcology.SpreadActivityMultiplier(api, entry.Origin, req) <= 0.05f)
+                    {
+                        return true;
+                    }
+
                     Block block = acc.GetBlock(entry.Origin);
-                    if (entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor)
+                    if (req?.Habitat == EcologyHabitat.MyceliumAnchor)
                     {
                         if (!WildSoilGroundRules.HasActiveMycelium(acc, entry.Origin))
                         {
                             return false;
                         }
 
-                        if (cfg.EnableMyceliumNetworkSpread)
-                        {
-                            MyceliumNetworkSpread.TrySpread(
+                        // Chance runs inside TrySpread after cheap frontier reject.
+                        if (cfg.EnableMyceliumNetworkSpread
+                            && placementBudget > 0
+                            && MyceliumNetworkSpread.TrySpread(
                                 this,
                                 entry,
-                                cfg.VerboseLogging && cfg.ReproduceDebug);
+                                cfg.VerboseLogging && cfg.ReproduceDebug))
+                        {
+                            placementBudget--;
                         }
 
                         return true;
                     }
 
-                    if (entry.Requirements?.Habitat == EcologyHabitat.WildVine)
+                    if (req?.Habitat == EcologyHabitat.WildVine)
                     {
                         if (!cfg.EnableWildVineEcology || !WildVineHelper.IsVineBlock(block))
                         {
                             return false;
                         }
 
-                        float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, entry.Requirements);
+                        float vineChance = SpeciesSpread.EffectiveChance(api, entry.Origin, cfg, req);
                         if (api.World.Rand.NextDouble() > vineChance) return true;
 
-                        WildVineSpread.TrySpread(this, entry, api, cfg);
+                        if (placementBudget > 0 && WildVineSpread.TrySpread(this, entry, api, cfg))
+                        {
+                            placementBudget--;
+                        }
+
                         return true;
                     }
 
@@ -80,19 +113,29 @@ namespace WildFarming.Ecosystem
                         return entry.MatchesRegisteredSpecies(block);
                     }
 
-                    if (entry.Requirements?.Species == "tallgrass"
+                    if (req?.Species == "tallgrass"
                         && TallgrassSpreadMaturation.UsesMaturation(cfg)
                         && !TallgrassSpreadMaturation.CanReproduceFrom(block, api, entry.Origin))
                     {
                         return true;
                     }
 
-                    if (SpreadGateChain.PreSpawn.BlocksSpread(api, entry, cfg))
+                    // Chance before capture / two-phase enqueue (already passed PreSpawn above).
+                    BlockPos anchor = PlantCodeHelper.GetReproduceAnchor(
+                        acc, entry.Origin, entry.MatureBlockCode);
+                    float chance = SpeciesSpread.EffectiveChance(api, anchor, cfg, req);
+                    if (api.World.Rand.NextDouble() > chance)
                     {
+                        BlockPos anchorCopy = anchor.Copy();
+                        MatSpreadCollectMode matMode = SpreadAttemptInspect.ResolveCollectMode(
+                            req, api.World.Rand);
+                        spreadMatModeScratch[anchorCopy] = matMode;
+                        RecordSpreadAttempt(anchorCopy, entry, matMode, placed: false, "Chance roll failed");
+                        spreadCooldown.ApplyFailedChanceRollOnce(anchorCopy, req);
                         return true;
                     }
 
-                    TrySpawnOffspring(entry, skipChanceRoll: false, maxSpawns: 1);
+                    TrySpawnOffspring(entry, skipChanceRoll: true, maxSpawns: 1);
                     return true;
                 };
 
@@ -138,10 +181,6 @@ namespace WildFarming.Ecosystem
             {
                 tickBudgetWatch.Restart();
 
-                int maxCommits = cfg.MaxSpreadCommitsPerTick > 0
-                    ? cfg.MaxSpreadCommitsPerTick
-                    : cfg.MaxReproduceAttemptsPerTick;
-
                 timings.SpreadCommitted = pendingSpreadQueue.ProcessCommit(
                     api,
                     cfg,
@@ -150,7 +189,7 @@ namespace WildFarming.Ecosystem
                         intent.Requirements,
                         intent.Displacing,
                         intent.ParentOrigin),
-                    maxCommits,
+                    placementBudget,
                     spreadBudgetTicks,
                     tickBudgetWatch,
                     cfg.VerboseLogging && cfg.ReproduceDebug,

@@ -20,18 +20,31 @@ namespace WildFarming.Ecosystem
         readonly System.Collections.Generic.Dictionary<long, ChunkWork> active =
             new System.Collections.Generic.Dictionary<long, ChunkWork>();
 
-        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount) =>
+        public int ActiveBuilderCount => active.Count;
+
+        public void Start(System.Collections.Generic.IList<Block> blockRegistry, int workerCount)
+        {
+            EcosystemConfig cfg = EcosystemConfig.Loaded ?? new EcosystemConfig();
+            scanner.ConfigureLimits(
+                cfg.ResolveMaxRegistrationSolvePending(),
+                cfg.ResolveMaxRegistrationSolveCompleted());
             scanner.Start(blockRegistry, workerCount);
+        }
 
         public bool IsBusy(Vec2i chunk) =>
             scanner.IsScanningChunk(chunk) || active.ContainsKey(BackgroundRegistrationScanner.ChunkKey(chunk));
 
         public void PollCompleted(EcosystemSystem eco, EcosystemConfig cfg)
         {
-            while (scanner.TryTakeCompleted(out BackgroundRegistrationScanner.CompletedWork done))
+            int maxDrain = cfg != null ? cfg.ResolveMaxRegistrationSolveDrainPerTick() : 8;
+            if (maxDrain <= 0) maxDrain = int.MaxValue;
+
+            int drained = 0;
+            while (drained < maxDrain && scanner.TryTakeCompleted(out BackgroundRegistrationScanner.CompletedWork done))
             {
                 active.Remove(done.ChunkKey);
                 ApplyScanResult(eco, cfg, done.ChunkCoord, done.Result);
+                drained++;
             }
         }
 
@@ -56,6 +69,13 @@ namespace WildFarming.Ecosystem
 
             if (!active.TryGetValue(chunkKey, out ChunkWork work))
             {
+                int maxActive = cfg.ResolveMaxActiveRegistrationSnapshots();
+                if (maxActive > 0 && active.Count >= maxActive)
+                {
+                    needsRequeue = true;
+                    return true;
+                }
+
                 work = new ChunkWork
                 {
                     Builder = new RegistrationChunkSnapshotBuilder(job.ChunkCoord),

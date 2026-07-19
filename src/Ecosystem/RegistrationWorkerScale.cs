@@ -7,11 +7,15 @@ namespace WildFarming.Ecosystem
     {
         public const int MaxWorkers = 8;
 
+        /// <summary>
+        /// 0 = half of <see cref="Environment.ProcessorCount"/> (min 1, max <see cref="MaxWorkers"/>).
+        /// Matches spread workers — full core count was over-feeding main-thread snapshot/apply budgets.
+        /// </summary>
         public static int Resolve(int configuredWorkerCount)
         {
             if (configuredWorkerCount <= 0)
             {
-                configuredWorkerCount = Environment.ProcessorCount;
+                configuredWorkerCount = Math.Max(1, Environment.ProcessorCount / 2);
             }
 
             if (configuredWorkerCount < 1) configuredWorkerCount = 1;

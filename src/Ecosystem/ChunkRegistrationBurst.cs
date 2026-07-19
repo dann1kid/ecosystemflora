@@ -5,7 +5,9 @@ using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
-    /// <summary>Completes ecology registration for one chunk in a single burst (player-vicinity latency).</summary>
+    /// <summary>
+    /// One paced registration slice for a near-player chunk load (priority queue fallback for the rest).
+    /// </summary>
     internal static class ChunkRegistrationBurst
     {
         public static bool TryCompleteChunk(
@@ -36,44 +38,36 @@ namespace WildFarming.Ecosystem
                 return true;
             }
 
+            long freq = Stopwatch.Frequency;
+            int sliceMs = passBudgetMs > 0 ? passBudgetMs : totalBudgetMs;
+            if (sliceMs <= 0) sliceMs = totalBudgetMs;
+            if (totalBudgetMs > 0 && sliceMs > totalBudgetMs) sliceMs = totalBudgetMs;
+
+            long sliceDeadline = sliceMs > 0
+                ? Stopwatch.GetTimestamp() + sliceMs * freq / 1000
+                : long.MaxValue;
+
             if (cfg.EnableBackgroundRegistrationScan)
             {
-                long freq = Stopwatch.Frequency;
-                long totalDeadline = totalBudgetMs > 0
-                    ? Stopwatch.GetTimestamp() + totalBudgetMs * freq / 1000
-                    : long.MaxValue;
-
-                while (Stopwatch.GetTimestamp() < totalDeadline)
+                // Single paced slice — remainder goes to the priority registration queue.
+                if (eco.TryAdvanceBackgroundScan(
+                        chunkCoord,
+                        acc,
+                        cfg,
+                        highPriority: true,
+                        deadlineTicks: sliceDeadline,
+                        out _))
                 {
-                    if (eco.TryAdvanceBackgroundScan(
-                            chunkCoord,
-                            acc,
-                            cfg,
-                            highPriority: true,
-                            deadlineTicks: totalDeadline,
-                            out bool needsRequeue))
+                    eco.PollBackgroundRegistration(cfg);
+                    if (eco.IsChunkRegistrationFinished(chunkCoord))
                     {
-                        eco.PollBackgroundRegistration(cfg);
-                        if (eco.IsChunkRegistrationFinished(chunkCoord))
-                        {
-                            return true;
-                        }
-
-                        if (!needsRequeue && eco.IsChunkRegistrationFinished(chunkCoord))
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
 
                 queue.Enqueue(new PendingChunkScan(chunkCoord), highPriority: true);
                 return false;
             }
-
-            long freqSync = Stopwatch.Frequency;
-            long totalDeadlineSync = totalBudgetMs > 0
-                ? Stopwatch.GetTimestamp() + totalBudgetMs * freqSync / 1000
-                : long.MaxValue;
 
             int scanScratch = 0;
             var job = new PendingChunkScan(chunkCoord);
@@ -84,40 +78,31 @@ namespace WildFarming.Ecosystem
                 ? eco.FoliageCells?.Index
                 : null;
 
-            while (Stopwatch.GetTimestamp() < totalDeadlineSync)
+            if (!eco.TryRunRegistrationPass(
+                    job,
+                    acc,
+                    cfg,
+                    ref scanScratch,
+                    sliceDeadline,
+                    syncFoliage,
+                    seasonKey,
+                    foliageIndex,
+                    out ChunkEcologyColumnPass.Result pass,
+                    out bool completed))
             {
-                long passDeadline = passBudgetMs > 0
-                    ? System.Math.Min(
-                        totalDeadlineSync,
-                        Stopwatch.GetTimestamp() + passBudgetMs * freqSync / 1000)
-                    : totalDeadlineSync;
-
-                if (!eco.TryRunRegistrationPass(
-                        job,
-                        acc,
-                        cfg,
-                        ref scanScratch,
-                        passDeadline,
-                        syncFoliage,
-                        seasonKey,
-                        foliageIndex,
-                        out ChunkEcologyColumnPass.Result pass,
-                        out bool completed))
-                {
-                    queue.Enqueue(job, highPriority: true);
-                    return false;
-                }
-
-                if (completed)
-                {
-                    eco.NotifyRegistrationScanCompleted(chunkCoord);
-                    return true;
-                }
-
-                job = new PendingChunkScan(chunkCoord, pass.ResumeLx, pass.ResumeLz, pass.ResumeY);
+                queue.Enqueue(job, highPriority: true);
+                return false;
             }
 
-            queue.Enqueue(job, highPriority: true);
+            if (completed)
+            {
+                eco.NotifyRegistrationScanCompleted(chunkCoord);
+                return true;
+            }
+
+            queue.Enqueue(
+                new PendingChunkScan(chunkCoord, pass.ResumeLx, pass.ResumeLz, pass.ResumeY),
+                highPriority: true);
             return false;
         }
     }

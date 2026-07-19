@@ -22,6 +22,13 @@ namespace WildFarming.Ecosystem.Config
             {
                 field.SetValue(target, field.GetValue(source));
             }
+
+            // Hidden from config UI schema — still must persist per-world.
+            target.SetupWizardCompleted = source.SetupWizardCompleted;
+            target.LastAutoTuneTier = source.LastAutoTuneTier ?? "";
+            target.LastAutoTuneOpsPerMs = source.LastAutoTuneOpsPerMs;
+            target.LastAutoTuneElapsedMs = source.LastAutoTuneElapsedMs;
+            target.LastAutoTuneUtc = source.LastAutoTuneUtc ?? "";
         }
 
         public static void CopyScope(EcosystemConfig source, EcosystemConfig target, ConfigFieldScope scope)
@@ -32,6 +39,15 @@ namespace WildFarming.Ecosystem.Config
             {
                 if (field.Scope != scope) continue;
                 field.SetValue(target, field.GetValue(source));
+            }
+
+            if (scope == ConfigFieldScope.Server)
+            {
+                target.SetupWizardCompleted = source.SetupWizardCompleted;
+                target.LastAutoTuneTier = source.LastAutoTuneTier ?? "";
+                target.LastAutoTuneOpsPerMs = source.LastAutoTuneOpsPerMs;
+                target.LastAutoTuneElapsedMs = source.LastAutoTuneElapsedMs;
+                target.LastAutoTuneUtc = source.LastAutoTuneUtc ?? "";
             }
         }
 

@@ -16,7 +16,7 @@ namespace WildFarming.Ecosystem
         public static int GetColumnTopY(ushort[] heightmap, int lx, int lz, int chunkSize, int mapTopY)
         {
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            int extra = cfg.FoliageColumnScanHeightAboveSurface;
+            int extra = cfg != null ? cfg.FoliageColumnScanHeightAboveSurface : 48;
             if (extra <= 0)
             {
                 return mapTopY;
