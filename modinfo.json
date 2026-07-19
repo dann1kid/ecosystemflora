@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flora on vanilla blocks. Per-world settings under ModConfig/ecosystemflora/worlds/, species CSV, setup wizard + auto-tune (U / /ecoconfig). Chunk-fair spread, vines, mycelium, canopy, tree aging, inspect (I).",
   "authors": ["-"],
-  "version": "4.10.33",
+  "version": "4.11.15",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

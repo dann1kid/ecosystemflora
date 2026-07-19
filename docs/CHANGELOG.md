@@ -3,7 +3,7 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.10.33** (unreleased) — expanded setup-wizard bench table (full Performance knobs)
+**Next release:** **4.11.15** (unreleased) — per-world setup wizard, full Performance bench, `/ecosetup`
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
