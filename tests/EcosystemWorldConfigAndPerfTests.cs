@@ -84,9 +84,59 @@ namespace WildFarming.Tests
         }
 
         [Fact]
-        public void WorldConfigSaveKey_IsStable()
+        public void WorldConfigSaveKey_IsStableLegacyConstant()
         {
             Assert.Equal("ecosystemflora:config", EcosystemWorldConfigStore.SaveKey);
+        }
+
+        [Fact]
+        public void SanitizeFolderName_StripsInvalidChars()
+        {
+            Assert.Equal("My_World", EcosystemConfigPaths.SanitizeFolderName("My World"));
+            Assert.Equal("a_b", EcosystemConfigPaths.SanitizeFolderName("a/b"));
+            Assert.Equal("world", EcosystemConfigPaths.SanitizeFolderName("???"));
+        }
+
+        [Fact]
+        public void CategoryExtractApply_RoundTripsPerfFields()
+        {
+            var src = new EcosystemConfig
+            {
+                ReproduceTickIntervalMs = 9999,
+                MaxFloraRescanColumnsPerTick = 2,
+                PlayerVicinityRescanIntervalMs = 12345,
+            };
+
+            var dict = EcosystemConfigFileIO.ExtractCategory(src, "perf");
+            var dst = new EcosystemConfig();
+            EcosystemConfigFileIO.ApplyCategory(dst, dict);
+
+            Assert.Equal(9999, dst.ReproduceTickIntervalMs);
+            Assert.Equal(2, dst.MaxFloraRescanColumnsPerTick);
+            Assert.Equal(12345, dst.PlayerVicinityRescanIntervalMs);
+        }
+
+        [Fact]
+        public void MetaExtractApply_RoundTripsWizardFlags()
+        {
+            var src = new EcosystemConfig
+            {
+                SetupWizardCompleted = true,
+                LastAutoTuneTier = "Balanced",
+                LastAutoTuneOpsPerMs = 12.5,
+                LastAutoTuneElapsedMs = 7,
+                LastAutoTuneUtc = "2026-07-19T00:00:00Z",
+            };
+
+            var dict = EcosystemConfigFileIO.ExtractMeta(src);
+            var dst = new EcosystemConfig();
+            EcosystemConfigFileIO.ApplyMeta(dst, dict);
+
+            Assert.True(dst.SetupWizardCompleted);
+            Assert.Equal("Balanced", dst.LastAutoTuneTier);
+            Assert.Equal(12.5, dst.LastAutoTuneOpsPerMs);
+            Assert.Equal(7, dst.LastAutoTuneElapsedMs);
+            Assert.Equal("2026-07-19T00:00:00Z", dst.LastAutoTuneUtc);
         }
     }
 

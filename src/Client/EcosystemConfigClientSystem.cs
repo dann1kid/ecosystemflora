@@ -22,6 +22,7 @@ namespace WildFarming.Client
         bool awaitingServerSave;
         bool wizardPromptPending = true;
         bool lastSyncCanEdit;
+        bool reloadAwaitingSync;
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Client;
 
@@ -81,11 +82,6 @@ namespace WildFarming.Client
 
         void RunAutoTuneAndSave()
         {
-            if (!lastSyncCanEdit && !CanSaveOnLocalServer())
-            {
-                // Still try — server will reject without privilege.
-            }
-
             EcosystemConfig working = EcosystemConfigCopier.Clone(EcosystemConfig.Loaded);
             EcosystemPerfCalibrator.CalibrationResult result =
                 EcosystemPerfCalibrator.RunAndApply(working);
@@ -101,7 +97,7 @@ namespace WildFarming.Client
 
             if (dialog != null && dialog.IsOpened())
             {
-                EcosystemConfigCopier.CopyScope(working, dialog.WorkingCopy, ConfigFieldScope.Server);
+                EcosystemConfigCopier.CopyFields(working, dialog.WorkingCopy);
                 dialog.RequestRecompose();
             }
         }
@@ -126,8 +122,23 @@ namespace WildFarming.Client
             dialog.OnApplyRequested += ApplyWorkingCopy;
             dialog.OnSetupWizardRequested += () => OpenSetupWizard(force: true);
             dialog.OnAutoTuneRequested += OnAutoTuneFromConfig;
+            dialog.OnReloadRequested += OnReloadFromDialog;
             capi.Gui.RegisterDialog(dialog);
             dialog.TryOpen();
+            // Always refresh from this world's server blob (not ModConfig).
+            channel.SendPacket(new EcosystemConfigSyncRequestPacket());
+        }
+
+        void OnReloadFromDialog()
+        {
+            if (CanSaveOnLocalServer() && capi.World.Api is ICoreServerAPI sapi)
+            {
+                EcosystemConfigSaveService.ReloadFromDisk(sapi, createDefaultIfMissing: true);
+                dialog?.ApplyReloadedConfig(EcosystemConfig.Loaded);
+                return;
+            }
+
+            reloadAwaitingSync = true;
             channel.SendPacket(new EcosystemConfigSyncRequestPacket());
         }
 
@@ -151,6 +162,7 @@ namespace WildFarming.Client
 
             if (!string.IsNullOrEmpty(packet.ErrorLangKey))
             {
+                reloadAwaitingSync = false;
                 capi.ShowChatMessage(Lang.Get(packet.ErrorLangKey));
                 return;
             }
@@ -164,21 +176,35 @@ namespace WildFarming.Client
             }
             catch
             {
+                reloadAwaitingSync = false;
                 capi.ShowChatMessage(Lang.Get("ecosystemflora:config-error-parse"));
                 return;
             }
 
             lastSyncCanEdit = packet.CanEditConfig || CanSaveOnLocalServer();
-            EcosystemConfigCopier.CopyScope(serverCfg, EcosystemConfig.Loaded, ConfigFieldScope.Server);
+            // Authoritative per-world settings (full blob, not ModConfig template).
+            EcosystemConfigCopier.CopyFields(serverCfg, EcosystemConfig.Loaded);
 
             if (dialog != null && dialog.IsOpened())
             {
-                dialog.MergeServerConfig(serverCfg);
+                if (reloadAwaitingSync)
+                {
+                    reloadAwaitingSync = false;
+                    dialog.ApplyReloadedConfig(serverCfg);
+                }
+                else
+                {
+                    dialog.MergeServerConfig(serverCfg);
+                }
+            }
+            else
+            {
+                reloadAwaitingSync = false;
             }
 
             if (wizard != null && wizard.IsOpened())
             {
-                EcosystemConfigCopier.CopyScope(serverCfg, wizard.WorkingCopy, ConfigFieldScope.Server);
+                EcosystemConfigCopier.CopyFields(serverCfg, wizard.WorkingCopy);
             }
             else if (wizardPromptPending && !serverCfg.SetupWizardCompleted && lastSyncCanEdit)
             {
@@ -217,13 +243,11 @@ namespace WildFarming.Client
                     return;
                 }
 
-                // Client-scope mirror only — server/world settings live in SaveGame.
-                SaveClientScope(EcosystemConfig.Loaded);
+                // Keep ModConfig as a clean new-world template only (no wizard completion).
+                TryRefreshGlobalTemplate();
                 FinishApplySuccess(closeConfigDialog);
                 return;
             }
-
-            SaveClientScope(working);
 
             awaitingServerSave = true;
             channel.SendPacket(new EcosystemConfigSaveRequestPacket
@@ -249,25 +273,28 @@ namespace WildFarming.Client
                 try
                 {
                     EcosystemConfig serverCfg = EcosystemConfigCopier.FromJson(packet.ConfigJson);
-                    EcosystemConfigCopier.CopyScope(serverCfg, EcosystemConfig.Loaded, ConfigFieldScope.Server);
-                    SaveClientScope(EcosystemConfig.Loaded);
+                    EcosystemConfigCopier.CopyFields(serverCfg, EcosystemConfig.Loaded);
+                    TryRefreshGlobalTemplate();
                 }
                 catch
                 {
-                    // Client-only values were already saved locally.
+                    // Ignore template mirror failures.
                 }
             }
 
             FinishApplySuccess(closeConfigDialog: true);
         }
 
-        void SaveClientScope(EcosystemConfig working)
+        void TryRefreshGlobalTemplate()
         {
-            EcosystemConfigCopier.CopyScope(working, EcosystemConfig.Loaded, ConfigFieldScope.Client);
-            // Global ModConfig is a template only — never carry this world's wizard completion into it.
-            capi.StoreModConfig(
-                EcosystemWorldConfigStore.CloneAsGlobalTemplate(EcosystemConfig.Loaded),
-                EcosystemConfig.ConfigFileName);
+            try
+            {
+                EcosystemWorldConfigStore.WriteTemplateDefaults(capi, EcosystemConfig.Loaded);
+            }
+            catch
+            {
+                // Template write is best-effort.
+            }
         }
 
         bool CanSaveOnLocalServer()

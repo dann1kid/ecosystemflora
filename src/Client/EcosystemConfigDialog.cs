@@ -61,7 +61,8 @@ namespace WildFarming.Client
         public void MergeServerConfig(EcosystemConfig serverCfg)
         {
             if (serverCfg == null) return;
-            EcosystemConfigCopier.CopyScope(serverCfg, working, ConfigFieldScope.Server);
+            // Full world blob — including former "client" fields (ambience/inspect) for this save.
+            EcosystemConfigCopier.CopyFields(serverCfg, working);
             RequestRecompose();
         }
 
@@ -304,9 +305,7 @@ namespace WildFarming.Client
         {
             string title = ConfigFieldLangResolver.GetTitle(field);
             string desc = ConfigFieldLangResolver.GetDescription(field);
-            string scopeHint = field.Scope == ConfigFieldScope.Client
-                ? L("config-ui-scope-client")
-                : L("config-ui-scope-server");
+            string scopeHint = L("config-ui-scope-world");
 
             double textHeight = MeasureHelpTextHeight(title, scopeHint, field.Name, desc, labelWidth);
             double innerHeight = Math.Max(textHeight, ControlHeight + 2);
@@ -352,9 +351,7 @@ namespace WildFarming.Client
             string code = "cfg-" + field.Name;
             string title = ConfigFieldLangResolver.GetTitle(field);
             string desc = ConfigFieldLangResolver.GetDescription(field);
-            string scopeHint = field.Scope == ConfigFieldScope.Client
-                ? L("config-ui-scope-client")
-                : L("config-ui-scope-server");
+            string scopeHint = L("config-ui-scope-world");
 
             double labelWidth = LabelWidth(width);
             double controlX = x + width - ControlWidth;
@@ -574,11 +571,16 @@ namespace WildFarming.Client
 
         bool OnReloadClicked()
         {
-            EcosystemConfigSaveService.ReloadFromDisk(capi, createDefaultIfMissing: true);
-            EcosystemConfigCopier.CopyFields(EcosystemConfig.Loaded, working);
+            OnReloadRequested?.Invoke();
+            return true;
+        }
+
+        public void ApplyReloadedConfig(EcosystemConfig source)
+        {
+            if (source == null) return;
+            EcosystemConfigCopier.CopyFields(source, working);
             RequestRecompose();
             capi.ShowChatMessage(L("config-ui-reloaded"));
-            return true;
         }
 
         bool OnSetupAgainClicked()
@@ -636,6 +638,7 @@ namespace WildFarming.Client
         public event Action<EcosystemConfig> OnApplyRequested;
         public event Action OnSetupWizardRequested;
         public event Action OnAutoTuneRequested;
+        public event Action OnReloadRequested;
 
         static string BuildFieldHelpText(string title, string scopeHint, string jsonKey, string desc)
         {

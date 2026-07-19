@@ -1,11 +1,11 @@
 # Прогресс разработки
 
 **Текущая стадия:** `Ecosystem v4.7.0` — third-party wild ecology (Wildcraft Fruit/Trees, Floral Zones, fruitvine climate-only); B+ species auto-curves; species CSV registry; seasonal snow; wildfire canopy guard.  
-**Версия мода (ModDB):** `4.7.0` · **В коде (unreleased):** `4.10.31` — per-world config, setup wizard, light auto-tune · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**882+**)  
+**Версия мода (ModDB):** `4.7.0` · **В коде (unreleased):** `4.10.32` — per-world config files under `ModConfig/ecosystemflora/worlds/` · **Игра:** Vintage Story 1.22+ · **Сборка:** .NET 10 · **Тесты:** xUnit (**882+**)  
 
 **ModDB:** https://mods.vintagestory.at/ecosystemflora  
 
-Последнее обновление документации: 2026-07-19 (код **4.10.31**, [`CHANGELOG.md`](CHANGELOG.md)).
+Последнее обновление документации: 2026-07-19 (код **4.10.32**, [`CHANGELOG.md`](CHANGELOG.md)).
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md) (теория), [PROMPT.md](PROMPT.md) (промпт для агентов), [CHANGELOG.md](CHANGELOG.md) (релизные заметки), [THIRD_PARTY_ECOLOGY.md](THIRD_PARTY_ECOLOGY.md) (сторонние блоки), [GAPS.md](GAPS.md) (пробелы идеи), [PHASE7_EXTERNAL_SIMULATION.md](PHASE7_EXTERNAL_SIMULATION.md) (v5.0 — симуляция выгруженных чанков), [FLOWER_PHENOLOGY.md](FLOWER_PHENOLOGY.md) (фенология луговых цветов), [CANOPY_PHENOLOGY.md](CANOPY_PHENOLOGY.md) (сезонная листва), [CANOPY_AMBIENCE.md](CANOPY_AMBIENCE.md) (частицы кроны), [TREE_AGING.md](TREE_AGING.md) (зрелость диких деревьев), [FERNTREE.md](FERNTREE.md) (древовидный папоротник), [WILD_VINE.md](WILD_VINE.md) (дикие лианы).
 

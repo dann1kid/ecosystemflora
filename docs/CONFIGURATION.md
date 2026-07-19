@@ -1,17 +1,30 @@
 # Configuration reference
 
-**Per-world (server):** ecology settings for each save live in the world SaveGame blob `ecosystemflora:config` (in-game UI / setup wizard). World A settings do not affect world B.
+**Active settings (U / wizard / `/ecoautotune`):** per-world files under
 
-**Global template:** `ModConfig/ecosystemflora.json` — seeds new worlds on first load / migration, and stores **client-only** fields (inspect UI, canopy ambience). Server apply does **not** overwrite this file with world settings.
+`ModConfig/ecosystemflora/worlds/<WorldName_Seed>/`
 
-**Template example:** `assets/ecosystemflora/ecosystemflora.example.json` in the mod package.  
-**Source of truth:** `src/Ecosystem/EcosystemConfig.cs` (defaults below match C# unless noted).
+| File | Contents |
+|------|----------|
+| `master.json`, `spread.json`, `aquatic.json`, … `perf.json`, `advanced.json` | UI category slices of `EcosystemConfig` |
+| `meta.json` | `SetupWizardCompleted`, last auto-tune stats |
+| `world.json` | Human-readable world key / name / seed |
 
-**First-run setup:** when `SetupWizardCompleted` is false, players with `controlserver` see a two-page wizard (profile → performance bench with editable fields). Re-open from Settings → **Setup wizard…**. Re-run bench anytime: **`/ecoautotune`** (or Performance → Auto-tune now). Last result is stored on the world config (`LastAutoTuneTier`, `LastAutoTuneOpsPerMs`, `LastAutoTuneElapsedMs`, `LastAutoTuneUtc`).
+**Global template (new worlds only):** `ModConfig/ecosystemflora/template/defaults.json`  
+(migrated from legacy `ModConfig/ecosystemflora.json`).
 
-**Per-species balance** (climate, spread rate, spacing, maturation hours, season curves): [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md) — `ecology.csv` + `season.csv`, not this JSON file (still global ModConfig for now).
+**Shared presets:** `ModConfig/ecosystemflora/presets/*.json`  
+(migrated from `ModConfig/ecosystemflora.presets/`).
 
-On template load, **missing keys are added** with defaults and the ModConfig file is rewritten (server always; client when the file already exists). World blobs flush on apply / world save.
+**Per-species CSV:** `ModConfig/ecosystemflora/species/ecology.csv` + `season.csv` (still global).
+
+**Source of truth (defaults):** `src/Ecosystem/EcosystemConfig.cs`.
+
+**In-game UI (U / `/ecoconfig`):** reads/writes the **current world's** folder above. Reload never pulls the global template while you are in a save.
+
+**First-run setup:** when `SetupWizardCompleted` is false in that world's `meta.json`, players with `controlserver` see the wizard.
+
+Legacy: an old SaveGame blob `ecosystemflora:config` is migrated into the world folder once, then cleared.
 
 ---
 

@@ -3,18 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.10.31** (unreleased) — per-world config, setup wizard, light auto-tune
+**Next release:** **4.10.32** (unreleased) — per-world config files under ModConfig/ecosystemflora/worlds/
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
+## Unreleased — 4.10.32
+
+- **Per-world config files** — U/perf settings live in `ModConfig/ecosystemflora/worlds/<WorldName_Seed>/` as category JSON (`perf.json`, `spread.json`, … + `meta.json`). Template: `template/defaults.json`; presets: `presets/`. Legacy SaveGame blob and flat `ecosystemflora.json` migrate automatically. U dialog is fully world-scoped (Apply/Reload).
+
 ## Unreleased — 4.10.31
 
-- **Per-world config** — server settings persist in the world SaveGame (`ecosystemflora:config`); `ModConfig/ecosystemflora.json` is a template for new worlds + client-only fields. Worlds no longer overwrite each other’s tuning. **Every new world** seeds with `SetupWizardCompleted=false` (wizard for SP owner / server `controlserver`); global template never stores wizard completion.
-- **First-run setup wizard** — page 1: profile (Weak PC / Balanced / Lush / Vanilla-safe) + near-players; page 2: **Start test** bench + editable Performance knobs. Privilege: `controlserver`. Re-open from Settings.
-- **Light performance auto-tune** — synthetic CPU bench; results stored (`LastAutoTuneTier` / `OpsPerMs` / `ElapsedMs` / `Utc`). Re-run: **`/ecoautotune`** or Performance → Auto-tune now.
-- **Performance scans** — `EnablePlayerVicinityRescan` + `PlayerVicinityRescanIntervalMs` (was hard-coded 5 s); cyclic flora discovery knobs listed under Performance.
+- **Per-world config** — server settings persist per world; setup wizard + light auto-tune (`/ecoautotune`); Performance scan knobs; lighter main-path defaults.
 
 ## Unreleased — 4.10.9
 

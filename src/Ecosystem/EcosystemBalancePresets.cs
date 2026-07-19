@@ -35,13 +35,14 @@ namespace WildFarming.Ecosystem
                 || filePresets.ContainsKey(preset);
         }
 
-        /// <summary>Load optional user JSON presets from ModConfig/ecosystemflora.presets/*.json.</summary>
+        /// <summary>Load optional user JSON presets from ModConfig/ecosystemflora/presets/*.json.</summary>
         public static void TryLoadFilePresets(ICoreAPI api)
         {
             filePresets.Clear();
             if (api == null) return;
 
-            string dir = Path.Combine(api.GetOrCreateDataPath("ModConfig"), "ecosystemflora.presets");
+            EcosystemConfigPaths.MigrateLegacyLayout(api);
+            string dir = EcosystemConfigPaths.GetPresetsFolder(api);
             if (!Directory.Exists(dir)) return;
 
             foreach (string file in Directory.GetFiles(dir, "*.json"))

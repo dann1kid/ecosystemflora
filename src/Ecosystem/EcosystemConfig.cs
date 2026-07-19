@@ -13,48 +13,53 @@ namespace WildFarming.Ecosystem
         public static EcosystemConfig Loaded { get; set; } = new EcosystemConfig();
 
         /// <summary>
-        /// Load ModConfig/ecosystemflora.json on server and client.
-        /// After load, missing keys get C# defaults and the file is rewritten so new options appear on disk.
+        /// Load global template from <c>ModConfig/ecosystemflora/template/defaults.json</c>
+        /// (migrates legacy flat <see cref="ConfigFileName"/>). Used to seed brand-new worlds only;
+        /// active play settings live under <c>worlds/&lt;key&gt;/</c>.
         /// </summary>
         public static void TryLoadFromDisk(ICoreAPI api, bool createDefaultIfMissing)
         {
             if (api == null) return;
 
-            EcosystemConfig fromDisk = null;
-            try
+            EcosystemConfigPaths.MigrateLegacyLayout(api);
+
+            EcosystemConfig fromDisk = EcosystemWorldConfigStore.TryReadTemplateDefaults(api);
+            bool fileExisted = fromDisk != null;
+
+            if (fromDisk == null)
             {
-                fromDisk = api.LoadModConfig<EcosystemConfig>(ConfigFileName);
+                // Last-chance legacy flat file (if migrate copy failed).
+                try
+                {
+                    fromDisk = api.LoadModConfig<EcosystemConfig>(ConfigFileName);
+                    fileExisted = fromDisk != null;
+                }
+                catch
+                {
+                    fromDisk = null;
+                }
             }
-            catch
+
+            if (fromDisk == null)
             {
                 if (!createDefaultIfMissing) return;
 
                 Loaded = new EcosystemConfig();
                 ApplyBalancePreset(Loaded);
                 EcosystemWorldConfigStore.PrepareFreshWorldConfig(Loaded);
-                api.StoreModConfig(EcosystemWorldConfigStore.CloneAsGlobalTemplate(Loaded), ConfigFileName);
+                EcosystemWorldConfigStore.WriteTemplateDefaults(api, Loaded);
                 return;
             }
 
-            if (fromDisk != null)
-            {
-                Loaded = fromDisk;
-                RegistrationBudgetMigration.ApplyIfNeeded(Loaded, api, configFileExisted: true);
-            }
-            else
-            {
-                Loaded = new EcosystemConfig();
-            }
-
+            Loaded = fromDisk;
+            RegistrationBudgetMigration.ApplyIfNeeded(Loaded, api, configFileExisted: fileExisted);
             EcosystemConfigValidator.NormalizeInPlace(Loaded);
-
             EcosystemBalancePresets.TryLoadFilePresets(api);
             ApplyBalancePreset(Loaded);
 
-            if (ShouldPersistConfig(createDefaultIfMissing, fromDisk != null))
+            if (ShouldPersistConfig(createDefaultIfMissing, fileExisted))
             {
-                // Never bake per-world wizard completion into the global template file.
-                api.StoreModConfig(EcosystemWorldConfigStore.CloneAsGlobalTemplate(Loaded), ConfigFileName);
+                EcosystemWorldConfigStore.WriteTemplateDefaults(api, Loaded);
             }
         }
 

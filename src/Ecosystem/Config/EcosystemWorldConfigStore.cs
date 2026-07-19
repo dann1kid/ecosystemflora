@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -6,15 +8,19 @@ using Vintagestory.API.Server;
 namespace WildFarming.Ecosystem.Config
 {
     /// <summary>
-    /// Per-world server config in <see cref="ISaveGame"/> (not global ModConfig).
-    /// Global <c>ModConfig/ecosystemflora.json</c> is only a template for new worlds / migration.
+    /// Per-world settings on disk under <c>ModConfig/ecosystemflora/worlds/&lt;key&gt;/</c>
+    /// (category JSON files). Migrates legacy SaveGame blob and flat ModConfig template.
     /// </summary>
     public static class EcosystemWorldConfigStore
     {
+        /// <summary>Legacy SaveGame key (migrated once into world folder files).</summary>
         public const string SaveKey = "ecosystemflora:config";
 
         static ICoreServerAPI boundApi;
         static bool eventsBound;
+        static string activeWorldKey;
+
+        public static string ActiveWorldKey => activeWorldKey;
 
         public static void Bind(ICoreServerAPI sapi)
         {
@@ -38,6 +44,7 @@ namespace WildFarming.Ecosystem.Config
             sapi.Event.GameWorldSave -= OnGameWorldSave;
             eventsBound = false;
             boundApi = null;
+            activeWorldKey = null;
         }
 
         static void OnSaveGameLoaded()
@@ -53,83 +60,56 @@ namespace WildFarming.Ecosystem.Config
             Persist(boundApi);
         }
 
-        /// <summary>Load world blob if present; otherwise seed from current <see cref="EcosystemConfig.Loaded"/> (ModConfig template) and persist once.</summary>
+        public static void TryLoadOrMigrateNow(ICoreServerAPI sapi)
+        {
+            if (sapi?.WorldManager?.SaveGame == null) return;
+            LoadOrMigrate(sapi);
+        }
+
         public static void LoadOrMigrate(ICoreServerAPI sapi)
         {
             if (sapi?.WorldManager?.SaveGame == null) return;
 
-            byte[] data = null;
-            try
+            EcosystemConfigPaths.MigrateLegacyLayout(sapi);
+            activeWorldKey = EcosystemConfigPaths.ResolveWorldKey(sapi);
+            string worldDir = EcosystemConfigPaths.GetWorldFolder(sapi, activeWorldKey);
+            EcosystemConfigPaths.EnsureDirectory(worldDir);
+
+            if (TryLoadFromWorldFolder(sapi, activeWorldKey, out EcosystemConfig fromFiles))
             {
-                data = sapi.WorldManager.SaveGame.GetData(SaveKey);
-            }
-            catch (Exception ex)
-            {
-                sapi.Logger.Warning("[ecosystemflora] Failed reading world config: {0}", ex.Message);
+                EcosystemConfigValidator.NormalizeInPlace(fromFiles);
+                EcosystemBalancePresets.TryLoadFilePresets(sapi);
+                ApplyKnownPreset(fromFiles);
+                EcosystemConfig.Loaded = fromFiles;
+                sapi.Logger.Notification(
+                    "[ecosystemflora] Loaded world settings from {0}",
+                    RelativeWorldPath(activeWorldKey));
+                return;
             }
 
-            if (data != null && data.Length > 0)
+            // Legacy SaveGame blob → export to files once.
+            if (TryLoadLegacySaveBlob(sapi, out EcosystemConfig fromBlob))
             {
-                try
-                {
-                    string json = Encoding.UTF8.GetString(data);
-                    EcosystemConfig fromWorld = EcosystemConfigCopier.FromJson(json);
-                    EcosystemConfigValidator.NormalizeInPlace(fromWorld);
-                    EcosystemBalancePresets.TryLoadFilePresets(sapi);
-                    ApplyKnownPreset(fromWorld);
-                    EcosystemConfig.Loaded = fromWorld;
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    sapi.Logger.Warning(
-                        "[ecosystemflora] Corrupt world config blob; reseeding from ModConfig template: {0}",
-                        ex.Message);
-                }
+                EcosystemConfigValidator.NormalizeInPlace(fromBlob);
+                EcosystemBalancePresets.TryLoadFilePresets(sapi);
+                ApplyKnownPreset(fromBlob);
+                EcosystemConfig.Loaded = fromBlob;
+                Persist(sapi);
+                ClearLegacySaveBlob(sapi);
+                sapi.Logger.Notification(
+                    "[ecosystemflora] Migrated SaveGame config blob → {0}",
+                    RelativeWorldPath(activeWorldKey));
+                return;
             }
 
-            // First load for this world: seed from in-memory template (already loaded from ModConfig).
-            // Always require setup wizard on a brand-new world — never inherit SetupWizardCompleted
-            // from a previous world's leaked ModConfig template.
+            // Brand-new world: seed from template, force wizard.
             EcosystemBalancePresets.TryLoadFilePresets(sapi);
             ApplyKnownPreset(EcosystemConfig.Loaded);
             PrepareFreshWorldConfig(EcosystemConfig.Loaded);
             Persist(sapi);
             sapi.Logger.Notification(
-                "[ecosystemflora] Seeded per-world config from ModConfig template ({0}); setup wizard pending.",
-                SaveKey);
-        }
-
-        /// <summary>
-        /// Clears first-run / auto-tune world-local flags so a newly created world always shows the setup wizard
-        /// (SP owner and server admins with <c>controlserver</c>).
-        /// </summary>
-        public static void PrepareFreshWorldConfig(EcosystemConfig cfg)
-        {
-            if (cfg == null) return;
-            cfg.SetupWizardCompleted = false;
-            cfg.LastAutoTuneTier = "";
-            cfg.LastAutoTuneOpsPerMs = 0;
-            cfg.LastAutoTuneElapsedMs = 0;
-            cfg.LastAutoTuneUtc = "";
-        }
-
-        /// <summary>
-        /// Clone suitable for writing <c>ModConfig/ecosystemflora.json</c> — never carries
-        /// per-world first-run completion into the global template.
-        /// </summary>
-        public static EcosystemConfig CloneAsGlobalTemplate(EcosystemConfig source)
-        {
-            EcosystemConfig clone = EcosystemConfigCopier.Clone(source ?? new EcosystemConfig());
-            PrepareFreshWorldConfig(clone);
-            return clone;
-        }
-
-        /// <summary>Best-effort load when SaveGame is already available (before SaveGameLoaded).</summary>
-        public static void TryLoadOrMigrateNow(ICoreServerAPI sapi)
-        {
-            if (sapi?.WorldManager?.SaveGame == null) return;
-            LoadOrMigrate(sapi);
+                "[ecosystemflora] Seeded world settings at {0}; setup wizard pending.",
+                RelativeWorldPath(activeWorldKey));
         }
 
         public static void Persist(ICoreServerAPI sapi)
@@ -139,16 +119,36 @@ namespace WildFarming.Ecosystem.Config
 
             try
             {
-                string json = EcosystemConfigCopier.ToJson(EcosystemConfig.Loaded);
-                sapi.WorldManager.SaveGame.StoreData(SaveKey, Encoding.UTF8.GetBytes(json));
+                if (string.IsNullOrEmpty(activeWorldKey))
+                {
+                    activeWorldKey = EcosystemConfigPaths.ResolveWorldKey(sapi);
+                }
+
+                WriteWorldFolder(sapi, activeWorldKey, EcosystemConfig.Loaded);
             }
             catch (Exception ex)
             {
-                sapi.Logger.Warning("[ecosystemflora] Failed writing world config: {0}", ex.Message);
+                sapi.Logger.Warning("[ecosystemflora] Failed writing world config files: {0}", ex.Message);
             }
         }
 
-        /// <summary>Whether a world blob exists (for tests / diagnostics).</summary>
+        public static bool HasWorldFiles(ICoreAPI api, string worldKey)
+        {
+            if (api == null || string.IsNullOrEmpty(worldKey)) return false;
+            string meta = EcosystemConfigPaths.GetWorldMetaPath(api, worldKey);
+            if (File.Exists(meta)) return true;
+            foreach (string category in EcosystemConfigPaths.WorldCategoryFiles)
+            {
+                if (File.Exists(EcosystemConfigPaths.GetWorldCategoryPath(api, worldKey, category)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether a world blob exists (legacy diagnostics).</summary>
         public static bool HasWorldBlob(ICoreServerAPI sapi)
         {
             if (sapi?.WorldManager?.SaveGame == null) return false;
@@ -163,6 +163,129 @@ namespace WildFarming.Ecosystem.Config
             }
         }
 
+        public static void PrepareFreshWorldConfig(EcosystemConfig cfg)
+        {
+            if (cfg == null) return;
+            cfg.SetupWizardCompleted = false;
+            cfg.LastAutoTuneTier = "";
+            cfg.LastAutoTuneOpsPerMs = 0;
+            cfg.LastAutoTuneElapsedMs = 0;
+            cfg.LastAutoTuneUtc = "";
+        }
+
+        public static EcosystemConfig CloneAsGlobalTemplate(EcosystemConfig source)
+        {
+            EcosystemConfig clone = EcosystemConfigCopier.Clone(source ?? new EcosystemConfig());
+            PrepareFreshWorldConfig(clone);
+            return clone;
+        }
+
+        public static void WriteTemplateDefaults(ICoreAPI api, EcosystemConfig cfg)
+        {
+            if (api == null || cfg == null) return;
+            EcosystemConfigPaths.MigrateLegacyLayout(api);
+            EcosystemConfig template = CloneAsGlobalTemplate(cfg);
+            EcosystemConfigFileIO.WriteFullConfig(EcosystemConfigPaths.GetTemplateDefaultsPath(api), template);
+        }
+
+        public static EcosystemConfig TryReadTemplateDefaults(ICoreAPI api)
+        {
+            if (api == null) return null;
+            EcosystemConfigPaths.MigrateLegacyLayout(api);
+            return EcosystemConfigFileIO.ReadFullConfig(EcosystemConfigPaths.GetTemplateDefaultsPath(api));
+        }
+
+        static bool TryLoadFromWorldFolder(ICoreAPI api, string worldKey, out EcosystemConfig cfg)
+        {
+            cfg = null;
+            if (!HasWorldFiles(api, worldKey)) return false;
+
+            cfg = new EcosystemConfig();
+            // Start from C# defaults, then overlay each category file that exists.
+            foreach (string category in EcosystemConfigPaths.WorldCategoryFiles)
+            {
+                string path = EcosystemConfigPaths.GetWorldCategoryPath(api, worldKey, category);
+                Dictionary<string, object> values = EcosystemConfigFileIO.ReadJsonDict(path);
+                if (values != null) EcosystemConfigFileIO.ApplyCategory(cfg, values);
+            }
+
+            Dictionary<string, object> meta = EcosystemConfigFileIO.ReadJsonDict(
+                EcosystemConfigPaths.GetWorldMetaPath(api, worldKey));
+            if (meta != null) EcosystemConfigFileIO.ApplyMeta(cfg, meta);
+
+            return true;
+        }
+
+        static void WriteWorldFolder(ICoreAPI api, string worldKey, EcosystemConfig cfg)
+        {
+            EcosystemConfigPaths.EnsureDirectory(EcosystemConfigPaths.GetWorldFolder(api, worldKey));
+
+            foreach (string category in EcosystemConfigPaths.WorldCategoryFiles)
+            {
+                Dictionary<string, object> values = EcosystemConfigFileIO.ExtractCategory(cfg, category);
+                EcosystemConfigFileIO.WriteJsonDict(
+                    EcosystemConfigPaths.GetWorldCategoryPath(api, worldKey, category),
+                    values);
+            }
+
+            EcosystemConfigFileIO.WriteJsonDict(
+                EcosystemConfigPaths.GetWorldMetaPath(api, worldKey),
+                EcosystemConfigFileIO.ExtractMeta(cfg));
+
+            var info = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                ["worldKey"] = worldKey,
+                ["updatedUtc"] = DateTime.UtcNow.ToString("o"),
+            };
+
+            if (api is ICoreServerAPI sapi && sapi.WorldManager?.SaveGame != null)
+            {
+                try
+                {
+                    info["worldName"] = sapi.WorldManager.SaveGame.WorldName ?? "";
+                    info["seed"] = sapi.WorldManager.SaveGame.Seed;
+                }
+                catch
+                {
+                    // optional
+                }
+            }
+
+            EcosystemConfigFileIO.WriteJsonDict(
+                EcosystemConfigPaths.GetWorldInfoPath(api, worldKey),
+                info);
+        }
+
+        static bool TryLoadLegacySaveBlob(ICoreServerAPI sapi, out EcosystemConfig cfg)
+        {
+            cfg = null;
+            try
+            {
+                byte[] data = sapi.WorldManager.SaveGame.GetData(SaveKey);
+                if (data == null || data.Length == 0) return false;
+                string json = Encoding.UTF8.GetString(data);
+                cfg = EcosystemConfigCopier.FromJson(json);
+                return cfg != null;
+            }
+            catch (Exception ex)
+            {
+                sapi.Logger.Warning("[ecosystemflora] Failed reading legacy world config blob: {0}", ex.Message);
+                return false;
+            }
+        }
+
+        static void ClearLegacySaveBlob(ICoreServerAPI sapi)
+        {
+            try
+            {
+                sapi.WorldManager.SaveGame.StoreData(SaveKey, Array.Empty<byte>());
+            }
+            catch
+            {
+                // best-effort
+            }
+        }
+
         static void ApplyKnownPreset(EcosystemConfig cfg)
         {
             if (cfg == null) return;
@@ -171,5 +294,11 @@ namespace WildFarming.Ecosystem.Config
                 EcosystemBalancePresets.Apply(cfg, cfg.BalancePreset);
             }
         }
+
+        static string RelativeWorldPath(string worldKey) =>
+            Path.Combine(
+                EcosystemConfigPaths.RootFolderName,
+                EcosystemConfigPaths.WorldsFolderName,
+                worldKey ?? "world");
     }
 }
