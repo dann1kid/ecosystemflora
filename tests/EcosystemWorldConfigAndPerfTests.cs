@@ -373,8 +373,9 @@ namespace WildFarming.Tests
             Assert.Equal(PerfKnobHint.HigherLighter, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.ReproduceTickIntervalMs)));
             Assert.Equal(PerfKnobHint.HigherHeavier, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.TickBudgetMs)));
             Assert.Equal(PerfKnobHint.OnLighter, EcosystemPerfKnobHints.Get(nameof(EcosystemConfig.OnlyActivateNearPlayers)));
-            Assert.Equal("Tick budget ↑", EcosystemPerfKnobHints.FormatTitleWithHint("Tick budget", nameof(EcosystemConfig.TickBudgetMs)));
-            Assert.Equal("Interval ↓", EcosystemPerfKnobHints.FormatTitleWithHint("Interval", nameof(EcosystemConfig.ReproduceTickIntervalMs)));
+            Assert.Equal("Tick budget  val→ CPU↑", EcosystemPerfKnobHints.FormatTitleWithHint("Tick budget", nameof(EcosystemConfig.TickBudgetMs)));
+            Assert.Equal("Interval  val→ CPU↓", EcosystemPerfKnobHints.FormatTitleWithHint("Interval", nameof(EcosystemConfig.ReproduceTickIntervalMs)));
+            Assert.Equal(EcosystemPerfKnobHints.MarkerOnLighter, EcosystemPerfKnobHints.MarkerForField(nameof(EcosystemConfig.OnlyActivateNearPlayers)));
         }
 
         [Fact]

@@ -779,7 +779,7 @@
   "ecosystemflora:setup-wizard-bench-intro": "Короткий синтетический CPU-бенч (без обхода мира). Затем можно править значения, которые он записал.",
   "ecosystemflora:setup-wizard-bench-run": "Начать тест",
   "ecosystemflora:setup-wizard-bench-idle": "Тест ещё не запускали — Начать тест или править значения ниже.",
-  "ecosystemflora:setup-wizard-bench-legend": "↑ больше значение = тяжелее CPU · ↓ больше = легче · on↑ вкл. = тяжелее · on↓ вкл. = легче",
+  "ecosystemflora:setup-wizard-bench-legend": "В строке: val→ CPU↑ = больше значение, больше CPU · val→ CPU↓ = больше значение, меньше CPU · on→ CPU↑ / on→ CPU↓ = для переключателей",
   "ecosystemflora:setup-wizard-bench-edit": "Поля производительности (можно править):",
   "ecosystemflora:setup-wizard-bench-page": "Поля, стр. {0}/{1} (всего {2})",
   "ecosystemflora:setup-wizard-fields-prev": "Поля ←",

@@ -306,8 +306,8 @@ namespace WildFarming.Client
             composer.AddStaticText(
                 L("setup-wizard-bench-legend"),
                 CairoFont.WhiteSmallText(),
-                ElementBounds.Fixed(pad, y, contentW, 32));
-            y += 34;
+                ElementBounds.Fixed(pad, y, contentW, 36));
+            y += 38;
 
             composer.AddStaticText(
                 string.Format(

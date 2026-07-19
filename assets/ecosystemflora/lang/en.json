@@ -779,7 +779,7 @@
   "ecosystemflora:setup-wizard-bench-intro": "Run a short synthetic CPU bench (no world scan). Then review or edit the values it wrote.",
   "ecosystemflora:setup-wizard-bench-run": "Start test",
   "ecosystemflora:setup-wizard-bench-idle": "No bench run yet — Start test, or edit defaults below.",
-  "ecosystemflora:setup-wizard-bench-legend": "↑ higher value = heavier CPU · ↓ higher = lighter · on↑ switch on = heavier · on↓ on = lighter",
+  "ecosystemflora:setup-wizard-bench-legend": "Row hints: val→ CPU↑ = raise value, more CPU · val→ CPU↓ = raise value, less CPU · on→ CPU↑ / on→ CPU↓ = for switches",
   "ecosystemflora:setup-wizard-bench-edit": "Tuned performance fields (editable):",
   "ecosystemflora:setup-wizard-bench-page": "Fields page {0}/{1} ({2} total)",
   "ecosystemflora:setup-wizard-fields-prev": "Fields ←",

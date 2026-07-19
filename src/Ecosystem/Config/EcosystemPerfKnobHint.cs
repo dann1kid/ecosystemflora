@@ -24,13 +24,21 @@ namespace WildFarming.Ecosystem.Config
         OnLighter = 4,
     }
 
-    /// <summary>Maps wizard perf fields to ↑/↓ markers for Tab-friendly editing.</summary>
+    /// <summary>Maps wizard perf fields to value/CPU direction markers for Tab-friendly editing.</summary>
     public static class EcosystemPerfKnobHints
     {
-        public const string MarkerHigherHeavier = "↑";
-        public const string MarkerHigherLighter = "↓";
-        public const string MarkerOnHeavier = "on↑";
-        public const string MarkerOnLighter = "on↓";
+        /// <summary>Higher value → higher CPU.</summary>
+        public const string MarkerHigherHeavier = "val→ CPU↑";
+
+        /// <summary>Higher value → lower CPU.</summary>
+        public const string MarkerHigherLighter = "val→ CPU↓";
+
+        /// <summary>Switch on → higher CPU.</summary>
+        public const string MarkerOnHeavier = "on→ CPU↑";
+
+        /// <summary>Switch on → lower CPU.</summary>
+        public const string MarkerOnLighter = "on→ CPU↓";
+
         public const string MarkerNeutral = "·";
 
         static readonly Dictionary<string, PerfKnobHint> ByField =
@@ -122,13 +130,13 @@ namespace WildFarming.Ecosystem.Config
 
         public static string MarkerForField(string fieldName) => Marker(Get(fieldName));
 
-        /// <summary>Title with a short direction suffix for Tab users (e.g. "Tick budget ↑").</summary>
+        /// <summary>Title with a short direction suffix for Tab users (e.g. "Tick budget  val→ CPU↑").</summary>
         public static string FormatTitleWithHint(string title, string fieldName)
         {
             string marker = MarkerForField(fieldName);
             if (string.IsNullOrEmpty(title)) return marker;
             if (marker == MarkerNeutral) return title;
-            return title + " " + marker;
+            return title + "  " + marker;
         }
     }
 }
