@@ -9,11 +9,12 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 
 ---
 
-## Unreleased — 4.10.33
+## Unreleased — 4.11.15
 
-- **Setup wizard bench** — editable table covers the full Performance knob set (intervals, budgets, spread/registration pipelines, bool toggles, foliage budgets, near-players), paginated; Weak/Balanced/Strong and Super-minimal stress all of them. No CPU topology detection (P/E, X3D).
-- **Setup wizard welcome** — first page states this is Ecosystem Flora's per-world setup; then profile → bench. Old worlds without a recorded `SetupWizardCompleted` stay pending and get the prompt. Reopen via `/ecosetup`.
-- **Setup wizard re-prompt fix** — disk marker `setup-wizard.done` + raw meta parse; client checks disk before auto-open; at most one auto-open per session; SSP stale sync cannot clear completion.
+- **Setup wizard overhaul** — welcome page (this mod / this world), full Performance knob table with `val→ CPU↑/↓` hints, `/ecosetup` + `/ecoautotune`; old worlds prompt until completed.
+- **Wizard completion stickiness** — `setup-wizard.done` marker + meta flag; SSP stale sync no longer re-opens the wizard after Apply; at most one auto-open per session.
+- **Config load fidelity** — known balance presets no longer wipe hand-edited perf/tick fields on load/save; `WildVineMaxHangDepth` in `trees.json`; enabling ecosystem after disabled Init starts runtime ticks.
+- **Server chat commands** — `/ecosetup` and `/ecoconfig` registered on the server (open GUI via packet).
 
 ## Unreleased — 4.10.32
 
