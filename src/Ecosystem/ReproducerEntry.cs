@@ -38,6 +38,12 @@ namespace WildFarming.Ecosystem
         /// <summary>Phased senescence after calendar lifespan (one stage per game year).</summary>
         public TreeSenescencePhase TreeSenescencePhase { get; set; }
 
+        /// <summary>
+        /// Years shaved off effective senescence horizon by niche mismatch
+        /// (<see cref="TreeNicheLifespanStress"/>). Persisted with calendar age.
+        /// </summary>
+        public int TreeLifespanDebtYears { get; set; }
+
         /// <summary>Meadow flower phenology phase when <see cref="FlowerPhenology"/> is enabled.</summary>
         public FlowerPhenologyPhase PhenologyPhase { get; set; }
 

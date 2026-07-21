@@ -991,13 +991,26 @@ namespace WildFarming.Ecosystem
                 metrics.CrownRadius,
                 profile);
 
+            int effectiveHorizon = TreeNicheLifespanStress.EffectiveHorizon(profile, entry, EcosystemConfig.Loaded);
+
             AddInspectLine(
                 lines,
                 "ecosystemflora:inspect-line-tree-age",
                 entry.TreeAgeYears.ToString(),
-                profile.SenescenceAgeYears.ToString());
+                effectiveHorizon.ToString());
 
-            if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, EcosystemConfig.Loaded))
+            if (EcosystemConfig.Loaded.EnableTreeNicheLifespanStress
+                && entry.TreeLifespanDebtYears > 0)
+            {
+                AddInspectLine(
+                    lines,
+                    "ecosystemflora:inspect-line-tree-lifespan-debt",
+                    entry.TreeLifespanDebtYears.ToString(),
+                    profile.SenescenceAgeYears.ToString(),
+                    effectiveHorizon.ToString());
+            }
+
+            if (TreeSenescence.IsPastHorizon(entry, profile, EcosystemConfig.Loaded))
             {
                 switch (entry.TreeSenescencePhase)
                 {
@@ -1015,7 +1028,7 @@ namespace WildFarming.Ecosystem
                         break;
                 }
             }
-            else if (entry.TreeAgeYears + 1 >= profile.SenescenceAgeYears
+            else if (entry.TreeAgeYears + 1 >= effectiveHorizon
                 && EcosystemConfig.Loaded.EnableTreeSenescence)
             {
                 AddInspectLine(lines, "ecosystemflora:inspect-line-tree-senescence-soon");

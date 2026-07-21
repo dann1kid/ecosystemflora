@@ -629,6 +629,33 @@ namespace WildFarming.Ecosystem
         /// <summary>When calendar age reaches species senescence horizon, phased natural death begins.</summary>
         public bool EnableTreeSenescence { get; set; } = true;
 
+        /// <summary>
+        /// Niche mismatch (climate / forest / soft seral) accumulates lifespan debt once per game year,
+        /// shortening effective <c>SenescenceAgeYears</c>. See <see cref="TreeNicheLifespanStress"/>.
+        /// </summary>
+        public bool EnableTreeNicheLifespanStress { get; set; } = true;
+
+        /// <summary>No niche debt accrual while calendar age is below this (protects age-0 worldgen trunks).</summary>
+        public int TreeNicheLifespanStressGraceYears { get; set; } = 8;
+
+        /// <summary>Debt years added per simulated year outside temp/rain/forest window.</summary>
+        public int TreeNicheLifespanStressHardDebtPerYear { get; set; } = 2;
+
+        /// <summary>Debt years added per year when climate OK but seral multiplier is below soft threshold.</summary>
+        public int TreeNicheLifespanStressSoftDebtPerYear { get; set; } = 1;
+
+        /// <summary>Debt years removed per year back inside niche.</summary>
+        public int TreeNicheLifespanStressRecoveryPerYear { get; set; } = 1;
+
+        /// <summary>Max fraction of species lifespan that debt may remove (0.5 ⇒ oak 120 → at most −60).</summary>
+        public float TreeNicheLifespanStressMaxDebtFraction { get; set; } = 0.5f;
+
+        /// <summary>
+        /// Soft miss when <see cref="EnableTreeSeralSuccession"/> is on and seral multiplier is below this.
+        /// 0 disables soft seral debt.
+        /// </summary>
+        public float TreeNicheLifespanStressSeralSoftThreshold { get; set; } = 0.35f;
+
         /// <summary>Pioneer/mid/climax spread curves vs local forest cover at sapling cells.</summary>
         public bool EnableTreeSeralSuccession { get; set; } = true;
 

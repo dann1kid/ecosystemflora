@@ -79,13 +79,31 @@ namespace WildFarming.Ecosystem
 
                 int advancedYears = 0;
                 int placedTotal = 0;
+                // Climate/forest does not change across catch-up years in one tick — sample once.
+                bool nicheSampled = false;
+                TreeNicheLifespanStress.YearOutcome nicheOutcome = TreeNicheLifespanStress.YearOutcome.Skipped;
 
                 for (int year = entry.LastTreeGrowthYear + 1; year <= gameYear && advancedYears < catchUpLimit; year++)
                 {
+                    if (TreeNicheLifespanStress.ShouldEvaluate(entry, cfg))
+                    {
+                        if (!nicheSampled)
+                        {
+                            nicheOutcome = TreeNicheLifespanStress.SampleOutcome(api, entry, wood, cfg);
+                            nicheSampled = true;
+                        }
+
+                        TreeNicheLifespanStress.ApplyOutcome(
+                            entry,
+                            nicheOutcome,
+                            profile.SenescenceAgeYears,
+                            cfg);
+                    }
+
                     entry.TreeAgeYears++;
                     if (entry.TreeAgeYears < 0) entry.TreeAgeYears = 0;
 
-                    if (TreeSenescence.IsPastHorizon(entry.TreeAgeYears, profile, cfg))
+                    if (TreeSenescence.IsPastHorizon(entry, profile, cfg))
                     {
                         if (cfg.EnableTreeSenescence)
                         {

@@ -3,11 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.11.20** (unreleased) — potato-PC perf stack, setup wizard, `/ecosetup`
+**Next release:** **4.11.22** (unreleased) — tree niche lifespan stress
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.11.22
+
+- **Tree niche lifespan stress** — climate/forest mismatch accumulates yearly lifespan debt (default +2 hard / +1 soft seral; −1 recovery), shortening effective senescence horizon (cap 50% of species lifespan; 8-year grace). Toggle `EnableTreeNicheLifespanStress`. Inspect shows effective age / debt.
+
+## Unreleased — 4.11.21
+
+- **Dedicated-server `/ecosetup`** — console opens GUI for online admins (or explains that an in-game admin is required); packaging tests fixed (Newtonsoft + migration/lang hints).
 
 ## Unreleased — 4.11.20
 

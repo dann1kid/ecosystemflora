@@ -48,11 +48,25 @@ namespace WildFarming.Ecosystem
         public static bool IsPastHorizon(
             int ageYears,
             WildTreeGrowthProfiles.Profile profile,
-            EcosystemConfig cfg)
+            EcosystemConfig cfg,
+            int lifespanDebtYears = 0)
         {
             if (cfg == null || !cfg.EnableTreeAging || !cfg.EnableTreeSenescence) return false;
             if (profile.SenescenceAgeYears <= 0) return false;
-            return ageYears >= profile.SenescenceAgeYears;
+            int horizon = TreeNicheLifespanStress.EffectiveHorizon(
+                profile.SenescenceAgeYears,
+                cfg.EnableTreeNicheLifespanStress ? lifespanDebtYears : 0,
+                cfg);
+            return ageYears >= horizon;
+        }
+
+        public static bool IsPastHorizon(
+            ReproducerEntry entry,
+            WildTreeGrowthProfiles.Profile profile,
+            EcosystemConfig cfg)
+        {
+            int debt = entry?.TreeLifespanDebtYears ?? 0;
+            return IsPastHorizon(entry?.TreeAgeYears ?? 0, profile, cfg, debt);
         }
 
         /// <summary>Legacy name — age at or past species lifespan.</summary>
@@ -76,7 +90,7 @@ namespace WildFarming.Ecosystem
             if (string.IsNullOrEmpty(wood)) return false;
 
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-            return IsPastHorizon(entry.TreeAgeYears, profile, cfg);
+            return IsPastHorizon(entry, profile, cfg);
         }
 
         public static bool BlocksSeasonalCanopy(
@@ -94,7 +108,7 @@ namespace WildFarming.Ecosystem
             if (entry.TreeSenescencePhase != TreeSenescencePhase.None) return true;
 
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-            return IsPastHorizon(entry.TreeAgeYears, profile, EcosystemConfig.Loaded);
+            return IsPastHorizon(entry, profile, EcosystemConfig.Loaded);
         }
 
         /// <summary>One senescence stage per game year after lifespan.</summary>

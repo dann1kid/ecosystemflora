@@ -30,6 +30,7 @@ namespace WildFarming.Ecosystem
         [ProtoMember(6)] public int LastGrowthYear;
         [ProtoMember(7)] public string Wood;
         [ProtoMember(8)] public int SenescencePhase;
+        [ProtoMember(9)] public int LifespanDebtYears;
     }
 
     /// <summary>Persists wild-tree calendar age across save/load (trunk base key).</summary>
@@ -75,6 +76,7 @@ namespace WildFarming.Ecosystem
             entry.TreeAgeYears = rec.AgeYears < 0 ? 0 : rec.AgeYears;
             entry.LastTreeGrowthYear = rec.LastGrowthYear;
             entry.TreeSenescencePhase = (TreeSenescencePhase)rec.SenescencePhase;
+            entry.TreeLifespanDebtYears = rec.LifespanDebtYears < 0 ? 0 : rec.LifespanDebtYears;
             return true;
         }
 
@@ -93,6 +95,7 @@ namespace WildFarming.Ecosystem
                 LastGrowthYear = entry.LastTreeGrowthYear,
                 Wood = wood,
                 SenescencePhase = (int)entry.TreeSenescencePhase,
+                LifespanDebtYears = entry.TreeLifespanDebtYears < 0 ? 0 : entry.TreeLifespanDebtYears,
             };
         }
 

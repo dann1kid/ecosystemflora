@@ -63,7 +63,7 @@ namespace WildFarming.Ecosystem
                 if (age >= System.Math.Min(maturity, 8)) return true;
 
                 WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-                if (TreeSenescence.IsPastHorizon(age, profile, EcosystemConfig.Loaded)) return true;
+                if (TreeSenescence.IsPastHorizon(entry, profile, EcosystemConfig.Loaded)) return true;
             }
 
             return false;

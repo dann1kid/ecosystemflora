@@ -455,6 +455,34 @@ namespace WildFarming.Ecosystem.Config
                 "On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age.",
                 "Вкл.: естественная гибель по возрасту (сухостой → пень/брёвна). Выкл.: деревья не стареют.");
 
+            D(nameof(EcosystemConfig.EnableTreeNicheLifespanStress),
+                "On: climate/forest mismatch shortens effective tree lifespan each year (then normal senescence). Off: full species lifespan always.",
+                "Вкл.: климат/лесность укорачивают срок жизни дерева раз в год (далее обычный сенисценс). Выкл.: всегда полный срок вида.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressGraceYears),
+                "Higher: longer no-debt grace after registration (safer for worldgen age-0 trunks). Lower: niche stress starts sooner.",
+                "Больше: дольше без долга после регистрации (безопаснее для worldgen age 0). Меньше: стресс ниши раньше.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressHardDebtPerYear),
+                "Higher: more lifespan debt per year outside temp/rain/forest window. Lower: gentler hard stress.",
+                "Больше: сильнее укорочение жизни за год вне окна климата/леса. Меньше: мягче жёсткий стресс.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressSoftDebtPerYear),
+                "Higher: more debt per year on soft seral mismatch. Lower: weaker soft stress. 0 = no soft debt.",
+                "Больше: сильнее долг при мягком seral-несовпадении. Меньше: слабее. 0 = без soft-долга.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressRecoveryPerYear),
+                "Higher: faster debt recovery when back in niche. Lower: stress hangover lasts longer.",
+                "Больше: быстрее сброс долга в нише. Меньше: дольше «похмелье» стресса.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressMaxDebtFraction),
+                "Higher: niche stress can cut more of species lifespan (cap). Lower: trees stay longer even out of niche. 0.5 = half max.",
+                "Больше: стресс может сильнее урезать срок вида (потолок). Меньше: дольше живут вне ниши. 0.5 = максимум половина.");
+
+            D(nameof(EcosystemConfig.TreeNicheLifespanStressSeralSoftThreshold),
+                "Higher: easier soft seral miss (more debt in suboptimal forest cover). Lower: only severe seral mismatch counts. 0 = soft off.",
+                "Больше: легче soft-промах seral (больше долга при неоптимальной лесности). Меньше: только сильный промах. 0 = soft выкл.");
+
             D(nameof(EcosystemConfig.EnableTreeSeralSuccession),
                 "On: pioneer trees prefer open cells; climax trees prefer mature forest cover. Off: forest cover gates only.",
                 "Вкл.: пионеры на открытых клетках, древостой — в зрелом лесу. Выкл.: только min/max лесности.");

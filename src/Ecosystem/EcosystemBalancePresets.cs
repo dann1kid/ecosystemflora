@@ -174,6 +174,7 @@ namespace WildFarming.Ecosystem
 
             cfg.EnableTreeAging = true;
             cfg.EnableTreeSenescence = true;
+            cfg.EnableTreeNicheLifespanStress = true;
             cfg.EnableTreeSeralSuccession = true;
             cfg.EnableTreeSenescenceRemains = true;
             cfg.EnableFerntreeEcology = true;

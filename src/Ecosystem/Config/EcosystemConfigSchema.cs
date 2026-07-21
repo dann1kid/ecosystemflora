@@ -50,6 +50,7 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.EnableAnimalFootTraffic),
             nameof(EcosystemConfig.EnableTreeAging),
             nameof(EcosystemConfig.EnableTreeSenescence),
+            nameof(EcosystemConfig.EnableTreeNicheLifespanStress),
             nameof(EcosystemConfig.EnableTreeSeralSuccession),
             nameof(EcosystemConfig.EnableFerntreeEcology),
             nameof(EcosystemConfig.EnableWildVineEcology),

@@ -64,7 +64,7 @@ Optional custom JSON presets: `ModConfig/ecosystemflora.presets/*.json` (filenam
 | Instant mature spread (legacy feel) | `"EnableFlowerSpreadMaturation": false` |
 | Decorative-only flowers (no bloom gating) | `"EnableFlowerPhenology": false` |
 | Instant tallgrass height at spread | `"EnableTallgrassSpreadMaturation": false` |
-| No wild tree death | `"EnableTreeSenescence": false` (optionally `"EnableTreeAging": false` for no growth either) |
+| No wild tree death | `"EnableTreeSenescence": false` (optionally `"EnableTreeAging": false`; niche lifespan stress is irrelevant without senescence) |
 | Treehouse-friendly | `"EnableTreeSenescence": false`; only natural `log-grown` trunks are in ecology — player `log-placed` builds are not |
 | Ecology only near players | `"OnlyActivateNearPlayers": true` (spread, stress, trees, **and** chunk scans) |
 | Spread/stress/trees near players only | `"LimitSpreadNearPlayers": true` (registration scans **unchanged**) |
@@ -238,6 +238,13 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `EnableStumpDecay` | bool | **true** | server | On: senescent snag stumps decay and remove after calendar years. Off: stumps persist. |
 | `EnableTreeAging` | bool | **true** | server | On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this). |
 | `EnableTreeSenescence` | bool | **true** | server | On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age. |
+| `EnableTreeNicheLifespanStress` | bool | **true** | server | On: climate/forest mismatch shortens effective lifespan each year, then normal senescence. Off: full species lifespan. |
+| `TreeNicheLifespanStressGraceYears` | int | `8` | server | No debt while calendar age below this. |
+| `TreeNicheLifespanStressHardDebtPerYear` | int | `2` | server | Debt years per year outside temp/rain/forest window. |
+| `TreeNicheLifespanStressSoftDebtPerYear` | int | `1` | server | Debt years on soft seral mismatch. |
+| `TreeNicheLifespanStressRecoveryPerYear` | int | `1` | server | Debt removed per year back in niche. |
+| `TreeNicheLifespanStressMaxDebtFraction` | float | `0.5` | server | Max fraction of species lifespan debt may remove. |
+| `TreeNicheLifespanStressSeralSoftThreshold` | float | `0.35` | server | Soft miss when seral multiplier below this (0 = soft off). |
 | `EnableTreeSenescenceRemains` | bool | **true** | server | On: final year spawns vanilla stump and fallen logs. Off: snag removed without remains. |
 | `EnableTreeSeralSuccession` | bool | **true** | server | On: pioneer trees prefer open cells; climax trees prefer mature forest cover. Off: forest cover gates only. |
 | `EnableWildVineEcology` | bool | **true** | server | On: wildvine-end blocks spread down and along captured walls. Off: static vines. |

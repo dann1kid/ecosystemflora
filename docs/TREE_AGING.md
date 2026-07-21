@@ -26,9 +26,9 @@ When **`EnableTreeAging`** is off, spread still places vanilla **`sapling-{wood}
 | **1. Seed** | Mature `log-grown` trunk places a **young seedling** (one `log-grown` + small crown) on open soil when **`EnableTreeAging`** is on; otherwise a free sapling. Nov–Feb spread off; no ice/snow placement. |
 | **2. Grow up** | **Mod yearly growth** (`TreeGrowthApplier`) from seedling size to mature — no instant vanilla treegen when aging is on. Player-planted saplings still use vanilla treegen. |
 | **3. Register** | Lowest `log-grown` in the column enters the ecology registry at **`TreeAgeYears = 0`** (spread seedlings register immediately; worldgen giants register on chunk scan). |
-| **4. Active life** | Each **game year** in loaded chunks: age +1; may add trunk/crown blocks; continues **sapling spread** from trunk base. Trees do **not** die from niche stress. |
+| **4. Active life** | Each **game year** in loaded chunks: age +1; optional **niche lifespan debt** (climate/forest mismatch shortens effective horizon); may add trunk/crown blocks; continues **sapling spread** from trunk base. Trees do **not** use flower-style stress death — out-of-niche stands die earlier via senescence instead. |
 | **5. Seasonal dress** | *(Parallel, optional)* Deciduous crowns follow autumn/winter/spring (`EnableSeasonalFoliage`) — separate from aging/senescence. |
-| **6. Senescence** | When age ≥ species lifespan (oak ~120 y, birch ~75, redwood ~1000 — see `WildTreeGrowthProfiles.cs`), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
+| **6. Senescence** | When age ≥ **effective** lifespan (`SenescenceAgeYears − niche debt`, or full species age if niche stress is off), **one stage per game year**: crown leaves → branchy skeleton → dry snag (`TreeSenescenceSnagBlocks`, default 3) → collapse. Spread and growth stop from year 1; spring bud blocked while senescing. |
 | **7. Remains** | Final year: snag removed; **stump** `log-{wood}-ud` at base + up to **`TreeSenescenceFallenLogCount`** horizontal `debarkedlog-*` nearby. Vanilla choppable blocks — **not** re-registered; ecology record cleared. Mycelium/soil cascade as on player tree cut. |
 | **8. Succession** | No sapling burst on death — **neighbouring mature trees** fill the gap through normal spread. |
 
@@ -54,7 +54,26 @@ See: `docs/TREE_REPRODUCTION_MATURITY.md`.
 | **Structure** | Trunk blocks + crown radius (live measure) | Growth pacing, inspect size index |
 | **Calendar age** | Years since ecology registration (`TreeAgeYears`) | Senescence death — **not** inferred from size |
 
-Worldgen trees register at **age 0** even when already tall. They will **not** senesce just because they look mature. Future death uses calendar age (+ vitality), not structure index.
+Worldgen trees register at **age 0** even when already tall. They will **not** senesce just because they look mature. Death uses calendar age plus optional **niche lifespan debt** (`EnableTreeNicheLifespanStress`), not structure index.
+
+### Niche lifespan stress
+
+When **`EnableTreeNicheLifespanStress`** is on (default), each simulated game year (same path as growth/senescence):
+
+| Outcome | Condition | Debt change (defaults) |
+|---------|-----------|------------------------|
+| **Hard miss** | Temp, rainfall, or local forest cover outside the species window | **+2** years |
+| **Soft miss** | Climate OK but seral multiplier &lt; `TreeNicheLifespanStressSeralSoftThreshold` (0.35) | **+1** year |
+| **In niche** | Climate + forest OK (and seral above soft threshold when seral is on) | **−1** year (recovery) |
+
+- **Grace:** no accrual while `TreeAgeYears` &lt; `TreeNicheLifespanStressGraceYears` (default **8**) — protects age-0 worldgen trunks.
+- **Cap:** debt ≤ `SenescenceAgeYears × TreeNicheLifespanStressMaxDebtFraction` (default **0.5**).
+- **Effective horizon:** `max(1, SenescenceAgeYears − debt)` — then normal phased senescence.
+- **Perf:** climate/forest sampled at most **once per tree per growth tick** (reused across catch-up years). Grace years and disabled feature skip sampling. Cost sits on the existing tree-growth prep path (`MaxTreeGrowthAttemptsPerTick`, default 2), not the flower stress tick.
+- Persisted with calendar age (`LifespanDebtYears` on the tree-age save blob).
+- Inspect shows age against the **effective** horizon and a debt line when debt &gt; 0.
+
+Toggle off with `"EnableTreeNicheLifespanStress": false` for the old full-lifespan behaviour.
 
 ---
 
