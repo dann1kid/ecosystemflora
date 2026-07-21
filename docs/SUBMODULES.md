@@ -46,6 +46,24 @@ git commit -m "Bump community submodule (…)."
 
 **Build:** `dotnet build community\ecosystemfloracompat\ecosystemfloracompat.csproj` or build full `wildfarming.sln` — see [`community/docs/BUILD.md`](../community/docs/BUILD.md).
 
+## `public-config/` — vs-ecosystemflora-config
+
+Public config reference pack (example JSON, species CSV docs). Separate repository:
+
+`https://github.com/dann1kid/vs-ecosystemflora-config.git`
+
+Synced into `examples/ecosystemflora-config/` for the monorepo; the live publish target is the submodule.
+
+```bash
+git submodule update --init public-config
+```
+
 ## `examples/ecologysample-mynewplant`
 
-Reference sample mod (nested repo). Remote: `git@github.com:danni1kid/ecologysample-mynewplant.git` — not wired in `.gitmodules` yet.
+Reference sample content mod (nested repo):
+
+`https://github.com/dann1kid/ecologysample-mynewplant.git`
+
+```bash
+git submodule update --init examples/ecologysample-mynewplant
+```

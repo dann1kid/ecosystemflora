@@ -11,14 +11,21 @@ obj/
 *.userosscache
 *.sln.docstates
 
-# Temp analysis
+# Temp analysis / local extracts
 _wfr_extract/
 _wfr_temp.zip
 _zip_extract/
 _zipcheck/
+_modinspect/
+_compatcheck/
+.tmp-*/
+.tmp-pyrogenesis/
 
 # OS
 Thumbs.db
 .DS_Store
+
+# Artifacts / logs
 *.zip
 *.log
+debug-*.log

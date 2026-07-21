@@ -1,3 +1,9 @@
 [submodule "community"]
 	path = community
 	url = ssh://git@95.165.173.218:2222/danni1kid/ecosystemfloracompat.git
+[submodule "public-config"]
+	path = public-config
+	url = https://github.com/dann1kid/vs-ecosystemflora-config.git
+[submodule "examples/ecologysample-mynewplant"]
+	path = examples/ecologysample-mynewplant
+	url = https://github.com/dann1kid/ecologysample-mynewplant.git
