@@ -3,11 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.11.22** (unreleased) — tree niche lifespan stress
+**Next release:** **4.11.23** (unreleased) — immature tree spread gate
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.11.23
+
+- **Immature tree spread** — ecology seedlings no longer unlock wild spread via soft size bypass after a few years of growth; calendar maturity (or full structure estimate) is required unless the trunk was already worldgen-sized at registration. Inspect shows “too young to spread”; immature trees are polled about once per game year instead of every spread interval.
 
 ## Unreleased — 4.11.22
 

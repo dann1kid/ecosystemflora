@@ -4,7 +4,7 @@
   "name": "Ecosystem - Flora",
   "description": "Wild ecology for vanilla flora on vanilla blocks.",
   "authors": ["-"],
-  "version": "4.11.22",
+  "version": "4.11.23",
   "side": "Universal",
   "dependencies": {
     "game": "1.22.0"

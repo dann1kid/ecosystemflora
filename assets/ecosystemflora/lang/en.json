@@ -952,6 +952,7 @@
   "ecosystemflora:inspect-line-tree-seral-mid": "Forest role: mid-seral (edges and young stands).",
   "ecosystemflora:inspect-line-tree-seral-pioneer": "Forest role: pioneer (prefers open / early seral cells).",
   "ecosystemflora:inspect-line-tree-size": "Structure: trunk {0} blocks, crown radius {1} ({2}% of typical mature ~{3}/{4}).",
+  "ecosystemflora:inspect-line-tree-too-young": "Too young to spread seeds ({0} / {1} years since ecology registration).",
   "ecosystemflora:inspect-line-waiting-scan": "Waiting for chunk registration scan — stay nearby or wait.",
   "ecosystemflora:inspect-list-separator": ", ",
   "ecosystemflora:inspect-pos": "Position",

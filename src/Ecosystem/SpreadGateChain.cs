@@ -18,8 +18,8 @@ namespace WildFarming.Ecosystem
     }
 
     /// <summary>
-    /// Young wild trees should not spread immediately. This primarily targets the mod's log-grown seedlings;
-    /// worldgen-sized trees register at age 0 and are allowed to spread once large enough.
+    /// Young wild trees should not spread immediately. Ecology seedlings wait for calendar maturity;
+    /// worldgen-sized trunks keep soft size bypass via <see cref="ReproducerEntry.TreeStructuralSpreadBypass"/>.
     /// </summary>
     internal sealed class YoungTreeSpreadGate : ISpreadGate
     {

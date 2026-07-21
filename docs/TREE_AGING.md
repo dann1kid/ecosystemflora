@@ -43,6 +43,11 @@ Toggle **`EnableTreeSenescenceRemains`** off to skip stump/logs (bare air on fin
 Wild trees do not start spreading offspring immediately after they appear. Each species has a default
 **spread maturity age** (years since ecology registration), based on real-world seed-bearing onset.
 
+**Ecology seedlings** (wild spread places a 1-block `log-grown` + small crown) must reach that calendar age
+before they can spread — even if yearly growth already made the trunk look medium-sized. Soft size
+bypass applies only when the trunk was **already worldgen-sized at registration**
+(`TreeStructuralSpreadBypass`), or when structure alone estimates full maturity age.
+
 See: `docs/TREE_REPRODUCTION_MATURITY.md`.
 
 ---

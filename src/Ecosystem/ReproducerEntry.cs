@@ -44,6 +44,13 @@ namespace WildFarming.Ecosystem
         /// </summary>
         public int TreeLifespanDebtYears { get; set; }
 
+        /// <summary>
+        /// Set at registration when the trunk was already worldgen-sized. Soft structural spread
+        /// bypass applies only then — ecology seedlings must wait for calendar maturity (or full
+        /// structure estimate), even after yearly growth makes them look medium-sized.
+        /// </summary>
+        public bool TreeStructuralSpreadBypass { get; set; }
+
         /// <summary>Meadow flower phenology phase when <see cref="FlowerPhenology"/> is enabled.</summary>
         public FlowerPhenologyPhase PhenologyPhase { get; set; }
 

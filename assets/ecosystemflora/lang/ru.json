@@ -944,6 +944,7 @@
   "ecosystemflora:inspect-line-tree-seral-mid": "Роль в лесу: средняя сукцессия (опушка, молодой лес).",
   "ecosystemflora:inspect-line-tree-seral-pioneer": "Роль в лесу: пионер (открытые / ранние клетки).",
   "ecosystemflora:inspect-line-tree-size": "Размер: ствол {0} блок., радиус кроны {1} ({2}% от типичного зрелого ~{3}/{4}).",
+  "ecosystemflora:inspect-line-tree-too-young": "Ещё рано для семян ({0} / {1} лет с регистрации в экологии).",
   "ecosystemflora:inspect-line-waiting-scan": "Ждёт скана регистрации чанка — побудьте рядом или подождите.",
   "ecosystemflora:inspect-list-separator": ", ",
   "ecosystemflora:inspect-pos": "Позиция",

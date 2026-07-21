@@ -1042,6 +1042,17 @@ namespace WildFarming.Ecosystem
                 sizePct.ToString(),
                 profile.ReferenceTrunkHeight.ToString(),
                 profile.ReferenceCrownRadius.ToString());
+
+            int spreadMaturity = TreeSpreadMaturity.ResolveMaturityYears(wood, EcosystemConfig.Loaded);
+            if (spreadMaturity > 0
+                && !TreeSpreadMaturity.AllowsSpread(api, entry, EcosystemConfig.Loaded))
+            {
+                AddInspectLine(
+                    lines,
+                    "ecosystemflora:inspect-line-tree-too-young",
+                    entry.TreeAgeYears.ToString(),
+                    spreadMaturity.ToString());
+            }
         }
 
         static void AppendFerntreeAgingInspect(

@@ -139,6 +139,14 @@ namespace WildFarming.Ecosystem
                     return true;
                 };
 
+                System.Func<ReproducerEntry, double> spreadIntervalHours = entry =>
+                {
+                    double interval = entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
+                        ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
+                        : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements);
+                    return TreeSpreadMaturity.RescheduleIntervalHours(api, entry, cfg, interval);
+                };
+
                 if (cfg.EnableChunkFairSpread)
                 {
                     timings.SpreadProcessed = registry.ProcessDueChunkFair(
@@ -146,9 +154,7 @@ namespace WildFarming.Ecosystem
                         now,
                         cfg.MaxReproduceAttemptsPerTick,
                         spreadActiveChunks,
-                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                        spreadIntervalHours,
                         trySpread,
                         spreadBudgetTicks,
                         tickBudgetWatch);
@@ -158,9 +164,7 @@ namespace WildFarming.Ecosystem
                     timings.SpreadProcessed = registry.ProcessDue(
                         now,
                         cfg.MaxReproduceAttemptsPerTick,
-                        entry => entry.Requirements?.Habitat == EcologyHabitat.MyceliumAnchor
-                            ? MyceliumSpreadTiming.EffectiveIntervalHours(api, cfg, entry.Requirements)
-                            : SpeciesSpread.EffectiveIntervalHours(api, entry.Origin, cfg, entry.Requirements),
+                        spreadIntervalHours,
                         trySpread,
                         spreadActiveChunks,
                         spreadBudgetTicks,

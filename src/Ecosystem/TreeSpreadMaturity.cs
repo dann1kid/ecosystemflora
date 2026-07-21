@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace WildFarming.Ecosystem
 {
@@ -22,11 +23,102 @@ namespace WildFarming.Ecosystem
             int maturityYears = ResolveMaturityYears(wood, cfg);
             if (maturityYears <= 0) return true;
 
-            int effectiveAge = EffectiveAgeYears(acc, entry, wood);
-            if (effectiveAge >= maturityYears) return true;
-
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
             TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
+            int estimated = TreeRegistrationAge.EstimateFromStructure(acc, entry.Origin, wood);
+
+            return AllowsSpread(
+                entry.TreeAgeYears,
+                entry.TreeStructuralSpreadBypass,
+                estimated,
+                metrics,
+                profile,
+                cfg,
+                maturityYears);
+        }
+
+        /// <summary>
+        /// Calendar maturity is required for ecology seedlings. Soft size bypass applies only when the
+        /// tree was already worldgen-sized at registration (<see cref="ReproducerEntry.TreeStructuralSpreadBypass"/>),
+        /// or when structure alone estimates full maturity age.
+        /// </summary>
+        public static bool AllowsSpread(
+            int treeAgeYears,
+            bool structuralBypassEligible,
+            int estimatedAgeYears,
+            in TreeStructureMetrics metrics,
+            in WildTreeGrowthProfiles.Profile profile,
+            EcosystemConfig cfg,
+            int maturityYears)
+        {
+            if (maturityYears <= 0) return true;
+
+            int calendarAge = treeAgeYears < 0 ? 0 : treeAgeYears;
+            if (calendarAge >= maturityYears) return true;
+
+            if (estimatedAgeYears >= maturityYears) return true;
+
+            return structuralBypassEligible
+                && MeetsStructuralBypass(metrics, profile, cfg);
+        }
+
+        /// <summary>
+        /// Years until calendar spread maturity (0 when already eligible by age). Does not account for
+        /// structural bypass — callers that need the live gate should use <see cref="AllowsSpread"/>.
+        /// </summary>
+        public static int YearsUntilCalendarMaturity(int treeAgeYears, int maturityYears)
+        {
+            if (maturityYears <= 0) return 0;
+            int calendarAge = treeAgeYears < 0 ? 0 : treeAgeYears;
+            return calendarAge >= maturityYears ? 0 : maturityYears - calendarAge;
+        }
+
+        /// <summary>Prefer a full game year between polls while a tree is still too young to spread.</summary>
+        public static double RescheduleIntervalHours(
+            ICoreAPI api,
+            ReproducerEntry entry,
+            EcosystemConfig cfg,
+            double normalIntervalHours)
+        {
+            if (api?.World?.Calendar == null || entry == null || cfg == null)
+            {
+                return normalIntervalHours;
+            }
+
+            if (entry.Requirements?.Habitat != EcologyHabitat.TerrestrialTree)
+            {
+                return normalIntervalHours;
+            }
+
+            if (AllowsSpread(api, entry, cfg))
+            {
+                return normalIntervalHours;
+            }
+
+            IGameCalendar cal = api.World.Calendar;
+            if (cal.DaysPerYear <= 0 || cal.HoursPerDay <= 0)
+            {
+                return normalIntervalHours;
+            }
+
+            double yearHours = cal.DaysPerYear * cal.HoursPerDay;
+            return yearHours > normalIntervalHours ? yearHours : normalIntervalHours;
+        }
+
+        /// <summary>True when this trunk was large enough at registration to use soft size bypass.</summary>
+        public static bool EvaluateStructuralBypassEligibility(
+            IBlockAccessor acc,
+            BlockPos trunkBase,
+            string wood,
+            EcosystemConfig cfg)
+        {
+            if (acc == null || trunkBase == null || string.IsNullOrEmpty(wood) || cfg == null)
+            {
+                return false;
+            }
+
+            WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
+            TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
             return MeetsStructuralBypass(metrics, profile, cfg);
         }
 

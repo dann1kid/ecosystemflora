@@ -6,7 +6,10 @@ Implementation:
 
 - **Code**: `WildTreeGrowthProfiles.Profile.SpreadMaturityAgeYears`
 - **Gate**: `YoungTreeSpreadGate` in `src/Ecosystem/SpreadGateChain.cs`
-- **Bypass**: worldgen-sized trees register at age 0; if trunk height ≥ `TreeYoungSpreadBypassTrunkHeight`, the age gate is bypassed.
+- **Bypass**: worldgen-sized trees set `TreeStructuralSpreadBypass` at registration; soft size bypass
+  (trunk ≥ ~55% of species reference, size index ≥ 40%, or `TreeYoungSpreadBypassTrunkHeight`) applies
+  only for those entries. Ecology seedlings start with the flag off and must wait for calendar maturity
+  (or a full structure-age estimate), even after yearly growth.
 
 ### Defaults (years since ecology registration)
 

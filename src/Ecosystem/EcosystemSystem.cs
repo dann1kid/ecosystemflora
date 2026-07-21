@@ -938,6 +938,18 @@ namespace WildFarming.Ecosystem
                             gameYear,
                             entry.TreeAgeYears,
                             cfg.MaxTreeGrowthCatchUpYearsPerTick);
+
+                        // Pre-4.11.23 saves lack StructuralSpreadBypass. Infer only at age 0 so
+                        // worldgen trunks keep soft bypass; grown ecology seedlings (age > 0) stay gated.
+                        if (!entry.TreeStructuralSpreadBypass && entry.TreeAgeYears == 0)
+                        {
+                            entry.TreeStructuralSpreadBypass =
+                                TreeSpreadMaturity.EvaluateStructuralBypassEligibility(
+                                    api.World.BlockAccessor,
+                                    origin,
+                                    wood,
+                                    cfg);
+                        }
                     }
                     else
                     {
@@ -946,6 +958,11 @@ namespace WildFarming.Ecosystem
                         entry.TreeSenescencePhase = TreeSenescencePhase.None;
                         // One year behind so the next growth tick can run (including catch-up after time skip).
                         entry.LastTreeGrowthYear = gameYear - 1;
+                        entry.TreeStructuralSpreadBypass = TreeSpreadMaturity.EvaluateStructuralBypassEligibility(
+                            api.World.BlockAccessor,
+                            origin,
+                            wood,
+                            cfg);
                     }
 
                     treeCalendarAgeStore.Capture(entry, wood);
