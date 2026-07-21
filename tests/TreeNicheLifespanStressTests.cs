@@ -1,6 +1,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using WildFarming.Ecosystem;
+using WildFarming.Ecosystem.Testing;
 using Xunit;
 
 namespace WildFarming.Tests
@@ -281,6 +282,66 @@ namespace WildFarming.Tests
             Assert.True(loaded.TryRestore(restored, pos, "oak"));
             Assert.Equal(12, restored.TreeLifespanDebtYears);
             Assert.Equal(44, restored.TreeAgeYears);
+        }
+        [Fact]
+        public void ClassifyYear_SoftMiss_WhenSeralLow()
+        {
+            EcosystemConfig prior = EcosystemConfig.Loaded;
+            try
+            {
+                EcosystemConfig.Loaded = Cfg;
+                // Climax pine wants denser cover; open cell → low seral → soft miss.
+                var pine = new PlantRequirements
+                {
+                    Species = "pine",
+                    Habitat = EcologyHabitat.TerrestrialTree,
+                    MinTemp = -20f,
+                    MaxTemp = 22f,
+                    MinRain = 0.38f,
+                    MaxRain = 1f,
+                    MinForest = 0f,
+                    MaxForest = 1f,
+                };
+                TreeNicheStubContext ctx = InNicheCtx();
+                ctx.LocalForestCover = 0.02f;
+
+                Assert.Equal(
+                    TreeNicheLifespanStress.YearOutcome.SoftMiss,
+                    TreeNicheLifespanStress.ClassifyYear(pine, ctx, "pine", Cfg));
+            }
+            finally
+            {
+                EcosystemConfig.Loaded = prior;
+            }
+        }
+
+        [Fact]
+        public void CountForestNeighbors_ExcludesOwnCrownFootprint()
+        {
+            var air = new Block { BlockId = 0, Code = new AssetLocation("game:air") };
+            var leaf = new Block
+            {
+                BlockId = 1,
+                Code = new AssetLocation("game:leaves-grown-oak-free"),
+            };
+            var farLeaf = new Block
+            {
+                BlockId = 2,
+                Code = new AssetLocation("game:leaves-grown-birch-free"),
+            };
+            var acc = new EcologyTestBlockAccessor(new[] { air, leaf, farLeaf }) { MapSizeY = 80 };
+            var trunk = new BlockPos(10, 64, 10, 0);
+
+            // Own crown leaf adjacent to trunk.
+            acc.SetBlock(leaf.BlockId, new BlockPos(11, 65, 10, 0));
+            // Other tree leaf outside exclude radius 1.
+            acc.SetBlock(farLeaf.BlockId, new BlockPos(13, 65, 10, 0));
+
+            int withSelf = FloraContextSampler.CountForestNeighbors(acc, trunk, radius: 3, excludeRadius: 0);
+            int withoutSelf = FloraContextSampler.CountForestNeighbors(acc, trunk, radius: 3, excludeRadius: 1);
+
+            Assert.True(withSelf >= 2);
+            Assert.Equal(1, withoutSelf);
         }
     }
 }

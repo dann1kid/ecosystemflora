@@ -238,7 +238,7 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `EnableStumpDecay` | bool | **true** | server | On: senescent snag stumps decay and remove after calendar years. Off: stumps persist. |
 | `EnableTreeAging` | bool | **true** | server | On: calendar age and yearly structure growth on wild trees. Off: no wild tree growth (senescence needs this). |
 | `EnableTreeSenescence` | bool | **true** | server | On: phased wild tree death after species lifespan (snag → stump/logs). Off: trees never die of age. |
-| `EnableTreeNicheLifespanStress` | bool | **true** | server | On: climate/forest mismatch shortens effective lifespan each year, then normal senescence. Off: full species lifespan. |
+| `EnableTreeNicheLifespanStress` | bool | **true** | server | On: climate/forest mismatch shortens effective lifespan each year (worldgen temp; forest excludes own crown), then normal senescence. Off: full species lifespan. |
 | `TreeNicheLifespanStressGraceYears` | int | `8` | server | No debt while calendar age below this. |
 | `TreeNicheLifespanStressHardDebtPerYear` | int | `2` | server | Debt years per year outside temp/rain/forest window. |
 | `TreeNicheLifespanStressSoftDebtPerYear` | int | `1` | server | Debt years on soft seral mismatch. |

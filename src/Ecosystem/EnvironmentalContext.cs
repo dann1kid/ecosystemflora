@@ -73,6 +73,67 @@ namespace WildFarming.Ecosystem
             return SampleForSurvival(api, plantPos, requirements, EcosystemSystem.Instance?.ColumnCache);
         }
 
+        /// <summary>
+        /// Yearly tree niche lifespan check: worldgen temperature (not season), rainfall, and local forest
+        /// cover with the trunk's own crown footprint excluded.
+        /// </summary>
+        public static EnvironmentalContext SampleForTreeNicheLifespan(
+            ICoreAPI api,
+            BlockPos trunkBase,
+            PlantRequirements requirements,
+            string wood)
+        {
+            EnvironmentalContext spread = SampleForSpread(
+                api,
+                trunkBase,
+                requirements,
+                EcosystemSystem.Instance?.ColumnCache);
+
+            float temperature = ReadWorldgenTemperature(api, trunkBase);
+
+            float localForest = spread.LocalForestCover;
+            FloraContextSampler flora = EcosystemSystem.Instance?.FloraContext;
+            if (flora != null && !string.IsNullOrEmpty(wood))
+            {
+                TreeStructureMetrics metrics = TreeStructureProbe.Measure(
+                    api.World.BlockAccessor,
+                    trunkBase,
+                    wood);
+                localForest = flora.GetLocalForestCoverExcludingSelf(
+                    api,
+                    trunkBase,
+                    metrics.CrownRadius);
+            }
+
+            return new EnvironmentalContext(
+                spread.Position,
+                temperature,
+                spread.WorldgenRainfall,
+                localForest,
+                GreenhouseHelper.IsGreenhouse(api, trunkBase),
+                spread.GroundFertility,
+                spread.GroundSoilKinds,
+                spread.GroundSideSolid,
+                spread.SpaceReplaceable,
+                spread.HasClimate,
+                spread.TouchesFluid,
+                spread.HasShallowWater);
+        }
+
+        static float ReadWorldgenTemperature(ICoreAPI api, BlockPos plantPos)
+        {
+            if (api?.World?.BlockAccessor == null || plantPos == null) return 0f;
+            ClimateCondition worldgen = api.World.BlockAccessor.GetClimateAt(
+                plantPos,
+                EnumGetClimateMode.WorldGenValues);
+            if (worldgen != null) return worldgen.Temperature;
+
+            ClimateCondition now = api.World.BlockAccessor.GetClimateAt(
+                plantPos,
+                EnumGetClimateMode.NowValues);
+            return now?.Temperature ?? 0f;
+        }
+
         internal static EnvironmentalContext SampleForSpread(
             ICoreAPI api,
             BlockPos plantPos,

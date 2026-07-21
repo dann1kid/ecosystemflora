@@ -106,7 +106,25 @@ namespace WildFarming.Ecosystem
 
         static int CountForestNeighbors(IBlockAccessor acc, BlockPos center, int radius)
         {
+            return CountForestNeighbors(acc, center, radius, excludeRadius: 0);
+        }
+
+        /// <summary>
+        /// Forest neighbor count for niche checks on a standing tree: columns within
+        /// <paramref name="excludeRadius"/> (Chebyshev) of the trunk are ignored so the tree's own
+        /// crown does not inflate local cover.
+        /// </summary>
+        public static int CountForestNeighbors(
+            IBlockAccessor acc,
+            BlockPos center,
+            int radius,
+            int excludeRadius)
+        {
             int count = 0;
+            if (acc == null || center == null) return 0;
+            if (radius < 0) radius = 0;
+            if (excludeRadius < 0) excludeRadius = 0;
+
             int y0 = center.Y - 1;
             int y1 = center.Y + 2;
             var scanPos = new BlockPos(0);
@@ -116,6 +134,13 @@ namespace WildFarming.Ecosystem
                 for (int dz = -radius; dz <= radius; dz++)
                 {
                     if (dx == 0 && dz == 0) continue;
+                    if (excludeRadius > 0)
+                    {
+                        int chebyshev = dx < 0 ? -dx : dx;
+                        int az = dz < 0 ? -dz : dz;
+                        if (az > chebyshev) chebyshev = az;
+                        if (chebyshev <= excludeRadius) continue;
+                    }
 
                     for (int y = y0; y <= y1; y++)
                     {
@@ -131,6 +156,27 @@ namespace WildFarming.Ecosystem
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// Local forest cover excluding the trunk's own crown footprint (for tree niche lifespan).
+        /// </summary>
+        public float GetLocalForestCoverExcludingSelf(ICoreAPI api, BlockPos trunkBase, int crownRadius)
+        {
+            if (api == null || trunkBase == null) return 0f;
+
+            EcosystemConfig cfg = EcosystemConfig.Loaded;
+            int radius = cfg.FloraContextNeighborRadius;
+            int exclude = crownRadius < 1 ? 1 : crownRadius;
+            // Need scan radius past the excluded crown or cover is always zero.
+            if (radius <= exclude) radius = exclude + 1;
+
+            int forestNeighbors = CountForestNeighbors(
+                api.World.BlockAccessor,
+                trunkBase,
+                radius,
+                exclude);
+            return CoverFromNeighborCount(forestNeighbors);
         }
 
         internal static bool IsForestNeighborBlock(Block block)

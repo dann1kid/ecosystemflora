@@ -74,6 +74,9 @@ namespace WildFarming.Ecosystem
         /// <summary>
         /// Hard miss = temp / rain / forest window fail.
         /// Soft miss = hard OK but seral multiplier below threshold (when seral succession is on).
+        /// Temperature must be annual/worldgen — seasonal NowValues would HardMiss every winter.
+        /// Forest cover for standing trees must exclude the trunk's own crown (see
+        /// <see cref="EnvironmentalContext.SampleForTreeNicheLifespan"/>).
         /// </summary>
         public static YearOutcome ClassifyYear(
             PlantRequirements req,
@@ -116,7 +119,11 @@ namespace WildFarming.Ecosystem
             if (api == null || !ShouldEvaluate(entry, cfg)) return YearOutcome.Skipped;
 
             PlantRequirements req = entry.Requirements;
-            EnvironmentalContext ctx = EnvironmentalContext.SampleForSurvival(api, entry.Origin, req);
+            EnvironmentalContext ctx = EnvironmentalContext.SampleForTreeNicheLifespan(
+                api,
+                entry.Origin,
+                req,
+                wood);
             return ClassifyYear(req, ctx, wood, cfg);
         }
 

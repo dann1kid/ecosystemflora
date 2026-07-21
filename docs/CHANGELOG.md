@@ -3,11 +3,15 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.11.23** (unreleased) — immature tree spread gate
+**Next release:** **4.11.24** (unreleased) — tree niche stress sampling fix
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.11.24
+
+- **Tree niche lifespan sampling** — yearly niche check uses worldgen temperature (not seasonal) and local forest cover with the tree’s own crown excluded, so mature stands no longer self-accrue hard/soft debt every year.
 
 ## Unreleased — 4.11.23
 

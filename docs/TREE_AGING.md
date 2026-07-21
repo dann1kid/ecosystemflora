@@ -67,13 +67,14 @@ When **`EnableTreeNicheLifespanStress`** is on (default), each simulated game ye
 
 | Outcome | Condition | Debt change (defaults) |
 |---------|-----------|------------------------|
-| **Hard miss** | Temp, rainfall, or local forest cover outside the species window | **+2** years |
+| **Hard miss** | Worldgen temp, rainfall, or **surrounding** forest cover outside the species window | **+2** years |
 | **Soft miss** | Climate OK but seral multiplier &lt; `TreeNicheLifespanStressSeralSoftThreshold` (0.35) | **+1** year |
 | **In niche** | Climate + forest OK (and seral above soft threshold when seral is on) | **−1** year (recovery) |
 
 - **Grace:** no accrual while `TreeAgeYears` &lt; `TreeNicheLifespanStressGraceYears` (default **8**) — protects age-0 worldgen trunks.
 - **Cap:** debt ≤ `SenescenceAgeYears × TreeNicheLifespanStressMaxDebtFraction` (default **0.5**).
 - **Effective horizon:** `max(1, SenescenceAgeYears − debt)` — then normal phased senescence.
+- **Sampling:** uses **worldgen** temperature (not seasonal NowValues — otherwise every winter is a hard miss) and local forest cover with the trunk’s **own crown footprint excluded** (otherwise mature crowns self-trigger density / soft-seral debt).
 - **Perf:** climate/forest sampled at most **once per tree per growth tick** (reused across catch-up years). Grace years and disabled feature skip sampling. Cost sits on the existing tree-growth prep path (`MaxTreeGrowthAttemptsPerTick`, default 2), not the flower stress tick.
 - Persisted with calendar age (`LifespanDebtYears` on the tree-age save blob).
 - Inspect shows age against the **effective** horizon and a debt line when debt &gt; 0.
