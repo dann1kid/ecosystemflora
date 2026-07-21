@@ -22,7 +22,7 @@ namespace WildFarming.Client
         const double DialogWidth = 720;
         const double DialogHeightWelcome = 320;
         const double DialogHeightProfile = 300;
-        const double DialogHeightBench = 610;
+        const double DialogHeightBench = 640;
         const double EditColWidth = 78;
         const double BenchColWidth = 62;
         const double MinimalColWidth = 62;
@@ -295,6 +295,19 @@ namespace WildFarming.Client
                 OnUseMinimalValues,
                 ElementBounds.Fixed(btnX, y, 190, 26),
                 CairoFont.WhiteSmallText());
+            y += 28;
+
+            composer.AddButton(
+                L("setup-wizard-x3d-use"),
+                OnUseX3dOptimize,
+                ElementBounds.Fixed(pad, y, 280, 26),
+                CairoFont.WhiteSmallText());
+            y += 30;
+
+            composer.AddStaticText(
+                L("setup-wizard-x3d-hint"),
+                CairoFont.WhiteSmallText(),
+                ElementBounds.Fixed(pad, y, contentW, 28));
             y += 30;
 
             composer.AddStaticText(
@@ -594,6 +607,14 @@ namespace WildFarming.Client
             EcosystemPerfCalibrator.CopyWizardFields(minimalCfg, working);
             working.BalancePreset = EcosystemBalancePresets.Custom;
             nearPlayers = working.OnlyActivateNearPlayers;
+            return TryCompose();
+        }
+
+        bool OnUseX3dOptimize()
+        {
+            EcosystemPerfCalibrator.ApplyX3dOptimize(working);
+            nearPlayers = working.OnlyActivateNearPlayers;
+            lastResultText = L("setup-wizard-x3d-applied");
             return TryCompose();
         }
 

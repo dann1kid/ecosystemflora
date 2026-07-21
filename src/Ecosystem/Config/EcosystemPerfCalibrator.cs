@@ -49,6 +49,12 @@ namespace WildFarming.Ecosystem.Config
             nameof(EcosystemConfig.PlayerVicinityRescanIntervalMs),
             nameof(EcosystemConfig.EnableCyclicFloraDiscovery),
             nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick),
+            nameof(EcosystemConfig.EnableCyclicTreeDiscovery),
+            nameof(EcosystemConfig.MaxTreeRescanColumnsPerTick),
+            nameof(EcosystemConfig.FoliageCatchUpOnChunkLoad),
+            nameof(EcosystemConfig.MaxFoliageCatchUpPerChunk),
+            nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick),
+            nameof(EcosystemConfig.MaxPendingTallgrassPromotionChecksPerTick),
             nameof(EcosystemConfig.TickBudgetMs),
             nameof(EcosystemConfig.SpreadBudgetMs),
             nameof(EcosystemConfig.RegistrationBudgetMs),
@@ -192,7 +198,8 @@ namespace WildFarming.Ecosystem.Config
                         vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
                         eventWake: true, seasonWake: true, columnCache: true,
                         bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
-                        onlyNearPlayers: false);
+                        onlyNearPlayers: true);
+                    ApplyWeakEcologyCaps(cfg);
                     break;
 
                 case PerfTier.Strong:
@@ -205,7 +212,7 @@ namespace WildFarming.Ecosystem.Config
                         floraRescan: 10, chunkCols: 18, registrations: 72, applies: 110, appliesPerChunk: 28,
                         snapCells: 420, snapBand: 28, regPending: 8, regDone: 8, regDrain: 4, activeSnaps: 4,
                         spreadPending: 8, spreadDone: 8, spreadDrain: 4, spreadIntents: 24,
-                        workers: 0, wakeRadius: 0, priorityRadius: 80,
+                        workers: 2, wakeRadius: 0, priorityRadius: 80,
                         priorityScans: 8, priorityRegs: 420, burstPerChunk: 2048, priorityApplies: 110,
                         vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
                         eventWake: true, seasonWake: true, columnCache: true,
@@ -223,7 +230,7 @@ namespace WildFarming.Ecosystem.Config
                         floraRescan: 7, chunkCols: 14, registrations: 54, applies: 85, appliesPerChunk: 21,
                         snapCells: 340, snapBand: 24, regPending: 6, regDone: 6, regDrain: 3, activeSnaps: 3,
                         spreadPending: 6, spreadDone: 6, spreadDrain: 3, spreadIntents: 16,
-                        workers: 0, wakeRadius: 0, priorityRadius: 64,
+                        workers: 2, wakeRadius: 0, priorityRadius: 64,
                         priorityScans: 6, priorityRegs: 340, burstPerChunk: 2048, priorityApplies: 85,
                         vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
                         eventWake: true, seasonWake: true, columnCache: true,
@@ -247,10 +254,11 @@ namespace WildFarming.Ecosystem.Config
                 spreadPending: 2, spreadDone: 2, spreadDrain: 1, spreadIntents: 4,
                 workers: 1, wakeRadius: 48, priorityRadius: 32,
                 priorityScans: 1, priorityRegs: 48, burstPerChunk: 256, priorityApplies: 24,
-                vicinity: true, cyclicFlora: true, fairSpread: true, twoPhase: true,
+                vicinity: false, cyclicFlora: true, fairSpread: true, twoPhase: true,
                 eventWake: true, seasonWake: false, columnCache: true,
-                bgSpread: true, bgReg: true, priorityReg: true, burstReg: true,
+                bgSpread: true, bgReg: true, priorityReg: true, burstReg: false,
                 onlyNearPlayers: true);
+            ApplySuperMinimalEcologyCaps(cfg);
         }
 
         static void ApplyTierCore(
@@ -332,10 +340,86 @@ namespace WildFarming.Ecosystem.Config
             cfg.OnlyActivateNearPlayers = onlyNearPlayers;
         }
 
+        /// <summary>Extra potato-friendly caps left out of the shared perf-tier core.</summary>
+        static void ApplyWeakEcologyCaps(EcosystemConfig cfg)
+        {
+            cfg.FoliageCatchUpOnChunkLoad = true;
+            cfg.MaxFoliageCatchUpPerChunk = 24;
+            cfg.FoliageChunkWorkPerTick = 1;
+            cfg.EnableCyclicTreeDiscovery = true;
+            cfg.MaxTreeRescanColumnsPerTick = 2;
+            cfg.MaxFlowerPhenologyChecksPerTick = 8;
+            cfg.MaxFernPhenologyChecksPerTick = 6;
+            cfg.MaxTallgrassPhenologyChecksPerTick = 6;
+            cfg.MaxPendingTallgrassPromotionChecksPerTick = 12;
+            cfg.MaxPendingFlowerMaturationChecksPerTick = 8;
+            cfg.MaxTreeGrowthAttemptsPerTick = 1;
+            cfg.MaxTreeGrowthCatchUpYearsPerTick = 2;
+        }
+
+        static void ApplySuperMinimalEcologyCaps(EcosystemConfig cfg)
+        {
+            cfg.FoliageCatchUpOnChunkLoad = false;
+            cfg.MaxFoliageCatchUpPerChunk = 12;
+            cfg.FoliageChunkWorkPerTick = 1;
+            cfg.EnableCyclicTreeDiscovery = false;
+            cfg.MaxTreeRescanColumnsPerTick = 1;
+            cfg.MaxFlowerPhenologyChecksPerTick = 4;
+            cfg.MaxFernPhenologyChecksPerTick = 3;
+            cfg.MaxTallgrassPhenologyChecksPerTick = 3;
+            cfg.MaxPendingTallgrassPromotionChecksPerTick = 6;
+            cfg.MaxPendingFlowerMaturationChecksPerTick = 4;
+            cfg.MaxTreeGrowthAttemptsPerTick = 1;
+            cfg.MaxTreeGrowthCatchUpYearsPerTick = 1;
+            cfg.EnableSeasonalFoliage = false;
+        }
+
+        /// <summary>
+        /// Dual-CCD / X3D-friendly clamp: keep ecology alive, but do not flood half of all
+        /// logical cores (cross-CCD noise vs Vintage Story main thread). Also useful on
+        /// Intel hybrid CPUs — fewer workers beat aggressive P+E scheduling. Laptops should
+        /// prefer Potato / Weak (Super-minimal), not this overlay.
+        /// </summary>
+        public static void ApplyX3dOptimize(EcosystemConfig cfg)
+        {
+            if (cfg == null) return;
+
+            cfg.RegistrationWorkerCount = 2;
+            cfg.SpreadWorkerCount = 2;
+            cfg.EnableBackgroundRegistrationScan = true;
+            cfg.EnableBackgroundSpreadSolve = true;
+            // Load burst is redundant with background scan and spikes main on mass chunk load.
+            cfg.EnableBurstRegistrationNearPlayers = false;
+            // Spread/stress/trees near players; registration can still cover loaded terrain.
+            cfg.LimitSpreadNearPlayers = true;
+            cfg.OnlyActivateNearPlayers = false;
+
+            if (cfg.MaxActiveRegistrationSnapshots <= 0 || cfg.MaxActiveRegistrationSnapshots > 3)
+            {
+                cfg.MaxActiveRegistrationSnapshots = 3;
+            }
+
+            if (cfg.MaxActiveRegistrationSnapshots < 1)
+            {
+                cfg.MaxActiveRegistrationSnapshots = 1;
+            }
+
+            cfg.BalancePreset = EcosystemBalancePresets.Custom;
+        }
+
         public static CalibrationResult RunAndApply(EcosystemConfig cfg)
         {
             CalibrationResult result = Run();
-            ApplyTiers(cfg, result.Tier);
+            // Potato PCs that classify Weak get Super-minimal (not the milder Weak overlay).
+            if (result.Tier == PerfTier.Weak)
+            {
+                ApplySuperMinimal(cfg);
+            }
+            else
+            {
+                ApplyTiers(cfg, result.Tier);
+            }
+
             RecordResult(cfg, result);
             return result;
         }

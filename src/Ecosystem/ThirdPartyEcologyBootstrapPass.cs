@@ -11,8 +11,9 @@ namespace WildFarming.Ecosystem
     {
         public static void ApplyAll(ICoreAPI api)
         {
+            // Always inject attrs at finalize. Participation is gated at runtime by
+            // EnableThirdPartyParticipants so world config can enable after template-off.
             if (api == null || api.Side != EnumAppSide.Server) return;
-            if (!EcosystemConfig.Loaded.EnableThirdPartyParticipants) return;
 
             int fruit = 0, fruitFail = 0;
             int vine = 0, vineFail = 0;

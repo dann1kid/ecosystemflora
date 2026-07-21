@@ -13,8 +13,10 @@ namespace WildFarming.Ecosystem.Harmony
 
         public static void TryApply(ICoreAPI api)
         {
+            // Always patch on server. Displacement is gated at runtime by world config
+            // (EnableMyceliumEcology + EnableMyceliumCapDisplacement) so per-world enable
+            // after a template-off StartPre still works in the same session.
             if (applied || api == null || api.Side != EnumAppSide.Server) return;
-            if (!EcosystemConfig.Loaded.EnableMyceliumEcology) return;
 
             try
             {
@@ -23,8 +25,7 @@ namespace WildFarming.Ecosystem.Harmony
                 applied = true;
 
                 api.Logger.Notification(
-                    "[ecosystemflora] Harmony: mycelium cap displacement patch applied (EnableMyceliumCapDisplacement={0})",
-                    EcosystemConfig.Loaded.EnableMyceliumCapDisplacement);
+                    "[ecosystemflora] Harmony: mycelium cap displacement patch applied (gated by world config)");
 
                 if (transpilerMiss)
                 {

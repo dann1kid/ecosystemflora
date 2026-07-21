@@ -3,11 +3,19 @@
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
 **Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.11.15** (unreleased) — per-world setup wizard, full Performance bench, `/ecosetup`
+**Next release:** **4.11.20** (unreleased) — potato-PC perf stack, setup wizard, `/ecosetup`
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
+
+## Unreleased — 4.11.20
+
+- **Potato / Weak wizard** — profile **Potato PC** + Weak apply Super-minimal; `/ecoautotune` Weak tier also applies Super-minimal; Super-minimal disables seasonal foliage.
+- **X3D / dual-CCD** — wizard profile + bench button: Strong ecology with **2** registration/spread workers, `LimitSpreadNearPlayers`, no load burst; Strong/Balanced auto-tune also use 2 workers (not half of all cores).
+- **Paced fern-phase remap** — legacy column remap resumes across frames (~2 ms slices) instead of one hitch per chunk on mass load.
+- **Worker rescale on Apply** — registration/spread worker count can change mid-session without world reload.
+- **Potato Weak caps** (from 4.11.15+) — near-player, catch-up/phenology/cyclic caps, chunk-load stagger, prep wall-clock.
 
 ## Unreleased — 4.11.15
 
@@ -15,6 +23,10 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Wizard completion stickiness** — `setup-wizard.done` marker + meta flag; SSP stale sync no longer re-opens the wizard after Apply; at most one auto-open per session.
 - **Config load fidelity** — known balance presets no longer wipe hand-edited perf/tick fields on load/save; `WildVineMaxHangDepth` in `trees.json`; enabling ecosystem after disabled Init starts runtime ticks.
 - **Server chat commands** — `/ecosetup` and `/ecoconfig` registered on the server (open GUI via packet).
+- **Boot-order fidelity** — Harmony mycelium patch always applied (displacement gated by world config); third-party ecology attrs always injected at finalize (participation still runtime-gated); flower drygrass drops re-sync on world load and config Apply (restore originals when disabled).
+- **Reproduce prep wall-clock** — `TickBudgetMs` caps maturation/phenology/snow/stump/tree prep before foliage/spread; `SpreadBudgetMs` stays independent so prep cannot starve spread.
+- **Chunk-load hitch smoothing** — deferred strip/remap/mycelium/registration delays staggered per chunk; load-time registration burst skipped when background scan is on (priority queue + paced snapshot instead).
+- **Potato Weak / Super-minimal** — Weak auto-tune enables `OnlyActivateNearPlayers` and lowers foliage catch-up / phenology / cyclic-tree / tallgrass-promotion caps; Super-minimal also disables vicinity rescan, foliage catch-up, cyclic trees, and load burst; chunk-scan tick caches player-chunk sets once.
 
 ## Unreleased — 4.10.32
 

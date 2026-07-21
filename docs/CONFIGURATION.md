@@ -362,9 +362,9 @@ Types: `bool`, `int`, `float`, `double`, `string`. **Scope:** server unless note
 | `RegistrationWorkerCount` | int | `0` | server | Higher: more background column-classification threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread. |
 | `ReproduceTickProfilingIntervalMs` | int | `30000` | server | Higher: less frequent profiling log lines. Lower: more frequent timing logs. |
 | `ReproduceTickProfilingMinRegistry` | int | `2000` | server | Higher: profiling logs only when registry is larger. Lower: logs on smaller registries. |
-| `SpreadBudgetMs` | int | `4` | server | Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap. |
+| `SpreadBudgetMs` | int | `4` | server | Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap. Independent of prep spend. |
 | `SpreadWorkerCount` | int | `0` | server | Higher: more background spread-scoring threads (max 8). 0 = half CPU cores. Snapshot and SetBlock stay on main thread. |
-| `TickBudgetMs` | int | `5` | server | Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited. |
+| `TickBudgetMs` | int | `5` | server | Higher: more ms for reproduce prep (maturation/phenology/trees) before foliage/spread. 0 = unlimited. Spread uses SpreadBudgetMs independently. |
 
 ### Diagnostics, logging & ecology inspect (client)
 

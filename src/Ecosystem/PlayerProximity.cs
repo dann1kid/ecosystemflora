@@ -102,13 +102,23 @@ namespace WildFarming.Ecosystem
         /// <summary>
         /// Build a set of chunk coord keys that fall within radiusBlocks of any online player.
         /// Callers test membership via <see cref="IsActiveChunk"/>.
+        /// Warning: returns a shared buffer — do not retain across another <see cref="BuildActivePlayerChunks"/>
+        /// / <see cref="FillActivePlayerChunks"/> call; use <see cref="FillActivePlayerChunks"/> into a private set instead.
         /// </summary>
         public static HashSet<long> BuildActivePlayerChunks(ICoreAPI api, int radiusBlocks)
         {
-            activeChunkKeys.Clear();
+            FillActivePlayerChunks(api, radiusBlocks, activeChunkKeys);
+            return activeChunkKeys;
+        }
+
+        /// <summary>Clears and fills <paramref name="dest"/> with player-vicinity chunk keys.</summary>
+        public static void FillActivePlayerChunks(ICoreAPI api, int radiusBlocks, HashSet<long> dest)
+        {
+            if (dest == null) return;
+            dest.Clear();
 
             ICoreServerAPI sapi = api as ICoreServerAPI;
-            if (sapi == null || radiusBlocks <= 0) return activeChunkKeys;
+            if (sapi == null || radiusBlocks <= 0) return;
 
             int cs = Vintagestory.API.Config.GlobalConstants.ChunkSize;
             int chunkRadius = (radiusBlocks / cs) + 1;
@@ -124,12 +134,10 @@ namespace WildFarming.Ecosystem
                 {
                     for (int dz = -chunkRadius; dz <= chunkRadius; dz++)
                     {
-                        activeChunkKeys.Add(ChunkKey(pcx + dx, pcz + dz));
+                        dest.Add(ChunkKey(pcx + dx, pcz + dz));
                     }
                 }
             }
-
-            return activeChunkKeys;
         }
 
         public static bool IsActiveChunk(HashSet<long> activeChunks, Vec2i chunkCoord)

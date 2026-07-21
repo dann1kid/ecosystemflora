@@ -8,15 +8,14 @@ namespace WildFarming.Ecosystem
     /// <summary>Registers vanilla mycelium BE anchors when chunks finish loading.</summary>
     internal static class MyceliumChunkRegistrar
     {
-        internal const int ScanDelayMs = 250;
-
         public static void ScheduleScanColumn(ICoreAPI api, Vec2i chunkCoord)
         {
             if (api?.World?.BlockAccessor == null) return;
             if (!EcosystemConfig.Loaded.EnableMyceliumEcology) return;
 
             Vec2i coord = chunkCoord.Copy();
-            api.Event.RegisterCallback(_ => ScanColumnAt(api, coord), ScanDelayMs);
+            // Later than remap base so mass loads do not stack BE walk + surface remap.
+            api.Event.RegisterCallback(_ => ScanColumnAt(api, coord), ChunkLoadDeferral.MyceliumDelayMs(coord));
         }
 
         static void ScanColumnAt(ICoreAPI api, Vec2i chunkCoord)

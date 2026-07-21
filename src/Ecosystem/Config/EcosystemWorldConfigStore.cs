@@ -110,6 +110,7 @@ namespace WildFarming.Ecosystem.Config
                         fromFiles.SetupWizardCompleted);
                 }
 
+                FlowerDrygrassDrops.Apply(sapi);
                 MarkWorldConfigReady();
                 return;
             }
@@ -127,6 +128,7 @@ namespace WildFarming.Ecosystem.Config
                 sapi.Logger.Notification(
                     "[ecosystemflora] Migrated SaveGame config blob → {0}",
                     RelativeWorldPath(activeWorldKey));
+                FlowerDrygrassDrops.Apply(sapi);
                 MarkWorldConfigReady();
                 return;
             }
@@ -139,6 +141,7 @@ namespace WildFarming.Ecosystem.Config
             sapi.Logger.Notification(
                 "[ecosystemflora] Seeded world settings at {0}; setup wizard pending.",
                 RelativeWorldPath(activeWorldKey));
+            FlowerDrygrassDrops.Apply(sapi);
             MarkWorldConfigReady();
         }
 

@@ -44,6 +44,7 @@ namespace WildFarming.Ecosystem
         Thread[] workers;
         IList<Block> blocks;
         volatile bool disposed;
+        volatile int workerGeneration;
         long nextToken;
         int maxPending = 128;
         int maxCompleted = 128;
@@ -59,6 +60,17 @@ namespace WildFarming.Ecosystem
 
         public int DroppedCompletedCount => Volatile.Read(ref droppedCompletedCount);
 
+        public int WorkerCount
+        {
+            get
+            {
+                lock (startLock)
+                {
+                    return workers?.Length ?? 0;
+                }
+            }
+        }
+
         public void ConfigureLimits(int pendingCap, int completedCap)
         {
             maxPending = pendingCap > 0 ? pendingCap : 128;
@@ -71,13 +83,18 @@ namespace WildFarming.Ecosystem
             int count = ResolveWorkerCount(workerCount);
             lock (startLock)
             {
-                if (workers != null) return;
+                if (disposed) return;
+                if (workers != null && workers.Length == count) return;
 
+                StopWorkersUnlocked();
+                workerGeneration++;
+                int generation = workerGeneration;
                 workers = new Thread[count];
                 for (int i = 0; i < count; i++)
                 {
                     int workerIndex = i;
-                    workers[i] = new Thread(() => WorkerLoop(workerIndex))
+                    int gen = generation;
+                    workers[i] = new Thread(() => WorkerLoop(workerIndex, gen))
                     {
                         IsBackground = true,
                         Name = count == 1
@@ -86,6 +103,20 @@ namespace WildFarming.Ecosystem
                     };
                     workers[i].Start();
                 }
+            }
+        }
+
+        void StopWorkersUnlocked()
+        {
+            if (workers == null) return;
+
+            workerGeneration++;
+            signal.Set();
+            Thread[] old = workers;
+            workers = null;
+            for (int i = 0; i < old.Length; i++)
+            {
+                old[i]?.Join(500);
             }
         }
 
@@ -125,15 +156,12 @@ namespace WildFarming.Ecosystem
         public void Dispose()
         {
             disposed = true;
-            signal.Set();
-            if (workers != null)
+            lock (startLock)
             {
-                for (int i = 0; i < workers.Length; i++)
-                {
-                    workers[i]?.Join(500);
-                }
+                StopWorkersUnlocked();
             }
 
+            signal.Set();
             signal.Dispose();
         }
 
@@ -156,11 +184,11 @@ namespace WildFarming.Ecosystem
             return configured;
         }
 
-        void WorkerLoop(int workerIndex)
+        void WorkerLoop(int workerIndex, int generation)
         {
             var winnersScratch = new List<SpreadSolveWinner>();
 
-            while (!disposed)
+            while (!disposed && workerGeneration == generation)
             {
                 if (!queue.TryDequeue(out WorkItem item))
                 {

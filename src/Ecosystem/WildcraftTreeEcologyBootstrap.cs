@@ -14,8 +14,8 @@ namespace WildFarming.Ecosystem
     {
         public static void Apply(ICoreAPI api)
         {
+            // Attrs always; participation gated at runtime by EnableThirdPartyParticipants.
             if (api == null || api.Side != EnumAppSide.Server) return;
-            if (!EcosystemConfig.Loaded.EnableThirdPartyParticipants) return;
 
             int injected = 0;
             int mergeFailed = 0;

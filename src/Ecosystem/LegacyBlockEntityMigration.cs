@@ -12,8 +12,6 @@ namespace WildFarming.Ecosystem
     /// </summary>
     internal static class LegacyBlockEntityMigration
     {
-        internal const int StripDelayMs = 200;
-
         public static void Register(ICoreAPI api)
         {
             api.RegisterBlockEntityClass("EcoSystemLife", typeof(LegacyModBlockEntityStripper));
@@ -23,13 +21,14 @@ namespace WildFarming.Ecosystem
         /// <summary>
         /// Schedule legacy BE removal after the column finishes deserializing block entities.
         /// Positions are collected in the callback — not at load time, when BEs may not exist yet.
+        /// Delay is staggered per chunk so mass loads do not strip every column in one frame.
         /// </summary>
         public static void ScheduleStripColumn(ICoreAPI api, Vec2i chunkCoord)
         {
             if (api?.World?.BlockAccessor == null) return;
 
             Vec2i coord = chunkCoord.Copy();
-            api.Event.RegisterCallback(_ => StripColumnAt(api, coord), StripDelayMs);
+            api.Event.RegisterCallback(_ => StripColumnAt(api, coord), ChunkLoadDeferral.StripDelayMs(coord));
         }
 
         static void StripColumnAt(ICoreAPI api, Vec2i chunkCoord)
@@ -88,6 +87,9 @@ namespace WildFarming.Ecosystem
             if (api.Side != EnumAppSide.Server) return;
 
             BlockPos pos = Pos.Copy();
+            int cx = pos.X / GlobalConstants.ChunkSize;
+            int cz = pos.Z / GlobalConstants.ChunkSize;
+            int delayMs = ChunkLoadDeferral.StripDelayMs(new Vec2i(cx, cz));
             api.Event.RegisterCallback(_ =>
             {
                 try
@@ -97,7 +99,7 @@ namespace WildFarming.Ecosystem
                         acc.RemoveBlockEntity(pos);
                 }
                 catch { /* chunk may already be unloaded */ }
-            }, LegacyBlockEntityMigration.StripDelayMs);
+            }, delayMs);
         }
     }
 }

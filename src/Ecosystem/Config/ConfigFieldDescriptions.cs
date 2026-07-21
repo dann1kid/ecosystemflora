@@ -824,12 +824,12 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: больше незавершённых снимков на main. 0 = 8. Лимит памяти при массовой загрузке.");
 
             D(nameof(EcosystemConfig.TickBudgetMs),
-                "Higher: more ms allowed per reproduce tick (smoother, more CPU). 0 = unlimited.",
-                "Больше: больше мс за размножение-тик. 0 = без лимита.");
+                "Higher: more ms for reproduce prep (maturation/phenology/trees) before foliage/spread. 0 = unlimited. Spread uses SpreadBudgetMs independently.",
+                "Больше: больше мс на prep размножения (созревание/фенология/деревья) до листвы/spread. 0 = без лимита. Spread — отдельно через SpreadBudgetMs.");
 
             D(nameof(EcosystemConfig.SpreadBudgetMs),
-                "Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap.",
-                "Больше: больше мс на распространение (0 = бюджет тика). Меньше: жёстче лимит распространения.");
+                "Higher: more ms for spread phase (0 = TickBudgetMs). Lower: tighter spread cap. Independent of prep spend.",
+                "Больше: больше мс на распространение (0 = бюджет тика). Меньше: жёстче лимит. Независимо от времени prep.");
 
             D(nameof(EcosystemConfig.RegistrationBudgetMs),
                 "Higher: more ms for chunk-scan phase (0 = TickBudgetMs). Lower: tighter registration cap.",
@@ -936,9 +936,12 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: крупные существа у игроков — physics stride (стада могут лагать SSP). Выкл. (по умолчанию): только игроки (OnFootStep).");
 
             D(nameof(EcosystemConfig.EnableFlowerDrygrass),
-                "On: empty hand harvests flower block; knife/scythe yields drygrass. Off: vanilla harvest only.",
-                "Вкл.: пустая рука — блок цветка; нож/коса — сухая трава. Выкл.: только ваниль.");
+                "On: empty hand harvests flower block; knife/scythe yields drygrass (re-synced after world config load). Off: restore vanilla flower drops.",
+                "Вкл.: пустая рука — блок цветка; нож/коса — сухая трава (синхрон после загрузки мира). Выкл.: ванильные дропы цветка.");
 
+            D(nameof(EcosystemConfig.EnableThirdPartyParticipants),
+                "On: third-party blocks with ecology attrs join simulation (attrs always injected at finalize). Off: vanilla blocks only.",
+                "Вкл.: сторонние блоки с ecology-attrs в симуляции (attrs всегда inject при finalize). Выкл.: только ваниль.");
             D(nameof(EcosystemConfig.EnableEcologyInspect),
                 "On: allow ecology inspect hotkey (default I). Off: inspect disabled.",
                 "Вкл.: осмотр экологии по клавише (по умолчанию I). Выкл.: осмотр отключён.");
@@ -962,10 +965,6 @@ namespace WildFarming.Ecosystem.Config
             D(nameof(EcosystemConfig.BerryTraitMutationChance),
                 "Higher: offspring more often lose one random trait on spread. 0 = no mutations.",
                 "Больше: чаще теряется случайная черта при распространении. 0 = без мутаций.");
-
-            D(nameof(EcosystemConfig.EnableThirdPartyParticipants),
-                "On: blocks with ecologyParticipant JSON from other mods join ecology. Off: vanilla blocks only.",
-                "Вкл.: блоки с меткой участника экологии из других модов (например, Wildgrass). Выкл.: только ваниль.");
 
             return m;
         }

@@ -74,6 +74,9 @@ namespace WildFarming.Ecosystem
         internal EnvironmentalColumnCache ColumnCache { get; private set; }
         internal EcologyColumnState EcologyColumns { get; private set; }
         readonly List<Vec2i> activeChunkScratch = new List<Vec2i>();
+        /// <summary>Per-tick player-vicinity chunk sets (avoids shared-buffer clobber + repeated builds).</summary>
+        readonly HashSet<long> scanTickActivationChunks = new HashSet<long>();
+        readonly HashSet<long> scanTickPriorityChunks = new HashSet<long>();
         SpreadCooldownService spreadCooldown;
         readonly Dictionary<BlockPos, MatSpreadCollectMode> spreadMatModeScratch = new Dictionary<BlockPos, MatSpreadCollectMode>();
         readonly Stopwatch tickBudgetWatch = new Stopwatch();
@@ -1093,8 +1096,10 @@ namespace WildFarming.Ecosystem
             bool nearPlayer = cfg.EnablePlayerPriorityRegistration
                 && PlayerProximity.IsNearAnyPlayer(api, center, cfg.PlayerRegistrationPriorityRadiusBlocks);
 
-            Vec2i coordCopy = chunkCoord;
-            api.Event.RegisterCallback(_ => ScheduleRegistrationScan(coordCopy, nearPlayer), 500);
+            Vec2i coordCopy = chunkCoord.Copy();
+            api.Event.RegisterCallback(
+                _ => ScheduleRegistrationScan(coordCopy, nearPlayer),
+                ChunkLoadDeferral.RegistrationDelayMs(coordCopy));
 
             foliageCells.ScheduleChunkSync(api, chunkCoord);
             MyceliumChunkRegistrar.ScheduleScanColumn(api, chunkCoord);
@@ -1106,7 +1111,9 @@ namespace WildFarming.Ecosystem
             if (api.World.BlockAccessor.GetMapChunk(chunkCoord.X, chunkCoord.Y) == null) return;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            if (nearPlayer && cfg.EnableBurstRegistrationNearPlayers)
+            // With background scan, paced snapshot on the scan tick is enough — load burst
+            // only adds a main-thread spike when many columns enqueue together.
+            if (nearPlayer && ChunkLoadDeferral.ShouldBurstOnLoad(cfg))
             {
                 TryBurstRegisterChunk(chunkCoord);
             }
@@ -1437,11 +1444,23 @@ namespace WildFarming.Ecosystem
                 ? registrationBudgetMs * Stopwatch.Frequency / 1000
                 : 0;
 
-            HashSet<long> activePlayerChunks = null;
-            if (cfg.OnlyActivateNearPlayers)
+            PlayerProximity.FillActivePlayerChunks(
+                api, cfg.PlayerActivationRadiusBlocks, scanTickActivationChunks);
+
+            if (cfg.OnlyActivateNearPlayers && scanTickActivationChunks.Count == 0)
             {
-                activePlayerChunks = PlayerProximity.BuildActivePlayerChunks(api, cfg.PlayerActivationRadiusBlocks);
+                if (cfg.EnableBackgroundRegistrationScan)
+                {
+                    backgroundRegistration.PollCompleted(this, cfg);
+                }
+
+                return;
             }
+
+            // Null = unrestricted registration dequeue; cyclic/discovery still use activation set.
+            HashSet<long> activePlayerChunks = cfg.OnlyActivateNearPlayers
+                ? scanTickActivationChunks
+                : null;
 
             tickBudgetWatch.Restart();
 
@@ -1532,39 +1551,25 @@ namespace WildFarming.Ecosystem
                 activePlayerChunks,
                 preferPriority: false);
 
-            if (registrationsLeft > 0)
+            if (registrationsLeft > 0 && scanTickActivationChunks.Count > 0)
             {
-                HashSet<long> treeScanChunks = activePlayerChunks;
-                if (treeScanChunks == null || treeScanChunks.Count == 0)
-                {
-                    treeScanChunks = PlayerProximity.BuildActivePlayerChunks(
-                        api, cfg.PlayerActivationRadiusBlocks);
-                }
-
                 cyclicTreeScanner.ProcessTick(
                     acc,
                     cfg,
-                    treeScanChunks,
+                    scanTickActivationChunks,
                     (basePos, wood) => TryRegisterDiscoveredTree(acc, basePos, ref registrationsLeft),
                     ref registrationsLeft,
                     budgetTicks,
                     tickBudgetWatch);
             }
 
-            if (registrationsLeft > 0)
+            if (registrationsLeft > 0 && scanTickActivationChunks.Count > 0)
             {
-                HashSet<long> floraScanChunks = activePlayerChunks;
-                if (floraScanChunks == null || floraScanChunks.Count == 0)
-                {
-                    floraScanChunks = PlayerProximity.BuildActivePlayerChunks(
-                        api, cfg.PlayerActivationRadiusBlocks);
-                }
-
                 cyclicFloraScanner.ProcessTick(
                     api,
                     acc,
                     cfg,
-                    floraScanChunks,
+                    scanTickActivationChunks,
                     (pos, block, needsEstablishment) =>
                         TryRegisterDiscoveredFlora(acc, pos, block, needsEstablishment, ref registrationsLeft),
                     ref registrationsLeft,
@@ -1577,12 +1582,12 @@ namespace WildFarming.Ecosystem
                         : null);
             }
 
-            DrainPendingRegistrations(cfg, acc, activePlayerChunks);
+            DrainPendingRegistrations(cfg, acc);
 
             tickBudgetWatch.Stop();
         }
 
-        void DrainPendingRegistrations(EcosystemConfig cfg, IBlockAccessor acc, HashSet<long> activePlayerChunks)
+        void DrainPendingRegistrations(EcosystemConfig cfg, IBlockAccessor acc)
         {
             if (pendingRegistrations.TotalPending == 0) return;
 
@@ -1592,8 +1597,16 @@ namespace WildFarming.Ecosystem
             HashSet<long> priorityChunks = null;
             if (cfg.EnablePlayerPriorityRegistration && api != null)
             {
-                priorityChunks = PlayerProximity.BuildActivePlayerChunks(
-                    api, cfg.PlayerRegistrationPriorityRadiusBlocks);
+                if (cfg.PlayerRegistrationPriorityRadiusBlocks == cfg.PlayerActivationRadiusBlocks)
+                {
+                    priorityChunks = scanTickActivationChunks;
+                }
+                else
+                {
+                    PlayerProximity.FillActivePlayerChunks(
+                        api, cfg.PlayerRegistrationPriorityRadiusBlocks, scanTickPriorityChunks);
+                    priorityChunks = scanTickPriorityChunks;
+                }
             }
 
             int appliesLeft = cfg.EffectiveMaxPriorityRegistryAppliesPerTick();
@@ -2133,48 +2146,105 @@ namespace WildFarming.Ecosystem
 
             var timings = new ReproduceTickTimings();
             long tickStart = Stopwatch.GetTimestamp();
+            long prepDeadline = BudgetDeadline.FromBudgetMs(cfg.ResolveReproducePrepBudgetMs(), tickStart);
             backgroundSpread.BeginReproduceTick();
 
-            tickBudgetWatch.Restart();
-            maturationQueues.ProcessTreeSaplings(api, this, now, cfg.MaxPendingTreeChecksPerTick);
-            timings.SaplingsTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                maturationQueues.ProcessTreeSaplings(api, this, now, cfg.MaxPendingTreeChecksPerTick);
+                timings.SaplingsTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            maturationQueues.ProcessFlower(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
-            timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                maturationQueues.ProcessFlower(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
+                timings.FlowerMaturationTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            maturationQueues.ProcessFern(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                maturationQueues.ProcessFern(api, this, now, cfg.MaxPendingFernMaturationChecksPerTick);
 
-            maturationQueues.ProcessShoreSedge(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
+                maturationQueues.ProcessShoreSedge(api, this, now, cfg.MaxPendingFlowerMaturationChecksPerTick);
+            }
 
-            tickBudgetWatch.Restart();
-            flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
-            timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                flowerPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+                timings.FlowerPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            fernPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
-            timings.FernPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                fernPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+                timings.FernPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            tallgrassPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
-            timings.TallgrassPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                tallgrassPhenologyScheduler.Tick(api, cfg, registry, spreadActiveChunks, now);
+                timings.TallgrassPhenologyTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            plantSnowCoverScheduler.Tick(api, cfg, registry, spreadActiveChunks);
-            timings.PlantSnowCoverTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                plantSnowCoverScheduler.Tick(api, cfg, registry, spreadActiveChunks);
+                timings.PlantSnowCoverTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            maturationQueues.ProcessTallgrass(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
-            timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                maturationQueues.ProcessTallgrass(api, this, now, cfg.MaxPendingTallgrassPromotionChecksPerTick);
+                timings.TallgrassPromotionTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            maturationQueues.ProcessBerry(api, this, now, cfg.MaxPendingBerryMaturationChecksPerTick);
-            timings.BerryMaturationTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                maturationQueues.ProcessBerry(api, this, now, cfg.MaxPendingBerryMaturationChecksPerTick);
+                timings.BerryMaturationTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
-            tickBudgetWatch.Restart();
-            stumpDecayScheduler.Process(api, cfg, cfg.MaxStumpDecayChecksPerTick);
-            timings.StumpDecayTicks = tickBudgetWatch.ElapsedTicks;
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                stumpDecayScheduler.Process(api, cfg, cfg.MaxStumpDecayChecksPerTick);
+                timings.StumpDecayTicks = tickBudgetWatch.ElapsedTicks;
+            }
+
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                treeGrowthScheduler.Tick(
+                    api,
+                    cfg,
+                    registry,
+                    spreadActiveChunks,
+                    treeCalendarAgeStore,
+                    CompleteTreeSenescenceRemoval);
+                timings.TreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
+            }
+
+            if (!BudgetDeadline.IsExpired(prepDeadline))
+            {
+                tickBudgetWatch.Restart();
+                ferntreeGrowthScheduler.Tick(
+                    api,
+                    cfg,
+                    registry,
+                    spreadActiveChunks,
+                    treeCalendarAgeStore,
+                    CompleteTreeSenescenceRemoval);
+                timings.FerntreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
+            }
 
             tickBudgetWatch.Restart();
 
@@ -2184,26 +2254,6 @@ namespace WildFarming.Ecosystem
 
             foliageCells.ProcessRandomTick(api, canopyActiveChunks, foliageBudgetTicks, tickBudgetWatch);
             timings.FoliageTicks = tickBudgetWatch.ElapsedTicks;
-
-            tickBudgetWatch.Restart();
-            treeGrowthScheduler.Tick(
-                api,
-                cfg,
-                registry,
-                spreadActiveChunks,
-                treeCalendarAgeStore,
-                CompleteTreeSenescenceRemoval);
-            timings.TreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
-
-            tickBudgetWatch.Restart();
-            ferntreeGrowthScheduler.Tick(
-                api,
-                cfg,
-                registry,
-                spreadActiveChunks,
-                treeCalendarAgeStore,
-                CompleteTreeSenescenceRemoval);
-            timings.FerntreeGrowthTicks = tickBudgetWatch.ElapsedTicks;
 
             RunSpreadAndCommitPhase(cfg, now, spreadActiveChunks, spreadBudgetTicks, ref timings);
 

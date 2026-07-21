@@ -53,6 +53,12 @@ namespace WildFarming.Ecosystem.Config
                 [nameof(EcosystemConfig.EnablePlayerVicinityRescan)] = PerfKnobHint.OnHeavier,
                 [nameof(EcosystemConfig.EnableCyclicFloraDiscovery)] = PerfKnobHint.OnHeavier,
                 [nameof(EcosystemConfig.MaxFloraRescanColumnsPerTick)] = PerfKnobHint.HigherHeavier,
+                [nameof(EcosystemConfig.EnableCyclicTreeDiscovery)] = PerfKnobHint.OnHeavier,
+                [nameof(EcosystemConfig.MaxTreeRescanColumnsPerTick)] = PerfKnobHint.HigherHeavier,
+                [nameof(EcosystemConfig.FoliageCatchUpOnChunkLoad)] = PerfKnobHint.OnHeavier,
+                [nameof(EcosystemConfig.MaxFoliageCatchUpPerChunk)] = PerfKnobHint.HigherHeavier,
+                [nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick)] = PerfKnobHint.HigherHeavier,
+                [nameof(EcosystemConfig.MaxPendingTallgrassPromotionChecksPerTick)] = PerfKnobHint.HigherHeavier,
 
                 [nameof(EcosystemConfig.TickBudgetMs)] = PerfKnobHint.HigherHeavier,
                 [nameof(EcosystemConfig.SpreadBudgetMs)] = PerfKnobHint.HigherHeavier,

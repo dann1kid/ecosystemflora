@@ -59,10 +59,12 @@ Main thread — PendingRegistrationQueue.Drain
 | Mechanism | Config | Effect |
 |-----------|--------|--------|
 | Player-vicinity priority | `EnablePlayerPriorityRegistration`, `PlayerRegistrationPriorityRadiusBlocks` | Chunks near players dequeue first |
-| Load burst | `EnableBurstRegistrationNearPlayers`, `BurstRegistrationBudgetMs` | Extra scan budget after chunk load near players |
+| Load burst | `EnableBurstRegistrationNearPlayers`, `BurstRegistrationBudgetMs` | Extra scan budget after chunk load near players — **only when background scan is off** (sync classify path). With background scan on, load only enqueues (high-priority if near player); snapshot stays paced on the chunk-scan tick |
 | Per-tick caps | `MaxRegistryAppliesPerTick`, `MaxRegistryAppliesPerChunkPerTick`, `MaxPriorityRegistryAppliesPerTick`, … | **Per worker** — effective limit = config value × resolved worker count (`RegistrationWorkerCount`, 0 = half CPU cores) |
 
-When `EnableBackgroundRegistrationScan` is **off**, the same column pass runs **synchronously** on the main thread during chunk scan (legacy path).
+**Mass chunk load (high view distance):** strip / fern-phase remap / mycelium / registration schedule use per-column staggered delays (`ChunkLoadDeferral`) so hundreds of columns do not all run deferred main-thread work in the same frames. Mycelium base delay is later than remap so BE walks do not stack with surface remap. Legacy fern-phase remap is **paced** (~2 ms slices, resume mid-column) so mass loads do not remap every column in one hitch.
+
+When `EnableBackgroundRegistrationScan` is **off**, the same column pass runs **synchronously** on the main thread during chunk scan (legacy path), and near-player load burst still applies.
 
 **Upgrade migration:** existing `ecosystemflora.json` files from before per-worker budgets are converted once on load (`RegistrationBudgetPerWorkerMigrated`). Absolute totals are divided by the resolved worker count so effective throughput stays the same; the file is rewritten with per-worker values.
 

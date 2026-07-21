@@ -110,3 +110,7 @@ Set `BalancePreset` to `custom` to keep your own feature toggles and numbers acr
 Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 
 Originally inspired by JakeCool19's Wild Farming (v1.2.0). Fully rewritten.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). Vintage Story itself remains proprietary; this license covers this mod's source and assets only. Third-party ecology tables / extracted upstream data (if present) remain under their original terms.

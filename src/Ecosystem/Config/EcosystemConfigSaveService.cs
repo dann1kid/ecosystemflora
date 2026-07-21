@@ -47,6 +47,9 @@ namespace WildFarming.Ecosystem.Config
                 EcosystemSystem.Instance?.ColumnTraffic?.Clear();
             }
 
+            // Re-sync knife/scythe drops after per-world toggle (AssetsFinalize may have used template).
+            FlowerDrygrassDrops.Apply(api);
+
             return true;
         }
 

@@ -458,6 +458,12 @@ namespace WildFarming.Ecosystem
 
         public int ResolveRegistrationBudgetMs() => RegistrationBudgetMs > 0 ? RegistrationBudgetMs : TickBudgetMs;
 
+        /// <summary>
+        /// Wall-clock for reproduce prep (maturation/phenology/snow/stump/tree growth) before foliage/spread.
+        /// Independent of <see cref="ResolveSpreadBudgetMs"/> so prep cannot starve spread.
+        /// </summary>
+        public int ResolveReproducePrepBudgetMs() => TickBudgetMs;
+
         /// <summary>Log reproduce-tick phase timings when registry is large (server diagnostics).</summary>
         public bool EnableReproduceTickProfiling { get; set; } = false;
 

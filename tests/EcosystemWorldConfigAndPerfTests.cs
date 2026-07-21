@@ -305,6 +305,7 @@ namespace WildFarming.Tests
             Assert.True(cfg.OnlyActivateNearPlayers);
             Assert.True(EcosystemSetupProfiles.DefaultAutoTune(EcosystemSetupProfiles.Weak));
             Assert.True(EcosystemSetupProfiles.DefaultNearPlayers(EcosystemSetupProfiles.Weak));
+            Assert.False(cfg.EnableSeasonalFoliage);
         }
 
         [Fact]
@@ -341,7 +342,10 @@ namespace WildFarming.Tests
             Assert.True(min.ReproduceTickIntervalMs > weak.ReproduceTickIntervalMs);
             Assert.True(min.MaxFloraRescanColumnsPerTick < weak.MaxFloraRescanColumnsPerTick);
             Assert.True(min.OnlyActivateNearPlayers);
+            Assert.True(weak.OnlyActivateNearPlayers);
             Assert.True(min.MaxReproduceAttemptsPerTick <= 3);
+            Assert.False(min.EnablePlayerVicinityRescan);
+            Assert.True(weak.EnablePlayerVicinityRescan);
         }
 
         [Fact]
@@ -386,7 +390,103 @@ namespace WildFarming.Tests
             Assert.True(cfg.MaxRegistrationsPerTick > 0);
             Assert.True(cfg.PriorityRegistrationBudgetMs > 0);
             Assert.True(cfg.MaxPriorityChunkScansPerTick > 0);
+            Assert.True(cfg.OnlyActivateNearPlayers);
+            Assert.Equal(24, cfg.MaxFoliageCatchUpPerChunk);
+            Assert.True(cfg.MaxFlowerPhenologyChecksPerTick <= 8);
+            Assert.True(cfg.MaxTreeRescanColumnsPerTick <= 2);
+        }
+
+        [Fact]
+        public void ApplyX3dOptimize_CapsWorkersAndLimitsSpread()
+        {
+            var cfg = new EcosystemConfig
+            {
+                RegistrationWorkerCount = 0,
+                SpreadWorkerCount = 0,
+                EnableBurstRegistrationNearPlayers = true,
+                LimitSpreadNearPlayers = false,
+                OnlyActivateNearPlayers = true,
+                MaxActiveRegistrationSnapshots = 8,
+            };
+
+            EcosystemPerfCalibrator.ApplyX3dOptimize(cfg);
+
+            Assert.Equal(2, cfg.RegistrationWorkerCount);
+            Assert.Equal(2, cfg.SpreadWorkerCount);
+            Assert.Equal(2, cfg.EffectiveRegistrationWorkerCount());
+            Assert.False(cfg.EnableBurstRegistrationNearPlayers);
+            Assert.True(cfg.LimitSpreadNearPlayers);
             Assert.False(cfg.OnlyActivateNearPlayers);
+            Assert.True(cfg.MaxActiveRegistrationSnapshots <= 3);
+            Assert.Equal(EcosystemBalancePresets.Custom, cfg.BalancePreset);
+        }
+
+        [Fact]
+        public void ApplyTiers_StrongAndBalanced_UseTwoWorkers()
+        {
+            var strong = new EcosystemConfig();
+            var balanced = new EcosystemConfig();
+            EcosystemPerfCalibrator.ApplyTiers(strong, EcosystemPerfCalibrator.PerfTier.Strong);
+            EcosystemPerfCalibrator.ApplyTiers(balanced, EcosystemPerfCalibrator.PerfTier.Balanced);
+
+            Assert.Equal(2, strong.RegistrationWorkerCount);
+            Assert.Equal(2, strong.SpreadWorkerCount);
+            Assert.Equal(2, balanced.RegistrationWorkerCount);
+            Assert.Equal(2, balanced.EffectiveRegistrationWorkerCount());
+        }
+
+        [Fact]
+        public void SetupProfiles_X3d_AppliesStrongThenX3dClamp()
+        {
+            var cfg = new EcosystemConfig();
+            EcosystemSetupProfiles.ApplyProfile(cfg, EcosystemSetupProfiles.X3d, onlyNearPlayers: true);
+
+            Assert.Equal(2, cfg.RegistrationWorkerCount);
+            Assert.True(cfg.LimitSpreadNearPlayers);
+            Assert.False(cfg.OnlyActivateNearPlayers);
+            Assert.True(cfg.ReproduceTickIntervalMs <= 2800);
+            Assert.Contains(EcosystemSetupProfiles.X3d, EcosystemSetupProfiles.Codes);
+        }
+
+        [Fact]
+        public void ApplySuperMinimal_CutsFoliageCatchUpAndVicinity()
+        {
+            var cfg = new EcosystemConfig();
+            EcosystemPerfCalibrator.ApplySuperMinimal(cfg);
+
+            Assert.True(cfg.OnlyActivateNearPlayers);
+            Assert.False(cfg.EnablePlayerVicinityRescan);
+            Assert.False(cfg.FoliageCatchUpOnChunkLoad);
+            Assert.False(cfg.EnableCyclicTreeDiscovery);
+            Assert.False(cfg.EnableBurstRegistrationNearPlayers);
+            Assert.False(cfg.EnableSeasonalFoliage);
+            Assert.True(cfg.MaxFlowerPhenologyChecksPerTick <= 4);
+            Assert.True(cfg.MaxPendingTallgrassPromotionChecksPerTick <= 6);
+        }
+
+        [Fact]
+        public void SetupProfiles_Potato_AppliesSuperMinimal()
+        {
+            var cfg = new EcosystemConfig();
+            EcosystemSetupProfiles.ApplyProfile(cfg, EcosystemSetupProfiles.Potato, onlyNearPlayers: true);
+
+            Assert.True(cfg.OnlyActivateNearPlayers);
+            Assert.False(cfg.EnableSeasonalFoliage);
+            Assert.False(cfg.FoliageCatchUpOnChunkLoad);
+            Assert.True(EcosystemSetupProfiles.DefaultNearPlayers(EcosystemSetupProfiles.Potato));
+            Assert.False(EcosystemSetupProfiles.DefaultAutoTune(EcosystemSetupProfiles.Potato));
+        }
+
+        [Fact]
+        public void SetupProfiles_Weak_AppliesSuperMinimal()
+        {
+            var cfg = new EcosystemConfig();
+            EcosystemSetupProfiles.ApplyProfile(cfg, EcosystemSetupProfiles.Weak, onlyNearPlayers: true);
+
+            Assert.Equal(EcosystemBalancePresets.Custom, cfg.BalancePreset);
+            Assert.True(cfg.OnlyActivateNearPlayers);
+            Assert.False(cfg.EnableSeasonalFoliage);
+            Assert.False(cfg.FoliageCatchUpOnChunkLoad);
         }
 
         [Fact]

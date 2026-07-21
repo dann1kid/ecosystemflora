@@ -38,7 +38,7 @@ namespace WildFarming.Ecosystem
         internal void Test_FlushRegistration()
         {
             if (api?.World?.BlockAccessor == null) return;
-            DrainPendingRegistrations(EcosystemConfig.Loaded, api.World.BlockAccessor, null);
+            DrainPendingRegistrations(EcosystemConfig.Loaded, api.World.BlockAccessor);
         }
 
         /// <summary>Server init without game tick listeners or world event hooks.</summary>
