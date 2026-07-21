@@ -22,6 +22,8 @@
 
 **In-game UI (U / `/ecoconfig`):** reads/writes the **current world's** folder above. Reload never pulls the global template while you are in a save. First-setup wizard: `/ecosetup` (also from U). Performance auto-tune only: `/ecoautotune`.
 
+**Dedicated server:** `/ecosetup` and `/ecoconfig` open a **client GUI**, so they need an in-game player with `controlserver` (admin group). From the server console they open the UI for every currently online admin; if nobody with that privilege is online, the command explains that. `/ecoautotune` runs on the server and works from the console without a player.
+
 **First-run setup:** when `SetupWizardCompleted` is false in that world's `meta.json`, players with `controlserver` (or singleplayer) see the wizard — including **old worlds** that never recorded the flag (missing meta key is treated as pending). Closing the window without Apply/Skip does not mark it complete; it will prompt again on the next join.
 
 Legacy: an old SaveGame blob `ecosystemflora:config` is migrated into the world folder once, then cleared.

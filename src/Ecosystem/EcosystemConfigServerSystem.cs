@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -71,35 +72,61 @@ namespace WildFarming.Ecosystem
                 });
 
             // Chat commands are resolved on the server — client-only registration is invisible in /.
+            // GUI openers need an in-game player; dedicated-server console has privilege but no client.
             api.ChatCommands
                 .GetOrCreate(SetupWizardCommandCode)
                 .WithDescription(Lang.Get("ecosystemflora:setup-wizard-command-desc"))
                 .RequiresPrivilege(Privilege.controlserver)
-                .HandleWith(args =>
-                {
-                    if (args.Caller?.Player is not IServerPlayer player)
-                    {
-                        return TextCommandResult.Error(Lang.Get("ecosystemflora:config-error-noprivilege"));
-                    }
-
-                    channel.SendPacket(new EcosystemOpenSetupWizardPacket(), player);
-                    return TextCommandResult.Success(Lang.Get("ecosystemflora:setup-wizard-command-opened"));
-                });
+                .HandleWith(args => OpenGuiCommand(
+                    args,
+                    player => channel.SendPacket(new EcosystemOpenSetupWizardPacket(), player),
+                    "ecosystemflora:setup-wizard-command-opened",
+                    "ecosystemflora:setup-wizard-command-opened-console"));
 
             api.ChatCommands
                 .GetOrCreate(ConfigCommandCode)
                 .WithDescription(Lang.Get("ecosystemflora:config-command-desc"))
                 .RequiresPrivilege(Privilege.controlserver)
-                .HandleWith(args =>
-                {
-                    if (args.Caller?.Player is not IServerPlayer player)
-                    {
-                        return TextCommandResult.Error(Lang.Get("ecosystemflora:config-error-noprivilege"));
-                    }
+                .HandleWith(args => OpenGuiCommand(
+                    args,
+                    player => channel.SendPacket(new EcosystemOpenConfigDialogPacket(), player),
+                    "ecosystemflora:config-command-opened",
+                    "ecosystemflora:config-command-opened-console"));
+        }
 
-                    channel.SendPacket(new EcosystemOpenConfigDialogPacket(), player);
-                    return TextCommandResult.Success(Lang.Get("ecosystemflora:config-command-opened"));
-                });
+        /// <summary>
+        /// Opens a client GUI for the calling player, or for every online admin when run from the server console.
+        /// </summary>
+        TextCommandResult OpenGuiCommand(
+            TextCommandCallingArgs args,
+            Action<IServerPlayer> sendOpen,
+            string openedLangKey,
+            string openedConsoleLangKey)
+        {
+            if (args.Caller?.Player is IServerPlayer caller)
+            {
+                sendOpen(caller);
+                return TextCommandResult.Success(Lang.Get(openedLangKey));
+            }
+
+            int opened = 0;
+            if (sapi?.World?.AllOnlinePlayers != null)
+            {
+                foreach (IPlayer online in sapi.World.AllOnlinePlayers)
+                {
+                    if (online is not IServerPlayer sp) continue;
+                    if (!sp.HasPrivilege(Privilege.controlserver)) continue;
+                    sendOpen(sp);
+                    opened++;
+                }
+            }
+
+            if (opened == 0)
+            {
+                return TextCommandResult.Error(Lang.Get("ecosystemflora:config-error-needs-ingame-admin"));
+            }
+
+            return TextCommandResult.Success(Lang.Get(openedConsoleLangKey, opened));
         }
 
         public override void Dispose()

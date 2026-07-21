@@ -47,10 +47,15 @@ namespace WildFarming.Tests
                 RegistrationWorkerCount = 4,
             };
 
+            int appliesBefore = cfg.MaxRegistryAppliesPerTick;
+
             Assert.True(RegistrationBudgetMigration.ApplyIfNeeded(cfg, api: null, configFileExisted: true));
             Assert.True(cfg.RegistrationBudgetPerWorkerMigrated);
-            Assert.Equal(512, cfg.MaxRegistryAppliesPerTick);
-            Assert.Equal(2048, cfg.EffectiveMaxRegistryAppliesPerTick());
+            // Current defaults already look per-worker — keep values, only set the flag.
+            Assert.Equal(appliesBefore, cfg.MaxRegistryAppliesPerTick);
+            Assert.Equal(
+                RegistrationWorkerScale.Scale(appliesBefore, 4),
+                cfg.EffectiveMaxRegistryAppliesPerTick());
         }
 
         [Fact]

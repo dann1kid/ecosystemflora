@@ -132,8 +132,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: дольше сбрасывать стресс перед выходом из dieback. Меньше: быстрее зеленеют.");
 
             D(nameof(EcosystemConfig.FlowerPhenologyColdStressGainPerDay),
-                "Frost (below bloom min °C) and winter season share this rate — hard freezes pack winter-class debt.",
-                "Заморозки (ниже мин. °C цветения) и зима копят стресс с одной скоростью — жёсткий мороз ≈ зимний долг.");
+                "Higher: frost and winter accumulate dieback stress faster. Lower: hardier cold recovery.",
+                "Больше: мороз и зима быстрее копят стресс dieback. Меньше: терпимее к холоду.");
 
             D(nameof(EcosystemConfig.FlowerPhenologyHeatStressGainPerDay),
                 "Higher: heat waves push dieback faster. Lower: more heat-tolerant stands.",
@@ -148,8 +148,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: хорошая погода быстрее снимает стресс. Меньше: дольше «после dieback».");
 
             D(nameof(EcosystemConfig.MaxFlowerPhenologyLifeCycles),
-                "Fallback dieback entries before senescence when ecology.csv omits flower_phenology_life_cycles. 0 = unlimited.",
-                "Запасной лимит входов в dieback, если в ecology.csv нет flower_phenology_life_cycles. 0 = без лимита.");
+                "Higher: more dieback entries before senescence when ecology.csv omits flower_phenology_life_cycles. Lower: shorter multi-year stands. 0 = unlimited.",
+                "Больше: больше входов в dieback до сенисценса, если в ecology.csv нет flower_phenology_life_cycles. Меньше: короче многолетние куртины. 0 = без лимита.");
 
             D(nameof(EcosystemConfig.MaxFlowerPhenologyChecksPerTick),
                 "Higher: more flower phase updates per tick. Lower: slower phenology pacing.",
@@ -276,8 +276,8 @@ namespace WildFarming.Ecosystem.Config
                 "Fallback, если у вида нет дистанции своего вида (у цветов 0 = пятно). Деревья — по породе в CSV / размеру кроны, не 0. Больше: реже; меньше: плотнее.");
 
             D(nameof(EcosystemConfig.DefaultOtherSpeciesSpacing),
-                "Fallback when a species has no other-species spacing. Trees use per-wood values grounded in crown radius.",
-                "Fallback, если у вида нет дистанции до других. У деревьев — свои значения от размера кроны.");
+                "Higher: stronger default spacing vs other species when a species omits its own. Lower: denser mixed stands. Trees still use per-wood crown values.",
+                "Больше: сильнее запасная дистанция до других видов, если у вида нет своей. Меньше: плотнее смешанные куртины. У деревьев — свои значения от кроны.");
 
             D(nameof(EcosystemConfig.SpacingVerticalSearch),
                 "Higher: check spacing conflicts farther above/below. Lower: tighter vertical spacing scan.",
@@ -557,7 +557,7 @@ namespace WildFarming.Ecosystem.Config
 
             D(nameof(EcosystemConfig.FoliageSyncMode),
                 "chunk = sync on chunk load (default). hybrid = chunk plus random tick. random = legacy random only.",
-                "при загрузке участка (по умолчанию). гибридный = участок плюс случайный тик. случайный = только прежний режим.");
+                "chunk = при загрузке участка (по умолчанию). гибридный = участок плюс случайный тик. случайный = только прежний режим.");
 
             D(nameof(EcosystemConfig.MaxFoliageCellsTickedPerTick),
                 "Higher: more random foliage cells per reproduce tick (hybrid/random). 0 = off.",
@@ -900,8 +900,8 @@ namespace WildFarming.Ecosystem.Config
                 "Вкл.: трафик синхронизирует покров (normal↔verysparse) при том же плодородии; заброшенные тропы зарастают со спадом давления. Выкл.: только растения. Пашню не трогает.");
 
             D(nameof(EcosystemConfig.FootTrafficStepsToFullCoverageWear),
-                "How many footsteps on one column to reach verysparse (default 20). Set 0 to use the advanced pressure-step override.",
-                "Сколько шагов по одной колонке до verysparse (дефолт 20). 0 — использовать доп. pressure-step.");
+                "Higher: more footsteps needed before tallgrass wears to verysparse (default 20). Lower: paths form sooner. 0 = use the advanced pressure-step override.",
+                "Больше: больше шагов до износа травы до verysparse (дефолт 20). Меньше: тропы появляются раньше. 0 — доп. pressure-step.");
 
             D(nameof(EcosystemConfig.FootTrafficPressurePerStep),
                 "Higher: trails pack faster (0–255 column pressure). Lower: need more traffic for the same wear.",
@@ -916,8 +916,8 @@ namespace WildFarming.Ecosystem.Config
                 "Больше: легче зарастить колею при полном давлении. Меньше: сложнее вернуть луг (пол fitness).");
 
             D(nameof(EcosystemConfig.FootTrafficSoilWearPressureStep),
-                "Advanced override when StepsToFullCoverageWear is 0. Pressure points per coverage stage (≤127). Unused when Steps > 0.",
-                "Доп. режим, если StepsToFullCoverageWear = 0. Пункты давления на ступень покрова (≤127). При Steps > 0 не используется.");
+                "Higher: more pressure points per coverage stage when StepsToFullCoverageWear is 0 (≤127). Lower: faster wear. Unused when Steps > 0.",
+                "Больше: больше пунктов давления на ступень покрова, если StepsToFullCoverageWear = 0 (≤127). Меньше: быстрее износ. При Steps > 0 не используется.");
 
             D(nameof(EcosystemConfig.FootTrafficAnimalStrideBlocks),
                 "Higher: animals leave traffic less often per distance. Lower: denser animal trails.",
