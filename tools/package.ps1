@@ -2,19 +2,24 @@
 .SYNOPSIS
   Build and package ecosystemflora into a release zip.
 .DESCRIPTION
-  1. Cleans the output directory (removes stale files from previous builds).
-  2. Builds the project in the chosen configuration.
-  3. Reads the version from modinfo.json.
-  4. Creates ecosystemflora-<version>.zip in the repo root.
+  1. Runs unit tests (unless -SkipTests).
+  2. Cleans the output directory (removes stale files from previous builds).
+  3. Builds the project in the chosen configuration.
+  4. Reads the version from modinfo.json.
+  5. Creates ecosystemflora-<version>.zip in the repo root.
 .PARAMETER Configuration
   MSBuild configuration. Default: Release.
+.PARAMETER SkipTests
+  Skip `dotnet test` before packaging (not recommended for releases).
 .EXAMPLE
   .\tools\package.ps1
   .\tools\package.ps1 -Configuration Debug
+  .\tools\package.ps1 -SkipTests
 #>
 param(
     [ValidateSet('Debug','Release')]
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+    [switch]$SkipTests
 )
 
 Set-StrictMode -Version Latest
@@ -22,7 +27,14 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Split-Path $PSScriptRoot -Parent
 $csproj    = Join-Path $repoRoot 'wildfarming.csproj'
+$testProj  = Join-Path $repoRoot 'tests\WildFarming.Tests.csproj'
 $outputDir = Join-Path $repoRoot "bin\$Configuration\Mods\ecosystemflora"
+
+if (-not $SkipTests) {
+    Write-Host "Running tests ..."
+    dotnet test $testProj -c $Configuration --nologo
+    if ($LASTEXITCODE -ne 0) { throw "Tests failed (exit code $LASTEXITCODE)." }
+}
 
 # Clean stale output so deleted assets don't linger
 if (Test-Path $outputDir) {

@@ -104,8 +104,15 @@ Set `BalancePreset` to `custom` to keep your own feature toggles and numbers acr
 
 ## For developers
 
-**Build:** `dotnet build` (.NET 10 SDK required)
-**Tests:** `dotnet test tests/WildFarming.Tests.csproj` (361 xUnit tests)
+**.NET 10 SDK** required. Open `wildfarming.sln` in Visual Studio, or use the CLI:
+
+| Task | Command |
+|------|---------|
+| Build | `dotnet build` |
+| Tests | `dotnet test tests/WildFarming.Tests.csproj` |
+| Release zip | `.\tools\package.ps1` |
+
+`package.ps1` runs tests first, then builds **Release** and writes `ecosystemflora-<version>.zip` in the repo root. Use `-SkipTests` only for local throwaway packs. VS setup: [`docs/VISUAL_STUDIO.md`](docs/VISUAL_STUDIO.md).
 
 Docs: [`docs/PROGRESS.md`](docs/PROGRESS.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md) · [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) · [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) · [`docs/PROMPT.md`](docs/PROMPT.md) · **[`docs/THIRD_PARTY_ECOLOGY.md`](docs/THIRD_PARTY_ECOLOGY.md)** (API для авторов модов через `ecologyParticipant`)
 
