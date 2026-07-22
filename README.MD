@@ -23,13 +23,13 @@ The result: meadows fill in naturally, forest edges develop a distinct flora bel
 
 | Stage | Behaviour |
 |-------|-----------|
-| **Seed** | Mature trunk spreads `sapling-*-free` (no spread Nov–Feb; not on ice/snow) |
-| **Grow** | Vanilla treegen to adult; mod registers trunk at **age 0** |
-| **Life** | Each game year: calendar age +1, optional growth, sapling spread — trunks ignore stress death |
-| **Senescence** | After species lifespan: 4 years — crown leaves → skeleton → snag → **stump + fallen logs** |
+| **Seed** | Mature trunk spreads a **young `log-grown` seedling** when tree aging is on (else free sapling); no spread Nov–Feb; not on ice/snow |
+| **Grow** | Mod yearly growth from seedling to mature size; player-planted saplings still use vanilla treegen |
+| **Life** | Each game year: calendar age +1, optional growth/spread; out-of-niche stands accrue **lifespan debt** (shorter senescence); trunks ignore flower-style stress death |
+| **Senescence** | After effective species lifespan: 4 years — crown leaves → skeleton → snag → **stump + fallen logs** |
 | **Gap fill** | Remains are choppable vanilla blocks; nearby trees seed the empty cell naturally |
 
-Config: `EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains` (default on), `TreeSenescenceFallenLogCount` (default 3).
+Config: `EnableTreeAging`, `EnableTreeSenescence`, `EnableTreeSenescenceRemains`, `EnableTreeNicheLifespanStress` (default on). Docs: [`docs/TREE_AGING.md`](docs/TREE_AGING.md).
 
 **Removing the mod leaves your world intact** — vanilla parents stay vanilla. Other mods may register their own blocks as spread parents via optional JSON attributes (see **`docs/THIRD_PARTY_ECOLOGY.md`**); disable with `EnableThirdPartyParticipants: false` if you want only hardcoded vanilla paths.
 
@@ -59,9 +59,9 @@ Each species has a seasonal profile:
 
 ## Config
 
-Config file: `%AppData%\VintagestoryData\ModConfig\ecosystemflora.json`
+Per-world settings: `%AppData%\VintagestoryData\ModConfig\ecosystemflora\worlds\<WorldName_Seed>\` (category JSON). First-run **setup wizard** (`/ecosetup`) and light auto-tune (`/ecoautotune`). Legacy flat `ecosystemflora.json` migrates automatically.
 
-A reference template ships with the mod. The easiest way to tune the experience is the **`BalancePreset`** setting:
+The easiest way to tune the experience is the **`BalancePreset`** setting:
 
 | Preset | Feel | Spread attempts/year | Chance | Min fitness |
 |--------|------|---------------------|--------|-------------|

@@ -356,7 +356,7 @@ Go **не вызывает** VS API. Вся логика размещения �
 
 | Версия | Содержание |
 |--------|------------|
-| **4.7.x** | Phase 6, third-party bootstraps (текущее) |
+| **4.11.x** | Phase 6, third-party bootstraps, per-world config, tree niche lifespan (текущее) |
 | **5.0.0** | Phase 7 MVP: export/import + optional Go worker + catch-up on load |
 | **5.1+** | Rule parity, tiered sim, binary IPC |
 

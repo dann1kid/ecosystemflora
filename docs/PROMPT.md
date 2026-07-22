@@ -24,7 +24,11 @@
 - v3.1.10: meadow harvest (flowers → world drop, tallgrass clear); fix inspect (I) dialog; client config load.
 - v3.1.11: tree spread — ice/snow footing rejected; TerrestrialTree uses terrestrial preflight; winter spread mult = 0.
 - v3.1.12: mycelium — soft niche (`MyceliumZone`), stress/death on vanilla BE, network spread, inspect (I) on cap + soil; meadow coexistence; config auto-merge (`StoreModConfig` after load).
-- v4.5.0: **Species CSV registry** — runtime balance from `assets/ecosystemflora/species/ecology.csv` + `season.csv`; user overrides `ModConfig/ecosystemflora.species*.csv`; C# `Wild*Ecology` export-only; handbook/inspect from registry — [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md). Global scale: `SpeciesSpreadRateScale` (~⅓ default).
+- v4.7.0: **Third-party wild ecology** — Wildcraft Fruit/Trees, Floral Zones bootstraps, fruitvine climate-only, B+ auto-curves; crowfoot **RhizomeMat**; wild tree **log-grown seedlings**; seasonal snow; wildfire canopy — [`CHANGELOG.md`](CHANGELOG.md), [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md).
+- v4.9.13: Floral Zones **Cape + Cosmopolitan** (211 entries, 7/7); trails; flower phenology senescence.
+- v4.10.x: per-species crown forms; **per-world config** under `ModConfig/ecosystemflora/worlds/<WorldName_Seed>/`; lighter main defaults.
+- v4.11.x: setup wizard `/ecosetup` + `/ecoautotune` (Potato/X3D/Super-minimal); **tree niche lifespan stress** + lean niche sample — [`TREE_AGING.md`](TREE_AGING.md).
+- v4.5.0: **Species CSV registry** — runtime balance from `assets/ecosystemflora/species/ecology.csv` + `season.csv`; user overrides in `ModConfig/ecosystemflora/species/`; C# `Wild*Ecology` export-only; handbook/inspect from registry — [`SPECIES_ECOLOGY_CSV.md`](SPECIES_ECOLOGY_CSV.md). Global scale: `SpeciesSpreadRateScale` (~⅓ default).
 - v4.4.1: global **`SpeciesSpreadRateScale`**, shore sedge retune, meadow scythe harvest fix.
 - v4.3.0: **Berry colony spread** — mat-edge colonies + seed jumps; shore sedge mat; `EnableBerryColonySpread`, `EnableShoreSedgeMatSpread`.
 - v4.2.0: **Simulation visibility** — fern/tallgrass phenology phase blocks; berry spread maturation + density tune; stump decay scheduler; ecology history hint (H); `vanilla-minimal` preset + optional JSON presets; `ApplyCrossHabitatSpacing` default true.
@@ -33,23 +37,23 @@
 - v3.5.0: **Canopy ambience** — client crown particles / flutter; docs [`CANOPY_AMBIENCE.md`](CANOPY_AMBIENCE.md).
 - v3.6: **Wild tree maturation** — calendar age (persisted), grown-block growth, **phased senescence** (leaves → skeleton → snag → stump/logs); inspect (I); `EnableTreeSenescenceRemains`, `TreeSenescenceFallenLogCount`; docs [`TREE_AGING.md`](TREE_AGING.md).
 - v3.7: **Tree fern** (`ferntree-normal-*`) — register, spread, aging, senescence — [`FERNTREE.md`](FERNTREE.md). **Canopy** — partial branchy strip, fallen sticks, spring branchy × tree age — [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md). **Wild vines** — tip spread down + wall capture — [`WILD_VINE.md`](WILD_VINE.md).
-- v3.8: **Phase 6** — chunk-fair spread, event wake, two-phase placement (terrestrial/mat only; mycelium/vine direct), season coarse wake; registration priority/burst, background column scan (`BackgroundRegistrationScanner`, `PendingRegistrationQueue`), foliage sync decoupled (`FoliageChunkSyncPass`); **vines** — column pass; **mycelium anchors** — `MyceliumChunkRegistrar` at chunk load; desynced ticks (2000/2300/5500 ms); `LimitSpreadNearPlayers` limits spread/stress/tree aging (not registration) — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
+- v3.8: **Phase 6** — chunk-fair spread, event wake, two-phase placement (terrestrial/mat only; mycelium/vine direct), season coarse wake; registration priority/burst, background column scan (`BackgroundRegistrationScanner`, `PendingRegistrationQueue`), foliage sync decoupled (`FoliageChunkSyncPass`); **vines** — column pass; **mycelium anchors** — `MyceliumChunkRegistrar` at chunk load; desynced ticks; `LimitSpreadNearPlayers` limits spread/stress/tree aging (not registration) — [`PHASE6_SIMULATION.md`](PHASE6_SIMULATION.md).
 - v5.0 (planned): **Phase 7** — ecology for **unloaded** chunk columns: compact snapshot export on unload, per-world ecology DB, optional Go `ecology-sim` process (spawn/kill server-side), paced block apply on load; VS commits diffs on main thread only — [`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md).
-- Aquatic v3.1.3–6: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = independent (см. GAPS).
+- Aquatic: reeds = RhizomeMat (edge + seed); lily = SurfaceMat; crowfoot = RhizomeMat (4.7+).
 
 Habitat:
 - Terrestrial — flowers, tallgrass, fern, berries
-- TerrestrialTree — log-grown → sapling
+- TerrestrialTree — log-grown → young log-grown seedling (aging on) or sapling
 - Ferntree — ferntree-normal-trunk → young column
 - WildVine — wildvine-end-* tips
 - ReedNearWater — coopersreed, tule, papyrus (rhizome mat default)
 - WaterSurface — waterlily (surface mat default)
 - UnderwaterColumn — watercrowfoot
 
-Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning.
+Не расширять без явного запроса: living trees, Harmony, legacy wildplant, termites. Mycelium — только vanilla BE (v3.1.12). Ferntree/vines — vanilla blocks (v3.7), playtest before tuning. Third-party bootstraps — C# injection only; do not patch parent mod JSON unless asked.
 
 Код: src/Ecosystem/ (в т.ч. LegacyBlockEntityMigration.cs; Mycelium*.cs; Phase 6 — SpreadChunkScheduler, PendingSpreadQueue, BackgroundRegistrationPipeline, RegistrationScanQueue, PendingRegistrationQueue, FoliageCellScheduler).
-Тесты: 681 (xUnit). Версия: 4.5.0.
+Тесты: 882+ (xUnit). Версия: 4.11.25 (ModDB).
 
 v3.0: CloneBerryTraits, BerryTraitMutationChance.
 v3.1: EnableThirdPartyParticipants, ecologySpreadMode (rhizome/surfacemat/independent).

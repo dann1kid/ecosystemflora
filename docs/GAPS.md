@@ -1,6 +1,6 @@
 # Gaps — где идея мода ещё недоработана
 
-> Актуально для **4.7.0+**. Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
+> Актуально для **4.11.25** (ModDB). Валидация баланса — через **логи** (`VerboseLogging` + `ReproduceDebug`) и **осмотр (I)**, не обязательно визуальный обход мира.
 
 См. также: [PROJECT_VISION.md](PROJECT_VISION.md), [PROGRESS.md](PROGRESS.md).
 
@@ -13,12 +13,12 @@
 | **Луг / цветы** | Juvenile spread → maturation; post-spread cooldown; seasonal snow; inspect на ростках | Полный жизненный цикл всё ещё abstract; росток inspect — «не в реестре» до созревания (намеренно) |
 | **Reeds / lily** | Mat edge + virtual seed (A–D); inspect: mode, frontier, seed %, **last spread channel** | Нет предметов семян/ризомов; игрок не видит «канал» spread в мире, только в I |
 | **Water crowfoot** | **RhizomeMat** edge ±1 (`CrowfootMatSpread`); колонка section→tip/top; глубина 2–6; seed **0**; guards (fish trap, BE) | Отдельный worker-путь `CollectCrowfootCells` **без** early `IsFrontier` (sync-путь проверяет); playtest tempo мелководья |
-| **Деревья** | Wild spread → **log-grown seedling** (не sapling); yearly maturation; senescence; **wildfire** — no bud near fire, orphan foliage prune ([`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) | living trunk stress; sapling burst on death |
+| **Деревья** | Wild spread → **log-grown seedling** (не sapling); yearly maturation; crown forms; **niche lifespan debt** (4.11.22–25); immature spread gate; senescence; **wildfire** — no bud near fire, orphan foliage prune ([`TREE_AGING.md`](TREE_AGING.md), [`CANOPY_PHENOLOGY.md`](CANOPY_PHENOLOGY.md)) | living trunk stress death; sapling burst on death |
 | **Древовидный папоротник** | [`FERNTREE.md`](FERNTREE.md) | playtest spread/senescence в тропиках |
 | **Дикие лианы** | Hang/corner/wall latch spread (4.7) — [`WILD_VINE.md`](WILD_VINE.md) | playtest на зданиях/стволах; нет stress/climate gate на tip |
 | **Грибница** | network spread + chunk load anchors | нет своих блоков; баланс mat vs vanilla regrowth — playtest |
 | **Ягоды** | Spread + trait clone (`game:` only) + **calendar maturation**; third-party mat edge (bdshrub и др.) | trait clone для **third-party** berry BE; density tuned blackberry/raspberry/currant — playtest |
-| **Third-party wild** | Runtime bootstraps: Wildcraft Fruit/Trees, Floral Zones (7/7 в main), fruitvine climate-only, B+ CSV auto-curves (4.7) | Floral Zones **trees** (`sapling`/`lognarrow`); playtest с модами; live merge `ecology.csv` для declared third-party |
+| **Third-party wild** | Runtime bootstraps: Wildcraft Fruit/Trees, Floral Zones (**7/7**, 211 entries), fruitvine climate-only, B+ CSV auto-curves (4.7–4.9) | Floral Zones **trees** (`sapling`/`lognarrow`); playtest с модами; live merge `ecology.csv` для declared third-party |
 
 **Вывод:** ядро — **конкуренция клеток и ниша**, не ботаническая модель. «Экосистема» для игрока = паттерны на карте + inspect, не полный life cycle.
 
@@ -127,3 +127,4 @@ Phase 6 engine + background spread/registration (см. [`PHASE6_SIMULATION.md`](
 - Chunk scan; land claims; third-party JSON participants.
 - **4.4.1** — `SpeciesSpreadRateScale`; **4.5.0** species CSV registry; **4.5.4** CSV parity, `/ecospeciesreload`, `CONFIGURATION.md`.
 - **4.7.0** — crowfoot rhizome mat; seasonal snow (incl. underwater skip); wildfire canopy guard + orphan foliage prune; wild tree log-grown seedlings; meadow trunk spread guard; wild vine hang/corner; third-party bootstraps (Wildcraft, Floral Zones 5→7); fruitvine climate-only; B+ auto-curves; third-party berry mat edge; `ecosystemfloracompat` submodule.
+- **4.9–4.11** — Floral Zones Cape + Cosmopolitan; per-world config + setup wizard; potato/X3D perf; crown forms; tree niche lifespan stress + lean niche sample.

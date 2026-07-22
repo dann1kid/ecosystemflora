@@ -2,7 +2,7 @@
 
 Документ для разработчиков и AI-агентов: **теория**, **целевая архитектура**, **текущая стадия репозитория**.
 
-Последнее обновление: 2026-06-18 (стадия **Ecosystem v3.8.0**, версия **`3.8.0`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
+Последнее обновление: 2026-07-22 (стадия **Ecosystem v4.11.25**, версия **`4.11.25`**; чеклист — [`PROGRESS.md`](PROGRESS.md); пробелы — [`GAPS.md`](GAPS.md)).
 
 ---
 
@@ -224,20 +224,21 @@ docs/
 
 ## 7. Текущая стадия репозитория
 
-**Стадия: `Ecosystem v3.8.0`, версия `3.8.0`.** … **v3.6 wild tree maturation + phased senescence**; **v3.7 tree fern + canopy sticks/branches + wild vines**; **v3.8 Phase 6 simulation engine**. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md).
+**Стадия: `Ecosystem v4.11.25`, версия `4.11.25` (ModDB).** Phase 6 simulation + third-party bootstraps (Wildcraft, Floral Zones 7/7) + species CSV + per-world config / setup wizard + tree niche lifespan stress. ModDB: [ecosystemflora](https://mods.vintagestory.at/ecosystemflora). Пробелы: [`GAPS.md`](GAPS.md). Полный чеклист: [`PROGRESS.md`](PROGRESS.md).
 
 | Компонент | Статус |
 |-----------|--------|
 | Ванильная экосистема (цветы, tallgrass, ferns, berries, trees, aquatic…) | ✅ см. [`PROGRESS.md`](PROGRESS.md) |
-| Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ v2.11.x |
-| Perf (отдельный stress/spread budget, spatial tick, …) | ✅ |
-| Юнит-тесты (xUnit) | ✅ **279** |
-| Сторонние blocktypes как участники | ✅ v3.1 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
+| Осмотр экологии (**I**), chunk-scan, i18n имен видов | ✅ |
+| Perf (background registration/spread, potato/X3D wizard, tick budgets) | ✅ 4.10–4.11 |
+| Юнит-тесты (xUnit) | ✅ **882+** |
+| Сторонние blocktypes как участники | ✅ v3.1 + runtime bootstraps 4.7–4.9 + [`THIRD_PARTY_ECOLOGY.md`](THIRD_PARTY_ECOLOGY.md) |
+| Per-world config + `/ecosetup` | ✅ 4.10.31+ |
 | Legacy JakeCool в сборке | ⏸ удалён |
+| Unloaded-chunk ecology (Phase 7) | 📋 design — [`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md) |
 
-- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **3.8.0**).
-- **Конфиг:** `%VintagestoryData%/ModConfig/ecosystemflora.json` (шаблон — `assets/ecosystemflora/ecosystemflora.example.json`).
-
+- **`modinfo.json`** — `ecosystemflora`, game `1.22.0`, версия см. поле `version` (сейчас **4.11.25**).
+- **Конфиг:** per-world category JSON under `%VintagestoryData%/ModConfig/ecosystemflora/worlds/<WorldName_Seed>/` (legacy flat `ecosystemflora.json` migrates); species CSV in `ModConfig/ecosystemflora/species/`.
 ---
 
 ## 8. Правила для агентов
