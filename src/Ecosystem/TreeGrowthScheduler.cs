@@ -82,6 +82,7 @@ namespace WildFarming.Ecosystem
                 // Climate/forest does not change across catch-up years in one tick — sample once.
                 bool nicheSampled = false;
                 TreeNicheLifespanStress.YearOutcome nicheOutcome = TreeNicheLifespanStress.YearOutcome.Skipped;
+                TreeStructureMetrics? sharedMetrics = null;
 
                 for (int year = entry.LastTreeGrowthYear + 1; year <= gameYear && advancedYears < catchUpLimit; year++)
                 {
@@ -89,7 +90,13 @@ namespace WildFarming.Ecosystem
                     {
                         if (!nicheSampled)
                         {
-                            nicheOutcome = TreeNicheLifespanStress.SampleOutcome(api, entry, wood, cfg);
+                            sharedMetrics = TreeStructureProbe.Measure(acc, entry.Origin, wood);
+                            nicheOutcome = TreeNicheLifespanStress.SampleOutcome(
+                                api,
+                                entry,
+                                wood,
+                                cfg,
+                                sharedMetrics.Value.CrownRadius);
                             nicheSampled = true;
                         }
 
@@ -141,6 +148,7 @@ namespace WildFarming.Ecosystem
 
                         entry.LastTreeGrowthYear = year;
                         advancedYears++;
+                        sharedMetrics = null;
                         continue;
                     }
 
@@ -151,7 +159,10 @@ namespace WildFarming.Ecosystem
                         wood,
                         year,
                         scale,
-                        entry.TreeAgeYears);
+                        entry.TreeAgeYears,
+                        sharedMetrics);
+                    // Structure may have changed — do not reuse metrics for later catch-up years.
+                    sharedMetrics = null;
 
                     placedTotal += placed;
                     entry.LastTreeGrowthYear = year;

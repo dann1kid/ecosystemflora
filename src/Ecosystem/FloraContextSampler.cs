@@ -160,16 +160,23 @@ namespace WildFarming.Ecosystem
 
         /// <summary>
         /// Local forest cover excluding the trunk's own crown footprint (for tree niche lifespan).
+        /// Scan radius is capped so giant crowns do not fan out a huge GetBlock grid each year.
         /// </summary>
         public float GetLocalForestCoverExcludingSelf(ICoreAPI api, BlockPos trunkBase, int crownRadius)
         {
             if (api == null || trunkBase == null) return 0f;
 
             EcosystemConfig cfg = EcosystemConfig.Loaded;
-            int radius = cfg.FloraContextNeighborRadius;
+            const int MaxNicheForestScanRadius = 6;
             int exclude = crownRadius < 1 ? 1 : crownRadius;
-            // Need scan radius past the excluded crown or cover is always zero.
+            if (exclude > MaxNicheForestScanRadius - 1)
+            {
+                exclude = MaxNicheForestScanRadius - 1;
+            }
+
+            int radius = cfg.FloraContextNeighborRadius;
             if (radius <= exclude) radius = exclude + 1;
+            if (radius > MaxNicheForestScanRadius) radius = MaxNicheForestScanRadius;
 
             int forestNeighbors = CountForestNeighbors(
                 api.World.BlockAccessor,

@@ -10,6 +10,7 @@ namespace WildFarming.Ecosystem
         struct WorldgenColumn
         {
             public float WorldgenRainfall;
+            public float WorldgenTemperature;
             public bool HasClimate;
         }
 
@@ -33,7 +34,19 @@ namespace WildFarming.Ecosystem
 
         public bool TryGetWorldgenRainfall(IBlockAccessor acc, BlockPos plantPos, out float rainfall, out bool hasClimate)
         {
+            return TryGetWorldgenClimate(acc, plantPos, out rainfall, out _, out hasClimate);
+        }
+
+        /// <summary>Worldgen rainfall + temperature from one climate lookup (cached per column).</summary>
+        public bool TryGetWorldgenClimate(
+            IBlockAccessor acc,
+            BlockPos plantPos,
+            out float rainfall,
+            out float temperature,
+            out bool hasClimate)
+        {
             rainfall = 0f;
+            temperature = 0f;
             hasClimate = false;
             if (acc == null || plantPos == null) return false;
 
@@ -41,6 +54,7 @@ namespace WildFarming.Ecosystem
             if (worldgenByXz.TryGetValue(key, out WorldgenColumn cached))
             {
                 rainfall = cached.WorldgenRainfall;
+                temperature = cached.WorldgenTemperature;
                 hasClimate = cached.HasClimate;
                 return true;
             }
@@ -52,11 +66,13 @@ namespace WildFarming.Ecosystem
             cached = new WorldgenColumn
             {
                 WorldgenRainfall = worldgen?.WorldgenRainfall ?? now?.WorldgenRainfall ?? 0f,
+                WorldgenTemperature = worldgen?.Temperature ?? now?.Temperature ?? 0f,
                 HasClimate = fallback != null,
             };
 
             StoreWorldgen(key, cached);
             rainfall = cached.WorldgenRainfall;
+            temperature = cached.WorldgenTemperature;
             hasClimate = cached.HasClimate;
             return true;
         }

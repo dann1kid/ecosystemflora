@@ -18,13 +18,15 @@ namespace WildFarming.Ecosystem
             string wood,
             int gameYear,
             float activityScale,
-            int treeAgeYears = 0)
+            int treeAgeYears = 0,
+            TreeStructureMetrics? initialMetrics = null)
         {
             if (api == null || acc == null || trunkBase == null || string.IsNullOrEmpty(wood)) return 0;
             if (!LandClaimGuard.AllowsEcologyChange(api, trunkBase)) return 0;
 
             WildTreeGrowthProfiles.Profile profile = WildTreeGrowthProfiles.Resolve(wood);
-            TreeStructureMetrics metrics = TreeStructureProbe.Measure(acc, trunkBase, wood);
+            TreeStructureMetrics metrics = initialMetrics
+                ?? TreeStructureProbe.Measure(acc, trunkBase, wood);
 
             int fireRadius = System.Math.Min(10, System.Math.Max(CanopyBurnGuard.SourceRadius, metrics.CrownRadius + 2));
             BlockPos fireCheck = metrics.TrunkTop ?? trunkBase;

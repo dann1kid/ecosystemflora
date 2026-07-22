@@ -2,7 +2,7 @@
 
 Registered wild trees (`log-grown` trunk base in the ecology registry) **grow once per game year** in the main reproduce tick (round-robin over the registry; filtered to player radius when `OnlyActivateNearPlayers` or `LimitSpreadNearPlayers`): taller trunk (`log-grown`) and wider crown (`leavesbranchy` / `leaves-grown`).
 
-Updated: 2026-06-14 (lifecycle + senescence remains).
+Updated: 2026-07-22 (niche lifespan stress + lean niche sample, 4.11.22–25).
 
 In-game handbook (en/ru): **Overview**, **Trees**, **Seasonal Canopy**, **Ecology Inspect (I)**, **Configuration Guide**.
 
@@ -75,7 +75,7 @@ When **`EnableTreeNicheLifespanStress`** is on (default), each simulated game ye
 - **Cap:** debt ≤ `SenescenceAgeYears × TreeNicheLifespanStressMaxDebtFraction` (default **0.5**).
 - **Effective horizon:** `max(1, SenescenceAgeYears − debt)` — then normal phased senescence.
 - **Sampling:** uses **worldgen** temperature (not seasonal NowValues — otherwise every winter is a hard miss) and local forest cover with the trunk’s **own crown footprint excluded** (otherwise mature crowns self-trigger density / soft-seral debt).
-- **Perf:** climate/forest sampled at most **once per tree per growth tick** (reused across catch-up years). Grace years and disabled feature skip sampling. Cost sits on the existing tree-growth prep path (`MaxTreeGrowthAttemptsPerTick`, default 2), not the flower stress tick.
+- **Perf:** climate/forest sampled at most **once per tree per growth tick** (reused across catch-up years). Lean sample (worldgen climate cache + crown-excluded forest ring, scan capped at radius 6); one `TreeStructureProbe.Measure` shared with the first growth year. Grace years and disabled feature skip sampling. Cost sits on the existing tree-growth prep path (`MaxTreeGrowthAttemptsPerTick`, default 2), not the flower stress tick.
 - Persisted with calendar age (`LifespanDebtYears` on the tree-age save blob).
 - Inspect shows age against the **effective** horizon and a debt line when debt &gt; 0.
 

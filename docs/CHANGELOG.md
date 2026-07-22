@@ -2,30 +2,34 @@
 
 Player-facing release notes. Dev history: [`PROGRESS.md`](PROGRESS.md).
 
-**Last public release:** **4.7.0** (ModDB)  
-**Next release:** **4.11.24** (unreleased) — tree niche stress sampling fix
+**Last public release:** **4.11.25** (ModDB)  
+**Next (planned):** **v5.0** Phase 7 — unloaded chunk ecology ([`PHASE7_EXTERNAL_SIMULATION.md`](PHASE7_EXTERNAL_SIMULATION.md))
 
 Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival.
 
 ---
 
-## Unreleased — 4.11.24
+## 4.11.25 — Lean tree niche sample
+
+- **Tree niche sample perf** — niche check skips full survival/spread context; uses cached worldgen climate + capped crown-excluded forest ring; shares one structure measure with the first growth year of the tick.
+
+## 4.11.24 — Tree niche lifespan sampling
 
 - **Tree niche lifespan sampling** — yearly niche check uses worldgen temperature (not seasonal) and local forest cover with the tree’s own crown excluded, so mature stands no longer self-accrue hard/soft debt every year.
 
-## Unreleased — 4.11.23
+## 4.11.23 — Immature tree spread gate
 
 - **Immature tree spread** — ecology seedlings no longer unlock wild spread via soft size bypass after a few years of growth; calendar maturity (or full structure estimate) is required unless the trunk was already worldgen-sized at registration. Inspect shows “too young to spread”; immature trees are polled about once per game year instead of every spread interval.
 
-## Unreleased — 4.11.22
+## 4.11.22 — Tree niche lifespan stress
 
 - **Tree niche lifespan stress** — climate/forest mismatch accumulates yearly lifespan debt (default +2 hard / +1 soft seral; −1 recovery), shortening effective senescence horizon (cap 50% of species lifespan; 8-year grace). Toggle `EnableTreeNicheLifespanStress`. Inspect shows effective age / debt.
 
-## Unreleased — 4.11.21
+## 4.11.21 — Dedicated-server `/ecosetup`
 
 - **Dedicated-server `/ecosetup`** — console opens GUI for online admins (or explains that an in-game admin is required); packaging tests fixed (Newtonsoft + migration/lang hints).
 
-## Unreleased — 4.11.20
+## 4.11.20 — Potato / X3D perf stack
 
 - **Potato / Weak wizard** — profile **Potato PC** + Weak apply Super-minimal; `/ecoautotune` Weak tier also applies Super-minimal; Super-minimal disables seasonal foliage.
 - **X3D / dual-CCD** — wizard profile + bench button: Strong ecology with **2** registration/spread workers, `LimitSpreadNearPlayers`, no load burst; Strong/Balanced auto-tune also use 2 workers (not half of all cores).
@@ -33,7 +37,7 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Worker rescale on Apply** — registration/spread worker count can change mid-session without world reload.
 - **Potato Weak caps** (from 4.11.15+) — near-player, catch-up/phenology/cyclic caps, chunk-load stagger, prep wall-clock.
 
-## Unreleased — 4.11.15
+## 4.11.15 — Setup wizard overhaul
 
 - **Setup wizard overhaul** — welcome page (this mod / this world), full Performance knob table with `val→ CPU↑/↓` hints, `/ecosetup` + `/ecoautotune`; old worlds prompt until completed.
 - **Wizard completion stickiness** — `setup-wizard.done` marker + meta flag; SSP stale sync no longer re-opens the wizard after Apply; at most one auto-open per session.
@@ -44,15 +48,15 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Chunk-load hitch smoothing** — deferred strip/remap/mycelium/registration delays staggered per chunk; load-time registration burst skipped when background scan is on (priority queue + paced snapshot instead).
 - **Potato Weak / Super-minimal** — Weak auto-tune enables `OnlyActivateNearPlayers` and lowers foliage catch-up / phenology / cyclic-tree / tallgrass-promotion caps; Super-minimal also disables vicinity rescan, foliage catch-up, cyclic trees, and load burst; chunk-scan tick caches player-chunk sets once.
 
-## Unreleased — 4.10.32
+## 4.10.32 — Per-world config files
 
 - **Per-world config files** — U/perf settings live in `ModConfig/ecosystemflora/worlds/<WorldName_Seed>/` as category JSON (`perf.json`, `spread.json`, … + `meta.json`). Template: `template/defaults.json`; presets: `presets/`. Legacy SaveGame blob and flat `ecosystemflora.json` migrate automatically. U dialog is fully world-scoped (Apply/Reload).
 
-## Unreleased — 4.10.31
+## 4.10.31 — Per-world config + setup wizard
 
 - **Per-world config** — server settings persist per world; setup wizard + light auto-tune (`/ecoautotune`); Performance scan knobs; lighter main-path defaults.
 
-## Unreleased — 4.10.9
+## 4.10.9 — Lighter main paths + perf F1–F12
 
 - **Smoother cadence** — rarer, desynced ticks (reproduce **3.5 s**, chunk-scan **2.3 s**, stress **8.5 s**, vicinity **5 s**); spread fairer (**1** attempt × **12** chunks); smaller registration pipeline defaults (pending **6**, drain/active snapshots **3**).
 - **~3× lighter main defaults** — another cut for mod-pack headroom: snapshot **340**, registration **9 ms**, burst/priority **8 ms**, tick/spread **5/4 ms** (natural **2/1**), reproduce attempts **14**, registry applies **85**, foliage sync **2 ms** / **1** chunk, capture ≤**12** cells, flora rescan **7** columns/tick.
@@ -61,29 +65,29 @@ Requirements: Vintage Story **1.22+**. Do not run alongside Wild Farming Revival
 - **Perf F1–F12** — spread/registration/foliage queue fixes (F1–F8); tighter environment-cache invalidation without wiping worldgen climate columns (F9); cyclic flora skips unfinished registration chunks so discovery paths do not overlap (F10); vine network BFS reuses thread-local pools (F11); third-party ecology bootstraps share one block-table pass (F12).
 - **Perf F6–F8** — foliage pending sync uses an incremental dirty set (no full-map enumerate+sort each tick); orphan BFS reuses thread-local pools and runs in a deferred pass after season catch-up; pending registration drain uses per-chunk queues (no `RemoveAt(0)` shifts).
 
-## Unreleased — 4.10.8
+## 4.10.8 — Redwood lifespan + sapling age catch-up
 
 - **Redwood lifespan** — senescence horizon raised to **1000** years.
 - **Sapling age catch-up death** — new trunks no longer inherit a size-estimated calendar age; impossible `LastGrowthYear` lags (e.g. 0 from old saves) are snapped instead of burning lifespan from world year 0; stale age saves on seedling trunks are ignored.
 
-## Unreleased — 4.10.7
+## 4.10.7 — Per-species crown forms
 
 - **Per-species crown forms** — yearly aging grows foliage inside a species silhouette (`Spreading` oak/maple/walnut, `Oval` birch, `Umbrella` acacia/kapok, `Column` pine/cypress, `Tiered` redwood) instead of a generic broom ball.
 
-## Unreleased — 4.10.6
+## 4.10.6 — Upper canopy bias
 
 - **Bare oak tip fix** — spring density and winter skeleton repair no longer treat foliage *below* a protruding trunk tip as “already dressed”, so stick-tops above a leafy mid canopy get branchy again; yearly aging also repairs undressed tips even when height growth has stopped.
 - **Upper canopy bias** — yearly tree growth anchors from the upper half of the trunk and tries top anchors first (plus tip dress on trunk extend), so broadleaf crowns widen the top shelf instead of only fluffing the mid canopy.
 - **Broadleaf crown targets** — oak soft crown 5→7; maple / crimson king maple / walnut 5→6.
 
-## Unreleased — 4.10.5
+## 4.10.5 — Redwood trunk + vine host revalidation
 
 - **Redwood trunk inspect** — living `logsection-grown-redwood-*` 2×2 trunk quarters are recognized as ecology trunks (vanilla treegen), so the lower trunk inspects and registers like branch `log-grown` wood.
 - **Oak crown fill** — yearly tree aging prefers branchy/leaf spread when the crown lags the trunk (typical after sapling treegen); older lagging trees get extra crown ops.
 - **Wild vines with seasonal leaves** — canopy leaf/branchy strip and tree senescence now revalidate attached vine columns so vines no longer float after the host foliage disappears.
 - **Wild vines on chunk load** — pending vine registration checks column support (once per column per drain) and prunes already-floating vines before they enter the ecology registry.
 
-## Unreleased — 4.9.13
+## 4.9.13 — Hitch fixes, trails, Floral Zones 7/7
 
 - **Main-thread chunk-load hitch** — legacy fern remaps scan only a rain-surface band (±2 / +8), not full `MapSizeY`; empty worker flora no longer triggers a second live column rescan on flat/empty chunks.
 - **Playable scan defaults** — `ChunkScanTickIntervalMs` 1000 (was 30), foliage scan height 48, `MaxFoliageCellsTickedPerTick` 48; `natural` preset resets these so timelapse leftovers cannot stick.

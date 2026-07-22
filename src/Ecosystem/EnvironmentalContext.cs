@@ -74,64 +74,82 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>
-        /// Yearly tree niche lifespan check: worldgen temperature (not season), rainfall, and local forest
-        /// cover with the trunk's own crown footprint excluded.
+        /// Lean yearly niche sample: worldgen temp/rain + forest cover excluding own crown.
+        /// Skips soil/snap/greenhouse work used by survival/spread sampling.
         /// </summary>
+        /// <param name="crownRadius">
+        /// Pre-measured crown radius; pass &gt;= 0 to skip <see cref="TreeStructureProbe.Measure"/>.
+        /// </param>
         public static EnvironmentalContext SampleForTreeNicheLifespan(
             ICoreAPI api,
             BlockPos trunkBase,
             PlantRequirements requirements,
-            string wood)
+            string wood,
+            int crownRadius = -1)
         {
-            EnvironmentalContext spread = SampleForSpread(
-                api,
-                trunkBase,
-                requirements,
-                EcosystemSystem.Instance?.ColumnCache);
+            _ = requirements;
 
-            float temperature = ReadWorldgenTemperature(api, trunkBase);
-
-            float localForest = spread.LocalForestCover;
-            FloraContextSampler flora = EcosystemSystem.Instance?.FloraContext;
-            if (flora != null && !string.IsNullOrEmpty(wood))
+            if (api?.World?.BlockAccessor == null || trunkBase == null)
             {
-                TreeStructureMetrics metrics = TreeStructureProbe.Measure(
-                    api.World.BlockAccessor,
-                    trunkBase,
-                    wood);
-                localForest = flora.GetLocalForestCoverExcludingSelf(
-                    api,
-                    trunkBase,
-                    metrics.CrownRadius);
+                return new EnvironmentalContext(
+                    trunkBase ?? new BlockPos(0),
+                    0f,
+                    0f,
+                    0f,
+                    false,
+                    0,
+                    default,
+                    true,
+                    0,
+                    false,
+                    false,
+                    false);
+            }
+
+            IBlockAccessor acc = api.World.BlockAccessor;
+            EnvironmentalColumnCache cache = EcosystemSystem.Instance?.ColumnCache;
+
+            float rainfall = 0f;
+            float temperature = 0f;
+            bool hasClimate = false;
+            if (cache == null
+                || !cache.TryGetWorldgenClimate(acc, trunkBase, out rainfall, out temperature, out hasClimate))
+            {
+                ClimateCondition worldgen = acc.GetClimateAt(trunkBase, EnumGetClimateMode.WorldGenValues);
+                ClimateCondition now = acc.GetClimateAt(trunkBase, EnumGetClimateMode.NowValues);
+                ClimateCondition fallback = worldgen ?? now;
+                rainfall = worldgen?.WorldgenRainfall ?? now?.WorldgenRainfall ?? 0f;
+                temperature = worldgen?.Temperature ?? now?.Temperature ?? 0f;
+                hasClimate = fallback != null;
+            }
+
+            float localForest = 0f;
+            FloraContextSampler flora = EcosystemSystem.Instance?.FloraContext;
+            if (flora != null)
+            {
+                int excludeCrown = crownRadius;
+                if (excludeCrown < 0 && !string.IsNullOrEmpty(wood))
+                {
+                    excludeCrown = TreeStructureProbe.Measure(acc, trunkBase, wood).CrownRadius;
+                }
+
+                if (excludeCrown < 0) excludeCrown = 1;
+                localForest = flora.GetLocalForestCoverExcludingSelf(api, trunkBase, excludeCrown);
             }
 
             return new EnvironmentalContext(
-                spread.Position,
+                trunkBase.Copy(),
                 temperature,
-                spread.WorldgenRainfall,
+                rainfall,
                 localForest,
-                GreenhouseHelper.IsGreenhouse(api, trunkBase),
-                spread.GroundFertility,
-                spread.GroundSoilKinds,
-                spread.GroundSideSolid,
-                spread.SpaceReplaceable,
-                spread.HasClimate,
-                spread.TouchesFluid,
-                spread.HasShallowWater);
-        }
-
-        static float ReadWorldgenTemperature(ICoreAPI api, BlockPos plantPos)
-        {
-            if (api?.World?.BlockAccessor == null || plantPos == null) return 0f;
-            ClimateCondition worldgen = api.World.BlockAccessor.GetClimateAt(
-                plantPos,
-                EnumGetClimateMode.WorldGenValues);
-            if (worldgen != null) return worldgen.Temperature;
-
-            ClimateCondition now = api.World.BlockAccessor.GetClimateAt(
-                plantPos,
-                EnumGetClimateMode.NowValues);
-            return now?.Temperature ?? 0f;
+                false,
+                0,
+                default,
+                true,
+                0,
+                hasClimate,
+                false,
+                false);
         }
 
         internal static EnvironmentalContext SampleForSpread(

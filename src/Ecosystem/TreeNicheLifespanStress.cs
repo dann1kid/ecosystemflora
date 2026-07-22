@@ -110,11 +110,15 @@ namespace WildFarming.Ecosystem
         }
 
         /// <summary>One world sample for niche classification (reuse across catch-up years in the same tick).</summary>
+        /// <param name="crownRadius">
+        /// Pre-measured crown radius (&gt;= 0) avoids a second <see cref="TreeStructureProbe.Measure"/>.
+        /// </param>
         public static YearOutcome SampleOutcome(
             ICoreAPI api,
             ReproducerEntry entry,
             string wood,
-            EcosystemConfig cfg)
+            EcosystemConfig cfg,
+            int crownRadius = -1)
         {
             if (api == null || !ShouldEvaluate(entry, cfg)) return YearOutcome.Skipped;
 
@@ -123,7 +127,8 @@ namespace WildFarming.Ecosystem
                 api,
                 entry.Origin,
                 req,
-                wood);
+                wood,
+                crownRadius);
             return ClassifyYear(req, ctx, wood, cfg);
         }
 
